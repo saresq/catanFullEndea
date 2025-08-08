@@ -44,10 +44,10 @@ export default class AlertUI {
   }
 
   bigAlert(message, no_status) {
-    const $alert_parchment = this.$alert.querySelector('.parchment')
     const $alert_text = this.$alert.querySelector('.text')
     this.$alert.classList.add('show')
-    $alert_parchment.innerHTML = $alert_text.innerHTML = message
+    // Use message only in the text element
+    $alert_text.innerHTML = message
     clearTimeout(this.#alert_timer)
     this.#alert_timer = setTimeout(_ => this.closeBigAlert(), this.#alert_time * 1000)
     no_status || this.setStatus(message)
@@ -71,12 +71,7 @@ export default class AlertUI {
   }
 
   alertStrategy(t) { this.bigAlert(MSG.STRATEGIZE.all(t)) }
-  alertFullScreen() {
-    const _tmp = this.#alert_time
-    this.#alert_time = 7
-    this.bigAlert(MSG.FULL_SCREEN.all(), true)
-    this.#alert_time = _tmp
-  }
+
   alertInitialSetup(p, turn) {
     const msg = turn < 2 ? MSG.INITIAL_BUILD : MSG.INITIAL_BUILD_2
     if (this.#isMe(p)) this.bigAlert(msg.self())
@@ -122,7 +117,8 @@ export default class AlertUI {
   }
 
   renderEndGameAlert(p, { pid, S, C, dVp, largest_army, longest_road }) {
-    this.$alert.querySelector('.parchment').innerHTML = this.$alert.querySelector('.text').innerHTML = `
+    // Show content in text element only
+    const content = `
       <div class="game-ended p${pid}">
         <div class="title-emoji">🏆</div>
         <div class="player-name">🎖 ${getName(p)} Won 🎖</div>
@@ -133,11 +129,10 @@ export default class AlertUI {
           ${largest_army ? `<div class="pts army" data-type="lArmy"><b>2 VP:</b> Largest Army with ${largest_army} Knights</div>` : ''}
           ${longest_road ? `<div class="pts road" data-type="lRoad"><b>2 VP:</b> Longest Road with ${longest_road} roads</div>` : ''}
         </small>
-        <div class="bg"></div>
       </div>
-    `
+    `;
+    this.$alert.querySelector('.text').innerHTML = content;
     this.$alert.classList.add('show')
-    setTimeout(_ => this.$alert.classList.add('animate'), 200)
     this.$alert.querySelectorAll('.dVp, .army, .road').forEach($_ => $_.addEventListener('click', e => {
       this.#showCard(e.target.dataset.type || e.target.parentElement.dataset.type)
     }))

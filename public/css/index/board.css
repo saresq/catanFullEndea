@@ -54,10 +54,6 @@
       border-radius: 50%;
       margin-left: 48px;
       margin-top: 60px;
-      /* opacity: 0.8; */
-      box-shadow: 3px 3px 5px -1px #000,
-        5px 5px 4px -1px #fffa inset,
-        -8px -8px 8px -6px #000a inset;
       background-color: #E9D49D;
       position: relative;
 
@@ -112,8 +108,8 @@
       z-index: 4;
       position: absolute;
       background-image: url(/images/ninja.png);
-      left: 45px;
-      top: 22px;
+      left: 40px;
+      top: 35px;
       height: 90px;
       width: 65px;
       /* background-image: url(/images/robber.png);
@@ -232,10 +228,7 @@
     &.taken {
       visibility: visible; border-radius: 0;
       background-color: transparent; background-size: contain; background-repeat: no-repeat;
-      /* filter: drop-shadow(1px -1px 0px #000) drop-shadow(-1px 1px 0px #000) drop-shadow(1px 1px 0px #000) drop-shadow(-1px -1px 0px #000); */
-      /* filter: drop-shadow(-3px 3px 3px #000); */
-      /* filter: drop-shadow(-3px 3px 2px #000) drop-shadow(-3px 3px 4px var(--sand-color)) drop-shadow(-3px 3px 5px var(--sand-color)); */
-      filter: drop-shadow(-3px 3px 2px #000) drop-shadow(1px -1px 3px var(--sand-color)) drop-shadow(3px -3px 5px var(--sand-color)) drop-shadow(-3px 3px 5px var(--sand-color)) drop-shadow(-3px 3px 4px var(--sand-color));
+      filter: drop-shadow(-3px 3px 2px #000) ;
       transform: scale(4); z-index: 4;
       transition: all .25s ease-in;
       &[data-taken=S] { transition: transform .5s cubic-bezier(0.38, -0.68, 0.67, -0.34); transform: scale(1); }
@@ -260,6 +253,10 @@
     &.p2[data-taken=S] { background-image: url(/images/pieces/settlement-2.png); }
     &.p3[data-taken=S] { background-image: url(/images/pieces/settlement-3.png); }
     &.p4[data-taken=S] { background-image: url(/images/pieces/settlement-4.png); }
+    &.p5[data-taken=S] { background-image: url(/images/pieces/settlement-5.png); }
+    &.p6[data-taken=S] { background-image: url(/images/pieces/settlement-6.png); }
+    &.p7[data-taken=S] { background-image: url(/images/pieces/settlement-7.png); }
+    &.p8[data-taken=S] { background-image: url(/images/pieces/settlement-8.png); }
 
     &[data-taken=C] {
       width: 40px;
@@ -270,6 +267,10 @@
       &.p2 { background-image: url(/images/pieces/city-2.png); }
       &.p3 { background-image: url(/images/pieces/city-3.png); }
       &.p4 { background-image: url(/images/pieces/city-4.png); }
+      &.p5 { background-image: url(/images/pieces/city-5.png); }
+      &.p6 { background-image: url(/images/pieces/city-6.png); }
+      &.p7 { background-image: url(/images/pieces/city-7.png); }
+      &.p8 { background-image: url(/images/pieces/city-8.png); }
     }
 
     &[data-dir="top"] { top: -15px; left: 60px; }
@@ -343,7 +344,7 @@
       border: 1px solid;
       width: 21px; height: 150px; z-index: 5;
 
-      &.p1, &.p2, &.p3, &.p4 {
+      &.p1, &.p2, &.p3, &.p4, &.p5, &.p6, &.p7, &.p8 {
         transition: z-index 0s .25s linear, width 0.25s ease-in, height 0.25s ease-in;
         width: 7px; height: 50px; z-index: 2;
       }
@@ -352,6 +353,10 @@
       &.p2 { background: var(--player-2-color); box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-2-color-dark) 50%, #000), 4px 4px 6px 0px #000; }
       &.p3 { background: var(--player-3-color); box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-3-color-dark) 50%, #000), 4px 4px 6px 0px #000; }
       &.p4 { background: var(--player-4-color); box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-4-color-dark) 50%, #000), 4px 4px 6px 0px #000; }
+      &.p5 { background: var(--player-5-color); box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-5-color-dark) 50%, #000), 4px 4px 6px 0px #000; }
+      &.p6 { background: var(--player-6-color); box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-6-color-dark) 50%, #000), 4px 4px 6px 0px #000; }
+      &.p7 { background: var(--player-7-color); box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-7-color-dark) 50%, #000), 4px 4px 6px 0px #000; }
+      &.p8 { background: var(--player-8-color); box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-8-color-dark) 50%, #000), 4px 4px 6px 0px #000; }
 
 
       &.longest {

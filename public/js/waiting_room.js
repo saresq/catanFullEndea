@@ -22,6 +22,10 @@ class WaitingRoomUI {
 
     this.player_count > 2 && $('.player-3').classList.remove('hide')
     this.player_count > 3 && $('.player-4').classList.remove('hide')
+    this.player_count > 4 && $('.player-5').classList.remove('hide')
+    this.player_count > 5 && $('.player-6').classList.remove('hide')
+    this.player_count > 6 && $('.player-7').classList.remove('hide')
+    this.player_count > 7 && $('.player-8').classList.remove('hide')
     window.players.forEach(p => p && this.addPlayer(p))
     this.changeBackground()
     this.checkAndEnd()

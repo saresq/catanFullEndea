@@ -24,10 +24,26 @@ export const DEVELOPMENT_CARDS = {
   dR: 'Road building', dY: 'Year of plenty', dM: 'Monopoly',
 }
 
-export const DEVELOPMENT_CARDS_DECK = []
-DEVELOPMENT_CARDS_DECK.push(...[...Array(14)].map(_ => 'dK')) // 14 Knights
-DEVELOPMENT_CARDS_DECK.push('dR','dR', 'dY','dY', 'dM','dM') // 2 of each power cards
-DEVELOPMENT_CARDS_DECK.push(...[...Array(5)].map(_ => 'dVp')) // 5 victory points
+// Standard deck for 2-4 players
+export const DEVELOPMENT_CARDS_DECK_STANDARD = []
+DEVELOPMENT_CARDS_DECK_STANDARD.push(...[...Array(14)].map(_ => 'dK')) // 14 Knights
+DEVELOPMENT_CARDS_DECK_STANDARD.push('dR','dR', 'dY','dY', 'dM','dM') // 2 of each power cards
+DEVELOPMENT_CARDS_DECK_STANDARD.push(...[...Array(5)].map(_ => 'dVp')) // 5 victory points
+
+// Extended deck for 5-6 players
+export const DEVELOPMENT_CARDS_DECK_5_6 = []
+DEVELOPMENT_CARDS_DECK_5_6.push(...[...Array(20)].map(_ => 'dK')) // 20 Knights
+DEVELOPMENT_CARDS_DECK_5_6.push('dR','dR','dR', 'dY','dY','dY', 'dM','dM','dM') // 3 of each power cards
+DEVELOPMENT_CARDS_DECK_5_6.push(...[...Array(6)].map(_ => 'dVp')) // 6 victory points
+
+// Extended deck for 7-8 players
+export const DEVELOPMENT_CARDS_DECK_7_8 = []
+DEVELOPMENT_CARDS_DECK_7_8.push(...[...Array(24)].map(_ => 'dK')) // 24 Knights
+DEVELOPMENT_CARDS_DECK_7_8.push('dR','dR','dR','dR', 'dY','dY','dY','dY', 'dM','dM','dM','dM') // 4 of each power cards
+DEVELOPMENT_CARDS_DECK_7_8.push(...[...Array(8)].map(_ => 'dVp')) // 8 victory points
+
+// Default to standard deck, will be updated based on player count
+export const DEVELOPMENT_CARDS_DECK = DEVELOPMENT_CARDS_DECK_STANDARD
 
 export const DC_VICTORY_POINT_CARD_VARIETIES = ['dL', 'dMr', 'dG', 'dC', 'dU']
 // dL: 'Library', dMr: 'Market', dG: 'Great Hall', dC: 'Chapel', dU: 'University',
@@ -83,6 +99,27 @@ export const DEFAULT_MAPKEY =
   +S.C5.F6.G11.S(tl_S2)
   +S(tr_*3).S.S(tl_*3).S`
 
+// 5-6 player board layout based on the official Catan 5-6 player extension
+export const DEFAULT_MAPKEY_5_6 =
+  `S(br_*3).S.S.S(bl_W2).S
+  -S.M10.G2.J9.F6.S(bl_O2)
+  -S(r_L2).F12.C6.G4.C10.M3.S
+  -S.F9.J11.D.J3.M8.G5.S(l_*3)
+  +S(r_B2).J8.M3.F4.G5.C11.S
+  +S.C5.F6.G11.J4.S(tl_S2)
+  +S(tr_*3).S.S.S(tl_*3).S`
+
+// 7-8 player board layout (custom larger board)
+export const DEFAULT_MAPKEY_7_8 =
+  `S(br_*3).S.S.S.S(bl_W2).S
+  -S.M10.G2.J9.F6.C5.S(bl_O2)
+  -S(r_L2).F12.C6.G4.C10.M3.G9.S
+  -S.F9.J11.D.J3.M8.G5.F10.S(l_*3)
+  -S.G6.F3.M5.C8.J10.F11.J12.S
+  +S(r_B2).J8.M3.F4.G5.C11.M12.S
+  +S.C5.F6.G11.J4.M2.S(tl_S2)
+  +S(tr_*3).S.S.S.S(tl_*3).S`
+
 export const GAME_CONFIG = {
   // private_game: true,
   player_count: 3,
@@ -99,6 +136,7 @@ export const GAME_CONFIG = {
   alert_time: 3,
   largest_army_count: 3,
   longest_road_count: 5,
+  robber_hand_limit: 7, // Default hand limit for triggering robber (will be adjusted based on player count)
   mapkey: DEFAULT_MAPKEY,
   /** @type {false|'none'|'all'|'number'|'port'|'tile'|'(combo of number-port-tile)'} */
   map_shuffle: 'all',

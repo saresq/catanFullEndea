@@ -28,15 +28,27 @@
   --player-4-color: #dc9f00;
   /* --player-4-color: #b78400; */
 
-
+  /* New player colors */
+  --player-5-color: #8a2be2; /* Purple */
+  --player-6-color: #808080; /* Grey */
+  --player-7-color: #000000; /* Black */
+  --player-8-color: #b9178c; /* Dark Pink */
 
   --player-1-color-light: color-mix(in srgb, var(--player-1-color) 40%, #fff);
   --player-2-color-light: color-mix(in srgb, var(--player-2-color) 40%, #fff);
   --player-3-color-light: color-mix(in srgb, var(--player-3-color) 40%, #fff);
   --player-4-color-light: color-mix(in srgb, var(--player-4-color) 40%, #fff);
+  --player-5-color-light: color-mix(in srgb, var(--player-5-color) 40%, #fff);
+  --player-6-color-light: color-mix(in srgb, var(--player-6-color) 40%, #fff);
+  --player-7-color-light: color-mix(in srgb, var(--player-7-color) 40%, #fff);
+  --player-8-color-light: color-mix(in srgb, var(--player-8-color) 40%, #fff);
 
   --player-1-color-dark: color-mix(in srgb, var(--player-1-color) 100%, #000 40%);
   --player-2-color-dark: color-mix(in srgb, var(--player-2-color) 100%, #000 40%);
   --player-3-color-dark: color-mix(in srgb, var(--player-3-color) 100%, #000 40%);
   --player-4-color-dark: color-mix(in srgb, var(--player-4-color) 100%, #000 40%);
+  --player-5-color-dark: color-mix(in srgb, var(--player-5-color) 100%, #000 40%);
+  --player-6-color-dark: color-mix(in srgb, var(--player-6-color) 100%, #000 40%);
+  --player-7-color-dark: color-mix(in srgb, var(--player-7-color) 100%, #000 40%);
+  --player-8-color-dark: color-mix(in srgb, var(--player-8-color) 100%, #000 40%);
 }

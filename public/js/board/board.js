@@ -20,7 +20,7 @@ export default class Board {
      * ============
      * row split by +/- and every row except the first MUST have a sign preceeding
      * + or - represent where the hex starts in the next line. bottom right or left
-     * each tile is split by dor (.) and each tile has it's own regex
+     * each tile is split by dot (.) and each tile has it's own regex
      * Sea -> S(direction _ ResourceKey number)? <sea has optional trade in a direction>
      * Desert -> D
      * ResourceTile -> TileKey number {F|G|J|C|M}

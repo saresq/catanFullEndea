@@ -27,7 +27,7 @@ export default class AllPlayersUI {
         <div class="victory-points"><span>${player.public_vps + (player.private_vps || 0)}</span></div>
         <div class="cards-container">
           <div class="resources" data-count="${player.resource_count}" title="Resources in hand"
-            data-robbable="${player.resource_count > 7}"></div>
+            data-robbable="${player.resource_count > window.game_obj.config.robber_hand_limit}"></div>
           <div class="development-cards" title="Development Cards in hand" data-count="${player.dev_card_count}"></div>
           <div class="largest-army" title="Largest Army" data-id="${player.id}"
             data-count="${player.open_dev_cards.dK}"></div>
@@ -73,7 +73,7 @@ export default class AllPlayersUI {
     if (!$p) return
     $vps.innerHTML = player.public_vps + (player.private_vps || 0)
     $res.dataset.count = player.resource_count
-    $res.dataset.robbable = player.resource_count > 7
+    $res.dataset.robbable = player.resource_count > window.game_obj.config.robber_hand_limit
     $dc.dataset.count = player.dev_card_count
     $army.dataset.count = player.open_dev_cards.dK
     $road.dataset.count = player.longest_road_list.length

@@ -4,7 +4,7 @@
 @import "/css/fonts.css";
 
 :root {
-  --box-width: 400px;
+  --box-width: 800px;
 }
 
 html,
@@ -14,12 +14,119 @@ body {
   font-family: EagleLake, serif;
 }
 
+/* Base button reset */
 button {
   display: block;
   background: none; color: inherit; border: none;
   font: inherit; cursor: pointer;
   outline: inherit; appearance: unset;
   padding: 0; padding-block: 0px; padding-inline: 0px;
+}
+
+/* Button component system */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+  text-align: center;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.btn-primary {
+  background-color: #333;
+  color: var(--sand-color);
+  border: 2px solid var(--sand-color);
+  border-radius: 50px;
+  font-size: 1.2em;
+  font-weight: bold;
+  word-spacing: 5px;
+  padding: 7px 25px;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  box-shadow: 0 0 10px 0px var(--sand-color), 0 0 20px 0px #333;
+}
+
+.btn-primary:active {
+  background-color: #000;
+}
+
+.btn-selection {
+  background-color: #fff6;
+  color: #333;
+  border: 1px solid #fff;
+  border-radius: 5px;
+  padding: 10px;
+  font-size: 2em;
+  width: 80%;
+  filter: grayscale(.5) contrast(0.5) brightness(1.5);
+  transition: all .25s ease;
+}
+
+.btn-selection:hover {
+  background-color: #fff;
+  filter: none;
+}
+
+.btn-selection:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px #4d90fe;
+  position: relative;
+  z-index: 1;
+}
+
+.btn-selection[data-selected="true"] {
+  background: color-mix(in srgb, var(--sand-color), transparent);
+  filter: none;
+  box-shadow: 0 0 0 3px var(--sand-color-dark);
+}
+
+.btn-selection:focus[data-selected="true"] {
+  box-shadow: 0 0 0 3px var(--sand-color-dark), 0 0 0 6px #4d90fe;
+}
+
+.button-group {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+/* Responsive design */
+@media (max-width: 850px) {
+  :root {
+    --box-width: 90%;
+  }
+  
+  #login > .container .action-container .host-section .content-wrapper {
+    flex-direction: column;
+  }
+  
+  #login > .container .action-container .host-section .left-column,
+  #login > .container .action-container .host-section .right-column {
+    width: 100%;
+    padding: 0;
+    margin-bottom: 20px;
+  }
+  
+  .btn-selection {
+    width: 90%;
+  }
+}
+
+@media (max-width: 500px) {
+  .button-group {
+    grid-template-columns: 1fr;
+  }
+  
+  .city-colors-display {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
 }
 
 #login {
@@ -48,10 +155,10 @@ button {
       text-transform: uppercase;
 
       > label {
-        width: 33%; padding: 5px 10px 5px; text-align: center; cursor: pointer;
+        width: 50%; padding: 5px 10px 5px; text-align: center; cursor: pointer;
         border-left: 1px solid var(--sand-color);
         transition: all .25s ease;
-        &:first-child { width: 34%; border: none; }
+        &:first-child { border: none; }
         &:has(input:checked) { background-color: var(--sand-color); color: var(--sand-color-text-dark); }
         &:hover:has(input:not(:checked)) { background-color: color-mix(in srgb, var(--sand-color) 20%, transparent);  }
 
@@ -82,13 +189,14 @@ button {
         }
 
         .submit {
-          margin: 20px auto 0; padding: 7px 25px; width: fit-content;
+          margin: 20px auto 20px; padding: 7px 25px; width: fit-content;
           box-sizing: border-box;
           border: 2px solid var(--sand-color); border-radius: 50px;
           text-align: center;
           background: #333; color: var(--sand-color);
           font-size: 1.2em; font-weight: bold; word-spacing: 5px;
           transition: all .25s ease;
+          align-self: center;
 
           &:active { background: #000; }
           &:hover, &:focus { box-shadow: 0 0 10px 0px var(--sand-color), 0 0 20px 0px #333; }
@@ -97,42 +205,83 @@ button {
       }
 
       .host-section {
-        input.name { margin-bottom: 30px; }
-        .players-count-container {
-          display: flex; justify-content: space-between;
-          width: 100%; margin-bottom: 35px; position: relative;
-          > label {
-            display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-start;
-            width: 80px; background-color: #fff6; cursor: pointer; color: #333;
-            border-radius: 5px; border: 1px solid #fff;
-            padding: 5px 7px 8px; font-size: 2em;
-            filter: grayscale(.5) contrast(0.5) brightness(1.5);
-            transition: all .25s ease;
-            &:hover { background-color: #fff; filter: none; }
-            .text {
-              flex-grow: 1; width: 100%; text-align: center; line-height: 1em; margin-bottom: 5px;
-            }
-            &.player-count-3 .text { position: relative; top: -7px; }
-            .p1, .p2, .p3, .p4 {
-              width: 25px; height: 24px;
-              margin: -3px; background-size: cover; background-position: center;
-            }
-            .p1 { background-image: url(/images/pieces/city-1.png); }
-            .p2 { background-image: url(/images/pieces/city-2.png); }
-            .p3 { background-image: url(/images/pieces/city-3.png); }
-            .p4 { background-image: url(/images/pieces/city-4.png); }
-            input { position: absolute; opacity: 0; cursor: pointer; }
-            &:has(input:checked) {
-              background: color-mix(in srgb, var(--sand-color), transparent);
-              filter: none; box-shadow: 0 0 0 3px var(--sand-color-dark);
-            }
-            &:has(input:checked:focus) { box-shadow: 0 0 10px 1px #000; }
-            &:has(input:checked)::before { content: 'Players'; font-size: 1.2rem; color: #0006;
-              position: absolute;
-              bottom: -35px; }
-          }
+        display: flex;
+        flex-direction: column;
+        
+        input.name { 
+          width: 100%;
+          margin-bottom: 30px; 
         }
-        .player-count-text { color: #0006; font-size: 1.2em; }
+        
+        .content-wrapper {
+          display: flex;
+          flex-direction: row;
+          flex-wrap: wrap;
+          justify-content: space-between;
+          width: 100%;
+        }
+        
+        .left-column {
+          width: 48%;
+          padding-right: 2%;
+        }
+        
+        .right-column {
+          width: 48%;
+          padding-left: 2%;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          align-items: center;
+        }
+        
+        .section-title {
+          font-size: 1.2em;
+          margin-bottom: 10px;
+          color: #333;
+          text-align: center;
+        }
+        
+        .players-selection {
+          margin-bottom: 35px;
+        }
+        
+        .section-panel {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          margin-bottom: 20px;
+          background-color: rgba(255, 255, 255, 0.4);
+          padding: 15px;
+          border-radius: 10px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        
+        .city-colors-display {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+          margin-bottom: 20px;
+          
+          .city-color {
+            width: 40px;
+            height: 40px;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            justify-self: center;
+          }
+          
+          .city-1 { background-image: url(/images/pieces/city-1.png); }
+          .city-2 { background-image: url(/images/pieces/city-2.png); }
+          .city-3 { background-image: url(/images/pieces/city-3.png); }
+          .city-4 { background-image: url(/images/pieces/city-4.png); }
+          .city-5 { background-image: url(/images/pieces/city-5.png); }
+          .city-6 { background-image: url(/images/pieces/city-6.png); }
+          .city-7 { background-image: url(/images/pieces/city-7.png); }
+          .city-8 { background-image: url(/images/pieces/city-8.png); }
+        }
 
         .advaced-options {
           position: relative; display: none;
@@ -147,10 +296,8 @@ button {
         input.game-key { font-size: 1em; }
       }
 
-      .watch-section { color: #fff; }
     }
     .action-types:has(input[value="host"]:checked) + .action-container .host-section { margin-left: 0%; }
     .action-types:has(input[value="join"]:checked) + .action-container .host-section { margin-left: -100%; }
-    .action-types:has(input[value="watch"]:checked) + .action-container .host-section { margin-left: -200%; }
   }
 }

@@ -24,6 +24,10 @@
     &.p2 { background: var(--player-2-color-light); border-color: var(--player-2-color-dark); }
     &.p3 { background: var(--player-3-color-light); border-color: var(--player-3-color-dark); }
     &.p4 { background: var(--player-4-color-light); border-color: var(--player-4-color-dark); }
+    &.p5 { background: var(--player-5-color-light); border-color: var(--player-5-color-dark); }
+    &.p6 { background: var(--player-6-color-light); border-color: var(--player-6-color-dark); }
+    &.p7 { background: var(--player-7-color-light); border-color: var(--player-7-color-dark); }
+    &.p8 { background: var(--player-8-color-light); border-color: var(--player-8-color-dark); }
 
     .name {
       width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
@@ -37,6 +41,10 @@
     &.p2 .name { background: var(--player-2-color); }
     &.p3 .name { background: var(--player-3-color); }
     &.p4 .name { background: var(--player-4-color); }
+    &.p5 .name { background: var(--player-5-color); }
+    &.p6 .name { background: var(--player-6-color); }
+    &.p7 .name { background: var(--player-7-color); }
+    &.p8 .name { background: var(--player-8-color); }
 
     .victory-points {
       display: flex; justify-content: start; font-family: Raleway, sans-serif;
@@ -125,6 +133,10 @@
   , &[data-active="2"] .player.p2::before
   , &[data-active="3"] .player.p3::before
   , &[data-active="4"] .player.p4::before
+  , &[data-active="5"] .player.p5::before
+  , &[data-active="6"] .player.p6::before
+  , &[data-active="7"] .player.p7::before
+  , &[data-active="8"] .player.p8::before
   { content: '👉'; }
 
 
@@ -132,10 +144,18 @@
   , &[data-army="2"] .player.p2 .largest-army
   , &[data-army="3"] .player.p3 .largest-army
   , &[data-army="4"] .player.p4 .largest-army
+  , &[data-army="5"] .player.p5 .largest-army
+  , &[data-army="6"] .player.p6 .largest-army
+  , &[data-army="7"] .player.p7 .largest-army
+  , &[data-army="8"] .player.p8 .largest-army
   , &[data-road="1"] .player.p1 .longest-road
   , &[data-road="2"] .player.p2 .longest-road
   , &[data-road="3"] .player.p3 .longest-road
   , &[data-road="4"] .player.p4 .longest-road
+  , &[data-road="5"] .player.p5 .longest-road
+  , &[data-road="6"] .player.p6 .longest-road
+  , &[data-road="7"] .player.p7 .longest-road
+  , &[data-road="8"] .player.p8 .longest-road
   {
     width: 67px; cursor: pointer;
     &:hover { box-shadow: 0 0 5px 0 #333; }
@@ -156,5 +176,17 @@
   }
   &[data-army="4"] .player.p4 .largest-army::after, &[data-road="4"] .player.p4 .longest-road::after {
     background: var(--player-4-color);
+  }
+  &[data-army="5"] .player.p5 .largest-army::after, &[data-road="5"] .player.p5 .longest-road::after {
+    background: var(--player-5-color);
+  }
+  &[data-army="6"] .player.p6 .largest-army::after, &[data-road="6"] .player.p6 .longest-road::after {
+    background: var(--player-6-color);
+  }
+  &[data-army="7"] .player.p7 .largest-army::after, &[data-road="7"] .player.p7 .longest-road::after {
+    background: var(--player-7-color);
+  }
+  &[data-army="8"] .player.p8 .largest-army::after, &[data-road="8"] .player.p8 .longest-road::after {
+    background: var(--player-8-color);
   }
 }

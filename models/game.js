@@ -24,7 +24,7 @@ export default class Game {
   /** @type {{ pid, giving, asking, id, status:('open'|'closed'|'success'|'failed'|'deleted'), rejected:number[] }[]} */
   ongoing_trades = []
   turn = 1; dice_value = 2
-  dev_cards = shuffle(CONST.DEVELOPMENT_CARDS_DECK)
+  dev_cards = []
   largest_army_pid = -1
   longest_road_pid = -1
 
@@ -52,6 +52,31 @@ export default class Game {
     this.expected_actions.add = (...elems) => elems.forEach(obj => {
       this.expected_actions.push(Object.assign({ type: this.state, pid: this.active_pid }, obj))
     })
+    
+    // Initialize development card deck and adjust game rules based on player count
+    if (this.player_count >= 7) {
+      this.dev_cards = shuffle(CONST.DEVELOPMENT_CARDS_DECK_7_8)
+      // Adjust victory points for 7-8 players if not explicitly set in config
+      if (!config.hasOwnProperty('win_points')) {
+        this.config.win_points = 12
+      }
+      // Adjust robber hand limit for 7-8 players if not explicitly set in config
+      if (!config.hasOwnProperty('robber_hand_limit')) {
+        this.config.robber_hand_limit = 11
+      }
+    } else if (this.player_count >= 5) {
+      this.dev_cards = shuffle(CONST.DEVELOPMENT_CARDS_DECK_5_6)
+      // Adjust victory points for 5-6 players if not explicitly set in config
+      if (!config.hasOwnProperty('win_points')) {
+        this.config.win_points = 11
+      }
+      // Adjust robber hand limit for 5-6 players if not explicitly set in config
+      if (!config.hasOwnProperty('robber_hand_limit')) {
+        this.config.robber_hand_limit = 9
+      }
+    } else {
+      this.dev_cards = shuffle(CONST.DEVELOPMENT_CARDS_DECK_STANDARD)
+    }
   }
 
   join(name) {
@@ -113,7 +138,7 @@ export default class Game {
       case ST.ROBBER_DROP:
         this.robbing_players = []
         this.players.forEach(pl => {
-          if (!pl.removed && pl.resource_count > 7) {
+          if (!pl.removed && pl.resource_count > this.config.robber_hand_limit) {
             this.expected_actions.add({
               pid: pl.id, drop_count: Math.floor(pl.resource_count / 2),
               callback: this.#expectedRobberDrop.bind(this)
@@ -167,7 +192,7 @@ export default class Game {
     this.#io_manager.updateDiceValue(this.dice_value, this.active_pid)
     const dice_total = this.dice_value[0] + this.dice_value[1]
     if (dice_total === 7) {
-      const drop = this.players.filter(p => p.resource_count > 7).length
+      const drop = this.players.filter(p => p.resource_count > this.config.robber_hand_limit).length
       this.state = drop ? ST.ROBBER_DROP : ST.ROBBER_MOVE
     } else {
       this.#distributeTileResources(dice_total)
@@ -178,7 +203,7 @@ export default class Game {
   /** Robber Drop Resource */
   #expectedRobberDrop(pid, { drop_count = 0, resources } = {}) {
     const player = this.getPlayer(pid)
-    if (drop_count || player.resource_count > 7) {
+    if (drop_count || player.resource_count > this.config.robber_hand_limit) {
       const taking_count = Math.max(drop_count, Math.floor(player.resource_count / 2))
       let taken_count = 0
       if (resources) {

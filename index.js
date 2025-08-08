@@ -45,9 +45,19 @@ app.get('/game/new', function (req, res) {
   let id
   do { id = generateRandomWords({ min: 2, max: 2, join: '-' }) } while (GAME_SESSIONS[id])
   const { name, players = CONST.GAME_CONFIG.player_count, config: query_config } = req.query
-  if (+players < 2 || +players > 4) { return res.redirect('/login?notice=Player count must be between 2 and 4.') }
+  if (+players < 2 || +players > 8) { return res.redirect('/login?notice=Player count must be between 2 and 8.') }
   let config = Object.assign({}, CONST.GAME_CONFIG, { player_count: +players || 2 })
   try { config = Object.assign(config, JSON.parse(decodeURIComponent(query_config))) } catch(e){}
+  
+  // Select appropriate mapkey based on player count if not explicitly provided in query_config
+  if (!query_config || !JSON.parse(decodeURIComponent(query_config))?.mapkey) {
+    if (config.player_count >= 7) {
+      config.mapkey = CONST.DEFAULT_MAPKEY_7_8
+    } else if (config.player_count >= 5) {
+      config.mapkey = CONST.DEFAULT_MAPKEY_5_6
+    }
+  }
+  
   config.mapkey = (new BoardShuffler(config.mapkey)).shuffle(config.map_shuffle)
   const pid = Math.floor(Math.random() * config.player_count + 1)
   const game = new Game({

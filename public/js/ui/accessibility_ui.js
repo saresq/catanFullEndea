@@ -72,30 +72,13 @@ export default class AccessibilityUI {
       ${this.#shown_icons.info ? `
         <div class="info-zone hide">
           <div class="container">
-            <div class="img-container">
-              <a href="https://bharathraja.in/#connect" target="_blank"><img class="logo" src="/images/logo-animation-loop.gif"></a>
-              <img class="dp" src="/images/dp2.png">
-            </div>
             <div class="text-container">
-              <div class="title">Bharath Raja</div>
+              <div class="title">Catan Full Endea</div>
               <div class="subtitle">
-                I go by <a href="https://bharathraja.in/#connect" target="_blank">bigOmega</a>
-                <a class="social-icon github" href="https://github.com/bigomega/" target="_blank"></a>
-                <a class="social-icon linkedin" href="https://www.linkedin.com/in/bigomega" target="_blank"></a>
-                <a class="social-icon twitter" href="https://twitter.com/bigomega" target="_blank"></a>
-                <a class="social-icon youtube" href="https://www.youtube.com/c/bigomega" target="_blank"></a>
-                <a class="social-icon email" href="mailto:bharathraja04@gmail.com" target="_blank"></a>
+                Una ampliación de <a href="https://github.com/bigomega/catan" target="_blank">BigOmega's Catan</a><span>☕️</span>
               </div>
-              <p>I've always been fascinated by the hexagonal structures of beehives 🐝. This game was built from my love for <b>open source</b>, my expression of visual thinking, my expertise in front-end web, and my gratitude for a favourite board game.
-                I took <b>🕰 10-14 hours</b> every day over <b>40 straight days</b> to curate, design, architect, build, refactor and deploy this. I've gone pure <b>vanilla</b> with JS and CSS and <b>built everything from scratch</b> for a refreshing change of pace.
-                I acquired the images and sounds from the internet, and yet it took quite a lot of editing with Preview, Pixlr & iMovie. I'd be happy to redraw them as and when possible.</p>
-              <p>When I built this in early 2024, I was on a small break from my career. My life revolved around <b>🪂 paragliding</b> in the Himalayas, <b>🚶🏻‍♂️ silent walks</b> alone in nature, <b>🤔 deep conversations</b> with my thoughtful partner,
-                😥 heavily missing Hackathon scenes, 👨🏻‍💻 introverted <b>Developer Evangelism</b> and a healthy mix of 🎮 <a href="https://www.klei.com/games/dont-starve-together" target="_blank">DST</a>, ONI and AOE4.</p>
-              <p>Feel free to <a href="https://github.com/bigomega/catan" target="_blank" style="font-weight:bold;">Modify this Project</a> as you see fit and <b>enjoy playing it with your friends and family</b>.
-                If you catch me online, don't hesitate to <b>say hi</b>; I'm always open to converse.</p>
-              <p class="cheers">Cheers <span>☕️</span></p>
-              <div class="title game-title">How to Play?</div>
-              <p>You can read the <a class="rules" href="https://www.catan.com/sites/default/files/2021-06/catan_base_rules_2020_200707.pdf" target="_blank">Game Rules & Almanac</a> here.
+              <div class="subtitle game-title">Como jugar?</div>
+              <p>Podes leer las reglas desde: <a class="rules" href="https://www.catan.com/sites/default/files/2021-06/catan_base_rules_2020_200707.pdf" target="_blank">Game Rules</a> [Están en ingles]
             </div>
           </div>
           <button class="close">X</button>

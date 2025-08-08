@@ -21,7 +21,7 @@ The server will be reachable at [localhost:3000](http://localhost:3000/). You're
 
 ## Game Features
 - [x] Design your own map
-- [x] 2/3/4 Players
+- [x] 2/3/4/5/6/7/8 Players
 - [x] Build Houses, Roads, and Cities
 - [x] Robber Mechanics
 - [x] Trade Requests
@@ -33,6 +33,21 @@ The server will be reachable at [localhost:3000](http://localhost:3000/). You're
 - [x] Smart Map Shuffler
 - [x] Optional Timer
 
+## 5-8 Player Support
+The game now supports up to 8 players with the following adjustments:
+
+### 5-6 Players
+- Larger board layout with more resource tiles
+- Increased development card deck (20 Knights, 9 Progress cards, 6 Victory Points)
+- Victory point requirement increased to 11 (configurable)
+- Robber hand limit increased to 9 (configurable)
+
+### 7-8 Players
+- Even larger board layout with more resource tiles
+- Further increased development card deck (24 Knights, 12 Progress cards, 8 Victory Points)
+- Victory point requirement increased to 12 (configurable)
+- Robber hand limit increased to 11 (configurable)
+
 ## Future Ideas
 - Browser Notifications
 - Join random games
@@ -42,7 +57,6 @@ The server will be reachable at [localhost:3000](http://localhost:3000/). You're
 - Rethink ports
   - multiple in single Sea tile
   - disallow connected edges of land being added as ports
-- Introducing 8-player maps
 - Social login (w pic and/or just a name/id)
 - Discord help (for talking)
 - Seafarers expansion (fairly easy one)

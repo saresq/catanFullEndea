@@ -115,7 +115,7 @@ export default class Game {
   // STATE - Drop for Robber
   #onRobberDropCards() {
     this.#isMyPid(this.active_pid) && this.clearDevCardUsage()
-    const drop_count = this.#player.resource_count > 7 ? Math.floor(this.#player.resource_count / 2) : 0
+    const drop_count = this.#player.resource_count > this.config.robber_hand_limit ? Math.floor(this.#player.resource_count / 2) : 0
     if (drop_count) {
       this.#ui.robberDrop(drop_count)
       this.#ui.player_ui.toggleShow()
