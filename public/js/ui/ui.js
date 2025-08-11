@@ -98,6 +98,10 @@ export default class UI {
   #setUpEvents() {
     document.addEventListener('keydown', e => {
       e.code === 'Backquote' && this.#game.clearDevCardUsage()
+      if (e.code === 'KeyP') {
+        e.preventDefault()
+        this.all_players_ui.toggleCompact()
+      }
     })
   }
 

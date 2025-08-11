@@ -6,6 +6,7 @@ export default class AllPlayersUI {
   #showLargestArmy; #showLongestRoad; #showPlayerLongestRoad; #hidePlayerLongestRoad
   $el = $('#game > .all-players')
   player_refs = []
+  #compact = false
 
   constructor(player, opponents, { showLargestArmy, showLongestRoad,
     showPlayerLongestRoad, hidePlayerLongestRoad }) {
@@ -21,9 +22,10 @@ export default class AllPlayersUI {
 
   render() {
     const all_players = [this.player, ...this.opponents].sort((a, b) => a.id - b.id)
-    this.$el.innerHTML = all_players.map(player => `
+    const header = `<div class="players-header"><button class="toggle-players" title="Toggle players panel (p)">▤</button></div>`
+    this.$el.innerHTML = header + all_players.map(player => `
       <div class="player p${player.id} ${player.removed ? 'deactivated' : ''}" data-id="${player.id}">
-        <div class="name">${player.name}</div>
+        <div class="name" data-name="${player.name}">${player.name}</div>
         <div class="victory-points"><span>${player.public_vps + (player.private_vps || 0)}</span></div>
         <div class="cards-container">
           <div class="resources" data-count="${player.resource_count}" title="Resources in hand"
@@ -39,6 +41,7 @@ export default class AllPlayersUI {
     this.$el.dataset.army = all_players.find(_ => _.largest_army)?.id || '-'
     this.$el.dataset.road = all_players.find(_ => _.longest_road)?.id || '-'
     this.#setRefs()
+    this.$el.querySelector('.toggle-players')?.addEventListener('click', _ => this.toggleCompact())
     this.$el.querySelectorAll('.largest-army').forEach($_ => $_.addEventListener('click', e => {
       if (this.$el.dataset.army !== e.target.dataset.id) return
       this.#showLargestArmy(+this.$el.dataset.army)
@@ -51,6 +54,10 @@ export default class AllPlayersUI {
       $_.addEventListener('mouseover', e => this.#showPlayerLongestRoad(+e.target.dataset.id))
       $_.addEventListener('mouseout', e => this.#hidePlayerLongestRoad())
     })
+
+    // Initialize compact state from storage
+    const saved = localStorage.getItem('all_players_compact')
+    if (saved === '1') { this.toggleCompact(true) }
   }
 
   #setRefs() {
@@ -71,7 +78,8 @@ export default class AllPlayersUI {
   updatePlayer(player, key) {
     const { $p, $vps, $res, $dc, $army, $road } = this.player_refs[player.id]
     if (!$p) return
-    $vps.innerHTML = player.public_vps + (player.private_vps || 0)
+    const total_vps = player.public_vps + (player.private_vps || 0)
+    $vps.innerHTML = total_vps
     $res.dataset.count = player.resource_count
     $res.dataset.robbable = player.resource_count > window.game_obj.config.robber_hand_limit
     $dc.dataset.count = player.dev_card_count
@@ -79,18 +87,41 @@ export default class AllPlayersUI {
     $road.dataset.count = player.longest_road_list.length
     if (player.longest_road) this.$el.dataset.road = player.id
     if (player.largest_army) this.$el.dataset.army = player.id
-    // switch (key) {
-    //   case 'closed_cards': break
-    //   case 'closed_cards.taken': break
-    //   case 'pieces': break
-    //   case 'largest_army': break
-    //   case 'longest_road': break
-    //   case 'longest_road_list': break
-    //   case 'dc_update': break
-    // }
+
+    // Update compact text if needed
+    if (this.#compact) {
+      const $name = $p.querySelector('.name')
+      if ($name) {
+        const base = $name.getAttribute('data-name') || $name.textContent
+        $name.textContent = `${base} - ${total_vps}`
+      }
+    }
   }
 
   deactivatePlayer(pid) {
     this.player_refs[pid]?.$p.classList.add('deactivated')
+  }
+
+  toggleCompact(force) {
+    this.#compact = typeof force === 'boolean' ? force : !this.#compact
+    this.$el.classList[this.#compact ? 'add' : 'remove']('compact')
+    const btn = this.$el.querySelector('.toggle-players')
+    if (btn) btn.textContent = this.#compact ? '▸' : '▤'
+    // Update names
+    this.$el.querySelectorAll('.player').forEach($p => {
+      const $name = $p.querySelector('.name')
+      const $vps = $p.querySelector('.victory-points span')
+      if (!$name || !$vps) return
+      const base = $name.getAttribute('data-name') || $name.textContent
+      if (this.#compact) {
+        $name.setAttribute('data-name', base)
+        $name.textContent = `${base} - ${$vps.textContent}`
+      } else {
+        const original = $name.getAttribute('data-name') || base
+        $name.textContent = original
+      }
+    })
+    // Persist
+    try { localStorage.setItem('all_players_compact', this.#compact ? '1' : '0') } catch (e) {}
   }
 }

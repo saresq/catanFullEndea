@@ -4,6 +4,19 @@
   filter: drop-shadow(0px 0px 30px #000);
   &.blur:not(:hover) { filter: blur(2px); }
 
+  .players-header {
+    display: flex; justify-content: flex-end; align-items: center;
+    background: var(--sand-color-dark); color: #fff; padding: 2px 4px;
+    border-left: 3px solid var(--sand-color-dark);
+    button.toggle-players {
+      appearance: none; border: none; cursor: pointer;
+      font-size: 14px; line-height: 1; padding: 4px 6px; border-radius: 3px;
+      background: #333; color: #fff;
+      &:hover { background: #000; }
+      &:focus { outline: 1px solid #fff7; }
+    }
+  }
+
   .player {
     width: 100%; position: relative;
     background: var(--sand-color);
@@ -188,5 +201,14 @@
   }
   &[data-army="8"] .player.p8 .largest-army::after, &[data-road="8"] .player.p8 .longest-road::after {
     background: var(--player-8-color);
+  }
+
+  &.compact {
+    width: 240px; /* keep width; we only hide details */
+    .player {
+      .victory-points, .cards-container { display: none; }
+      .name { font-size: 1.1em; padding: 6px 10px; border-bottom-width: 0; }
+      &::before { top: -15px; }
+    }
   }
 }

@@ -129,7 +129,7 @@ export const GAME_CONFIG = {
   initial_build_time: 90,
   auto_roll: false,
   roll_time: 15,
-  player_turn_time: 120,
+  player_turn_time: 60,
   robber_drop_time: 30,
   robber_move_time: 30,
   max_trade_requests: 4,
