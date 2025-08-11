@@ -64,7 +64,7 @@ export default class PlayerUI {
     this.$el.classList.add('id-' + this.player.id)
     this.$action_bar.innerHTML = `
       <div class="timer disabled ${this.has_timer ? '' : 'hide'}">0:00</div>
-      <button class="roll-dice disabled ${this.auto_roll ? 'hide' : ''}" title="Roll Dice (Space)">🎲🎲</button>
+      <button class="roll-dice disabled" data-mode="roll" title="Roll Dice (Space)"><span class="label">🎲🎲</span></button>
       <button class="build-road disabled" title="Build Road (r)" data-count="${CONST.PIECES_COUNT.R}">
         <div class="cost-tooltip">${resToText(CONST.COST.R)}</div>
       </button>
@@ -79,7 +79,6 @@ export default class PlayerUI {
         <img src="/images/dc-back.png"/>
       </button>
       <button class="trade disabled" title="Trade (t/\`)">Trade</button>
-      <button class="end-turn disabled" title="End Turn (e/Space)">End Turn</button>
     `
     this.#setRefs()
     this.#setupActionEvents()
@@ -93,7 +92,6 @@ export default class PlayerUI {
     this.$build_city = this.$action_bar.querySelector('.build-city')
     this.$buy_dev_card = this.$action_bar.querySelector('.dev-card')
     this.$trade_btn = this.$action_bar.querySelector('.trade')
-    this.$end_turn = this.$action_bar.querySelector('.end-turn')
   }
 
   #$keyToEl(key) {
@@ -104,11 +102,16 @@ export default class PlayerUI {
   }
 
   #setupActionEvents() {
-    // Dice Click
+    // Unified Dice/End Turn Click
     this.$dice.addEventListener('click', e => {
-      if (e.target.classList.contains('disabled')) return
-      this.#onDiceClick()
-      e.target.classList.add('disabled')
+      const $btn = this.$dice
+      if ($btn.classList.contains('disabled')) return
+      if ($btn.dataset.mode === 'end') {
+        this.#onEndTurnClick()
+      } else {
+        this.#onDiceClick()
+        $btn.classList.add('disabled')
+      }
     })
     // Road, Settlement & City Click
     const getEventCb = piece => e => {
@@ -132,11 +135,7 @@ export default class PlayerUI {
       if (this.$trade_btn.classList.contains('disabled')) return
       this.#onTradeClick()
     })
-    // End Turn
-    this.$end_turn.addEventListener('click', e => {
-      if (e.target.classList.contains('disabled')) return
-      this.#onEndTurnClick()
-    })
+    // End Turn (hidden in unified mode)
     // Keyboard shortcuts
     document.addEventListener('keydown', e => {
       switch (e.code) {
@@ -147,7 +146,9 @@ export default class PlayerUI {
           !this.$buy_dev_card.classList.contains('disabled') && this.#onBuyDevCardClick()
           break
         case 'KeyE':
-          !this.$end_turn.classList.contains('disabled') && this.#onEndTurnClick()
+          if (this.$dice.dataset.mode === 'end' && !this.$dice.classList.contains('disabled')) {
+            this.#onEndTurnClick()
+          }
           break
         case 'KeyT':
           if (this.$trade_btn.classList.contains('disabled')) { break }
@@ -156,10 +157,12 @@ export default class PlayerUI {
         case 'Space':
           e.target === document.body && e.preventDefault()
           if (!this.$dice.classList.contains('disabled')) {
-            this.#onDiceClick()
-            e.target.classList.add('disabled')
-          } else if (!this.$end_turn.classList.contains('disabled')) {
-            this.#onEndTurnClick()
+            if (this.$dice.dataset.mode === 'end') {
+              this.#onEndTurnClick()
+            } else {
+              this.#onDiceClick()
+              this.$dice.classList.add('disabled')
+            }
           }
           break
         case 'Backquote':
@@ -185,7 +188,8 @@ export default class PlayerUI {
   checkAndToggleActions(toggle) {
     this.removeActiveActions()
     if (toggle) {
-      this.toggleAction(this.$end_turn, true)
+      // Enable end turn on unified button during action phase
+      this.setUnifiedModeEnd(true)
       this.toggleAction(this.$trade_btn, true)
       oKeys(CONST.COST).forEach(key => {
         const can_act = this.canIBuy(key)
@@ -196,6 +200,8 @@ export default class PlayerUI {
       for (const $el of this.$action_bar.children) {
         this.toggleAction($el)
       }
+      // When actions turn off, also disable unified end-turn state
+      this.setUnifiedModeEnd(false)
     }
   }
 
@@ -226,9 +232,20 @@ export default class PlayerUI {
     }, 1000)
   }
 
-  toggleDice(active) { this.toggleAction(this.$dice, active) }
+  toggleDice(active) {
+    // When active, we are in roll mode; when not, we don't touch end-turn mode here
+    if (active) this.setUnifiedModeRoll(true)
+    else this.setUnifiedModeRoll(false)
+  }
   toggleAction($el, toggle) {
     $el?.classList[toggle ? 'remove' : 'add']('disabled')
+  }
+
+  #ensureDiceLabel() {
+    const span = document.createElement('span')
+    span.className = 'label'
+    this.$dice.appendChild(span)
+    return span
   }
 
   updatePiecesCount() {
@@ -238,6 +255,24 @@ export default class PlayerUI {
   }
 
   setDevCardCount(n) { this.$buy_dev_card.dataset.count = n }
+
+  // Unified button modes
+  setUnifiedModeRoll(enabled) {
+    if (!this.$dice) return
+    this.$dice.dataset.mode = 'roll'
+    this.$dice.title = 'Roll Dice (Space)'
+    const label = this.$dice.querySelector('.label') || this.#ensureDiceLabel()
+    label.textContent = '🎲🎲'
+    this.toggleAction(this.$dice, enabled)
+  }
+  setUnifiedModeEnd(enabled) {
+    if (!this.$dice) return
+    this.$dice.dataset.mode = 'end'
+    this.$dice.title = 'End Turn (e/Space)'
+    const label = this.$dice.querySelector('.label') || this.#ensureDiceLabel()
+    label.textContent = 'End Turn'
+    this.toggleAction(this.$dice, enabled)
+  }
   //#endregion
 
   /**

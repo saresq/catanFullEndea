@@ -97,7 +97,12 @@ export default class Game {
     this.#ui.trade_ui.clearRequests()
     if (this.#isMyPid(this.active_pid)) {
       this.#audio_manager.playTurnNotification()
-      this.config.auto_roll || this.#ui.player_ui.toggleDice(1)
+      if (this.config.auto_roll) {
+        // Auto-roll: keep unified button disabled until actions phase
+        this.#ui.player_ui.setUnifiedModeRoll(false)
+      } else {
+        this.#ui.player_ui.setUnifiedModeRoll(true)
+      }
       this.#ui.player_ui.toggleShow(1)
     } else {
       this.#ui.player_ui.toggleShow()
@@ -181,7 +186,10 @@ export default class Game {
   // SOC - Dice Value Update
   updateDiceValueSoc([d1, d2], pid) {
     this.#ui.player_ui.toggleDice(false)
+    // Show small floating dice result near the button instead of full-screen animation
     this.#isMyPid(pid) && this.#ui.animation_ui.animateDiceRoll(d1, d2)
+    // After rolling, switch unified button to End Turn during the actions phase
+    if (this.#isMyPid(pid)) { this.#ui.player_ui.setUnifiedModeEnd(true) }
     this.#audio_manager.playDice(this.#isMyPid(pid))
     const total = d1 + d2
     total === 7 && setTimeout(_ => {

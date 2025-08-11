@@ -21,13 +21,18 @@ export default class AnimationUI {
   }
 
   animateDiceRoll(d1, d2) {
-    this.$el.className = `animation-zone ready dice-roll-animation`
-    this.$el.innerHTML = `
-      <div class="dice-animation"></div>
-      <div class="dice d1">${Array(d1).fill(0).map(_ => `<span class="pip"></span>`).join('')}</div>
-      <div class="dice d2">${Array(d2).fill(0).map(_ => `<span class="pip"></span>`).join('')}</div>
-    `
-    setTimeout(_ => this.$el.classList.add('start'), 250)
+    // Small floating dice result above the dice/unified button; no full-screen overlay and no animation
+    const btn = document.querySelector('#game > .current-player .actions .roll-dice')
+    if (!btn) return
+    // Remove existing float if any
+    btn.querySelector('.dice-float')?.remove()
+    const box = document.createElement('div')
+    box.className = 'dice-float'
+    const mk = (n) => `<div class="dice-mini">${Array(n).fill(0).map(_ => '<span class="pip"></span>').join('')}</div>`
+    box.innerHTML = `${mk(d1)}${mk(d2)}`
+    btn.appendChild(box)
+    // Auto-remove after 2 seconds
+    setTimeout(() => { box.remove() }, 2000)
   }
 
   animateDevelopmentCard(type, out) {
