@@ -6,7 +6,7 @@ import AccessibilityUI from "./ui/accessibility_ui.js"
 const $ = document.querySelector.bind(document)
 
 const dummyFn = _ => _
-const PROD_URL = 'https://catan-qvig.onrender.com/'
+const PROD_URL = 'https://catan-full-endea.onrender.com/'
 
 class Shuffler {
   board; board_ui; accessibility_ui

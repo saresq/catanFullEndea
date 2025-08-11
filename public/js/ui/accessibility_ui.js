@@ -3,7 +3,9 @@ export default class AccessibilityUI {
   #shown_icons
   muted = true
   // muted = !!+localStorage.getItem('mute')
-  muted_notif = !!+localStorage.getItem('mute-notifications')
+  muted_notif = (localStorage.getItem('mute-notifications') === null)
+    ? true
+    : !!+localStorage.getItem('mute-notifications')
   #toggleBoardZoom; #toggleBgm; #toggleNotificationsAudio
   $el = document.querySelector('#game > .accessibility-zone')
 

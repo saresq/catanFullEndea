@@ -3,7 +3,9 @@ import { AUDIO_FILES as AUDIO } from "./const.js"
 export default class AudioManager {
   #bgm; #bgm_wait;
   #muted = true
-  #notif_muted = !!+localStorage.getItem('mute-notifications')
+  #notif_muted = (localStorage.getItem('mute-notifications') === null)
+    ? true
+    : !!+localStorage.getItem('mute-notifications')
   #au_card_delay = 0
 
   constructor() {
