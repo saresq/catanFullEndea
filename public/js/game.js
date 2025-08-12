@@ -49,9 +49,7 @@ export default class Game {
     }
     // State updates
     this.updateStateChangeSoc(this.state, this.active_pid)
-    if (this.state === ST.INITIAL_SETUP) {
-      this.requestInitialSetupSoc(this.active_pid, game_obj.turn)
-    }
+    // Do not request initial setup immediately; wait for server to emit INITIAL_SETUP after strategize time
   }
 
 
@@ -281,7 +279,7 @@ export default class Game {
       this.#audio_manager.playLargestArmy()
       const player = this.getPlayer(pid)
       this.#ui.alert_ui.alertLargestArmy(player, count)
-      this.#ui.animation_ui.animateLargestArmy(pid, !this.#isMyPid(pid) && this.getPlayer(pid), count)
+      this.#ui.animation_ui.animateLargestArmy(pid, this.getPlayer(pid), count)
     }, 2000) // Wait for the Knight DC animation & sound
   }
 

@@ -4,17 +4,18 @@ const $ = document.querySelector.bind(document)
 const oKeys = Object.keys
 
 export default class BoardUI {
-  #board; #onClick;
+  #board; #onClick; #getColorId;
   #size = { MIN: -7, MAX: 2 }
   #renderedCorners = []
   #renderedEdges = []
   $el = $('#game .board')
 
   /** @param {Board} board  */
-  constructor(board, onClick, size) {
+  constructor(board, onClick, size, getColorId) {
     this.#board = board
     this.#onClick = onClick
     this.#size = size || this.#size
+    this.#getColorId = (typeof getColorId === 'function') ? getColorId : (pid => pid)
   }
 
   toggleBlur(bool) { this.$el.classList[bool ? 'add' : 'remove']('blur') }
@@ -151,13 +152,15 @@ export default class BoardUI {
       const $corner = this.#$getCorner(location)
       if (!$corner) return
       $corner.classList.remove('shown')
-      piece === 'S' && $corner.classList.add('taken', `p${pid}`)
+      const cid = this.#getColorId(pid)
+      piece === 'S' && $corner.classList.add('taken', `p${pid}`, `pc${cid}`)
       setTimeout(_ => { $corner.dataset.taken = piece }, 200) // For animation
     } else if (piece === 'R') {
       const $edge = this.#$getEdge(location)
       $edge?.classList.remove('shown')
       $edge?.classList.add('taken')
-      setTimeout(_ => $edge?.classList.add('p' + pid), 100) // For animation
+      const cid = this.#getColorId(pid)
+      setTimeout(_ => { $edge?.classList.add('p' + pid); $edge?.classList.add('pc' + cid) }, 100) // For animation
     }
   }
 

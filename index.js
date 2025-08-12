@@ -122,13 +122,11 @@ app.get('/game/:id', function(req, res) {
   if (!req.cookies.player_id || !game.hasPlayer(+req.cookies.player_id)) {
     return res.redirect(`/login?game_id=${encodeURIComponent(game_id)}`)
   }
-  if (game.players.filter(p => p?.id).length < game.player_count) {
+  if (!game.state) {
     const pc = game.player_count
     // Prefer precomputed label; fallback heuristic for customs
     let map_size = game.config.map_size
     if (!map_size || map_size === 'Custom') {
-      // Heuristic: treat by counting rows/land tokens roughly if needed; default to 'Custom'
-      // Minimal approach: keep 'Custom' when not a known preset
       const mk = game.config.mapkey
       if (mk === CONST.DEFAULT_MAPKEY) map_size = 'Standard'
       else if (mk === CONST.DEFAULT_MAPKEY_5_6) map_size = 'Extended'
@@ -142,6 +140,8 @@ app.get('/game/:id', function(req, res) {
       game_id,
       win_points: game.config.win_points,
       map_size,
+      my_pid: +req.cookies.player_id,
+      host_pid: game.host_pid,
     })
     return
   }

@@ -62,6 +62,9 @@ export default class PlayerUI {
   //#region
   renderActionBar() {
     this.$el.classList.add('id-' + this.player.id)
+    // Apply selected color class to the player container so UI uses color_id theme
+    const cid = this.player.color_id || this.player.id
+    this.$el.classList.add('pc' + cid)
     this.$action_bar.innerHTML = `
       <div class="timer disabled ${this.has_timer ? '' : 'hide'}">0:00</div>
       <button class="roll-dice disabled" data-mode="roll" title="Roll Dice (Space)"><span class="label">🎲🎲</span></button>

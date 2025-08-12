@@ -40,6 +40,7 @@ export default class Game {
   }
 
   constructor({ id, host, config, io, onGameEnd }) {
+    this.host_pid = host?.id
     this.id = id
     this.config = config
     this.player_count = config.player_count
@@ -250,10 +251,8 @@ export default class Game {
 
   /** Player Online */
   playerOnlineSoc(pid) {
+    // Mark player as online/ready, but do not auto-start; host will start the game manually from waiting room
     this.getPlayer(pid).ready = true
-    if (!this.state && this.players.filter(p => p?.ready).length === this.player_count) {
-      this.start()
-    }
   }
 
   /** Initial Build Locations */
@@ -328,11 +327,29 @@ export default class Game {
 
     callback(pid, { drop_count, resources })
     this.expected_actions.splice(expected_index, 1)
-    if (this.robbing_players.length) {
-      this.#io_manager.updateRobbed_Private(this.getPlayerSocId(pid))
-    } else {
-      this.#next()
-    }
+  }
+
+  /** Waiting Room: Change player color */
+  waitingRoomChangeColorIO(pid, color_id) {
+    if (this.state) return // game already started
+    const player = this.getPlayer(pid)
+    if (!player) return
+    const cid = +color_id
+    if (!(cid >= 1 && cid <= 8)) return
+    // Disallow if color already taken by another joined player
+    const isTaken = this.players.filter(p => p?.id).some(p => p.id !== pid && p.color_id === cid)
+    if (isTaken) return
+    player.color_id = cid
+    this.#io_manager.updateWaitingRoomColor(pid, cid)
+  }
+
+  /** Waiting Room: Host starts the game */
+  waitingRoomStartGameIO(pid) {
+    if (this.state) return // already started
+    if (pid !== this.host_pid) return // only host
+    const joined = this.players.filter(p => p?.id).length
+    if (joined < this.player_count) return // require full room
+    this.start()
   }
 
   /** Robber movement location and stolen player */
@@ -595,6 +612,7 @@ export default class Game {
       const player = this.getPlayer(pid)
       this.#io_manager.updateGameEnd({
         pid, vps,
+        color_id: player.color_id,
         S: player.pieces.S.length,
         C: player.pieces.C.length,
         dVp: player.private_vps,

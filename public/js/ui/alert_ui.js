@@ -116,10 +116,11 @@ export default class AlertUI {
     this.renderEndGameAlert(this.#isNotMe(p), context)
   }
 
-  renderEndGameAlert(p, { pid, S, C, dVp, largest_army, longest_road }) {
+  renderEndGameAlert(p, { pid, color_id, S, C, dVp, largest_army, longest_road }) {
     // Show content in text element only
+    const cid = p?.color_id || color_id || pid
     const content = `
-      <div class="game-ended p${pid}">
+      <div class="game-ended p${pid} pc${cid}">
         <div class="title-emoji">🏆</div>
         <div class="player-name">🎖 ${getName(p)} Won 🎖</div>
         <small>

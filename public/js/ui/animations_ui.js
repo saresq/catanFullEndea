@@ -48,8 +48,9 @@ export default class AnimationUI {
 
   animateLargestArmy(pid, p, count) {
     this.$el.className = `animation-zone ready largest-army-animation`
+    const cid = (p && p.color_id) ? p.color_id : pid
     this.$el.innerHTML = `
-      <div class="title p${pid}">${GAME_MESSAGES.LARGEST_ARMY.all(p, count)}</div>
+      <div class="title p${pid} pc${cid}">${GAME_MESSAGES.LARGEST_ARMY.all(p, count)}</div>
       <div class="container">
         <div class="largest-army-card"></div>
         <div class="knight second"></div>
@@ -73,8 +74,9 @@ export default class AnimationUI {
     }, 2000 / locs.length)
     setTimeout(_ => {
       this.$el.className = `animation-zone ready longest-road-animation`
+      const cid = (p && p.color_id) ? p.color_id : pid
       this.$el.innerHTML = `
-        <div class="title p${pid}">${GAME_MESSAGES.LONGEST_ROAD.all(p, locs.filter(_ => _.type == 'e').length)}</div>
+        <div class="title p${pid} pc${cid}">${GAME_MESSAGES.LONGEST_ROAD.all(p, locs.filter(_ => _.type == 'e').length)}</div>
         <div class="container">
         <div class="longest-road-card"></div>
         </div>

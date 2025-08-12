@@ -28,6 +28,7 @@
         <div class="info-item"><span class="label">Map size:</span> <span class="value" id="map-size">-</span></div>
         <div class="info-item"><span class="label">Victory points:</span> <span class="value" id="win-points">-</span></div>
         <div class="info-item"><span class="label">Players remaining:</span> <span class="value p-count">0</span></div>
+        <button id="start-game-btn" class="start-game" title="Start the game (host only)" disabled>Start Game</button>
       </div>
       <div id="slots-list" class="slots"></div>
     </div>
@@ -41,6 +42,8 @@
   window.player_count = {{ player_count }};
   window.win_points = {{ win_points }};
   window.map_size = "{{ map_size }}";
+  window.my_pid = "{{ my_pid }}";
+  window.host_pid = "{{ host_pid }}";
 </script>
 <script src="/socket.io/socket.io.min.js"></script>
 <script src="/js/waiting_room.js" type="module"></script>

@@ -212,3 +212,22 @@
     }
   }
 }
+
+
+/* Support color-based classes (pc1..pc8) to reflect selected colors in scoreboard */
+.all-players .player.pc1 { background: var(--player-1-color-light); border-color: var(--player-1-color-dark); }
+.all-players .player.pc2 { background: var(--player-2-color-light); border-color: var(--player-2-color-dark); }
+.all-players .player.pc3 { background: var(--player-3-color-light); border-color: var(--player-3-color-dark); }
+.all-players .player.pc4 { background: var(--player-4-color-light); border-color: var(--player-4-color-dark); }
+.all-players .player.pc5 { background: var(--player-5-color-light); border-color: var(--player-5-color-dark); }
+.all-players .player.pc6 { background: var(--player-6-color-light); border-color: var(--player-6-color-dark); }
+.all-players .player.pc7 { background: var(--player-7-color-light); border-color: var(--player-7-color-dark); }
+.all-players .player.pc8 { background: var(--player-8-color-light); border-color: var(--player-8-color-dark); }
+.all-players .player.pc1 .name { background: var(--player-1-color); }
+.all-players .player.pc2 .name { background: var(--player-2-color); }
+.all-players .player.pc3 .name { background: var(--player-3-color); }
+.all-players .player.pc4 .name { background: var(--player-4-color); }
+.all-players .player.pc5 .name { background: var(--player-5-color); }
+.all-players .player.pc6 .name { background: var(--player-6-color); }
+.all-players .player.pc7 .name { background: var(--player-7-color); }
+.all-players .player.pc8 .name { background: var(--player-8-color); }

@@ -162,6 +162,8 @@ export const SOCKET_EVENTS = {
   CLICK_LOC: 'clicked_location',
   BUY_DEV: 'buy_development_card',
   END_TURN: 'end_turn',
+  PLAYER_COLOR_CHANGE: 'waiting_room_player_color_change',
+  START_GAME: 'waiting_room_start_game',
   // Both Sends…
   INITIAL_SETUP: 'ask/return_initial_setup',
   ROBBER_DROP: 'resources_dropped_to_robber/ack', // Private
@@ -174,6 +176,7 @@ export const SOCKET_EVENTS = {
   YEAR_OF_PLENTY: 'year_of_plenty_resource/ack', // Private
   // Server Sends…
   JOINED_WAITING_ROOM: 'joined_waiting_room',
+  PLAYER_COLOR_UPDATED: 'waiting_room_player_color_updated',
   STATE_CHANGE: 'state_change',
   SET_TIMER: 'set_timer',
   BUILD: 'build',

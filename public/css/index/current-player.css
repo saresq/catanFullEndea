@@ -377,6 +377,52 @@
   &.id-7 .actions .end-turn { color: var(--player-7-color); }
   &.id-8 .actions .end-turn { color: var(--player-8-color); }
 
+  /* Also support color-based classes (pc1..pc8) so selected color drives the theme */
+  &.pc1 .actions { background: var(--player-1-color-dark); border-color: var(--player-1-color);} 
+  &.pc2 .actions { background: var(--player-2-color-dark); border-color: var(--player-2-color);} 
+  &.pc3 .actions { background: var(--player-3-color-dark); border-color: var(--player-3-color);} 
+  &.pc4 .actions { background: var(--player-4-color-dark); border-color: var(--player-4-color);} 
+  &.pc5 .actions { background: var(--player-5-color-dark); border-color: var(--player-5-color);} 
+  &.pc6 .actions { background: var(--player-6-color-dark); border-color: var(--player-6-color);} 
+  &.pc7 .actions { background: var(--player-7-color-dark); border-color: var(--player-7-color);} 
+  &.pc8 .actions { background: var(--player-8-color-dark); border-color: var(--player-8-color);} 
+
+  &.pc1 .actions .build-road:not(.disabled) { background: var(--player-1-color-dark); }
+  &.pc2 .actions .build-road:not(.disabled) { background: var(--player-2-color-dark); }
+  &.pc3 .actions .build-road:not(.disabled) { background: var(--player-3-color-dark); }
+  &.pc4 .actions .build-road:not(.disabled) { background: var(--player-4-color-dark); }
+  &.pc5 .actions .build-road:not(.disabled) { background: var(--player-5-color-dark); }
+  &.pc6 .actions .build-road:not(.disabled) { background: var(--player-6-color-dark); }
+  &.pc7 .actions .build-road:not(.disabled) { background: var(--player-7-color-dark); }
+  &.pc8 .actions .build-road:not(.disabled) { background: var(--player-8-color-dark); }
+
+  &.pc1 .actions .build-settlement::after { background-image: url(/images/pieces/settlement-1.png); }
+  &.pc2 .actions .build-settlement::after { background-image: url(/images/pieces/settlement-2.png); }
+  &.pc3 .actions .build-settlement::after { background-image: url(/images/pieces/settlement-3.png); }
+  &.pc4 .actions .build-settlement::after { background-image: url(/images/pieces/settlement-4.png); }
+  &.pc5 .actions .build-settlement::after { background-image: url(/images/pieces/settlement-5.png); }
+  &.pc6 .actions .build-settlement::after { background-image: url(/images/pieces/settlement-6.png); }
+  &.pc7 .actions .build-settlement::after { background-image: url(/images/pieces/settlement-7.png); }
+  &.pc8 .actions .build-settlement::after { background-image: url(/images/pieces/settlement-8.png); }
+
+  &.pc1 .actions .build-city::after { background-image: url(/images/pieces/city-1.png); }
+  &.pc2 .actions .build-city::after { background-image: url(/images/pieces/city-2.png); }
+  &.pc3 .actions .build-city::after { background-image: url(/images/pieces/city-3.png); }
+  &.pc4 .actions .build-city::after { background-image: url(/images/pieces/city-4.png); }
+  &.pc5 .actions .build-city::after { background-image: url(/images/pieces/city-5.png); }
+  &.pc6 .actions .build-city::after { background-image: url(/images/pieces/city-6.png); }
+  &.pc7 .actions .build-city::after { background-image: url(/images/pieces/city-7.png); }
+  &.pc8 .actions .build-city::after { background-image: url(/images/pieces/city-8.png); }
+
+  &.pc1 .actions .end-turn { color: var(--player-1-color); }
+  &.pc2 .actions .end-turn { color: var(--player-2-color); }
+  &.pc3 .actions .end-turn { color: var(--player-3-color); }
+  &.pc4 .actions .end-turn { color: var(--player-4-color); }
+  &.pc5 .actions .end-turn { color: var(--player-5-color); }
+  &.pc6 .actions .end-turn { color: var(--player-6-color); }
+  &.pc7 .actions .end-turn { color: var(--player-7-color); }
+  &.pc8 .actions .end-turn { color: var(--player-8-color); }
+
   .status-bar {
     font-family: Raleway, sans-serif;
     background: var(--sand-color);;
@@ -398,6 +444,15 @@
       &.p6 { border-color: var(--player-6-color); }
       &.p7 { border-color: var(--player-7-color); }
       &.p8 { border-color: var(--player-8-color); }
+      /* Support color-based class as well */
+      &.pc1 { border-color: var(--player-1-color); }
+      &.pc2 { border-color: var(--player-2-color); }
+      &.pc3 { border-color: var(--player-3-color); }
+      &.pc4 { border-color: var(--player-4-color); }
+      &.pc5 { border-color: var(--player-5-color); }
+      &.pc6 { border-color: var(--player-6-color); }
+      &.pc7 { border-color: var(--player-7-color); }
+      &.pc8 { border-color: var(--player-8-color); }
     }
   }
   .status-bar-history {

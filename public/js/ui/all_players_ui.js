@@ -24,7 +24,7 @@ export default class AllPlayersUI {
     const all_players = [this.player, ...this.opponents].sort((a, b) => a.id - b.id)
     const header = `<div class="players-header"><button class="toggle-players" title="Toggle players panel (p)">▤</button></div>`
     this.$el.innerHTML = header + all_players.map(player => `
-      <div class="player p${player.id} ${player.removed ? 'deactivated' : ''}" data-id="${player.id}">
+      <div class="player p${player.id} ${player.color_id ? 'pc' + player.color_id : ''} ${player.removed ? 'deactivated' : ''}" data-id="${player.id}">
         <div class="name" data-name="${player.name}">${player.name}</div>
         <div class="victory-points"><span>${player.public_vps + (player.private_vps || 0)}</span></div>
         <div class="cards-container">

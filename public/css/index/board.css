@@ -404,3 +404,33 @@
   .beach-bottom_right { top: 89px; left: 91px; transform: rotate(-120deg); }
   .beach-bottom_left { top: 90px; left: 32px; transform: rotate(-60deg); }
 }
+
+
+/* Support color-based classes (pc1..pc8) for board pieces to reflect selected colors */
+/* Settlements on corners */
+.board .tile .corner.taken.pc1[data-taken=S] { background-image: url(/images/pieces/settlement-1.png); }
+.board .tile .corner.taken.pc2[data-taken=S] { background-image: url(/images/pieces/settlement-2.png); }
+.board .tile .corner.taken.pc3[data-taken=S] { background-image: url(/images/pieces/settlement-3.png); }
+.board .tile .corner.taken.pc4[data-taken=S] { background-image: url(/images/pieces/settlement-4.png); }
+.board .tile .corner.taken.pc5[data-taken=S] { background-image: url(/images/pieces/settlement-5.png); }
+.board .tile .corner.taken.pc6[data-taken=S] { background-image: url(/images/pieces/settlement-6.png); }
+.board .tile .corner.taken.pc7[data-taken=S] { background-image: url(/images/pieces/settlement-7.png); }
+.board .tile .corner.taken.pc8[data-taken=S] { background-image: url(/images/pieces/settlement-8.png); }
+/* Cities on corners */
+.board .tile .corner[data-taken=C].pc1 { background-image: url(/images/pieces/city-1.png); }
+.board .tile .corner[data-taken=C].pc2 { background-image: url(/images/pieces/city-2.png); }
+.board .tile .corner[data-taken=C].pc3 { background-image: url(/images/pieces/city-3.png); }
+.board .tile .corner[data-taken=C].pc4 { background-image: url(/images/pieces/city-4.png); }
+.board .tile .corner[data-taken=C].pc5 { background-image: url(/images/pieces/city-5.png); }
+.board .tile .corner[data-taken=C].pc6 { background-image: url(/images/pieces/city-6.png); }
+.board .tile .corner[data-taken=C].pc7 { background-image: url(/images/pieces/city-7.png); }
+.board .tile .corner[data-taken=C].pc8 { background-image: url(/images/pieces/city-8.png); }
+/* Roads on edges */
+.board .tile .edge.taken.pc1 { background: var(--player-1-color); box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-1-color-dark) 50%, #000), 4px 4px 6px 0px #000; }
+.board .tile .edge.taken.pc2 { background: var(--player-2-color); box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-2-color-dark) 50%, #000), 4px 4px 6px 0px #000; }
+.board .tile .edge.taken.pc3 { background: var(--player-3-color); box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-3-color-dark) 50%, #000), 4px 4px 6px 0px #000; }
+.board .tile .edge.taken.pc4 { background: var(--player-4-color); box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-4-color-dark) 50%, #000), 4px 4px 6px 0px #000; }
+.board .tile .edge.taken.pc5 { background: var(--player-5-color); box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-5-color-dark) 50%, #000), 4px 4px 6px 0px #000; }
+.board .tile .edge.taken.pc6 { background: var(--player-6-color); box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-6-color-dark) 50%, #000), 4px 4px 6px 0px #000; }
+.board .tile .edge.taken.pc7 { background: var(--player-7-color); box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-7-color-dark) 50%, #000), 4px 4px 6px 0px #000; }
+.board .tile .edge.taken.pc8 { background: var(--player-8-color); box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-8-color-dark) 50%, #000), 4px 4px 6px 0px #000; }

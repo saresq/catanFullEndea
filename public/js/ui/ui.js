@@ -25,7 +25,7 @@ export default class UI {
     this.#board = board
     this.#player = player
 
-    this.board_ui = new BoardUI(board, (loc, id) => game.onBoardClick(loc, id))
+    this.board_ui = new BoardUI(board, (loc, id) => game.onBoardClick(loc, id), undefined, (pid) => game.getPlayer(pid)?.color_id || pid)
     this.animation_ui = new AnimationUI()
 
     this.alert_ui = new AlertUI(player, game.config.alert_time, {

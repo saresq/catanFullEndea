@@ -8,6 +8,7 @@ export default class Player {
   online = false
   ready = false
   removed = false
+  color_id = 1
   resource_count = 0
   dev_card_count = 0
   public_vps = 0
@@ -28,6 +29,7 @@ export default class Player {
   constructor(id, name, { onChange, onVpChange }) {
     this.id = id
     this.name = name || Player.#names[this.id - 1]
+    this.color_id = id // default: same as id; can be customized later
     this.#onChange = onChange
     this.#onVpChange = onVpChange
     this.trade_offers.Px = true
@@ -183,6 +185,7 @@ export default class Player {
     const playerJSON = {
       id: this.id,
       name: this.name,
+      color_id: this.color_id,
       pieces: this.pieces,
       public_vps: this.public_vps,
       resource_count: this.resource_count,

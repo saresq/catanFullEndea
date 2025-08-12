@@ -104,3 +104,75 @@ button {
   .slot.filled.p7 .name { background: var(--player-7-color); }
   .slot.filled.p8 .name { background: var(--player-8-color); }
 }
+
+
+/* --- Color selection UI --- */
+#waiting-room .slot {
+  position: relative;
+}
+#waiting-room .slot .city-icon {
+  width: 32px; height: 32px; flex: 0 0 50px;
+  background-size: contain; background-repeat: no-repeat; background-position: center;
+  margin-left: 6px; filter: drop-shadow(1px 1px 2px #0006);
+}
+#waiting-room .slot .city-icon.clickable { cursor: pointer; }
+#waiting-room .slot .name { flex: 1; width: auto; }
+
+.color-picker-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+.color-picker-overlay .picker {
+  background: #fff; color: #333; padding: 16px; border-radius: 8px;
+  min-width: 280px; box-shadow: 0 10px 30px #000a; font-family: Raleway, sans-serif;
+}
+.color-picker-overlay .picker .title { font-weight: 700; margin-bottom: 10px; text-align: center; }
+.color-picker-overlay .picker .grid {
+  display: grid; grid-template-columns: repeat(4, 70px); gap: 12px; justify-content: center; margin: 10px 0 6px;
+}
+.color-picker-overlay .picker .color-option {
+  width: 60px; height: 60px; border-radius: 8px; background-size: contain; background-position: center; background-repeat: no-repeat;
+  border: 2px solid #fff0; transition: transform .12s ease, border-color .12s ease;
+}
+.color-picker-overlay .picker .color-option:hover { transform: scale(1.06); border-color: #fff; }
+.color-picker-overlay .picker .color-option.taken { opacity: .3; pointer-events: none; }
+.color-picker-overlay .picker .close { margin: 0 auto; display: block; padding: 6px 10px; background: #222; color: #fff; border-radius: 6px; }
+
+
+/* Support color-based classes (pc1..pc8) to reflect selected color */
+#waiting-room .slot.filled.pc1 { background: var(--player-1-color-light); border-color: var(--player-1-color-dark); }
+#waiting-room .slot.filled.pc2 { background: var(--player-2-color-light); border-color: var(--player-2-color-dark); }
+#waiting-room .slot.filled.pc3 { background: var(--player-3-color-light); border-color: var(--player-3-color-dark); }
+#waiting-room .slot.filled.pc4 { background: var(--player-4-color-light); border-color: var(--player-4-color-dark); }
+#waiting-room .slot.filled.pc5 { background: var(--player-5-color-light); border-color: var(--player-5-color-dark); }
+#waiting-room .slot.filled.pc6 { background: var(--player-6-color-light); border-color: var(--player-6-color-dark); }
+#waiting-room .slot.filled.pc7 { background: var(--player-7-color-light); border-color: var(--player-7-color-dark); }
+#waiting-room .slot.filled.pc8 { background: var(--player-8-color-light); border-color: var(--player-8-color-dark); }
+#waiting-room .slot.filled.pc1 .name { background: var(--player-1-color); }
+#waiting-room .slot.filled.pc2 .name { background: var(--player-2-color); }
+#waiting-room .slot.filled.pc3 .name { background: var(--player-3-color); }
+#waiting-room .slot.filled.pc4 .name { background: var(--player-4-color); }
+#waiting-room .slot.filled.pc5 .name { background: var(--player-5-color); }
+#waiting-room .slot.filled.pc6 .name { background: var(--player-6-color); }
+#waiting-room .slot.filled.pc7 .name { background: var(--player-7-color); }
+#waiting-room .slot.filled.pc8 .name { background: var(--player-8-color); }
+
+/* Start Game button */
+#waiting-room .box-header .start-game {
+  margin-left: auto;
+  background: #2b70ff;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: Raleway, sans-serif;
+  font-weight: 700;
+  border: 2px solid #fff5;
+  box-shadow: 0 2px 6px #0006;
+}
+#waiting-room .box-header .start-game:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+  filter: grayscale(0.2);
+}
+#waiting-room .box-header .start-game.hide { display: none; }
