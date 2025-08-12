@@ -49,15 +49,53 @@ app.get('/game/new', function (req, res) {
   let config = Object.assign({}, CONST.GAME_CONFIG, { player_count: +players || 2 })
   try { config = Object.assign(config, JSON.parse(decodeURIComponent(query_config))) } catch(e){}
   
-  // Select appropriate mapkey based on player count if not explicitly provided in query_config
-  if (!query_config || !JSON.parse(decodeURIComponent(query_config))?.mapkey) {
+  // Determine mapkey and map_size, and enforce constraints (never smaller than required)
+  const providedConfig = (() => { try { return JSON.parse(decodeURIComponent(query_config)) } catch(e) { return {} } })()
+
+  // If no mapkey provided, choose based on player count
+  if (!providedConfig.mapkey) {
     if (config.player_count >= 7) {
       config.mapkey = CONST.DEFAULT_MAPKEY_7_8
+      config.map_size = 'Large'
     } else if (config.player_count >= 5) {
       config.mapkey = CONST.DEFAULT_MAPKEY_5_6
+      config.map_size = 'Extended'
+    } else {
+      config.mapkey = CONST.DEFAULT_MAPKEY
+      config.map_size = 'Standard'
     }
+  } else {
+    // Map provided mapkey to a size label if it matches known presets
+    if (providedConfig.mapkey === CONST.DEFAULT_MAPKEY_7_8) {
+      config.map_size = 'Large'
+    } else if (providedConfig.mapkey === CONST.DEFAULT_MAPKEY_5_6) {
+      config.map_size = 'Extended'
+    } else if (providedConfig.mapkey === CONST.DEFAULT_MAPKEY) {
+      config.map_size = 'Standard'
+    } else {
+      config.map_size = 'Custom'
+    }
+    config.mapkey = providedConfig.mapkey
+  }
+
+  // Enforce minimal map size based on player count (auto-upsize if needed)
+  if (config.player_count >= 7) {
+    if (config.mapkey !== CONST.DEFAULT_MAPKEY_7_8) {
+      config.mapkey = CONST.DEFAULT_MAPKEY_7_8
+      config.map_size = 'Large'
+    }
+  } else if (config.player_count >= 5) {
+    if (config.mapkey === CONST.DEFAULT_MAPKEY) {
+      // Small not allowed for 5-6 players; bump to Extended
+      config.mapkey = CONST.DEFAULT_MAPKEY_5_6
+      config.map_size = 'Extended'
+    }
+  } else {
+    // 2-4 players: keep selection; larger maps are allowed
+    if (!config.map_size) config.map_size = 'Standard'
   }
   
+  // Shuffle after determining the base map and storing the label
   config.mapkey = (new BoardShuffler(config.mapkey)).shuffle(config.map_shuffle)
   const pid = Math.floor(Math.random() * config.player_count + 1)
   const game = new Game({
@@ -85,10 +123,25 @@ app.get('/game/:id', function(req, res) {
     return res.redirect(`/login?game_id=${encodeURIComponent(game_id)}`)
   }
   if (game.players.filter(p => p?.id).length < game.player_count) {
+    const pc = game.player_count
+    // Prefer precomputed label; fallback heuristic for customs
+    let map_size = game.config.map_size
+    if (!map_size || map_size === 'Custom') {
+      // Heuristic: treat by counting rows/land tokens roughly if needed; default to 'Custom'
+      // Minimal approach: keep 'Custom' when not a known preset
+      const mk = game.config.mapkey
+      if (mk === CONST.DEFAULT_MAPKEY) map_size = 'Standard'
+      else if (mk === CONST.DEFAULT_MAPKEY_5_6) map_size = 'Extended'
+      else if (mk === CONST.DEFAULT_MAPKEY_7_8) map_size = 'Large'
+      else if (!map_size) map_size = 'Custom'
+    }
+
     res.render('waiting_room', {
       players: JSON.stringify(game.players),
-      player_count: game.player_count,
+      player_count: pc,
       game_id,
+      win_points: game.config.win_points,
+      map_size,
     })
     return
   }

@@ -5,29 +5,20 @@
 
 :root {
   --title-padding: .8em 20px .2em;
-  --tile-width: 151px;
+  --box-width: 500px;
 }
 
 @media screen and (max-width: 800px) {
-  :root {
-    --title-padding: 2em 20px 1em;
-  }
+  :root { --title-padding: 2em 20px 1em; --box-width: 90%; }
 }
-
 @media screen and (max-width: 450px) {
-  :root {
-    --title-padding: 2em 10px 1em;
-  }
+  :root { --title-padding: 2em 10px 1em; }
 }
 
 html { height: 100%; }
 body {
-  height: 100%;
-  padding: 0;
-  margin: 0;
-  background: url(/images/catan-bg.png);
-  background-size: cover;
-  background-position: center;
+  height: 100%; padding: 0; margin: 0;
+  background: url(/images/catan-bg.png) center/cover;
   backdrop-filter: blur(50px);
   transition: all linear .5s;
 }
@@ -40,9 +31,7 @@ button {
   padding: 0; padding-block: 0px; padding-inline: 0px;
 }
 
-@keyframes blink { 50% { opacity: .5; } }
 #waiting-room {
-  /* height: 100%; */
   display: flex; flex-wrap: wrap; align-content: flex-start;
   font-family: EagleLake;
   &.hide { opacity: 0; transition: opacity .5s 1.5s linear; }
@@ -50,16 +39,11 @@ button {
   .title {
     position: absolute; top: 0; left: 0; width: 100%;
     text-align: center; cursor: default;
-    .colored {
-      border-bottom: 2px solid var(--sand-color-dark); background-color: var(--sand-color);
-    }
-    .name {
-      font-size: 1em; color: #0006;
-    }
+    .colored { border-bottom: 2px solid var(--sand-color-dark); background-color: var(--sand-color); }
+    .name { font-size: 1em; color: #0006; }
     .text {
-      margin-bottom: 10px; margin-top: -5px;
-      font-size: 2.5em; text-align: center; position: relative;
-      color: var(--sand-color-text-dark); cursor: copy;
+      margin-bottom: 10px; margin-top: -5px; font-size: 2em;
+      text-align: center; position: relative; color: var(--sand-color-text-dark); cursor: copy;
       transition: all .15s ease;
       svg { transform: scale(1.3); margin-left: 5px; opacity: 0.7; }
       &:hover{
@@ -75,89 +59,48 @@ button {
         &::after { content: 'Copied!'; }
       }
     }
-    small {
-      display: block; color: var(--sand-color); margin-top: 10px;
-    }
   }
 
-  .players {
-    margin: 335px auto 130px;
-    /* width: 298px; */
-    position: relative;
-    padding-right: 2px;
-    display: flex;
-    filter: drop-shadow(0px 0px 10px #000);
-    width: 450px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    > div {
-      width: var(--tile-width);
-      margin-right: -2px;
-      height: 176px;
-      display: inline-block;
-      vertical-align: top;
-      background-size: cover;
-      position: relative;
-      background-image: url(/images/tiles/Desert.png);
-      display: flex; flex-wrap: wrap; flex-direction: column; justify-content: center;
-      /* animation: 1s infinite alternate blink ease; */
-      animation: blink 3s cubic-bezier(0.63, 0.01, 0.27, 0.97) 0s infinite;
-      &.hide { display: none; }
-      &.joined { animation: none; }
-
-      .name {
-        color: #fff; background: #ffffffa8;
-        width: 100%; margin: 73px 0; padding: 4px 5px;
-        box-sizing: border-box;
-        text-align: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
-      }
-
-      &.player-1 .name {
-        /* background: color-mix(in srgb, var(--player-1-color) 66%, transparent); */
-        background: var(--player-1-color);
-      }
-
-      &.player-2 {
-        animation-delay: .5s;
-        .name { background: var(--player-2-color); }
-      }
-
-      &.player-3 {
-        position: absolute; top: -131px; left: 74px;
-        animation-delay: .75s;
-        .name { background: var(--player-3-color); }
-      }
-
-      &.player-4 {
-        position: absolute; top: 131px; left: 74px;
-        animation-delay: .25s;
-        .name { background: var(--player-4-color); }
-      }
-
-      &.player-5 {
-        position: absolute; top: -131px; left: 225px;
-        animation-delay: .6s;
-        .name { background: var(--player-5-color); }
-      }
-
-      &.player-6 {
-        position: absolute; top: 131px; left: 225px;
-        animation-delay: .35s;
-        .name { background: var(--player-6-color); }
-      }
-
-      &.player-7 {
-        position: absolute; top: -131px; left: 376px;
-        animation-delay: .8s;
-        .name { background: var(--player-7-color); }
-      }
-
-      &.player-8 {
-        position: absolute; top: 131px; left: 376px;
-        animation-delay: .15s;
-        .name { background: var(--player-8-color); }
-      }
-    }
+  > .container { width: var(--box-width); margin: 120px auto 30px; }
+  .wait-box {
+    background: #fff3; box-shadow: 0 0px 40px #0009; border-radius: 10px; backdrop-filter: blur(6px);
+    padding: 20px; box-sizing: border-box;
+    margin-top: 5em;
   }
+  .box-header {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: center;
+    font-family: Raleway, sans-serif; color: #fff; filter: drop-shadow(0 0 5px #000);
+    margin-bottom: 10px;
+  }
+  .box-header .info-item { background: #0008; padding: 6px 10px; border-radius: 6px; }
+  .box-header .label { opacity: .8; margin-right: 6px; }
+  .box-header .value { font-weight: 700; }
+
+  .slots { display: flex; flex-direction: column; gap: 8px; }
+  .slot {
+    display: flex; align-items: center; min-height: 44px;
+    background: var(--sand-color); color: #fff; border: 3px solid var(--sand-color-dark);
+    border-radius: 6px; overflow: hidden;
+  }
+  .slot .name, .slot .empty-label { width: 100%; padding: 8px 12px; box-sizing: border-box; }
+  .slot.filled .name { background: var(--sand-color-dark); }
+  .slot.empty { filter: grayscale(1) contrast(0.7) brightness(0.9); }
+
+  /* Apply player colors to filled slots */
+  .slot.filled.p1 { background: var(--player-1-color-light); border-color: var(--player-1-color-dark); }
+  .slot.filled.p2 { background: var(--player-2-color-light); border-color: var(--player-2-color-dark); }
+  .slot.filled.p3 { background: var(--player-3-color-light); border-color: var(--player-3-color-dark); }
+  .slot.filled.p4 { background: var(--player-4-color-light); border-color: var(--player-4-color-dark); }
+  .slot.filled.p5 { background: var(--player-5-color-light); border-color: var(--player-5-color-dark); }
+  .slot.filled.p6 { background: var(--player-6-color-light); border-color: var(--player-6-color-dark); }
+  .slot.filled.p7 { background: var(--player-7-color-light); border-color: var(--player-7-color-dark); }
+  .slot.filled.p8 { background: var(--player-8-color-light); border-color: var(--player-8-color-dark); }
+  .slot.filled.p1 .name { background: var(--player-1-color); }
+  .slot.filled.p2 .name { background: var(--player-2-color); }
+  .slot.filled.p3 .name { background: var(--player-3-color); }
+  .slot.filled.p4 .name { background: var(--player-4-color); }
+  .slot.filled.p5 .name { background: var(--player-5-color); }
+  .slot.filled.p6 .name { background: var(--player-6-color); }
+  .slot.filled.p7 .name { background: var(--player-7-color); }
+  .slot.filled.p8 .name { background: var(--player-8-color); }
 }

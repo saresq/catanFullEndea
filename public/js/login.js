@@ -107,6 +107,33 @@ class LoginUI {
     this.$container.querySelector('.host-section input').addEventListener('keydown', e => {
       e.code === 'Enter' && this.$container.querySelector('.host-section .btn-primary').click()
     })
+
+    // Enforce valid map size options based on selected player count
+    const pcSelect = this.$container.querySelector('.host-section select.player-count')
+    const msSelect = this.$container.querySelector('.host-section select.map-size')
+    const enforceMapSizeOptions = () => {
+      const pc = +(pcSelect?.value || 3)
+      // Enable all by default
+      Array.from(msSelect.options).forEach(opt => { opt.disabled = false; opt.hidden = false })
+      // Apply constraints: never smaller than required for the player count
+      if (pc >= 7) {
+        // Only Large is allowed
+        Array.from(msSelect.options).forEach(opt => {
+          if (opt.value !== 'large') { opt.disabled = true; opt.hidden = true }
+        })
+        msSelect.value = 'large'
+      } else if (pc >= 5) {
+        // Small is not allowed; Medium or Large are okay
+        const smallOpt = Array.from(msSelect.options).find(o => o.value === 'small')
+        if (smallOpt) { smallOpt.disabled = true; smallOpt.hidden = true }
+        if (msSelect.value === 'small') { msSelect.value = 'medium' }
+      } else {
+        // 2–4 players: all sizes allowed
+      }
+    }
+    pcSelect?.addEventListener('change', enforceMapSizeOptions)
+    // Initialize constraints on first render
+    enforceMapSizeOptions()
     
     // Setup host submit button
     this.$container.querySelector('.host-section .btn-primary').addEventListener('click', e => {
