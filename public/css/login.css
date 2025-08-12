@@ -4,7 +4,7 @@
 @import "/css/fonts.css";
 
 :root {
-  --box-width: 800px;
+  --box-width: 500px;
 }
 
 html,
@@ -123,10 +123,6 @@ button {
   .button-group {
     grid-template-columns: 1fr;
   }
-  
-  .city-colors-display {
-    grid-template-columns: repeat(4, 1fr) !important;
-  }
 }
 
 #login {
@@ -215,10 +211,11 @@ button {
         
         .content-wrapper {
           display: flex;
-          flex-direction: row;
-          flex-wrap: wrap;
-          justify-content: space-between;
+          flex-direction: column;
+          flex-wrap: nowrap;
+          justify-content: flex-start;
           width: 100%;
+          gap: 16px;
         }
         
         .left-column {
@@ -240,6 +237,32 @@ button {
           margin-bottom: 10px;
           color: #333;
           text-align: center;
+        }
+        
+        /* Inline rows for label + select */
+        .section-group {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .section-group .section-label {
+          font-size: 1.1em;
+          color: #333;
+          white-space: nowrap;
+        }
+        .section-group select.select {
+          flex: 1 1 auto;
+          background: #fffc;
+          border: 1px solid #fff6;
+          border-radius: 5px;
+          padding: 10px 20px;
+          box-shadow: 0 0 1px 0 #000;
+          backdrop-filter: blur(6px);
+          font-family: inherit;
+          font-size: 1em;
+          color: var(--sand-color-text-dark);
+          text-shadow: 0 0 5px #fff, 0 0 10px #fff;
+          transition: all .25s ease;
         }
         
         .players-selection {
@@ -297,7 +320,41 @@ button {
       }
 
     }
-    .action-types:has(input[value="host"]:checked) + .action-container .host-section { margin-left: 0%; }
-    .action-types:has(input[value="join"]:checked) + .action-container .host-section { margin-left: -100%; }
+    .action-container { display: block; }
+    .action-container .section { display: none; }
+    .action-types:has(input[value="host"]:checked) + .action-container .host-section { display: flex; }
+    .action-types:has(input[value="join"]:checked) + .action-container .join-section { display: flex; }
   }
+}
+
+
+/* Responsive enhancements appended by Junie */
+:root { --box-width: 500px; }
+#login { min-height: 100svh; }
+
+@media (max-width: 850px) {
+  #login > .container { margin-top: 60px; }
+  #login > .container .action-types { margin: 0 10px; }
+  #login > .container .action-container .section { padding: 20px; }
+}
+
+@media (max-width: 400px) {
+  #login > .container { margin-top: 40px; }
+  #login > .container .action-container .section input[type="text"] { font-size: 1.1em; }
+  .btn-primary { font-size: 1em; padding: 7px 18px; }
+  .btn-selection { width: 100%; font-size: 1.6em; }
+  .button-group { grid-template-columns: 1fr; }
+}
+
+
+/* Match select focus style to name input */
+#login > .container .action-container .section .section-group select.select:focus {
+  box-shadow: 0 0 10px 0 #000;
+  background: #fff;
+  outline: none;
+}
+
+/* Small-screen font size for selects, similar to inputs */
+@media (max-width: 400px) {
+  #login > .container .action-container .section select.select { font-size: 1.1em; }
 }

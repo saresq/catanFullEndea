@@ -76,11 +76,13 @@ app.get('/game/new', function (req, res) {
 app.get('/game/:id', function(req, res) {
   const game_id = req.params.id
   if (!game_id || game_id !== req.cookies.game_id || !GAME_SESSIONS[game_id]) {
-    return res.redirect('/login?notice=Game id not found')
+    // If user comes via a shared link without cookies or game not in session,
+    // take them to login with the game_id prefilled instead of showing an error.
+    return res.redirect(`/login?game_id=${encodeURIComponent(game_id || '')}`)
   }
   const game = GAME_SESSIONS[game_id]
   if (!req.cookies.player_id || !game.hasPlayer(+req.cookies.player_id)) {
-    return res.redirect('/login?notice=Player not found in the game')
+    return res.redirect(`/login?game_id=${encodeURIComponent(game_id)}`)
   }
   if (game.players.filter(p => p?.id).length < game.player_count) {
     res.render('waiting_room', {
@@ -105,12 +107,20 @@ app.get('/login', function (req, res) {
   if (notice) { return res.render('login', { notice }) }
   if (!game_id) { return res.render('login') }
   if (!GAME_SESSIONS[game_id]) {
-    return res.render('login', { notice: 'Game not found!' })
+    // If a game_id is present but the session is not found (e.g., direct link, server restart),
+    // show the login page without an error so the user can enter a name or a different key.
+    return res.render('login')
+  }
+
+  // Require a non-empty name to join; otherwise show the login page (Join tab UI will guide the user)
+  const trimmedName = (name || '').trim()
+  if (!trimmedName) {
+    return res.render('login')
   }
 
   // Joining a game
   const game = GAME_SESSIONS[game_id]
-  const player = game.join(name)
+  const player = game.join(trimmedName)
 
   if (!player) {
     return res.redirect('/login?notice=Game is full!')

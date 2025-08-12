@@ -29,26 +29,31 @@ class LoginUI {
         <div class="section host-section">
           <input type="text" class="name" name="name" placeholder="Your Name" value="${name}"/>
           <div class="content-wrapper">
-            <div class="left-column">
-              <div id="players-count-title" class="section-title">Select how many players:</div>
-              <div class="button-group players-selection" role="radiogroup" aria-labelledby="players-count-title">
-                ${[...Array(7).keys()].map(i => `
-                  <button class="btn btn-selection player-count-${i + 2}" 
-                    data-value="${i + 2}" 
-                    ${i === 1 ? 'data-selected="true" aria-selected="true"' : 'aria-selected="false"'}
-                    role="radio"
-                    aria-label="${i + 2} players">
-                    ${i + 2}
-                  </button>`).join('')}
-              </div>
+            <div class="section-group">
+              <label class="section-label" for="player-count">Players:</label>
+              <select id="player-count" class="select player-count">
+                ${[...Array(7).keys()].map(i => `<option value="${i + 2}" ${i + 2 === 3 ? 'selected' : ''}>${i + 2}</option>`).join('')}
+              </select>
             </div>
-            <div class="right-column">
-              <button class="btn btn-primary host">Start Game</button>
-              <div class="section-panel">
-                <div class="section-title">City Colors</div>
-                <div class="city-colors-display">
-                  ${[...Array(8).keys()].map(i => `<div class="city-color city-${i + 1}"></div>`).join('')}
-                </div>
+            <div class="section-group">
+              <label class="section-label" for="map-size">Map Size:</label>
+              <select id="map-size" class="select map-size">
+                <option value="small" selected>Small</option>
+                <option value="medium">Medium</option>
+                <option value="large">Large</option>
+              </select>
+            </div>
+            <div class="section-group">
+              <label class="section-label" for="win-points">Victory Points:</label>
+              <select id="win-points" class="select win-points">
+                ${Array.from({ length: 16 }, (_, i) => i + 5).map(v => `<option value="${v}" ${v === 10 ? 'selected' : ''}>${v}</option>`).join('')}
+              </select>
+            </div>
+            <button class="btn btn-primary host">Start Game</button>
+            <div class="section-panel">
+              <div class="section-title">City Colors</div>
+              <div class="city-colors-display">
+                ${[...Array(8).keys()].map(i => `<div class="city-color city-${i + 1}"></div>`).join('')}
               </div>
             </div>
           </div>
@@ -60,6 +65,28 @@ class LoginUI {
         </div>
       </div>
     `
+    // If a game_id is present in the URL, prefill and switch to Join tab
+    const params = new URLSearchParams(window.location.search)
+    const preGameId = params.get('game_id')
+    const preName = params.get('name')
+    if (preGameId) {
+      const joinRadio = this.$container.querySelector('input[type="radio"][value="join"]')
+      const hostRadio = this.$container.querySelector('input[type="radio"][value="host"]')
+      joinRadio && (joinRadio.checked = true)
+      hostRadio && (hostRadio.checked = false)
+      const gameKeyInput = this.$container.querySelector('.join-section input.game-key')
+      if (gameKeyInput) gameKeyInput.value = preGameId
+      // Prefill name if present in URL, otherwise focus the name input to prompt selection
+      const nameInput = this.$container.querySelector('.join-section input.name')
+      if (nameInput) {
+        if (preName && preName.trim()) {
+          nameInput.value = preName
+        } else if (!(nameInput.value || '').trim()) {
+          // focus so the user picks a name immediately
+          setTimeout(() => nameInput.focus(), 0)
+        }
+      }
+    }
     this.#setupEvents()
     setTimeout(_ => $('.notice')?.classList.add('hide'), 5000)
     console.log('%c🛠 Advanced Game Configurations 🪚', 'border-radius: 100px; padding: 10px 25px; font: 2em EagleLake, fantasy, cursive; background: #e8d49c; color: #9c5e15;')
@@ -76,67 +103,6 @@ class LoginUI {
   }
 
   #setupEvents() {
-    // Setup player selection buttons
-    const playerButtons = this.$container.querySelectorAll('.players-selection .btn-selection');
-    
-    // Function to select a button
-    const selectButton = (btn) => {
-      // Remove selected state from all buttons
-      playerButtons.forEach(b => {
-        b.removeAttribute('data-selected')
-        b.setAttribute('aria-selected', 'false')
-      })
-      // Set selected state on clicked button
-      btn.setAttribute('data-selected', 'true')
-      btn.setAttribute('aria-selected', 'true')
-      
-      // Log for testing
-      console.log(`Selected player count: ${btn.getAttribute('data-value')}`)
-    };
-    
-    // Add click event listeners
-    playerButtons.forEach((btn, index) => {
-      // Click event
-      btn.addEventListener('click', e => {
-        selectButton(btn);
-      });
-      
-      // Keyboard navigation
-      btn.addEventListener('keydown', e => {
-        let nextIndex;
-        
-        switch(e.key) {
-          case 'ArrowRight':
-            nextIndex = (index + 1) % playerButtons.length;
-            playerButtons[nextIndex].focus();
-            e.preventDefault();
-            break;
-          case 'ArrowLeft':
-            nextIndex = (index - 1 + playerButtons.length) % playerButtons.length;
-            playerButtons[nextIndex].focus();
-            e.preventDefault();
-            break;
-          case 'ArrowDown':
-            if (index + 2 < playerButtons.length) {
-              playerButtons[index + 2].focus();
-              e.preventDefault();
-            }
-            break;
-          case 'ArrowUp':
-            if (index - 2 >= 0) {
-              playerButtons[index - 2].focus();
-              e.preventDefault();
-            }
-            break;
-          case ' ':
-          case 'Enter':
-            selectButton(btn);
-            e.preventDefault();
-            break;
-        }
-      });
-    })
-    
     // Setup name input enter key handler
     this.$container.querySelector('.host-section input').addEventListener('keydown', e => {
       e.code === 'Enter' && this.$container.querySelector('.host-section .btn-primary').click()
@@ -145,9 +111,18 @@ class LoginUI {
     // Setup host submit button
     this.$container.querySelector('.host-section .btn-primary').addEventListener('click', e => {
       const host_name = this.$container.querySelector('.host-section input.name').value
-      const selectedButton = this.$container.querySelector('.players-selection .btn-selection[data-selected="true"]')
-      const player_count = selectedButton ? +selectedButton.getAttribute('data-value') : 3
-      window.location.href = `/game/new?name=${encodeURIComponent(host_name)}&players=${encodeURIComponent(player_count)}`
+      const player_count = +(this.$container.querySelector('.host-section select.player-count')?.value || 3)
+      const map_size = this.$container.querySelector('.host-section select.map-size')?.value || 'small'
+      const win_points = +(this.$container.querySelector('.host-section select.win-points')?.value || 10)
+
+      // Map size to mapkey
+      let mapkey = CONST.DEFAULT_MAPKEY
+      if (map_size === 'medium') mapkey = CONST.DEFAULT_MAPKEY_5_6
+      else if (map_size === 'large') mapkey = CONST.DEFAULT_MAPKEY_7_8
+
+      const config = { win_points, mapkey }
+      const configParam = encodeURIComponent(JSON.stringify(config))
+      window.location.href = `/game/new?name=${encodeURIComponent(host_name)}&players=${encodeURIComponent(player_count)}&config=${configParam}`
     })
 
     // Setup join section input enter key handlers
@@ -157,8 +132,13 @@ class LoginUI {
     
     // Setup join submit button
     this.$container.querySelector('.join-section .btn-primary').addEventListener('click', e => {
-      const name = this.$container.querySelector('.join-section input.name').value
-      const game_key = this.$container.querySelector('.join-section input.game-key').value
+      const name = (this.$container.querySelector('.join-section input.name').value || '').trim()
+      const game_key = (this.$container.querySelector('.join-section input.game-key').value || '').trim()
+      if (!name) {
+        const nameInput = this.$container.querySelector('.join-section input.name')
+        nameInput && nameInput.focus()
+        return
+      }
       window.location.href = `/login?name=${encodeURIComponent(name)}&game_id=${encodeURIComponent(game_key)}`
     })
 
