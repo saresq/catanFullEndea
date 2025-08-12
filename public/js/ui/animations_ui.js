@@ -31,8 +31,8 @@ export default class AnimationUI {
     const mk = (n) => `<div class="dice-mini">${Array(n).fill(0).map(_ => '<span class="pip"></span>').join('')}</div>`
     box.innerHTML = `${mk(d1)}${mk(d2)}`
     btn.appendChild(box)
-    // Auto-remove after 2 seconds
-    setTimeout(() => { box.remove() }, 2000)
+    // Auto-remove after 5 seconds
+    setTimeout(() => { box.remove() }, 5000)
   }
 
   animateDevelopmentCard(type, out) {

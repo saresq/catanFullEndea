@@ -67,7 +67,6 @@ export default class PlayerUI {
     this.$el.classList.add('pc' + cid)
     this.$action_bar.innerHTML = `
       <div class="timer disabled ${this.has_timer ? '' : 'hide'}">0:00</div>
-      <button class="roll-dice disabled" data-mode="roll" title="Roll Dice (Space)"><span class="label">🎲🎲</span></button>
       <button class="build-road disabled" title="Build Road (r)" data-count="${CONST.PIECES_COUNT.R}">
         <div class="cost-tooltip">${resToText(CONST.COST.R)}</div>
       </button>
@@ -82,6 +81,7 @@ export default class PlayerUI {
         <img src="/images/dc-back.png"/>
       </button>
       <button class="trade disabled" title="Trade (t/\`)">Trade</button>
+      <button class="roll-dice disabled" data-mode="roll" title="Roll Dice (Space)"><span class="label">🎲🎲</span></button>
     `
     this.#setRefs()
     this.#setupActionEvents()
@@ -274,7 +274,23 @@ export default class PlayerUI {
     this.$dice.title = 'End Turn (e/Space)'
     const label = this.$dice.querySelector('.label') || this.#ensureDiceLabel()
     label.textContent = 'End Turn'
-    this.toggleAction(this.$dice, enabled)
+    const effective = !!enabled && !this._isEndCooldown
+    this.toggleAction(this.$dice, effective)
+  }
+
+  startEndTurnCooldown(ms = 5000) {
+    if (!this.$dice) return
+    // Prevent enabling End Turn during cooldown
+    this._isEndCooldown = true
+    // Clear previous timer if any
+    if (this._endCooldownTimer) { clearTimeout(this._endCooldownTimer); this._endCooldownTimer = null }
+    // Switch to End mode but keep disabled
+    this.setUnifiedModeEnd(false)
+    this._endCooldownTimer = setTimeout(() => {
+      this._isEndCooldown = false
+      this.setUnifiedModeEnd(true)
+      this._endCooldownTimer = null
+    }, ms)
   }
   //#endregion
 
