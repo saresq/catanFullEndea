@@ -5,7 +5,7 @@
   &.blur:not(:hover) { filter: blur(2px); }
 
   .players-header {
-    display: flex; justify-content: flex-end; align-items: center;
+    display: flex; justify-content: space-between; align-items: center;
     background: var(--sand-color-dark); color: #fff; padding: 2px 4px;
     border-left: 3px solid var(--sand-color-dark);
     button.toggle-players {
@@ -22,7 +22,6 @@
     background: var(--sand-color);
     border: 3px solid var(--sand-color-dark);
     border-top: none; border-right: none;
-    margin: 0 -3px;
     &.deactivated {
       filter: grayscale(1) contrast(0.5) brightness(0.7); cursor: not-allowed;
       &::before { content: '🏃' !important;}
@@ -44,7 +43,7 @@
 
     .name {
       width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
-      font-size: 2em;
+      font-size: 1.5em;
       padding: 5px 10px 10px;
       background: var(--sand-color-dark); color: #fff;
       border-bottom: 3px solid; border-color: inherit;
