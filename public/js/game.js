@@ -187,7 +187,7 @@ export default class Game {
     // Show small floating dice result near the button instead of full-screen animation
     this.#isMyPid(pid) && this.#ui.animation_ui.animateDiceRoll(d1, d2)
     // After rolling, keep End Turn disabled for 5 seconds, then enable
-    if (this.#isMyPid(pid)) { this.#ui.player_ui.startEndTurnCooldown(5000) }
+    if (this.#isMyPid(pid)) { this.#ui.player_ui.startEndTurnCooldown(1000) }
     this.#audio_manager.playDice(this.#isMyPid(pid))
     const total = d1 + d2
     total === 7 && setTimeout(_ => {

@@ -278,7 +278,7 @@ export default class PlayerUI {
     this.toggleAction(this.$dice, effective)
   }
 
-  startEndTurnCooldown(ms = 5000) {
+  startEndTurnCooldown(ms = 1000) {
     if (!this.$dice) return
     // Prevent enabling End Turn during cooldown
     this._isEndCooldown = true
