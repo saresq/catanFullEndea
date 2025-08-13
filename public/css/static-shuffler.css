@@ -1,12 +1,12 @@
-@import "/catan/css/index/accessibility.css";
-@import "/catan/css/index/board.css";
-@import "/catan/css/constants.css";
+@import "index/accessibility.css";
+@import "index/board.css";
+@import "constants.css";
 
-@font-face { font-family: Papyrus; src: url(/catan/css/fonts/Papyrus.ttf); }
-@font-face { font-family: EagleLake; src: url(/catan/css/fonts/EagleLake-Regular.ttf); }
-@font-face { font-family: Raleway; src: url(/catan/css/fonts/Raleway-Light.ttf); font-weight: 200; }
-@font-face { font-family: Raleway; src: url(/catan/css/fonts/Raleway-Regular.ttf); }
-@font-face { font-family: Raleway; src: url(/catan/css/fonts/Raleway-Bold.ttf); font-weight: 600; }
+@font-face { font-family: Papyrus; src: url(fonts/Papyrus.ttf); }
+@font-face { font-family: EagleLake; src: url(fonts/EagleLake-Regular.ttf); }
+@font-face { font-family: Raleway; src: url(fonts/Raleway-Light.ttf); font-weight: 200; }
+@font-face { font-family: Raleway; src: url(fonts/Raleway-Regular.ttf); }
+@font-face { font-family: Raleway; src: url(fonts/Raleway-Bold.ttf); font-weight: 600; }
 
 @keyframes beach-blink {
   0% { filter: saturate(8); }
@@ -72,15 +72,11 @@ body {
   }
 }
 
-#game > .accessibility-zone .info-zone .container .text-container .subtitle .social-icon {
-  background-image: url(/catan/images/social-icons.png);
-}
-
 #game :is(.board-container, .accessibility-zone) { transition: all .125s ease-in; }
 #game.board--editing :is(.board-container, .accessibility-zone) { margin-top: calc(170px + 10px); }
 
 .board .tile.robbed::before {
-  background-image: url(/catan/images/robber.png);
+  background-image: url(../images/robber.png);
   left: 53px; top: 30px; height: 90px; width: 47px;
 }
 #game.board--editing .board .tile {
@@ -136,37 +132,37 @@ body {
 
 :is(.board, #tile-selector) .tile.G .background
 , #tile-selector[data-tile="G"] .select-number .tile .background
-  { background-image: url('/catan/images/tiles/Grassland.png'); }
+  { background-image: url('../images/tiles/Grassland.png'); }
 :is(.board, #tile-selector) .tile.J .background
 , #tile-selector[data-tile="J"] .select-number .tile .background
-  { background-image: url('/catan/images/tiles/Jungle.png'); }
+  { background-image: url('../images/tiles/Jungle.png'); }
 :is(.board, #tile-selector) .tile.C .background
 , #tile-selector[data-tile="C"] .select-number .tile .background
-  { background-image: url('/catan/images/tiles/Clay Pit.png'); }
+  { background-image: url('../images/tiles/Clay Pit.png'); }
 :is(.board, #tile-selector) .tile.M .background
 , #tile-selector[data-tile="M"] .select-number .tile .background
-  { background-image: url('/catan/images/tiles/Mountain.png'); }
+  { background-image: url('../images/tiles/Mountain.png'); }
 :is(.board, #tile-selector) .tile.F .background
 , #tile-selector[data-tile="F"] .select-number .tile .background
-  { background-image: url('/catan/images/tiles/Fields.png'); }
+  { background-image: url('../images/tiles/Fields.png'); }
 :is(.board, #tile-selector) .tile.D .background
 , #tile-selector[data-tile="D"] .select-number .tile .background
-  { background-image: url('/catan/images/tiles/Desert.png'); }
+  { background-image: url('../images/tiles/Desert.png'); }
 :is(.board, #tile-selector) .tile.S .background
 , #tile-selector[data-tile="S"] .select-number .tile .background
-  { background-image: url('/catan/images/tiles/Sea.png'); }
+  { background-image: url('../images/tiles/Sea.png'); }
 
 :is(.board, #tile-selector) .tile {
-  &.S[data-trade="B"]::after { background-image: url(/catan/images/trade/Brick.png); }
-  &.S[data-trade="L"]::after { background-image: url(/catan/images/trade/Lumber.png); }
-  &.S[data-trade="O"]::after { background-image: url(/catan/images/trade/Ore.png); }
-  &.S[data-trade="S"]::after { background-image: url(/catan/images/trade/Sheep.png); }
-  &.S[data-trade="W"]::after { background-image: url(/catan/images/trade/Wheat.png); }
-  &.S[data-trade="*"]::after { background-image: url(/catan/images/trade/*3.png); }
-  .beach-1 { background-image: url(/catan/images/beach-1.png); }
-  .beach-2 { background-image: url(/catan/images/beach-2.png); }
-  .beach-3 { background-image: url(/catan/images/beach-3.png); }
-  .trade-post { background-image: url(/catan/images/trade/Dock.png); }
+  &.S[data-trade="B"]::after { background-image: url(../images/trade/Brick.png); }
+  &.S[data-trade="L"]::after { background-image: url(../images/trade/Lumber.png); }
+  &.S[data-trade="O"]::after { background-image: url(../images/trade/Ore.png); }
+  &.S[data-trade="S"]::after { background-image: url(../images/trade/Sheep.png); }
+  &.S[data-trade="W"]::after { background-image: url(../images/trade/Wheat.png); }
+  &.S[data-trade="*"]::after { background-image: url(../images/trade/*3.png); }
+  .beach-1 { background-image: url(../images/beach-1.png); }
+  .beach-2 { background-image: url(../images/beach-2.png); }
+  .beach-3 { background-image: url(../images/beach-3.png); }
+  .trade-post { background-image: url(../images/trade/Dock.png); }
 }
 
 /* --------------------------------------
@@ -387,12 +383,12 @@ body {
         }
 
 
-        &.B2::before { background-image: url(/catan/images/trade/Brick.png); }
-        &.L2::before { background-image: url(/catan/images/trade/Lumber.png); }
-        &.O2::before { background-image: url(/catan/images/trade/Ore.png); }
-        &.S2::before { background-image: url(/catan/images/trade/Sheep.png); }
-        &.W2::before { background-image: url(/catan/images/trade/Wheat.png); }
-        &._3::before { background-image: url(/catan/images/trade/*3.png); }
+        &.B2::before { background-image: url(../images/trade/Brick.png); }
+        &.L2::before { background-image: url(../images/trade/Lumber.png); }
+        &.O2::before { background-image: url(../images/trade/Ore.png); }
+        &.S2::before { background-image: url(../images/trade/Sheep.png); }
+        &.W2::before { background-image: url(../images/trade/Wheat.png); }
+        &._3::before { background-image: url(../images/trade/*3.png); }
       }
       &:hover .trade-type::before { filter: drop-shadow(0px 5px 5px #000a); top: -5px; }
       .trade-text { text-align: center; margin-top: 10px; opacity: 0.5; }
@@ -483,12 +479,12 @@ body {
   &[data-land_bottom_right="true"] > .select-trade-direction .trade-direction-container[data-trade-dir="bottom_right"] { display: flex; }
   &[data-land_bottom_left="true"] > .select-trade-direction .trade-direction-container[data-trade-dir="bottom_left"] { display: flex; }
 
-  &[data-trade-type="B2"] .tile.S::after { background-image: url(/catan/images/trade/Brick.png); }
-  &[data-trade-type="L2"] .tile.S::after { background-image: url(/catan/images/trade/Lumber.png); }
-  &[data-trade-type="O2"] .tile.S::after { background-image: url(/catan/images/trade/Ore.png); }
-  &[data-trade-type="S2"] .tile.S::after { background-image: url(/catan/images/trade/Sheep.png); }
-  &[data-trade-type="W2"] .tile.S::after { background-image: url(/catan/images/trade/Wheat.png); }
-  &[data-trade-type="*3"] .tile.S::after { background-image: url(/catan/images/trade/*3.png); }
+  &[data-trade-type="B2"] .tile.S::after { background-image: url(../images/trade/Brick.png); }
+  &[data-trade-type="L2"] .tile.S::after { background-image: url(../images/trade/Lumber.png); }
+  &[data-trade-type="O2"] .tile.S::after { background-image: url(../images/trade/Ore.png); }
+  &[data-trade-type="S2"] .tile.S::after { background-image: url(../images/trade/Sheep.png); }
+  &[data-trade-type="W2"] .tile.S::after { background-image: url(../images/trade/Wheat.png); }
+  &[data-trade-type="*3"] .tile.S::after { background-image: url(../images/trade/*3.png); }
 
   .cancel-container { display: none !important; }
 }

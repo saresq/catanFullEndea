@@ -67,7 +67,7 @@ export default class BoardShuffler {
               clear_tile.num = tile.num
               tile.num = tmp
               red_area_tiles[clear_tile_i] = true
-              Object.values(clear_tile.adjacent_tiles).forEach(t => red_area_tiles[t.id] = true)
+              Object.values(clear_tile.adjacent_tiles).filter(Boolean).forEach(t => red_area_tiles[t.id] = true)
             } else {
               const switch_index = new_numbers.findLastIndex(_ => +_ !== 8 && +_ !== 6)
               if (switch_index >= number_index) {
@@ -80,7 +80,7 @@ export default class BoardShuffler {
             }
           } else {
             red_area_tiles[tile.id] = true
-            Object.values(tile.adjacent_tiles).forEach(t => red_area_tiles[t.id] = true)
+            Object.values(tile.adjacent_tiles).filter(Boolean).forEach(t => red_area_tiles[t.id] = true)
           }
         } else {
           if (!red_area_tiles[tile.id]) red_area_tiles[tile.id] = false

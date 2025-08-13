@@ -23,6 +23,10 @@ app.engine('html', mustacheExpress())
 app.set('view engine', 'html')
 app.set('views', __dirname + '/views')
 
+app.get('/map-editor', (req, res) => {
+  res.render('map-editor')
+})
+
 const SESSION_EXPIRE_HOURS = 5
 const API_SALT = process.env.API_SALT || 'cultivate'
 /** @todo Move to a db for game state maintenance? */

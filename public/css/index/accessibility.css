@@ -99,16 +99,6 @@
         .subtitle {
           font-size: 1.2em;
           a { font-size: 1.3em; background-color: inherit; color: #8fc045; &:hover { background-color: inherit; filter: brightness(.75);} }
-          .social-icon {
-            background-image: url(/images/social-icons.png);
-            width: 30px; height: 30px; margin-bottom: -7px; margin-left: 5px;
-            display: inline-block; border-radius: 30px;
-            &.github { background-color: #333; background-size: 258px; background-position: -44px -101px; }
-            &.linkedin { background-color: #0274B3; background-position: -148px 5px; background-size: 260px; }
-            &.twitter { background-color: #000; background-position: -20px -242px; background-size: 270px; }
-            &.youtube { background-color: #cd201f; background-position: -26px -24px; background-size: 298px; }
-            &.email { background-color: #00AB6C; background-position: -45px -48px; background-size: 263px; }
-          }
         }
         .rules { font-size: 1.3em; font-family: EagleLake; }
         b { background-color: #cfeaa5; padding: 0 3px; font-family: EagleLake; font-size: .9em; word-spacing: 2px; }

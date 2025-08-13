@@ -2,12 +2,16 @@
 Free to play multiplayer Catan board game
 
 ## Links
-**Play Game:** [catan-qvig.onrender.com](https://catan-full-endea.onrender.com/login)
+**Play Game:** [catan-full-endea.onrender.com](https://catan-full-endea.onrender.com/login)
 > The onrender server goes to sleep on inactivity, if you open the link it might take a few minutes to get the server up
 
 > Open the Browser Console to have control over all the game configs, including mapkey
 
 **Shuffler & Board builder:** [bharathraja.in/catan](https://bharathraja.in/catan)
+
+**Static Shuffler (this repo deployment):**
+- Local dev: http://localhost:3000/static-shuffler
+- Render: https://catan-full-endea.onrender.com/static-shuffler
 
 ---
 

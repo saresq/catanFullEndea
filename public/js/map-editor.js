@@ -336,15 +336,12 @@ class Shuffler {
   changeTile() {
     /**
      * Change the tile data
-     * Add adjacent sea if not available
-     * Remove extra sea tiles
-     *  - Need to write a complex graph algorith to find out
+     * Add adjacent sea if not available (auto-expand borders)
      * Re-render board
      * Update mapkey in input and url
      */
     const new_tile = this.tile_selection_obj
     const tile = this.board.findTile(new_tile.id)
-    console.log(new_tile);
     tile.type = new_tile.type
     tile.num = tile.type !== 'S' && tile.type !== 'D' && new_tile.number
     if (tile.type === 'S') {
@@ -352,9 +349,119 @@ class Shuffler {
       tile.trade_type = new_tile.trade_type?.replace(/\d+/, '')
       tile.trade_ratio = new_tile.trade_type?.replace(/[^\d]+/, '')
     }
-    const new_mapkey = this.board.generateMapKey()
+
+    // Generate mapkey from current (mutated) board
+    let new_mapkey = this.board.generateMapKey()
+
+    // Auto-add surrounding sea tiles when changing to land/desert
+    if (tile.type !== 'S') {
+      new_mapkey = this.#expandSeaBordersAroundTile(tile)
+    }
+
     this.updateBoard(new_mapkey)
     this.#resetBoardEdit()
+  }
+
+  /**
+   * Ensure that there are Sea (S) tiles surrounding a newly placed land/desert tile
+   * - Adds S tiles to the above and below rows as needed
+   * - Adds an S tile at the end of the current edited row when needed
+   * This is a minimal, mapkey-only expansion; full graph is rebuilt via updateBoard()
+   */
+  #expandSeaBordersAroundTile(tile) {
+    // Build rows with diff signs preserved and tokens split
+    const mk = this.board.generateMapKey()
+    const raw_rows = mk.split('\n')
+    const rows = raw_rows.map((rowStr, i) => {
+      if (!i) { return { sign: '', diff: 1, tokens: rowStr.split('.') } }
+      const sign = rowStr[0]
+      const diff = sign === '+' ? 1 : -1
+      const rest = rowStr.slice(1)
+      return { sign, diff, tokens: rest.split('.') }
+    })
+
+    // Find (r,c) of the edited tile via board.tile_rows
+    let r = -1, c = -1
+    for (let i = 0; i < this.board.tile_rows.length; i++) {
+      const idx = this.board.tile_rows[i].indexOf(tile)
+      if (idx !== -1) { r = i; c = idx; break }
+    }
+    if (r === -1 || c === -1) return mk // fallback
+
+    // Extend current row end if edited tile is at the end
+    if (c === rows[r].tokens.length - 1) {
+      rows[r].tokens.push('S')
+    }
+
+    // Helper to ensure index exists within a row by pushing/adding S
+    const ensureIndex = (rowObj, idx) => {
+      if (!rowObj) return
+      if (idx < 0) {
+        // Prepend required S tiles
+        let cnt = -idx
+        while (cnt--) { rowObj.tokens.unshift('S') }
+        return 0
+      }
+      if (idx >= rowObj.tokens.length) {
+        while (rowObj.tokens.length <= idx) { rowObj.tokens.push('S') }
+      }
+      return idx
+    }
+
+    // Above row: ensure top-left and top-right exist
+    if (rows[r - 1]) {
+      const rowDiffTmp = rows[r].diff < 0 ? -1 : 0
+      let tli = c + rowDiffTmp
+      let tri = tli + 1
+      if (tli < 0) {
+        // Prepend to previous row so that tli becomes 0
+        const delta = -tli
+        for (let k = 0; k < delta; k++) rows[r - 1].tokens.unshift('S')
+        tli = 0
+        tri = 1
+      }
+      if (tri >= rows[r - 1].tokens.length) {
+        while (rows[r - 1].tokens.length <= tri) rows[r - 1].tokens.push('S')
+      }
+    }
+
+    // Below row: ensure bottom-left and bottom-right exist
+    if (rows[r + 1]) {
+      const nextRowDiffTmp = rows[r + 1].diff < 0 ? -1 : 0
+      let brIdx = c - nextRowDiffTmp
+      let blIdx = brIdx - 1
+      if (blIdx < 0) {
+        const delta = -blIdx
+        for (let k = 0; k < delta; k++) rows[r + 1].tokens.unshift('S')
+        blIdx = 0
+        brIdx = 1
+      }
+      if (brIdx >= rows[r + 1].tokens.length) {
+        while (rows[r + 1].tokens.length <= brIdx) rows[r + 1].tokens.push('S')
+      }
+    }
+
+    // New requirement: when adding a land/desert tile, add a new row of all S tiles
+    // - If editing on the topmost row, prepend a full S row
+    // - If editing on the bottommost row, append a full S row
+    if (r === 0) {
+      const newLenTop = rows[r].tokens.length
+      rows.unshift({ sign: '', diff: 1, tokens: Array(newLenTop).fill('S') })
+      r += 1 // original row index shifted down by 1
+    }
+    if (r === rows.length - 1) {
+      const newLenBottom = rows[r].tokens.length
+      const lastSign = rows[r].sign || '+'
+      rows.push({ sign: lastSign, diff: lastSign === '-' ? -1 : 1, tokens: Array(newLenBottom).fill('S') })
+    }
+
+    // Re-serialize rows into a mapkey string
+    const new_mk = rows.map((row, i) => {
+      const rowKey = row.tokens.join('.')
+      return i === 0 ? rowKey : (row.sign || '+') + rowKey
+    }).join('\n')
+
+    return new_mk
   }
 
   shuffle({ mapkey, tile, number, port }) {
@@ -386,9 +493,6 @@ class Shuffler {
     div.innerHTML = `<a href="${PROD_URL}" target="_blank">Play the Full Game.</a>`
     div.className = 'play-full-game'
     this.accessibility_ui.$el.querySelector('.info-zone').prepend(div)
-    this.accessibility_ui.$el.querySelectorAll('img').forEach($_ => {
-      $_.src = '/catan' + (new URL($_.src)).pathname
-    })
     // this.accessibility_ui.$el.querySelector('.info-zone').innerHTML = `
     //   <div class="play-full-game">
     //     <a href="${PROD_URL}" target="_blank">Play the Full Game.</a>

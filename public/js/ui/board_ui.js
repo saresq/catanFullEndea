@@ -119,11 +119,20 @@ export default class BoardUI {
   }
 
   renderBeaches(tile) {
-    return oKeys(tile.adjacent_tiles).map(dir =>
-      (tile.adjacent_tiles[dir] && tile.adjacent_tiles[dir].type !== 'S')
-        ? `<div class="beach beach-${Math.floor(Math.random() * 3) + 1} beach-${dir}"></div>`
+    return oKeys(tile.adjacent_tiles).map(dir => {
+      const neighbor = tile.adjacent_tiles[dir]
+      const variant = Math.floor(Math.random() * 3) + 1
+      // Sea tiles: show beach where adjacent tile is land
+      if (tile.type === 'S') {
+        return (neighbor && neighbor.type !== 'S')
+          ? `<div class="beach beach-${variant} beach-${dir}"></div>`
+          : ''
+      }
+      // Land tiles: show beach on map border (no neighbor)
+      return (!neighbor)
+        ? `<div class="beach beach-${variant} beach-${dir}"></div>`
         : ''
-    ).join('')
+    }).join('')
   }
 
   #setupEvents() {
