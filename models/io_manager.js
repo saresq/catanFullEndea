@@ -84,24 +84,28 @@ export default class IOManager {
   updateBuild(pid, piece, loc) { this.emit(SOC.BUILD, pid, piece, loc) }
 
   updatePlayerData_Private(player_socket_id, p_json, key, data) {
+    if (!player_socket_id) { return }
     this.#io.to(player_socket_id).emit(SOC.UPDATE_PLAYER, p_json, key, data)
   }
 
   updateDevCardTaken_Private(player_socket_id, pid, count, card) {
+    if (!player_socket_id) { return }
     this.#io.to(player_socket_id).emit(SOC.DEV_CARD_TAKEN, pid, count, card)
   }
 
   updateDiceValue(dice_value, pid) { this.emit(SOC.DICE_VALUE, dice_value, pid) }
 
   updateResourceReceived_Private(player_socket_id, total_resouces) {
+    if (!player_socket_id) { return }
     this.#io.to(player_socket_id).emit(SOC.RES_RECEIVED, total_resouces)
   }
 
-  updateRobbed_Private(player_socket_id) { this.#io.to(player_socket_id).emit(SOC.ROBBER_DROP) }
+  updateRobbed_Private(player_socket_id) { if (!player_socket_id) { return } this.#io.to(player_socket_id).emit(SOC.ROBBER_DROP) }
 
   moveRobber(active_pid, id) { this.emit(SOC.ROBBER_MOVE, active_pid, id) }
 
   updateStolen_Private(player_socket_id, p1_id, p2_id, res) {
+    if (!player_socket_id) { return }
     this.#io.to(player_socket_id).emit(SOC.STOLEN_INFO, p1_id, p2_id, res)
   }
 
@@ -116,10 +120,12 @@ export default class IOManager {
   updateRoadBuildingUsed(pid) { this.emit(SOC.ROAD_BUILDING, pid) }
 
   updateMonopolyUsed_Private(player_socket_id, pid, res, total_count, self_count) {
+    if (!player_socket_id) { return }
     this.#io.to(player_socket_id).emit(SOC.MONOPOLY, pid, res, total_count, self_count)
   }
 
   updateYearOfPlentyUsed_Private(player_socket_id, pid, res_obj) {
+    if (!player_socket_id) { return }
     this.#io.to(player_socket_id).emit(SOC.YEAR_OF_PLENTY, pid, res_obj)
   }
 

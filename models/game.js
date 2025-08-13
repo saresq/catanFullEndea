@@ -204,18 +204,35 @@ export default class Game {
   /** Robber Drop Resource */
   #expectedRobberDrop(pid, { drop_count = 0, resources } = {}) {
     const player = this.getPlayer(pid)
-    if (drop_count || player.resource_count > this.config.robber_hand_limit) {
-      const taking_count = Math.max(drop_count, Math.floor(player.resource_count / 2))
+    // Only proceed if the player is actually required to drop now
+    if (!this.robbing_players.includes(pid)) { return }
+    const must_drop = player.resource_count > this.config.robber_hand_limit || drop_count > 0
+    if (must_drop) {
+      // How many cards should be taken this time (cap to what's available)
+      let taking_count = Math.max(drop_count, Math.floor(player.resource_count / 2))
+      taking_count = Math.max(0, Math.min(taking_count, player.resource_count))
       let taken_count = 0
       if (resources) {
-        player.takeCards(resources)
-        taken_count = Object.values(resources).reduce((mem, v) => mem + v, 0)
+        // clamp the resources to what the player actually has
+        const clamped = {}
+        Object.entries(resources).forEach(([k, v]) => {
+          if (v > 0 && player.closed_cards?.[k] > 0) {
+            const give = Math.min(v, player.closed_cards[k])
+            if (give) { clamped[k] = give; taken_count += give }
+          }
+        })
+        if (taken_count) { player.takeCards(clamped) }
       }
-      taken_count < taking_count && player.takeRandomResources(taking_count - taken_count)
+      const remaining = taking_count - taken_count
+      if (remaining > 0) { player.takeRandomResources(remaining) }
     }
     const rob_pl_index = this.robbing_players.indexOf(pid)
-    rob_pl_index >= 0 && this.robbing_players.splice(rob_pl_index, 1)
-    if (!this.robbing_players.length) { this.#gotoNextState(); this.#next() }
+    if (rob_pl_index >= 0) { this.robbing_players.splice(rob_pl_index, 1) }
+    if (!this.robbing_players.length) {
+      this.#gotoNextState()
+      // Avoid re-entrancy into #next() during resolution loop
+      setTimeout(() => this.#next(), 0)
+    }
   }
 
   /** Robber Movement */
@@ -316,15 +333,16 @@ export default class Game {
   }
 
   /** Cards dropped to robber */
-  robberDropIO(pid, resources) {
+  robberDropIO(pid, resources = {}) {
     if (this.state !== ST.ROBBER_DROP) return
     if (!this.robbing_players.includes(pid)) return
     const expected_index = this.expected_actions.findIndex(_ =>_.type === ST.ROBBER_DROP && _.pid === pid)
     if (expected_index < 0) return
     const { drop_count, callback } = this.expected_actions[expected_index]
-    const total_given = Object.entries(resources).reduce((mem, [_, v]) => mem + v, 0)
-    if (total_given < drop_count) return
-
+    const total_given = Object.entries(resources).reduce((mem, [_, v]) => mem + (v || 0), 0)
+    // Reject if the client attempts to drop more than required
+    if (total_given > drop_count) return
+    // Allow partial; server will take the remainder randomly
     callback(pid, { drop_count, resources })
     this.expected_actions.splice(expected_index, 1)
   }
