@@ -50,6 +50,8 @@ export default class Game {
       onVpChange: (pid, vp) => this.#onPlayerVpChange(pid, vp),
     })
     this.#onGameEnd = onGameEnd
+    // Track which players still have their first regular-round roll pending (to forbid 7)
+    this._firstRoundRollPids = null
     this.expected_actions.add = (...elems) => elems.forEach(obj => {
       this.expected_actions.push(Object.assign({ type: this.state, pid: this.active_pid }, obj))
     })
@@ -181,6 +183,8 @@ export default class Game {
       this.#distributeCornerResources(s_id)
       if (this.active_pid == 1) {
         this.turn++
+        // Initialize first-round roll protection for all current players
+        this._firstRoundRollPids = new Set(this.players.filter(p => p?.id && !p.removed).map(p => p.id))
         this.players.forEach(p => p.resetDevCard(this.#isActive(p.id)))
         this.#gotoNextState()
       } else { this.active_pid-- }
@@ -189,9 +193,18 @@ export default class Game {
 
   /** Roll Dice */
   #expectedRoll(pid) {
-    this.dice_value = [CONST.ROLL(), CONST.ROLL()]
+    // Roll two dice; for each player's first regular-round roll, forbid total 7
+    let d1 = CONST.ROLL(), d2 = CONST.ROLL()
+    const hasProtection = this._firstRoundRollPids instanceof Set && this._firstRoundRollPids.has(pid)
+    if (hasProtection) {
+      while (d1 + d2 === 7) { d1 = CONST.ROLL(); d2 = CONST.ROLL() }
+      // consume protection for this player
+      this._firstRoundRollPids.delete(pid)
+      if (!this._firstRoundRollPids.size) this._firstRoundRollPids = null
+    }
+    this.dice_value = [d1, d2]
     this.#io_manager.updateDiceValue(this.dice_value, this.active_pid)
-    const dice_total = this.dice_value[0] + this.dice_value[1]
+    const dice_total = d1 + d2
     if (dice_total === 7) {
       const drop = this.players.filter(p => p.resource_count > this.config.robber_hand_limit).length
       this.state = drop ? ST.ROBBER_DROP : ST.ROBBER_MOVE
@@ -650,6 +663,11 @@ export default class Game {
     player.removePlayer()
     this.removePlayerSocket(pid)
     this.#io_manager.updatePlayerQuit(pid)
+    // If first-round roll protection is active, remove this player from the set
+    if (this._firstRoundRollPids instanceof Set) {
+      this._firstRoundRollPids.delete(pid)
+      if (!this._firstRoundRollPids.size) this._firstRoundRollPids = null
+    }
     // In Waiting Room
     const joined_player_count = this.players.filter(p => p?.id).length
     if (!this.state && joined_player_count < this.player_count) {
