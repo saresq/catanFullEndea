@@ -143,9 +143,12 @@
       &.hide { display: none; }
 
       &.disabled {
-        filter: grayscale(1) contrast(0.5);
         cursor: not-allowed;
         line-height: 70px;
+      }
+
+      &.disabled .label {
+        filter: grayscale(1) contrast(0.5);
       }
 
       &:not(.disabled):is(:hover, :focus) {

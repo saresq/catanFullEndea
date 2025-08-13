@@ -343,10 +343,24 @@ export default class PlayerUI {
       const type = $card_group.dataset.type
       const is_active = $card_group.classList.contains('active')
       const is_dc = CONST.DEVELOPMENT_CARDS[type] && type !== 'dVp'
-      if (is_dc || !is_active) {
-        this.showCardPreview(type, is_dc, is_dc && this.#canPlayDevCard(type))
+      // Development cards: keep preview/activation behavior
+      if (is_dc) {
+        this.showCardPreview(type, true, this.#canPlayDevCard(type))
+        return
       }
-      else { this.#onCardClick(type) }
+      // Resource cards
+      if (!is_active) {
+        // Instead of showing preview for resource cards, trigger Trade UI
+        if (!this.$trade_btn?.classList.contains('disabled')) {
+          this.#onTradeClick()
+          return
+        }
+        // Fallback: if trade is disabled, keep previous preview behavior
+        this.showCardPreview(type, false, false)
+        return
+      }
+      // Active mode (e.g., robber drop): keep existing selection callback
+      this.#onCardClick(type)
     }))
   }
 

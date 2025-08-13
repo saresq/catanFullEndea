@@ -215,7 +215,7 @@ export default class Game {
     }
     const rob_pl_index = this.robbing_players.indexOf(pid)
     rob_pl_index >= 0 && this.robbing_players.splice(rob_pl_index, 1)
-    !this.robbing_players.length && this.#gotoNextState()
+    if (!this.robbing_players.length) { this.#gotoNextState(); this.#next() }
   }
 
   /** Robber Movement */
@@ -357,6 +357,7 @@ export default class Game {
     if (!this.#isActive(pid)) return
     if (this.state !== ST.ROBBER_MOVE) return
     const expected_index = this.expected_actions.findIndex(_ => _.type === ST.ROBBER_MOVE)
+    if (expected_index < 0) return
     const { callback } = this.expected_actions[expected_index]
     callback(pid, { tile_id, stolen_pid })
     this.expected_actions.splice(expected_index, 1)
