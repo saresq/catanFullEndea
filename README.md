@@ -7,13 +7,30 @@ Free to play multiplayer Catan board game
 
 > Open the Browser Console to have control over all the game configs, including mapkey
 
-**Shuffler & Board builder:** [bharathraja.in/catan](https://bharathraja.in/catan)
+**Map Editor (built-in):**
+- Local dev: http://localhost:3000/map-editor
+- Render: https://catan-full-endea.onrender.com/map-editor
+
+**Shuffler & Board builder (legacy site):** [bharathraja.in/catan](https://bharathraja.in/catan)
 
 **Static Shuffler (this repo deployment):**
-- Local dev: http://localhost:3000/static-shuffler
-- Render: https://catan-full-endea.onrender.com/static-shuffler
+- Local dev: http://localhost:3000/map-editor
+- Render: https://catan-full-endea.onrender.com/map-editor
 
 ---
+
+## Play your custom map from the Map Editor
+1. Open the Map Editor (see links above).
+2. Build or edit your map using the editor UI (or paste a mapkey into the textarea and click Render).
+3. Click the “Play this Map” link in the top info area.
+   - It will open a new game with your current map, with shuffling disabled.
+   - It defaults to 3 players by design, so your custom map won’t be auto-replaced for larger player counts.
+4. Enter your name on the login page (if prompted), invite friends, and start the game.
+
+Tips:
+- The editor URL always contains your current mapkey. You can copy the URL with the “Copy” button.
+- Advanced: You can change the players count by editing the players query param on the /game/new URL before loading it.
+- For 7–8 players, the server enforces a Large preset map to ensure enough tiles, so custom maps for 7–8 are currently not auto-accepted.
 
 ## Local Installation & Running
 ```bash

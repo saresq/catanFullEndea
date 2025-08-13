@@ -39,7 +39,6 @@ class Shuffler {
 
     this.board_ui.render()
     this.accessibility_ui.render()
-    this.injectGameLinkInInfo()
     this.render()
   }
 
@@ -75,6 +74,27 @@ class Shuffler {
         <div class="title">Map Key:</div>
         <textarea name="mapkey" id="mapkey">${this.board.mapkey}</textarea>
         <div class="button render secondary">Render</div>
+      </div>
+      <hr/>
+      <div class="play-section">
+        <div class="title">Play:</div>
+        <div class="form-row">
+          <label for="players-select">Players:</label>
+          <select id="players-select" class="select players-select">
+            ${[...Array(7).keys()].map(i => {
+              const v = i + 2
+              const sel = v === 3 ? 'selected' : ''
+              return `<option value="${v}" ${sel}>${v}</option>`
+            }).join('')}
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="winpoints-select">Victory points:</label>
+          <select id="winpoints-select" class="select winpoints-select">
+            ${Array.from({ length: 16 }, (_, i) => i + 5).map(v => `<option value="${v}" ${v === 10 ? 'selected' : ''}>${v}</option>`).join('')}
+          </select>
+        </div>
+        <div class="button play">Play this Map</div>
       </div>
     `
 
@@ -222,6 +242,20 @@ class Shuffler {
     this.$el.querySelector('.button.render').addEventListener('click', e => {
       try { this.updateBoard(this.$mapkey_textarea.value) }
       catch(e) { window.alert(e) }
+    })
+
+    // Play this Map (inside shuffler container)
+    const $playersSelect = this.$el.querySelector('#players-select')
+    const $winPointsSelect = this.$el.querySelector('#winpoints-select')
+    this.$el.querySelector('.button.play')?.addEventListener('click', e => {
+      const hostName = (localStorage.getItem('player-name') || 'Editor Host').trim() || 'Editor Host'
+      const players = +($playersSelect?.value || 3)
+      const win_points = +($winPointsSelect?.value || CONST.GAME_CONFIG.win_points)
+      const mapkey = (this.$mapkey_textarea?.value || this.board?.mapkey || CONST.GAME_CONFIG.mapkey)
+      const config = { mapkey, win_points, map_shuffle: 'none' }
+      const configParam = encodeURIComponent(JSON.stringify(config))
+      const href = `/game/new?name=${encodeURIComponent(hostName)}&players=${encodeURIComponent(players)}&config=${configParam}`
+      window.open(href, '_blank')
     })
 
     this.$el.querySelector('#toggle-edit-input').addEventListener('change', e => {
@@ -480,6 +514,8 @@ class Shuffler {
     this.board_ui = new MapBuilderBoardUI(this.board, dummyFn)
     this.board_ui.render()
     this.#setupBoardClickEvent()
+    // Keep the Play link in sync with the current map
+    this.updatePlayLinkHref && this.updatePlayLinkHref()
   }
 
   updateURL(mapkey) {
@@ -490,14 +526,42 @@ class Shuffler {
 
   injectGameLinkInInfo() {
     const div = document.createElement('div')
-    div.innerHTML = `<a href="${PROD_URL}" target="_blank">Play the Full Game.</a>`
     div.className = 'play-full-game'
+
+    // Create a dynamic link that will start a game with the current editor map
+    const a = document.createElement('a')
+    a.target = '_blank'
+    a.textContent = 'Play this Map'
+    a.id = 'play-this-map-link'
+
+    // Small helper to build href from current mapkey
+    const buildHref = () => {
+      const hostName = (localStorage.getItem('player-name') || 'Editor Host').trim() || 'Editor Host'
+      const players = 3 // default to 3 players to avoid auto-upsize overrides
+      const mapkey = (this.$mapkey_textarea?.value || this.board?.mapkey || CONST.GAME_CONFIG.mapkey)
+      const config = { mapkey, map_shuffle: 'none' }
+      const configParam = encodeURIComponent(JSON.stringify(config))
+      return `/game/new?name=${encodeURIComponent(hostName)}&players=${encodeURIComponent(players)}&config=${configParam}`
+    }
+
+    // Store for later updates
+    this.$play_link = a
+    a.href = buildHref()
+
+    // Optional: also keep the original link to the homepage
+    const home = document.createElement('a')
+    home.href = '/login'
+    home.textContent = 'Open Game Home'
+    home.style.marginLeft = '12px'
+
+    div.appendChild(a)
+    div.appendChild(home)
     this.accessibility_ui.$el.querySelector('.info-zone').prepend(div)
-    // this.accessibility_ui.$el.querySelector('.info-zone').innerHTML = `
-    //   <div class="play-full-game">
-    //     <a href="${PROD_URL}" target="_blank">Play the Full Game.</a>
-    //   </div>
-    // ` + this.accessibility_ui.$el.querySelector('.info-zone').innerHTML
+
+    // Expose an updater
+    this.updatePlayLinkHref = () => {
+      if (this.$play_link) this.$play_link.href = buildHref()
+    }
   }
 }
 
