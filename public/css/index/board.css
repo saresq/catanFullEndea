@@ -434,3 +434,30 @@
 .board .tile .edge.taken.pc6 { background: var(--player-6-color); box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-6-color-dark) 50%, #000), 4px 4px 6px 0px #000; }
 .board .tile .edge.taken.pc7 { background: var(--player-7-color); box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-7-color-dark) 50%, #000), 4px 4px 6px 0px #000; }
 .board .tile .edge.taken.pc8 { background: var(--player-8-color); box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-8-color-dark) 50%, #000), 4px 4px 6px 0px #000; }
+
+
+/* --- Selected Corner Cancel Hover --- */
+.board .tile .corner.selected.shown:not(.taken):hover {
+  background: #fff;
+  box-shadow: 0 0 0 2px #d21c0e;
+}
+.board .tile .corner.selected.shown:not(.taken):hover::after {
+  content: '✖';
+  position: absolute;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  line-height: 30px;
+  text-align: center;
+  color: #d21c0e;
+  font-size: 22px;
+  font-weight: 900;
+  text-shadow: 0 0 2px #fff;
+  pointer-events: none;
+}
+
+
+/* Ensure Longest Road visual overrides color-specific road styles */
+.board .tile .edge.taken.longest {
+  box-shadow: 0px 0px 0 5px #fff, 0px -20px 0 5px #fff, 0px 20px 0 5px #fff;
+  border-radius: 3px;
+}

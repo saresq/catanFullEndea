@@ -191,7 +191,8 @@ export default class BoardUI {
   #$getCorner(id) { return this.$el.querySelector(`.corner[data-id="${id}"]`) }
   #$getEdge(id) { return this.$el.querySelector(`.edge[data-id="${id}"]`) }
   #$getTile(id) { return this.$el.querySelector(`.tile[data-id="${id}"]`) }
-
+  
+  setCornerSelected(id, selected) { this.#$getCorner(id)?.classList[selected ? 'add' : 'remove']('selected') }
   showCorners(ids = []) { ids.forEach(id => this.#$getCorner(id)?.classList.add('shown')) }
   showEdges(ids = []) { ids.forEach(id => this.#$getEdge(id)?.classList.add('shown')) }
   showTiles(ids = []) { ids.forEach(id => this.#$getTile(id)?.classList.add('shown')) }
@@ -206,6 +207,7 @@ export default class BoardUI {
     this.$el.querySelectorAll('.corner.shown, .edge.shown, .tile.shown').forEach($el => {
       $el.classList.remove('shown')
     })
+    this.$el.querySelectorAll('.corner.selected').forEach($el => $el.classList.remove('selected'))
     this.hideLongestRoads()
   }
   hideLongestRoads() {

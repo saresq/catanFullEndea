@@ -329,13 +329,31 @@ export default class Game {
     // Initial Setup
     if (this.state === ST.INITIAL_SETUP) {
       if (location_type === 'C') {
-        this.#ui.showCorners([id])
-        this.#temp.settlement_loc = id
-        this.#ui.showEdges(this.#board.findCorner(id)?.getEdges(-1)
-          .filter(_ => !_.corner1.surroundedBySea() && !_.corner2.surroundedBySea()).map(e => e.id)
-        )
+        // If same corner clicked again, cancel selection
+        if (this.#temp.settlement_loc === id) {
+          // clear previous selection
+          this.#ui.board_ui.setCornerSelected(id, false)
+          this.#temp = {}
+          // Re-show all allowed settlement locations
+          this.#ui.showCorners(this.#board.getSettlementLocations(-1).map(s => s.id))
+        } else {
+          // If switching from a previous selection, clear previous selected marker
+          if (this.#temp.settlement_loc) {
+            this.#ui.board_ui.setCornerSelected(this.#temp.settlement_loc, false)
+          }
+          this.#ui.showCorners([id])
+          this.#temp.settlement_loc = id
+          this.#ui.board_ui.setCornerSelected(id, true)
+          this.#ui.showEdges(this.#board.findCorner(id)?.getEdges(-1)
+            .filter(_ => !_.corner1.surroundedBySea() && !_.corner2.surroundedBySea()).map(e => e.id)
+          )
+        }
       } else if (location_type === 'E') {
         this.#temp.road_loc = id
+        // Clear the visual selected marker from the settlement after road chosen
+        if (this.#temp.settlement_loc) {
+          this.#ui.board_ui.setCornerSelected(this.#temp.settlement_loc, false)
+        }
         this.#socket_manager.sendInitialSetup(this.#temp)
       }
       return
