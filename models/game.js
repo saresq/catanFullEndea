@@ -24,6 +24,8 @@ export default class Game {
   /** @type {{ pid, giving, asking, id, status:('open'|'closed'|'success'|'failed'|'deleted'), rejected:number[] }[]} */
   ongoing_trades = []
   turn = 1; dice_value = 2
+  // Adds +20s bonus only once per player's actions turn when they initiate a trade
+  turn_trade_time_added = false
   dev_cards = []
   largest_army_pid = -1
   longest_road_pid = -1
@@ -135,6 +137,8 @@ export default class Game {
           this.players.forEach(p => p.resetDevCard(this.#isActive(p.id)))
           this.#gotoNextState(); this.ongoing_trades = []
         }})
+        // Reset once-per-turn trade bonus flag at the start of each actions phase
+        this.turn_trade_time_added = false
         this.setTimer(this.config.player_turn_time)
         break
 
@@ -411,6 +415,7 @@ export default class Game {
       if (total_requests >= this.config.max_trade_requests) return
       const trade_obj = { pid, giving, asking: taking, id: this.ongoing_trades.length, rejected: [], status: 'open' }
       this.ongoing_trades.push(trade_obj)
+      this.#extendTurnTimeOnFirstTrade()
       this.#io_manager.requestPlayerTrade(pid, trade_obj)
       return
     }
@@ -418,12 +423,14 @@ export default class Game {
     if (['S2','L2','B2','O2','W2'].includes(type)) {
       const res = type[0]
       if (giving[res] === (taking_total * 2) && giving_total === giving[res]) {
+        this.#extendTurnTimeOnFirstTrade()
         this.#tradeResources(player, giving, taking)
       }
     } else if (type === '*3' || type === '*4') {
       const count = type[1]
       const non_multiples = Object.values(giving).filter(v => v%count).length
       if (!non_multiples && giving_total === (taking_total * count)) {
+        this.#extendTurnTimeOnFirstTrade()
         this.#tradeResources(player, giving, taking)
       }
     }
@@ -707,6 +714,17 @@ export default class Game {
     }, time_in_seconds * 1000)
   }
   clearTimer() { clearTimeout(this.#timer) }
+
+  #extendTurnTimeOnFirstTrade() {
+    if (this.turn_trade_time_added) return
+    if (!this.config?.timer) return
+    if (this.state !== ST.PLAYER_ACTIONS) return
+    const left = this.#timer && Math.ceil((this.#timer._idleStart + this.#timer._idleTimeout) / 1000 - process.uptime())
+    const remaining = left > 0 ? left : 0
+    this.turn_trade_time_added = true
+    const bonus = (this.config?.trade_time_bonus_seconds ?? CONST.GAME_CONFIG.trade_time_bonus_seconds ?? 20)
+    this.setTimer(remaining + bonus)
+  }
 
   #canPlayDC(pid) {
     return this.#isActive(pid)

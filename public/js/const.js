@@ -130,6 +130,7 @@ export const GAME_CONFIG = {
   auto_roll: false,
   roll_time: 15,
   player_turn_time: 60,
+  trade_time_bonus_seconds: 20, // Bonus seconds added on first trade of a turn
   robber_drop_time: 30,
   robber_move_time: 30,
   max_trade_requests: 4,
