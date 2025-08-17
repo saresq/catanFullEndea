@@ -189,6 +189,7 @@ export const SOCKET_EVENTS = {
   END_TURN: 'end_turn',
   PLAYER_COLOR_CHANGE: 'waiting_room_player_color_change',
   START_GAME: 'waiting_room_start_game',
+  REMATCH_VOTE: 'rematch_vote',
   // Both Sends…
   INITIAL_SETUP: 'ask/return_initial_setup',
   ROBBER_DROP: 'resources_dropped_to_robber/ack', // Private
@@ -216,6 +217,8 @@ export const SOCKET_EVENTS = {
   LONGEST_ROAD: 'longest_road',
   GAME_END: 'game_end',
   PLAYER_QUIT: 'player_quit',
+  REMATCH_PROGRESS: 'rematch_progress',
+  REMATCH_NEW_GAME: 'rematch_new_game',
 }
 
 export const AUDIO_FILES = {

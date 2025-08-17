@@ -300,7 +300,57 @@ export default class Game {
       this.#ui.alert_ui.alertGameEnd(this.getPlayer(context.pid), context)
       this.#audio_manager.playGameEnd()
       context.longest_road && this.#ui.board_ui.showLongestEdges(this.#player.longest_road_list)
+      // Wire up rematch vote button
+      const $btn = document.querySelector('#game > .alert .vote-rematch')
+      const $time = document.querySelector('#game > .alert .rematch-timer .time-left')
+      if ($btn) {
+        $btn.addEventListener('click', () => {
+          $btn.disabled = true
+          // Visually reflect disabled state similar to login btn-secondary
+          $btn.style.backgroundColor = '#344a2d'
+          $btn.style.cursor = 'not-allowed'
+          $btn.textContent = 'Voted'
+          this.#socket_manager.sendRematchVote()
+        }, { once: true })
+      }
+      // Start 240s countdown display
+      clearInterval(this._rematchInterval)
+      let left = 240
+      if ($time) { $time.textContent = '' + left }
+      this._rematchInterval = setInterval(() => {
+        left -= 1
+        if (left < 0) left = 0
+        if ($time) { $time.textContent = '' + left }
+        if (left <= 0) {
+          clearInterval(this._rematchInterval)
+          // Optionally disable button if still present
+          if ($btn && !$btn.disabled) {
+            $btn.disabled = true
+            $btn.style.backgroundColor = '#344a2d'
+            $btn.style.cursor = 'not-allowed'
+            $btn.textContent = 'Time\'s Up'
+          }
+        }
+      }, 1000)
     }, 3000) // Waiting for other animations to end
+  }
+
+  updateRematchProgressSoc(nonVoterNames = []) {
+    const $status = document.querySelector('#game > .alert .rematch-status')
+    if (!$status) return
+    if (!nonVoterNames.length) { $status.innerHTML = ''; return }
+    const list = nonVoterNames.map(n => `<li>${n}</li>`).join('')
+    $status.innerHTML = `
+      <div style="font-size:3em;line-height:1">🫏</div>
+      <div style="font-size:1em;">Estos burritos todavia no votaron:</div>
+      <ul style="list-style:disc; display:inline-block; text-align:left; margin:6px 0 0 20px; font-size:1em;">${list}</ul>
+    `
+  }
+
+  handleRematchNewGameSoc(redirectMap = {}) {
+    const myPid = this.#player.id
+    const url = redirectMap[myPid] || redirectMap['*']
+    if (url) { window.location.href = url }
   }
 
   // SOC - Update Player Quit

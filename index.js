@@ -203,9 +203,12 @@ app.get('/login', function (req, res) {
     return res.render('login')
   }
 
-  // Joining a game
+  // Joining a game (or reclaiming an existing slot by name)
   const game = GAME_SESSIONS[game_id]
-  const player = game.join(trimmedName)
+  let player = game.players.find(p => p?.name === trimmedName && !p.removed)
+  if (!player) {
+    player = game.join(trimmedName)
+  }
 
   if (!player) {
     return res.redirect('/login?notice=Game is full!')
@@ -242,6 +245,7 @@ app.get('/api/sessions/clear/:id?', function(req, res) {
   res.redirect('/api/sessions')
 })
 
+const REMATCH_INFO = {}
 const SOCK_INFO = {}
 io.on('connection', (socket) => {
   let { game_id, player_id } = parseCookie(socket.handshake.headers.cookie || '')
@@ -250,6 +254,59 @@ io.on('connection', (socket) => {
   // Only setup socket events for the correct game
   GAME_SESSIONS[game_id]?.setUpPlayerSocket(player_id, socket)
   SOCK_INFO[socket.id] = { game_id, player_id }
+
+  // Handle Rematch Vote
+  socket.on(CONST.SOCKET_EVENTS.REMATCH_VOTE, () => {
+    const info = SOCK_INFO[socket.id]
+    const gid = info?.game_id
+    const pid = info?.player_id
+    const game = GAME_SESSIONS[gid]
+    if (!gid || !pid || !game) return
+
+    // Initialize vote tracking for this game if needed
+    if (!REMATCH_INFO[gid]) {
+      REMATCH_INFO[gid] = { votes: new Set() }
+    }
+
+    REMATCH_INFO[gid].votes.add(pid)
+
+    // Compute non-voters from active players at end of game
+    const players = game.players.filter(p => p && !p.removed)
+    const nonVoters = players.filter(p => !REMATCH_INFO[gid].votes.has(p.id))
+
+    if (nonVoters.length === 0) {
+      // Unanimous: create a new game with the same configuration and same host
+      let newId
+      do { newId = generateRandomWords({ min: 2, max: 2, join: '-' }) } while (GAME_SESSIONS[newId])
+
+      const clonedConfig = JSON.parse(JSON.stringify(game.config || {}))
+      const hostPid = game.host_pid
+      const hostPlayer = game.getPlayer(hostPid)
+
+      const newGame = new Game({
+        id: newId,
+        io,
+        host: { name: hostPlayer?.name, id: hostPid },
+        config: clonedConfig,
+        onGameEnd: _id => onGameEnd(_id),
+      })
+      GAME_SESSIONS[newId] = newGame
+
+      // Build per-player redirect map based on names
+      const redirectMap = players.reduce((map, p) => {
+        map[p.id] = `/login?game_id=${encodeURIComponent(newId)}&name=${encodeURIComponent(p.name)}`
+        return map
+      }, {})
+
+      io.to(gid).emit(CONST.SOCKET_EVENTS.REMATCH_NEW_GAME, redirectMap)
+
+      // Cleanup old session tracking
+      delete REMATCH_INFO[gid]
+      onGameEnd(gid)
+    } else {
+      io.to(gid).emit(CONST.SOCKET_EVENTS.REMATCH_PROGRESS, nonVoters.map(p => p.name))
+    }
+  })
 
   socket.on('disconnect', () => {
     const { game_id, player_id } = SOCK_INFO[socket.id]

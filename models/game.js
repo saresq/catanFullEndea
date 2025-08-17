@@ -658,9 +658,14 @@ export default class Game {
         largest_army: player.largest_army && player.open_dev_cards.dK,
         longest_road: player.longest_road && player.longest_road_list.length,
       })
-      this.players.forEach(p => this.removePlayerSocket(p.id))
+      // Keep sockets alive and retain session for potential rematch voting
       this.clearTimer()
-      this.#onGameEnd(this.id)
+      this.state = CONST.GAME_STATES.END
+      // Schedule auto-cleanup after 240s to avoid stale sessions
+      try { clearTimeout(this._endCleanupTimer) } catch(e) {}
+      this._endCleanupTimer = setTimeout(() => {
+        try { this.#onGameEnd(this.id) } catch(e) {}
+      }, 240000)
     }, 200) // Wait for other actions to complete
   }
 

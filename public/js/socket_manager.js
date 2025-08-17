@@ -12,6 +12,12 @@ export default class SocketManager {
 
     /** @event State-Change */
     socket.on(SOC.STATE_CHANGE, (state, active_pid) => game.updateStateChangeSoc(state, active_pid))
+    
+    /** @event Rematch-Progress */
+    socket.on(SOC.REMATCH_PROGRESS, (nonVoterNames) => game.updateRematchProgressSoc(nonVoterNames))
+
+    /** @event Rematch-New-Game */
+    socket.on(SOC.REMATCH_NEW_GAME, (redirectMap) => game.handleRematchNewGameSoc(redirectMap))
 
     /** @event Set-Timer */
     socket.on(SOC.SET_TIMER, (t, pid) => game.setTimerSoc(t, pid))
@@ -104,4 +110,6 @@ export default class SocketManager {
   sendYearOfPlentyResource(res1, res2) { this.#socket.emit(SOC.YEAR_OF_PLENTY, res1, res2) }
 
   saveStatus(message) { this.#socket.emit(SOC.SAVE_STATUS, message) }
+
+  sendRematchVote() { this.#socket.emit(SOC.REMATCH_VOTE) }
 }

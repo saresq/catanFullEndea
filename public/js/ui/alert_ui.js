@@ -120,7 +120,7 @@ export default class AlertUI {
     // Show content in text element only
     const cid = p?.color_id || color_id || pid
     const content = `
-      <div class="game-ended p${pid} pc${cid}">
+      <div class="game-ended p${pid} pc${cid}" style="font-family: EagleLake;">
         <div class="title-emoji">🏆</div>
         <div class="player-name">🎖 ${getName(p)} Won 🎖</div>
         <small>
@@ -130,6 +130,12 @@ export default class AlertUI {
           ${largest_army ? `<div class="pts army" data-type="lArmy"><b>2 VP:</b> Largest Army with ${largest_army} Knights</div>` : ''}
           ${longest_road ? `<div class="pts road" data-type="lRoad"><b>2 VP:</b> Longest Road with ${longest_road} roads</div>` : ''}
         </small>
+        <hr style="margin:10px 0;border-top:1px solid #ccc;"/>
+        <div class="rematch-section" style="text-align:center; font-family: EagleLake;">
+          <button class="vote-rematch" style="background-color:#4a6741;color:var(--sand-color);border:2px solid var(--sand-color);border-radius:50px;font-size:1.1em;font-weight:bold;word-spacing:3px;padding:6px 20px;margin-top:15px;display:inline-block;">Vote Rematch</button>
+          <div class="rematch-timer" style="margin-top:8px;font-size:1em;">⏳ <span class="time-left">240</span>s</div>
+          <div class="rematch-status" style="margin-top:8px;font-size:1em;"></div>
+        </div>
       </div>
     `;
     this.$alert.querySelector('.text').innerHTML = content;
