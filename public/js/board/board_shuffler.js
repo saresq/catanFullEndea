@@ -36,54 +36,113 @@ export default class BoardShuffler {
     let tile_index = 0, number_index = 0
     const new_tiles = shuff_tiles ? arrayShuffle(this.#tiles) : this.#tiles
     const new_numbers = shuff_nums ? arrayShuffle(this.#numbers) : this.#numbers
-    const red_area_tiles = {}
+    // Track which numbers are adjacent to each tile
+    const adjacent_numbers = {}
 
     this.#board.tile_rows.forEach(row => {
       row.forEach(tile => {
         if (tile.type === 'S') return
         tile.type = new_tiles[tile_index++]
-        if (tile.type === 'D') {
-          red_area_tiles[tile.id] = true; return
-        }
+        if (tile.type === 'D') return
+        
         tile.num = new_numbers[number_index++]
         if (!shuff_nums) return
+        
         /**
-         * @description Breaking the Red Numbers from being next to each other
-         * - If I am 6 or 8
-         *   - If this is red zone
-         *      :: check for clear tiles
-         *        - If found :: replace and update the clear tile as red zone
-         *        - Else :: replace me with the first non (6|8) number from the end
-         *            - If not found :: let's pray
-         *   - Else :: mark red zone around me
-         * - Else :: mark clear unless I'm red zoned already
+         * @description Preventing adjacent same numbers and treating 6 and 8 as equivalent
+         * This algorithm ensures that:
+         * 1. No number is adjacent to the same number value
+         * 2. Numbers 6 and 8 (red numbers) are treated as equivalent and never adjacent
+         * 
+         * For each tile, we check if its number conflicts with adjacent tiles:
+         * - A conflict occurs if the same number is adjacent
+         * - A conflict also occurs if a 6 is adjacent to an 8 or vice versa
+         * 
+         * When conflicts are found, we try these strategies in order:
+         * a. Swap with a previously processed tile that would create no new conflicts
+         * b. Swap with a number from the remaining pool that isn't adjacent
+         * c. If no valid swap is found, leave it as is (rare edge case)
          */
-        if (+tile.num === 6 || +tile.num === 8) {
-          if (red_area_tiles[tile.id]) {
-            const clear_tile_i = Object.entries(red_area_tiles).find(([i, v]) => v === false)?.[0]
-            if (clear_tile_i > -1) {
-              const clear_tile = this.#board.findTile(clear_tile_i)
+        
+        // Get all adjacent numbers for this tile
+        const adjacent_nums = new Set()
+        Object.values(tile.adjacent_tiles)
+          .filter(Boolean)
+          .filter(t => t.type !== 'S' && t.type !== 'D' && t.num)
+          .forEach(t => {
+            adjacent_nums.add(+t.num)
+            // Treat 6 and 8 as equivalent (red numbers)
+            if (+t.num === 6) adjacent_nums.add(8)
+            if (+t.num === 8) adjacent_nums.add(6)
+          })
+        
+        // If the current number is already adjacent or (6 adjacent to 8 or vice versa), try to swap
+        if (adjacent_nums.has(+tile.num)) {
+          // First, try to find a tile that doesn't have this number adjacent to it
+          const clear_tile_indices = []
+          
+          // Collect all previously processed tiles that aren't desert or sea
+          for (let i = 0; i < number_index - 1; i++) {
+            const processed_tile = this.#board.findTile(i)
+            if (processed_tile && processed_tile.type !== 'S' && processed_tile.type !== 'D') {
+              clear_tile_indices.push(i)
+            }
+          }
+          
+          // Find a compatible tile to swap with
+          let swapped = false
+          for (const clear_tile_i of clear_tile_indices) {
+            const clear_tile = this.#board.findTile(clear_tile_i)
+            
+            // Get adjacent numbers for the potential swap tile
+            const clear_adjacent_nums = new Set()
+            Object.values(clear_tile.adjacent_tiles)
+              .filter(Boolean)
+              .filter(t => t.type !== 'S' && t.type !== 'D' && t.num)
+              .forEach(t => {
+                clear_adjacent_nums.add(+t.num)
+                // Treat 6 and 8 as equivalent (red numbers)
+                if (+t.num === 6) clear_adjacent_nums.add(8)
+                if (+t.num === 8) clear_adjacent_nums.add(6)
+              })
+            
+            // Check if swapping would create no conflicts
+            // For 6 and 8, we need to check both numbers
+            const tileNumConflict = clear_adjacent_nums.has(+tile.num) || 
+              ((+tile.num === 6 || +tile.num === 8) && (clear_adjacent_nums.has(6) || clear_adjacent_nums.has(8)))
+            
+            const clearTileNumConflict = adjacent_nums.has(+clear_tile.num) || 
+              ((+clear_tile.num === 6 || +clear_tile.num === 8) && (adjacent_nums.has(6) || adjacent_nums.has(8)))
+            
+            if (!tileNumConflict && !clearTileNumConflict) {
+              // Swap the numbers
               const tmp = clear_tile.num
               clear_tile.num = tile.num
               tile.num = tmp
-              red_area_tiles[clear_tile_i] = true
-              Object.values(clear_tile.adjacent_tiles).filter(Boolean).forEach(t => red_area_tiles[t.id] = true)
-            } else {
-              const switch_index = new_numbers.findLastIndex(_ => +_ !== 8 && +_ !== 6)
-              if (switch_index >= number_index) {
-                const tmp = new_numbers[switch_index]
-                new_numbers[switch_index] = tile.num
+              swapped = true
+              break
+            }
+          }
+          
+          // If no compatible tile found, try to swap with a number from the remaining pool
+          if (!swapped) {
+            for (let i = number_index; i < new_numbers.length; i++) {
+              // Check if the number from the pool would conflict with adjacent tiles
+              // For 6 and 8, we need to check both numbers
+              const poolNumConflict = adjacent_nums.has(+new_numbers[i]) || 
+                ((+new_numbers[i] === 6 || +new_numbers[i] === 8) && (adjacent_nums.has(6) || adjacent_nums.has(8)))
+              
+              if (!poolNumConflict) {
+                const tmp = new_numbers[i]
+                new_numbers[i] = tile.num
                 tile.num = tmp
-              } else {
-                // RNGesus 🙏
+                swapped = true
+                break
               }
             }
-          } else {
-            red_area_tiles[tile.id] = true
-            Object.values(tile.adjacent_tiles).filter(Boolean).forEach(t => red_area_tiles[t.id] = true)
           }
-        } else {
-          if (!red_area_tiles[tile.id]) red_area_tiles[tile.id] = false
+          
+          // If still not swapped, we'll have to leave it (RNGesus 🙏)
         }
       })
     })
