@@ -120,7 +120,7 @@ export default class AlertUI {
     // Show content in text element only
     const cid = p?.color_id || color_id || pid
     const content = `
-      <div class="game-ended p${pid} pc${cid}" style="font-family: EagleLake;">
+      <div class="game-ended pc${cid}" style="font-family: EagleLake;">
         <div class="title-emoji">🏆</div>
         <div class="player-name">🎖 ${getName(p)} Won 🎖</div>
         <small>

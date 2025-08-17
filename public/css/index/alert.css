@@ -48,35 +48,35 @@
     .S, .C, .dVp, .army, .road { b { position: relative; margin-right: 40px; } }
   }
   .text .game-ended .player-name { color: #fff; background-color: var(--sand-color-text-dark); }
-  .text .game-ended.p1 .player-name { box-shadow: 0 0 10px 0 var(--player-1-color); background: var(--player-1-color); }
-  .text .game-ended.p2 .player-name { box-shadow: 0 0 10px 0 var(--player-2-color); background: var(--player-2-color); }
-  .text .game-ended.p3 .player-name { box-shadow: 0 0 10px 0 var(--player-3-color); background: var(--player-3-color); }
-  .text .game-ended.p4 .player-name { box-shadow: 0 0 10px 0 var(--player-4-color); background: var(--player-4-color); }
-  .text .game-ended.p5 .player-name { box-shadow: 0 0 10px 0 var(--player-5-color); background: var(--player-5-color); }
-  .text .game-ended.p6 .player-name { box-shadow: 0 0 10px 0 var(--player-6-color); background: var(--player-6-color); }
-  .text .game-ended.p7 .player-name { box-shadow: 0 0 10px 0 var(--player-7-color); background: var(--player-7-color); }
-  .text .game-ended.p8 .player-name { box-shadow: 0 0 10px 0 var(--player-8-color); background: var(--player-8-color); }
+  .text .game-ended.pc1 .player-name { box-shadow: 0 0 10px 0 var(--player-1-color); background: var(--player-1-color); }
+  .text .game-ended.pc2 .player-name { box-shadow: 0 0 10px 0 var(--player-2-color); background: var(--player-2-color); }
+  .text .game-ended.pc3 .player-name { box-shadow: 0 0 10px 0 var(--player-3-color); background: var(--player-3-color); }
+  .text .game-ended.pc4 .player-name { box-shadow: 0 0 10px 0 var(--player-4-color); background: var(--player-4-color); }
+  .text .game-ended.pc5 .player-name { box-shadow: 0 0 10px 0 var(--player-5-color); background: var(--player-5-color); }
+  .text .game-ended.pc6 .player-name { box-shadow: 0 0 10px 0 var(--player-6-color); background: var(--player-6-color); }
+  .text .game-ended.pc7 .player-name { box-shadow: 0 0 10px 0 var(--player-7-color); background: var(--player-7-color); }
+  .text .game-ended.pc8 .player-name { box-shadow: 0 0 10px 0 var(--player-8-color); background: var(--player-8-color); }
   .text .game-ended .S b::after, .text .game-ended .C b::after {
     content: ''; background-size: cover; background-repeat: no-repeat;
     position: absolute; right: -30px; top: 9px;
     width: 30px; height: 30px;
   }
-  .text .game-ended.p1 .S b::after { background-image: url(/images/pieces/settlement-1.png); }
-  .text .game-ended.p2 .S b::after { background-image: url(/images/pieces/settlement-2.png); }
-  .text .game-ended.p3 .S b::after { background-image: url(/images/pieces/settlement-3.png); }
-  .text .game-ended.p4 .S b::after { background-image: url(/images/pieces/settlement-4.png); }
-  .text .game-ended.p5 .S b::after { background-image: url(/images/pieces/settlement-5.png); }
-  .text .game-ended.p6 .S b::after { background-image: url(/images/pieces/settlement-6.png); }
-  .text .game-ended.p7 .S b::after { background-image: url(/images/pieces/settlement-7.png); }
-  .text .game-ended.p8 .S b::after { background-image: url(/images/pieces/settlement-8.png); }
-  .text .game-ended.p1 .C b::after { background-image: url(/images/pieces/city-1.png); }
-  .text .game-ended.p2 .C b::after { background-image: url(/images/pieces/city-2.png); }
-  .text .game-ended.p3 .C b::after { background-image: url(/images/pieces/city-3.png); }
-  .text .game-ended.p4 .C b::after { background-image: url(/images/pieces/city-4.png); }
-  .text .game-ended.p5 .C b::after { background-image: url(/images/pieces/city-5.png); }
-  .text .game-ended.p6 .C b::after { background-image: url(/images/pieces/city-6.png); }
-  .text .game-ended.p7 .C b::after { background-image: url(/images/pieces/city-7.png); }
-  .text .game-ended.p8 .C b::after { background-image: url(/images/pieces/city-8.png); }
+  .text .game-ended.pc1 .S b::after { background-image: url(/images/pieces/settlement-1.png); }
+  .text .game-ended.pc2 .S b::after { background-image: url(/images/pieces/settlement-2.png); }
+  .text .game-ended.pc3 .S b::after { background-image: url(/images/pieces/settlement-3.png); }
+  .text .game-ended.pc4 .S b::after { background-image: url(/images/pieces/settlement-4.png); }
+  .text .game-ended.pc5 .S b::after { background-image: url(/images/pieces/settlement-5.png); }
+  .text .game-ended.pc6 .S b::after { background-image: url(/images/pieces/settlement-6.png); }
+  .text .game-ended.pc7 .S b::after { background-image: url(/images/pieces/settlement-7.png); }
+  .text .game-ended.pc8 .S b::after { background-image: url(/images/pieces/settlement-8.png); }
+  .text .game-ended.pc1 .C b::after { background-image: url(/images/pieces/city-1.png); }
+  .text .game-ended.pc2 .C b::after { background-image: url(/images/pieces/city-2.png); }
+  .text .game-ended.pc3 .C b::after { background-image: url(/images/pieces/city-3.png); }
+  .text .game-ended.pc4 .C b::after { background-image: url(/images/pieces/city-4.png); }
+  .text .game-ended.pc5 .C b::after { background-image: url(/images/pieces/city-5.png); }
+  .text .game-ended.pc6 .C b::after { background-image: url(/images/pieces/city-6.png); }
+  .text .game-ended.pc7 .C b::after { background-image: url(/images/pieces/city-7.png); }
+  .text .game-ended.pc8 .C b::after { background-image: url(/images/pieces/city-8.png); }
   .text .game-ended .dVp b::after {
     content: ''; position: absolute; right: -35px; top: -4px;
     background: #daba6a url(/images/cards_sprite.png) -82px -119px/269px no-repeat;
@@ -135,16 +135,6 @@
     small { opacity: 0.7; }
     .p-name {
       border-left: 5px solid; padding-left: 3px;
-      /* Legacy: id-based color (kept as fallback) */
-      &.p1 { border-color: var(--player-1-color); }
-      &.p2 { border-color: var(--player-2-color); }
-      &.p3 { border-color: var(--player-3-color); }
-      &.p4 { border-color: var(--player-4-color); }
-      &.p5 { border-color: var(--player-5-color); }
-      &.p6 { border-color: var(--player-6-color); }
-      &.p7 { border-color: var(--player-7-color); }
-      &.p8 { border-color: var(--player-8-color); }
-      /* New: color-id based classes */
       &.pc1 { border-color: var(--player-1-color); }
       &.pc2 { border-color: var(--player-2-color); }
       &.pc3 { border-color: var(--player-3-color); }
