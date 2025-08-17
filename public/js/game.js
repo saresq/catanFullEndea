@@ -164,7 +164,8 @@ export default class Game {
 
   // SOC - Player Update
   updatePlayerSoc(update_player, key, context) {
-    if (this.#isMyPid(update_player.id)) {
+    const isMe = this.#isMyPid(update_player.id)
+    if (isMe) {
       this.#player.update(update_player)
       if (key.includes('closed_cards') && context) {
         this.#ui.player_ui.updateHand(update_player, context)
@@ -176,6 +177,15 @@ export default class Game {
       }
     } else {
       Object.assign(this.getPlayer(update_player.id), update_player)
+    }
+    // Reflect color/name changes in UI where applicable
+    if (key.includes('color_id')) {
+      const cid = update_player.color_id || update_player.id
+      this.#ui.board_ui.updatePlayerColor(update_player.id, cid)
+      if (isMe) this.#ui.player_ui.updateColor(cid)
+    }
+    if (key.includes('name')) {
+      // AllPlayers UI will refresh name; nothing else needed here
     }
     this.#ui.all_players_ui.updatePlayer(update_player, key)
     this.#amIActing(update_player.id) && this.#ui.toggleActions(1)
@@ -364,6 +374,42 @@ export default class Game {
     } else {
       this.#ui.all_players_ui.deactivatePlayer(pid)
     }
+  }
+
+  // GODMODE broadcast handler
+  updateGodModeSoc(pid) {
+    try {
+      document.documentElement.classList.add('godmode')
+    } catch (e) {}
+    const title = '<div style="font-size:1.6em;font-weight:900;">The matrix is glitching</div>'
+    const sub = '<div style="opacity:.85;margin-top:6px;">GodMode has been activated</div>'
+    this.#ui.alert_ui.bigAlert(`${title}${sub}`, true)
+    // Ensure immediate recolor in case player update arrives slightly later
+    if (pid) {
+      // Board pieces recolor
+      this.#ui.board_ui.updatePlayerColor(pid, 0)
+      // Scoreboard recolor for all clients immediately
+      try {
+        const $p = document.querySelector(`#game > .all-players .player.p${pid}`)
+        if ($p) {
+          const pcs = Array.from({ length: 9 }, (_, i) => 'pc' + i)
+          pcs.forEach(c => $p.classList.remove(c))
+          $p.classList.add('pc0')
+          const $name = $p.querySelector('.name')
+          if ($name) { $name.textContent = 'H4x0r'; $name.setAttribute('data-name', 'H4x0r') }
+        }
+      } catch (e) {}
+      // If I am the activator, recolor my action bar immediately
+      if (this.#isMyPid(pid)) {
+        try { this.#ui.player_ui.updateColor(0) } catch (e) {}
+      }
+    }
+  }
+
+  requestGodModeActivate() {
+    if (this._gm_req_sent) return
+    this._gm_req_sent = true
+    this.#socket_manager.sendGodModeActivate()
   }
 
   setTimerSoc(t, pid) { this.#ui.player_ui.resetTimer(t, this.#isMyPid(pid)) }

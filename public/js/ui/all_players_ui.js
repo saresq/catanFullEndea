@@ -89,6 +89,17 @@ export default class AllPlayersUI {
     if (player.longest_road) this.$el.dataset.road = player.id
     if (player.largest_army) this.$el.dataset.army = player.id
 
+    // Reflect color change
+    if (key?.includes && key.includes('color_id')) {
+      const classes = $p.className.split(' ').filter(c => !/^pc\d$/.test(c))
+      $p.className = classes.join(' ') + ` pc${player.color_id || player.id}`
+    }
+    // Reflect name change
+    if (key?.includes && key.includes('name')) {
+      const $name = $p.querySelector('.name')
+      if ($name) { $name.textContent = player.name; $name.setAttribute('data-name', player.name) }
+    }
+
     // Update compact text if needed
     if (this.#compact) {
       const $name = $p.querySelector('.name')

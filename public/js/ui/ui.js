@@ -25,7 +25,7 @@ export default class UI {
     this.#board = board
     this.#player = player
 
-    this.board_ui = new BoardUI(board, (loc, id) => game.onBoardClick(loc, id), undefined, (pid) => game.getPlayer(pid)?.color_id || pid)
+    this.board_ui = new BoardUI(board, (loc, id) => game.onBoardClick(loc, id), undefined, (pid) => (game.getPlayer(pid)?.color_id ?? pid))
     this.animation_ui = new AnimationUI()
 
     this.alert_ui = new AlertUI(player, game.config.alert_time, {
@@ -102,6 +102,25 @@ export default class UI {
       if (e.code === 'KeyP') {
         e.preventDefault()
         this.all_players_ui.toggleCompact()
+      }
+      // GodMode: Backspace + iddqd
+      if (e.code === 'Backspace') {
+        this.#temp.gmStart = Date.now()
+        this.#temp.gmBuf = ''
+        try { clearTimeout(this.#temp.gmT) } catch (err) {}
+        this.#temp.gmT = setTimeout(() => { this.#temp.gmStart = null; this.#temp.gmBuf = '' }, 3000)
+      } else if (this.#temp.gmStart && Date.now() - this.#temp.gmStart < 3000) {
+        const k = (e.key || '').toLowerCase()
+        if (k && k.length === 1 && /[a-z]/.test(k)) {
+          this.#temp.gmBuf = (this.#temp.gmBuf || '') + k
+          if (this.#temp.gmBuf.length > 5) this.#temp.gmBuf = this.#temp.gmBuf.slice(-5)
+          if (this.#temp.gmBuf === 'iddqd') {
+            this.#temp.gmStart = null
+            this.#temp.gmBuf = ''
+            try { clearTimeout(this.#temp.gmT) } catch (err) {}
+            this.#game.requestGodModeActivate()
+          }
+        }
       }
     })
   }

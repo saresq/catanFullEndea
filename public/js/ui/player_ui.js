@@ -54,6 +54,12 @@ export default class PlayerUI {
   toggleHandBlur(bool) { this.$hand.classList[bool ? 'add' : 'remove']('blur') }
   togglePlayerBlur(bool) { this.$el.classList[bool ? 'add' : 'remove']('blur') }
 
+  updateColor(cid) {
+    const pcs = Array.from({ length: 9 }, (_, i) => 'pc' + i)
+    pcs.forEach(c => this.$el.classList.remove(c))
+    this.$el.classList.add('pc' + cid)
+  }
+
   /**
    * -----------------
    *   ACTION BAR UI
@@ -63,7 +69,7 @@ export default class PlayerUI {
   renderActionBar() {
     this.$el.classList.add('id-' + this.player.id)
     // Apply selected color class to the player container so UI uses color_id theme
-    const cid = this.player.color_id || this.player.id
+    const cid = (this.player.color_id ?? this.player.id)
     this.$el.classList.add('pc' + cid)
     this.$action_bar.innerHTML = `
       <div class="timer disabled ${this.has_timer ? '' : 'hide'}">0:00</div>

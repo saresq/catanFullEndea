@@ -616,3 +616,11 @@
 #game > .current-player .actions .roll-dice:not(.disabled) { top: -10px; }
 #game > .current-player .actions .timer { top: 0; color: inherit; opacity: 1; text-shadow: none; }
 #game > .current-player .actions .timer.disabled { color: #0004; font-weight: 600; }
+
+
+/* GodMode special color theme mappings for current player (pc0) */
+#game > .current-player.pc0 .actions { background: var(--player-0-color-dark); border-color: var(--player-0-color);} 
+#game > .current-player.pc0 .actions .build-road:not(.disabled) { background: var(--player-0-color-dark); }
+#game > .current-player.pc0 .actions .build-settlement::after { background-image: url(/images/pieces/settlement-0.png); }
+#game > .current-player.pc0 .actions .build-city::after { background-image: url(/images/pieces/city-0.png); }
+#game > .current-player.pc0 .actions .end-turn { color: var(--player-0-color); }

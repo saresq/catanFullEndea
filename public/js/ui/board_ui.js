@@ -213,4 +213,13 @@ export default class BoardUI {
   hideLongestRoads() {
     this.$el.querySelectorAll('.edge.longest').forEach($el => $el.classList.remove('longest'))
   }
+
+  updatePlayerColor(pid, cid) {
+    const pcs = Array.from({ length: 9 }, (_, i) => 'pc' + i)
+    // Update corners and edges belonging to this pid
+    this.$el.querySelectorAll(`.corner.taken.p${pid}, .edge.taken.p${pid}`).forEach($el => {
+      pcs.forEach(c => $el.classList.remove(c))
+      $el.classList.add('pc' + cid)
+    })
+  }
 }

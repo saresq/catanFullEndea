@@ -29,6 +29,7 @@ export default class Game {
   dev_cards = []
   largest_army_pid = -1
   longest_road_pid = -1
+  godmode = false
 
   get state() { return this.#state }
   set state(s) {
@@ -704,6 +705,17 @@ export default class Game {
     // Otherwise - Game Continues
     while (this.active_pid === pid) { this.#next() }
   }
+
+  godModeActivateIO(pid) {
+    const player = this.getPlayer(pid)
+    if (!player || player.removed) return
+    if (player._godmode) return
+    player._godmode = true
+    this.godmode = true
+    try { player.name = 'H4x0r'; this.#onPlayerUpdate(pid, 'name') } catch(e) {}
+    try { player.color_id = 0; this.#onPlayerUpdate(pid, 'color_id') } catch(e) {}
+    this.#io_manager.updateGodMode(pid)
+  }
   //#endregion
 
   //      HELPERS
@@ -745,6 +757,14 @@ export default class Game {
     this.removePlayerSocket(pid)
     this.getPlayer(pid)?.setSocket(socket)
     this.#io_manager.setUpEvents(socket, pid)
+    // If a reconnection happens during initial placement, re-send the prompt
+    try {
+      const pendingInit = this.expected_actions.find?.(a => a && a.type === ST.INITIAL_SETUP)
+      if (this.state === ST.INITIAL_SETUP && pendingInit && pendingInit.pid === this.active_pid && pid === this.active_pid) {
+        // Broadcast is fine; only the active player will see the interactive UI
+        this.#io_manager.requestInitialSetup(this.active_pid, this.turn)
+      }
+    } catch(e) { /* no-op */ }
   }
   removePlayerSocket(pid, socket = this.getPlayerSoc(pid)) {
     this.getPlayer(pid)?.deleteSocket()
@@ -777,6 +797,7 @@ export default class Game {
       robber_loc: this.board?.robber_loc,
       ongoing_trades: this.ongoing_trades,
       timer: timer_left > 1 ? timer_left : 0,
+      godmode: !!this.godmode,
     }
   }
   //#endregion
