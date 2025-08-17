@@ -40,6 +40,7 @@ class Shuffler {
     this.board_ui.render()
     this.accessibility_ui.render()
     this.render()
+    this.updateInfoSection()
   }
 
   render() {
@@ -60,6 +61,8 @@ class Shuffler {
           <span>Shuffle Ports</span>
         </label>
         <div class="button shuffle">Shuffle</div>
+        <div class="button balance-numbers">Balance Numbers</div>
+        <div class="button balance-resources">Balance Resources</div>
         <div class="button text reset">Reset Map</div>
         <div class="button text copy"></div>
       </div>
@@ -87,9 +90,7 @@ class Shuffler {
               return `<option value="${v}" ${sel}>${v}</option>`
             }).join('')}
           </select>
-        </div>
-        <div class="form-row">
-          <label for="winpoints-select">Victory points:</label>
+          <label for="winpoints-select" style="margin-left: 20px;">Victory points:</label>
           <select id="winpoints-select" class="select winpoints-select">
             ${Array.from({ length: 16 }, (_, i) => i + 5).map(v => `<option value="${v}" ${v === 10 ? 'selected' : ''}>${v}</option>`).join('')}
           </select>
@@ -106,6 +107,12 @@ class Shuffler {
           </label>
         </div>
         <div class="button play">Play this Map</div>
+      </div>
+      <hr/>
+      <div class="info-section">
+        <div class="title">Info:</div>
+        <div id="resource-info"></div>
+        <div id="number-info"></div>
       </div>
     `
 
@@ -236,6 +243,14 @@ class Shuffler {
         number: this.$shuffle_numbers.checked,
         port: this.$shuffle_ports.checked,
       })
+    })
+    
+    this.$el.querySelector('.button.balance-numbers').addEventListener('click', e => {
+      this.balanceNumbers()
+    })
+    
+    this.$el.querySelector('.button.balance-resources').addEventListener('click', e => {
+      this.balanceResources()
     })
 
     this.$el.querySelector('.button.reset').addEventListener('click', e => {
@@ -540,6 +555,220 @@ class Shuffler {
     this.#setupBoardClickEvent()
     // Keep the Play link in sync with the current map
     this.updatePlayLinkHref && this.updatePlayLinkHref()
+    // Update the info section
+    this.updateInfoSection()
+  }
+  
+  updateInfoSection() {
+    // Count resources
+    const resourceCounts = {};
+    Object.keys(CONST.TILE_RES).forEach(tileType => {
+      resourceCounts[tileType] = 0;
+    });
+    
+    // Count numbers
+    const numberCounts = {};
+    for (let i = 2; i <= 12; i++) {
+      if (i !== 7) { // 7 is not used in Catan
+        numberCounts[i] = 0;
+      }
+    }
+    
+    // Count desert tiles
+    let desertCount = 0;
+    
+    // Iterate through all tiles to count resources and numbers
+    this.board.tile_rows.forEach(row => {
+      row.forEach(tile => {
+        if (tile.type === 'D') {
+          desertCount++;
+        } else if (tile.type !== 'S') { // Not sea
+          resourceCounts[tile.type]++;
+          if (tile.num) {
+            numberCounts[tile.num]++;
+          }
+        }
+      });
+    });
+    
+    // Update resource info
+    const $resourceInfo = document.getElementById('resource-info');
+    let resourceHtml = '<div class="info-title">Resources:</div>';
+    
+    Object.entries(resourceCounts).forEach(([tileType, count]) => {
+      if (count > 0) {
+        const resourceKey = CONST.TILE_RES[tileType];
+        const resourceName = CONST.RESOURCES[resourceKey];
+        const emoji = CONST.TILE_EMOJIS[tileType];
+        resourceHtml += `<div class="info-item">${emoji} ${resourceName}: ${count}</div>`;
+      }
+    });
+    
+    if (desertCount > 0) {
+      resourceHtml += `<div class="info-item">${CONST.TILE_EMOJIS['D']} Desert: ${desertCount}</div>`;
+    }
+    
+    $resourceInfo.innerHTML = resourceHtml;
+    
+    // Update number info
+    const $numberInfo = document.getElementById('number-info');
+    let numberHtml = '<div class="info-title">Numbers:</div>';
+    
+    Object.entries(numberCounts).forEach(([number, count]) => {
+      if (count > 0) {
+        numberHtml += `<div class="info-item">${number} => ${count} tiles</div>`;
+      }
+    });
+    
+    $numberInfo.innerHTML = numberHtml;
+  }
+  
+  balanceNumbers() {
+    // Get all resource tiles (not sea or desert)
+    const resourceTiles = [];
+    this.board.tile_rows.forEach(row => {
+      row.forEach(tile => {
+        if (tile.type !== 'S' && tile.type !== 'D') {
+          resourceTiles.push(tile);
+        }
+      });
+    });
+    
+    // Remove all numbers from resource tiles
+    resourceTiles.forEach(tile => {
+      tile.num = null;
+    });
+    
+    // Calculate how many of each number we need based on the rules
+    const totalTiles = resourceTiles.length;
+    
+    // 10% should be 6 or 8
+    const highValueCount = Math.round(totalTiles * 0.2);
+    // 40% should be 2, 3, 11, 12
+    const lowValueCount = Math.round(totalTiles * 0.4);
+    // The rest should be the remaining numbers (4, 5, 9, 10)
+    const mediumValueCount = totalTiles - highValueCount - lowValueCount;
+    
+    // Create arrays of numbers according to the distribution
+    const highValueNumbers = [];
+    for (let i = 0; i < highValueCount; i++) {
+      highValueNumbers.push(i % 2 === 0 ? 6 : 8);
+    }
+    
+    const lowValueNumbers = [];
+    for (let i = 0; i < lowValueCount; i++) {
+      const num = [2, 3, 11, 12][i % 4];
+      lowValueNumbers.push(num);
+    }
+    
+    const mediumValueNumbers = [];
+    for (let i = 0; i < mediumValueCount; i++) {
+      const num = [4, 5, 9, 10][i % 4];
+      mediumValueNumbers.push(num);
+    }
+    
+    // Combine all numbers and shuffle them
+    const allNumbers = [...highValueNumbers, ...lowValueNumbers, ...mediumValueNumbers];
+    const shuffledNumbers = this.#shuffleArray(allNumbers);
+    
+    // Assign numbers to tiles
+    resourceTiles.forEach((tile, index) => {
+      if (index < shuffledNumbers.length) {
+        tile.num = shuffledNumbers[index];
+      }
+    });
+    
+    // Generate a new mapkey with our balanced numbers
+    const newMapkey = this.board.generateMapKey();
+    
+    // Use the BoardShuffler to properly distribute the numbers
+    // This will ensure numbers are properly distributed (no adjacent same numbers, etc.)
+    const shuffledMapkey = (new BoardShuffler(newMapkey)).shuffle('number');
+    
+    // Update the board with the shuffled mapkey
+    this.updateBoard(shuffledMapkey.replace(/([+|-])/g, '\n$1'));
+  }
+  
+  #shuffleArray(array) {
+    // Create a copy of the array to avoid modifying the original
+    const shuffled = [...array];
+    
+    // Fisher-Yates shuffle algorithm
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    
+    return shuffled;
+  }
+  
+  balanceResources() {
+    // Get all resource tiles (not sea or desert)
+    const resourceTiles = [];
+    this.board.tile_rows.forEach(row => {
+      row.forEach(tile => {
+        if (tile.type !== 'S' && tile.type !== 'D') {
+          resourceTiles.push(tile);
+        }
+      });
+    });
+    
+    // Count current resources
+    const currentResourceCounts = {};
+    Object.keys(CONST.TILE_RES).forEach(tileType => {
+      currentResourceCounts[tileType] = 0;
+    });
+    
+    resourceTiles.forEach(tile => {
+      currentResourceCounts[tile.type]++;
+    });
+    
+    // Calculate target distribution
+    const totalTiles = resourceTiles.length;
+    const idealCount = Math.floor(totalTiles / 5); // 5 resource types
+    const remainder = totalTiles % 5;
+    
+    // Priority order: Lumber (J), Brick (C), Wheat (F), then others
+    const priorityOrder = ['J', 'C', 'F', 'G', 'M'];
+    
+    // Calculate target counts for each resource
+    const targetCounts = {};
+    priorityOrder.forEach((type, index) => {
+      // Distribute remainder to higher priority resources
+      targetCounts[type] = idealCount + (index < remainder ? 1 : 0);
+    });
+    
+    // Create a new distribution of tile types
+    const newTileTypes = [];
+    
+    // Add tiles according to target counts
+    priorityOrder.forEach(type => {
+      for (let i = 0; i < targetCounts[type]; i++) {
+        newTileTypes.push(type);
+      }
+    });
+    
+    // Shuffle the new tile types
+    const shuffledTypes = this.#shuffleArray(newTileTypes);
+    
+    // Assign new types to tiles, preserving their numbers
+    resourceTiles.forEach((tile, index) => {
+      if (index < shuffledTypes.length) {
+        const oldNum = tile.num; // Save the current number
+        tile.type = shuffledTypes[index]; // Change the tile type
+        tile.num = oldNum; // Restore the number
+      }
+    });
+    
+    // Generate a new mapkey with our balanced resources
+    const newMapkey = this.board.generateMapKey();
+    
+    // Use the BoardShuffler to properly distribute the resources
+    // This will ensure resources are properly distributed across the board
+    const shuffledMapkey = (new BoardShuffler(newMapkey)).shuffle('tile');
+    
+    // Update the board with the shuffled mapkey
+    this.updateBoard(shuffledMapkey.replace(/([+|-])/g, '\n$1'));
   }
 
   updateURL(mapkey) {

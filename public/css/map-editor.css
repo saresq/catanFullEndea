@@ -983,6 +983,12 @@ body {
             display: block;
             font-family: EagleLake;
         }
+        
+        &.balance-numbers, &.balance-resources {
+            margin: 10px 0;
+            display: block;
+            font-family: EagleLake;
+        }
 
         &.reset {
             margin-bottom: 10px;
@@ -1049,6 +1055,23 @@ body {
             font-size: .85em;
             width: 100%;
             min-height: 115px;
+        }
+    }
+    
+    .info-section {
+        .info-title {
+            font-weight: bold;
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
+        
+        .info-item {
+            margin-left: 10px;
+            margin-bottom: 3px;
+        }
+        
+        #resource-info, #number-info {
+            margin-bottom: 15px;
         }
     }
 }
