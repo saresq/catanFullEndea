@@ -94,6 +94,17 @@ class Shuffler {
             ${Array.from({ length: 16 }, (_, i) => i + 5).map(v => `<option value="${v}" ${v === 10 ? 'selected' : ''}>${v}</option>`).join('')}
           </select>
         </div>
+        <div class="form-row">
+          <div class="title">Do not shuffle:</div>
+          <label>
+            <input type="checkbox" name="no-shuffle" id="no-shuffle-resources">
+            <span>Resources</span>
+          </label>
+          <label>
+            <input type="checkbox" name="no-shuffle" id="no-shuffle-numbers">
+            <span>Numbers</span>
+          </label>
+        </div>
         <div class="button play">Play this Map</div>
       </div>
     `
@@ -207,6 +218,8 @@ class Shuffler {
     this.$shuffle_tiles = this.$el.querySelector('#shuffle-tiles')
     this.$shuffle_numbers = this.$el.querySelector('#shuffle-numbers')
     this.$shuffle_ports = this.$el.querySelector('#shuffle-ports')
+    this.$no_shuffle_resources = this.$el.querySelector('#no-shuffle-resources')
+    this.$no_shuffle_numbers = this.$el.querySelector('#no-shuffle-numbers')
     this.#setupEvents()
     this.#setupBoardClickEvent()
   }
@@ -252,7 +265,16 @@ class Shuffler {
       const players = +($playersSelect?.value || 3)
       const win_points = +($winPointsSelect?.value || CONST.GAME_CONFIG.win_points)
       const mapkey = (this.$mapkey_textarea?.value || this.board?.mapkey || CONST.GAME_CONFIG.mapkey)
-      const config = { mapkey, win_points, map_shuffle: 'none' }
+      
+      // Create configuration with do-not-shuffle settings
+      const config = { 
+        mapkey, 
+        win_points, 
+        map_shuffle: 'none',
+        do_not_shuffle_resources: this.$no_shuffle_resources.checked,
+        do_not_shuffle_numbers: this.$no_shuffle_numbers.checked
+      }
+      
       const configParam = encodeURIComponent(JSON.stringify(config))
       const href = `/game/new?name=${encodeURIComponent(hostName)}&players=${encodeURIComponent(players)}&config=${configParam}`
       window.open(href, '_blank')
@@ -541,7 +563,15 @@ class Shuffler {
       const hostName = (localStorage.getItem('player-name') || 'Editor Host').trim() || 'Editor Host'
       const players = 3 // default to 3 players to avoid auto-upsize overrides
       const mapkey = (this.$mapkey_textarea?.value || this.board?.mapkey || CONST.GAME_CONFIG.mapkey)
-      const config = { mapkey, map_shuffle: 'none' }
+      
+      // Include do-not-shuffle settings
+      const config = { 
+        mapkey, 
+        map_shuffle: 'none',
+        do_not_shuffle_resources: this.$no_shuffle_resources?.checked || false,
+        do_not_shuffle_numbers: this.$no_shuffle_numbers?.checked || false
+      }
+      
       const configParam = encodeURIComponent(JSON.stringify(config))
       return `/game/new?name=${encodeURIComponent(hostName)}&players=${encodeURIComponent(players)}&config=${configParam}`
     }

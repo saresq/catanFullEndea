@@ -51,12 +51,9 @@ class LoginUI {
               </select>
             </div>
             <button class="btn btn-primary host">Start Game</button>
-            <div class="section-panel">
-              <div class="section-title">City Colors</div>
-              <div class="city-colors-display">
-                ${[...Array(8).keys()].map(i => `<div class="city-color city-${i + 1}"></div>`).join('')}
-              </div>
-            </div>
+          </div>
+          <div class="map-editor-link">
+            <button class="btn btn-secondary map-editor">Go to Map Editor</button>
           </div>
         </div>
         <div class="section join-section">
@@ -183,6 +180,11 @@ class LoginUI {
     this.$container.querySelectorAll('.name').forEach($_ => $_.addEventListener('input', e => {
       localStorage.setItem('player-name', e.target.value)
     }))
+    
+    // Setup map editor button
+    this.$container.querySelector('.map-editor').addEventListener('click', e => {
+      window.location.href = '/map-editor'
+    })
   }
 }
 
