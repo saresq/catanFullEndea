@@ -5,6 +5,7 @@ import Player from "./player/player.js"
 import UI from "./ui/ui.js"
 import SocketManager from "./socket_manager.js"
 import AudioManager from "./audio_manager.js"
+import { getName, resToText } from "./const_messages.js"
 const ST = CONST.GAME_STATES
 
 export default class Game {
@@ -211,6 +212,22 @@ export default class Game {
 
   // SOC_P - Total Res received
   updateTotalResReceivedInfoSoc(res_obj) { this.#ui.alert_ui.alertResTaken(res_obj) }
+
+  // SOC - Public roll distribution (per-player)
+  updateRollDistributionSoc(dist) {
+    try {
+      if (!Array.isArray(dist)) return
+      const entries = dist
+        .map(({ pid, res }) => ({ p: this.getPlayer(pid), res: res || {} }))
+        .filter(({ res }) => Object.values(res).some(v => v > 0))
+      if (!entries.length) return
+      const parts = entries.map(({ p, res }) => `${getName(p)} took ${resToText(res)}`)
+      const msg = ' :: ' + parts.join('; ')
+      this.#ui.alert_ui.appendStatus(msg)
+    } catch (e) {
+      // Fail-safe: do nothing on formatting errors
+    }
+  }
 
   // SOC - Dev Card taken
   updateDevCardTakenSoc(pid, count, card) {

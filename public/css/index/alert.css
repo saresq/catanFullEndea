@@ -135,6 +135,7 @@
     small { opacity: 0.7; }
     .p-name {
       border-left: 5px solid; padding-left: 3px;
+      /* Legacy: id-based color (kept as fallback) */
       &.p1 { border-color: var(--player-1-color); }
       &.p2 { border-color: var(--player-2-color); }
       &.p3 { border-color: var(--player-3-color); }
@@ -143,6 +144,15 @@
       &.p6 { border-color: var(--player-6-color); }
       &.p7 { border-color: var(--player-7-color); }
       &.p8 { border-color: var(--player-8-color); }
+      /* New: color-id based classes */
+      &.pc1 { border-color: var(--player-1-color); }
+      &.pc2 { border-color: var(--player-2-color); }
+      &.pc3 { border-color: var(--player-3-color); }
+      &.pc4 { border-color: var(--player-4-color); }
+      &.pc5 { border-color: var(--player-5-color); }
+      &.pc6 { border-color: var(--player-6-color); }
+      &.pc7 { border-color: var(--player-7-color); }
+      &.pc8 { border-color: var(--player-8-color); }
     }
   }
 }

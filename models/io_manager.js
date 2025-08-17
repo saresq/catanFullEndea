@@ -78,7 +78,7 @@ export default class IOManager {
 
   updateWaitingRoomColor(pid, color_id) { this.emit(SOC.PLAYER_COLOR_UPDATED, pid, color_id) }
 
-  updateState(state, active_pid) { this.emit(SOC.STATE_CHANGE, state, active_pid) }
+  updateState(state, active_pid, turn) { this.emit(SOC.STATE_CHANGE, state, active_pid, turn) }
 
   updateTimer(time, pid) { this.emit(SOC.SET_TIMER, time, pid) }
 
@@ -102,6 +102,8 @@ export default class IOManager {
     if (!player_socket_id) { return }
     this.#io.to(player_socket_id).emit(SOC.RES_RECEIVED, total_resouces)
   }
+
+  updateRollDistribution(data) { this.emit(SOC.ROLL_DISTRIBUTION, data) }
 
   updateRobbed_Private(player_socket_id) { if (!player_socket_id) { return } this.#io.to(player_socket_id).emit(SOC.ROBBER_DROP) }
 

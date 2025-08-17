@@ -33,7 +33,7 @@ export default class Game {
 
   get state() { return this.#state }
   set state(s) {
-    this.#io_manager.updateState(s, this.active_pid)
+    this.#io_manager.updateState(s, this.active_pid, this.turn)
     this.#state = s
   }
   get active_pid() { return this.#active_pid + 1 }
@@ -564,6 +564,9 @@ export default class Game {
       player.giveCards(res)
       this.#io_manager.updateResourceReceived_Private(this.getPlayerSocId(player.id), res)
     })
+    // Broadcast public summary of this roll's distribution to all players
+    const dist = resource_by_pid.map((res, i) => ({ pid: i + 1, res }))
+    this.#io_manager.updateRollDistribution(dist)
   }
 
   build(pid, piece, loc) {
