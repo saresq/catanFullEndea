@@ -47,8 +47,9 @@
   }
 
   .keyboard-shortcuts {
-    position: fixed; left: 0; top: 0;
-    width: calc(100% - 90px); margin: 30px; padding: 60px 0 30px 30px;
+    position: fixed; left: 50%; top: 0;
+    width: 30%; margin: 30px auto; padding: 60px 0 30px 30px;
+    transform: translateX(-50%);
     background: #fff; border-radius: 10px;
     box-shadow: 0 0 10px 0px #000;
     font-family: Raleway, sans-serif; font-weight: 200;
@@ -77,8 +78,9 @@
   }
 
   .info-zone {
-    position: fixed; left: 0; top: 0;
-    width: calc(100% - 120px); margin: 30px; padding: 30px;
+    position: fixed; left: 50%; top: 0;
+    width: 30%; margin: 30px auto; padding: 30px;
+    transform: translateX(-50%);
     max-height: calc(100% - 120px); overflow: scroll;
     background: #fff; border-radius: 10px;
     box-shadow: 0 0 10px 0px #000;
@@ -117,6 +119,19 @@
       display: flex; align-items: center; justify-content: center;
       transform: scaleX(1.3);
       &:hover, &:focus { color: var(--trade-negative); text-shadow: 0 0 5px #0003;}
+    }
+  }
+}
+
+/* Media query for smaller screens */
+@media screen and (max-width: 768px) {
+  #game > .accessibility-zone {
+    .keyboard-shortcuts {
+      width: 50%;
+    }
+    
+    .info-zone {
+      width: 50%;
     }
   }
 }

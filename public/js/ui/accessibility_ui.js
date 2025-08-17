@@ -101,6 +101,25 @@ export default class AccessibilityUI {
     this.$el.querySelector('.info')?.addEventListener('click', e => this.showHideInfo(true))
     this.$el.querySelector('.keyboard-shortcuts .close')?.addEventListener('click', e => this.showHideKeyboardShortcuts(false))
     this.$el.querySelector('.info-zone .close')?.addEventListener('click', e => this.showHideInfo(false))
+    
+    // Close info displays when clicked outside
+    document.addEventListener('click', e => {
+      const keyboardShortcuts = this.$el.querySelector('.keyboard-shortcuts')
+      const infoZone = this.$el.querySelector('.info-zone')
+      
+      if (keyboardShortcuts && !keyboardShortcuts.classList.contains('hide')) {
+        if (!keyboardShortcuts.contains(e.target) && e.target !== this.$el.querySelector('.question-mark')) {
+          this.showHideKeyboardShortcuts(false)
+        }
+      }
+      
+      if (infoZone && !infoZone.classList.contains('hide')) {
+        if (!infoZone.contains(e.target) && e.target !== this.$el.querySelector('.info')) {
+          this.showHideInfo(false)
+        }
+      }
+    })
+    
     document.addEventListener('keydown', e => {
       switch (e.code) {
         case 'KeyF': this.toggleFullScreen(); break
