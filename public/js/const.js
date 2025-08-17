@@ -120,6 +120,30 @@ export const DEFAULT_MAPKEY_7_8 =
   +S.C5.F6.G11.J4.M2.S(tl_S2)
   +S(tr_*3).S.S.S.S(tl_*3).S`
 
+export const ARGENTUM_MAPKEY =
+  `S.S.S.S.S.S.S.S.S.S.S.S
+  +S.S.G5.D.C6.S.S.S.S.S.S.S
+  +S.F8.M4.F5.J9.S.C6.S.S.S.S.S.S
+  -S.J12.C3.G6.J9.M4.M11.S.S.S.S
+  -S.G8.G4.M10.C12.M6.M5.S.S.S.S
+  -S.S.F2.C6.F10.G4.M11.S.S.S
+  +S.D.G10.G10.J8.J3.S.S.S
+  +S.C8.F11.F10.J4.C6.S.S.S
+  -S.J9.D.C6.M5.J2.J4.S.S
+  +S.J6.G2.C5.J3.M8.F9.S.S
+  -S.G11.M11.M12.F12.M11.C5.S.S
+  +S.M4.F9.J4.F12.S.S.S.S
+  -S.M4.G5.C10.D.S.S.S.S
+  +S.F8.J12.C3.S.S.S.S.S
+  -S.S.F10.F2.M9.S.S.S
+  +S.F9.G12.G2.S.S.S
+  -S.S.F2.J8.G3.S.S
+  +S.G10.F3.C2.S.S.S.S
+  -S.S.G9.G10.S.S.J9.C3.S
+  +S.S.C11.M8.S.S.S.S
+  -S.S.S.J5.C5.S.S.S
+  +S.S.S.S.S.S`
+
 export const GAME_CONFIG = {
   // private_game: true,
   player_count: 3,

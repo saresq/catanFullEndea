@@ -503,6 +503,8 @@ class Shuffler {
     tile && shuffle_options.push('tile')
     number && shuffle_options.push('number')
     port && shuffle_options.push('port')
+    // Use BoardShuffler which handles preventing same numbers from being adjacent
+    // and treats 6 and 8 (red numbers) as equivalent
     const shuffled_mapkey = (new BoardShuffler(mapkey)).shuffle(shuffle_options.join('-'))
     this.updateBoard(shuffled_mapkey.replace(/([+|-])/g, '\n$1'))
   }

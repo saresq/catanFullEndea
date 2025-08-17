@@ -76,6 +76,8 @@ app.get('/game/new', function (req, res) {
       config.map_size = 'Extended'
     } else if (providedConfig.mapkey === CONST.DEFAULT_MAPKEY) {
       config.map_size = 'Standard'
+    } else if (providedConfig.mapkey === CONST.ARGENTUM_MAPKEY) {
+      config.map_size = 'Argentum'
     } else {
       config.map_size = 'Custom'
     }
@@ -135,6 +137,7 @@ app.get('/game/:id', function(req, res) {
       if (mk === CONST.DEFAULT_MAPKEY) map_size = 'Standard'
       else if (mk === CONST.DEFAULT_MAPKEY_5_6) map_size = 'Extended'
       else if (mk === CONST.DEFAULT_MAPKEY_7_8) map_size = 'Large'
+      else if (mk === CONST.ARGENTUM_MAPKEY) map_size = 'Argentum'
       else if (!map_size) map_size = 'Custom'
     }
 

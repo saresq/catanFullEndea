@@ -41,6 +41,7 @@ class LoginUI {
                 <option value="small" selected>Small</option>
                 <option value="medium">Medium</option>
                 <option value="large">Large</option>
+                <option value="argentum">Argentum</option>
               </select>
             </div>
             <div class="section-group">
@@ -146,6 +147,7 @@ class LoginUI {
       let mapkey = CONST.DEFAULT_MAPKEY
       if (map_size === 'medium') mapkey = CONST.DEFAULT_MAPKEY_5_6
       else if (map_size === 'large') mapkey = CONST.DEFAULT_MAPKEY_7_8
+      else if (map_size === 'argentum') mapkey = CONST.ARGENTUM_MAPKEY
 
       const config = { win_points, mapkey }
       const configParam = encodeURIComponent(JSON.stringify(config))
