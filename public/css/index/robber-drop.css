@@ -27,7 +27,7 @@
     margin-right: 20px;
     margin-bottom: 20px;
     border-radius: 20px;
-    &.valued { border-color: transparent; cursor: pointer; }
+    &.valued { border-color: transparent; }
 
     &::before {
       content: '';
@@ -46,6 +46,29 @@
       position: relative; left: -3px; top: -3px;
       &::before { box-shadow: 5px 5px 10px 5px #0009; }
     }
+
+    .ctrl {
+      display: none;
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid #333;
+      background: #222c;
+      color: #fff;
+      line-height: 26px;
+      text-align: center;
+      font-weight: 900;
+      font-size: 2.5em;
+      cursor: pointer;
+      user-select: none;
+    }
+    &:hover .ctrl { display: block; }
+    .ctrl.minus { left: 8px; }
+    .ctrl.plus { right: 8px; }
+    .ctrl.plus.disabled { opacity: 0.5; pointer-events: none; }
 
     &[data-type=S]::before { background-size: 1100px; background-position: -176px -13px; }
     &[data-type=L]::before { background-size: 1109px; background-position: -639px -9px; }
@@ -139,7 +162,7 @@
     .drop-give-button {
       margin: 20px 10px;
       padding: 7px 15px;
-      width: 100%;
+      width: 160px;
       box-sizing: border-box;
       text-align: center;
       background: #ccc;

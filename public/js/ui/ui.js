@@ -67,6 +67,7 @@ export default class UI {
       onDropSubmit: res => game.onGiveToRobber(res),
       onTakenBack: type => this.player_ui.toggleHandResource(type, true),
       playRobberAudio: _ => game.playRobberAudio(),
+      onAddRequested: type => this.player_ui.clickCard(type),
     })
 
     this.trade_ui = new TradeUI(player, game.config.max_trade_requests, {
