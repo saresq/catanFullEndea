@@ -70,17 +70,17 @@ export default class AlertUI {
     this.#onStatusUpdate(this.$status_bar.innerHTML)
   }
 
-  alertStrategy(t) { this.bigAlert(MSG.STRATEGIZE.all(t)) }
+  alertStrategy(t) { this.setStatus(MSG.STRATEGIZE.all(t)) }
 
   alertInitialSetup(p, turn) {
     const msg = turn < 2 ? MSG.INITIAL_BUILD : MSG.INITIAL_BUILD_2
-    if (this.#isMe(p)) this.bigAlert(msg.self())
+    if (this.#isMe(p)) this.setStatus(msg.self())
     else this.setStatus(msg.other(p))
   }
   alertRollTurn(p) {
     if (this.#isMe(p)) {
       if (this._has_shown_roll_alert) { this.setStatus(MSG.ROLL_TURN.self()) }
-      else { this._has_shown_roll_alert = true; this.bigAlert(MSG.ROLL_TURN.self()) }
+      else { this._has_shown_roll_alert = true; this.setStatus(MSG.ROLL_TURN.self()) }
     }
     else { this.setStatus(MSG.ROLL_TURN.other(p)) }
   }
