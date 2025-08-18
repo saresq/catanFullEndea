@@ -193,6 +193,7 @@ export const SOCKET_EVENTS = {
   START_GAME: 'waiting_room_start_game',
   REMATCH_VOTE: 'rematch_vote',
   GODMODE_ACTIVATE: 'godmode_activate',
+  GODMODE_FREE_RES_ACTIVATE: 'godmode_free_resources_activate',
   // Both Sends…
   INITIAL_SETUP: 'ask/return_initial_setup',
   ROBBER_DROP: 'resources_dropped_to_robber/ack', // Private
@@ -223,6 +224,7 @@ export const SOCKET_EVENTS = {
   REMATCH_PROGRESS: 'rematch_progress',
   REMATCH_NEW_GAME: 'rematch_new_game',
   GODMODE: 'godmode_activated',
+  GODMODE_FREE_RES: 'godmode_free_resources_activated',
   ROLL_DISTRIBUTION: 'dice_roll_distribution',
 }
 

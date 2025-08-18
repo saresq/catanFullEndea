@@ -429,10 +429,22 @@ export default class Game {
     }
   }
 
+  updateGodModeFreeResSoc(pid) {
+    const title = '<div style="font-size:1.6em;font-weight:900;">Cheat code unlocked</div>'
+    const sub = '<div style="opacity:.85;margin-top:6px;">Free Resources mode is ON — everyone receives 10 extra resources each round (2 of each)</div>'
+    this.#ui.alert_ui.bigAlert(`${title}${sub}`, true)
+  }
+
   requestGodModeActivate() {
     if (this._gm_req_sent) return
     this._gm_req_sent = true
     this.#socket_manager.sendGodModeActivate()
+  }
+
+  requestGodModeFreeResActivate() {
+    if (this._gmfr_req_sent) return
+    this._gmfr_req_sent = true
+    this.#socket_manager.sendGodModeFreeResActivate()
   }
 
   setTimerSoc(t, pid) { this.#ui.player_ui.resetTimer(t, this.#isMyPid(pid)) }

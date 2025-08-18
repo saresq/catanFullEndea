@@ -31,6 +31,7 @@ export default class Game {
   largest_army_pid = -1
   longest_road_pid = -1
   godmode = false
+  free_resources_active = false
 
   get state() { return this.#state }
   set state(s) {
@@ -225,6 +226,7 @@ export default class Game {
       this.state = drop ? ST.ROBBER_DROP : ST.ROBBER_MOVE
     } else {
       this.#distributeTileResources(dice_total)
+      if (this.free_resources_active) { this.#grantFreeResourcesAll() }
       this.#gotoNextState()
     }
   }
@@ -290,7 +292,10 @@ export default class Game {
         })
       }
     }
-    !knight && this.#gotoNextState()
+    if (!knight) {
+      if (this.free_resources_active) { this.#grantFreeResourcesAll() }
+      this.#gotoNextState()
+    }
   }
   //#endregion
 
@@ -583,6 +588,15 @@ export default class Game {
     this.#io_manager.updateRollDistribution(dist)
   }
 
+  #grantFreeResourcesAll() {
+    const freebies = { S: 2, L: 2, B: 2, O: 2, W: 2 }
+    this.players.forEach(p => {
+      if (!p || p.removed) return
+      p.giveCards(freebies)
+      this.#io_manager.updateResourceReceived_Private(this.getPlayerSocId(p.id), freebies)
+    })
+  }
+
   build(pid, piece, loc) {
     const player = this.getPlayer(pid)
     this.board.build(pid, piece, loc)
@@ -732,6 +746,16 @@ export default class Game {
     try { player.name = 'H4x0r'; this.#onPlayerUpdate(pid, 'name') } catch(e) {}
     try { player.color_id = 0; this.#onPlayerUpdate(pid, 'color_id') } catch(e) {}
     this.#io_manager.updateGodMode(pid)
+  }
+
+  godModeFreeResActivateIO(pid) {
+    const player = this.getPlayer(pid)
+    if (!player || player.removed) return
+    if (this.free_resources_active) return
+    // Only allow after GodMode has been activated in this session
+    if (!this.godmode && !player._godmode) return
+    this.free_resources_active = true
+    this.#io_manager.updateGodModeFreeRes(pid)
   }
   //#endregion
 

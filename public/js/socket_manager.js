@@ -87,6 +87,9 @@ export default class SocketManager {
 
     /** @event GodMode Activated (broadcast) */
     socket.on(SOC.GODMODE, pid => game.updateGodModeSoc(pid))
+
+    /** @event GodMode Free Resources Activated (broadcast) */
+    socket.on(SOC.GODMODE_FREE_RES, pid => game.updateGodModeFreeResSoc(pid))
   }
 
   sendInitialSetup({ settlement_loc, road_loc }) { this.#socket.emit(SOC.INITIAL_SETUP, settlement_loc, road_loc) }
@@ -120,4 +123,6 @@ export default class SocketManager {
   sendRematchVote() { this.#socket.emit(SOC.REMATCH_VOTE) }
 
   sendGodModeActivate() { this.#socket.emit(SOC.GODMODE_ACTIVATE) }
+
+  sendGodModeFreeResActivate() { this.#socket.emit(SOC.GODMODE_FREE_RES_ACTIVATE) }
 }

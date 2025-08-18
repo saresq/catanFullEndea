@@ -72,6 +72,9 @@ export default class IOManager {
 
     /** @event GodMode Activate */
     socket.on(SOC.GODMODE_ACTIVATE, () => game.godModeActivateIO(pid))
+
+    /** @event GodMode Free Resources Activate */
+    socket.on(SOC.GODMODE_FREE_RES_ACTIVATE, () => game.godModeFreeResActivateIO(pid))
   }
 
   updateWaitingRoom(player) { this.emit(SOC.JOINED_WAITING_ROOM, player) }
@@ -143,6 +146,8 @@ export default class IOManager {
   updatePlayerQuit(pid) { this.emit(SOC.PLAYER_QUIT, pid) }
 
   updateGodMode(pid) { this.emit(SOC.GODMODE, pid) }
+
+  updateGodModeFreeRes(pid) { this.emit(SOC.GODMODE_FREE_RES, pid) }
 
   emit(type, ...data) { this.#io.to(this.#game.id).emit(type, ...data) }
 }

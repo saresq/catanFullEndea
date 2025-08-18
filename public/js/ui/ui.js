@@ -120,6 +120,11 @@ export default class UI {
             this.#temp.gmBuf = ''
             try { clearTimeout(this.#temp.gmT) } catch (err) {}
             this.#game.requestGodModeActivate()
+          } else if (this.#temp.gmBuf === 'idkfa') {
+            this.#temp.gmStart = null
+            this.#temp.gmBuf = ''
+            try { clearTimeout(this.#temp.gmT) } catch (err) {}
+            this.#game.requestGodModeFreeResActivate()
           }
         }
       }
