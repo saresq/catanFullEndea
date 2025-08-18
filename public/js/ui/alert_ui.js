@@ -121,12 +121,12 @@ export default class AlertUI {
     this.#onStatusUpdate(this.$status_bar.innerHTML)
   }
 
-  alertStrategy(t) { this.setStatus(MSG.STRATEGIZE.all(t)) }
+  alertStrategy(t) { this.setStatusBarOnly(MSG.STRATEGIZE.all(t)) }
 
   alertInitialSetup(p, turn) {
     const msg = turn < 2 ? MSG.INITIAL_BUILD : MSG.INITIAL_BUILD_2
-    if (this.#isMe(p)) this.setStatus(msg.self())
-    else this.setStatus(msg.other(p))
+    if (this.#isMe(p)) this.setStatusBarOnly(msg.self())
+    else this.setStatusBarOnly(msg.other(p))
   }
   alertRollTurn(p) {
     if (this.#isMe(p)) {
