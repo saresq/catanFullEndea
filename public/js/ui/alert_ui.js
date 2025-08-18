@@ -198,6 +198,19 @@ export default class AlertUI {
           ${largest_army ? `<div class="pts army" data-type="lArmy"><b>2 VP:</b> Largest Army with ${largest_army} Knights</div>` : ''}
           ${longest_road ? `<div class="pts road" data-type="lRoad"><b>2 VP:</b> Longest Road with ${longest_road} roads</div>` : ''}
         </small>
+        
+        <!-- Tabs Section -->
+        <div class="end-tabs" style="margin-top:10px; font-size:0.6em;">
+          <div class="end-tabs-header" style="display:flex; gap:16px; justify-content:center; align-items:flex-end;">
+            <div class="end-tab active" data-tab="overview">Overview</div>
+            <div class="end-tab" data-tab="wip">Work in progress</div>
+          </div>
+          <div class="end-tabs-content" style="margin-top:10px; font-size:1em;">
+            <div class="end-tab-content" data-tab="overview"></div>
+            <div class="end-tab-content hide" data-tab="wip" style="text-align:center;">WIP</div>
+          </div>
+        </div>
+
         <hr style="margin:10px 0;border-top:1px solid #ccc;"/>
         <div class="rematch-section" style="text-align:center; font-family: EagleLake;">
           <button class="vote-rematch" style="background-color:#4a6741;color:var(--sand-color);border:2px solid var(--sand-color);border-radius:50px;font-size:1.1em;font-weight:bold;word-spacing:3px;padding:6px 20px;margin-top:15px;display:inline-block;">Vote Rematch</button>
@@ -211,6 +224,81 @@ export default class AlertUI {
     this.$alert.querySelectorAll('.dVp, .army, .road').forEach($_ => $_.addEventListener('click', e => {
       this.#showCard(e.target.dataset.type || e.target.parentElement.dataset.type)
     }))
+
+    // Build Overview table
+    try {
+      const $overview = this.$alert.querySelector('.end-tab-content[data-tab="overview"]')
+      if ($overview) {
+        const g = window.game
+        const myId = (window.player_obj && window.player_obj.id) || (p && p.id) || null
+        const ids = []
+        if (myId) ids.push(myId)
+        if (g && Array.isArray(g.opponents)) {
+          g.opponents.forEach(o => { if (o && o.id && !ids.includes(o.id)) ids.push(o.id) })
+        }
+        let players = ids.map(id => g && typeof g.getPlayer === 'function' ? g.getPlayer(id) : null).filter(Boolean)
+        // Fallback: include provided winner context if list is empty
+        if (!players.length && p) { players = [p] }
+
+        const rows = players.map(pl => {
+          const total_vps = (pl.public_vps || 0) + (pl.private_vps || 0)
+          const settlements = (pl.pieces && pl.pieces.S && pl.pieces.S.length) || 0
+          const cities = (pl.pieces && pl.pieces.C && pl.pieces.C.length) || 0
+          const dev1vp = (pl.private_vps || 0) // 1VP dev cards count approximated by private VPs
+          const knights = (pl.open_dev_cards && pl.open_dev_cards.dK) || 0
+          const roads = (pl.pieces && pl.pieces.R && pl.pieces.R.length) || 0
+          const color = (pl.color_id ?? pl.id)
+          const name = pl.name || ('P' + pl.id)
+          return { id: pl.id, name, color, total_vps, settlements, cities, dev1vp, knights, roads }
+        }).sort((a, b) => b.total_vps - a.total_vps || a.name.localeCompare(b.name))
+
+        const tableHtml = `
+          <div class="end-overview" style="overflow:auto;">
+            <table class="end-table" style="width:100%; border-collapse:collapse; font-family: EagleLake;">
+              <thead>
+                <tr>
+                  <th style="text-align:left; padding:6px; border-bottom:1px solid #ccc;">Player</th>
+                  <th title="Victory Points" style="padding:6px; border-bottom:1px solid #ccc;">🏆</th>
+                  <th style="padding:6px; border-bottom:1px solid #ccc;">🏠</th>
+                  <th style="padding:6px; border-bottom:1px solid #ccc;">🏢</th>
+                  <th style="padding:6px; border-bottom:1px solid #ccc;">1VP</th>
+                  <th style="padding:6px; border-bottom:1px solid #ccc;">⚔️</th>
+                  <th style="padding:6px; border-bottom:1px solid #ccc;">Roads</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows.map(r => `
+                  <tr class="pc${r.color}">
+                    <td style="text-align:left; padding:6px; border-bottom:1px solid #eee;"><span class="p-name pc${r.color}">${r.name}</span></td>
+                    <td style="text-align:center; padding:6px; border-bottom:1px solid #eee; font-weight:bold;">${r.total_vps}</td>
+                    <td style="text-align:center; padding:6px; border-bottom:1px solid #eee;">${r.settlements}</td>
+                    <td style="text-align:center; padding:6px; border-bottom:1px solid #eee;">${r.cities}</td>
+                    <td style="text-align:center; padding:6px; border-bottom:1px solid #eee;">${r.dev1vp ?? '-'}</td>
+                    <td style="text-align:center; padding:6px; border-bottom:1px solid #eee;">${r.knights}</td>
+                    <td style="text-align:center; padding:6px; border-bottom:1px solid #eee;">${r.roads}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `
+        $overview.innerHTML = tableHtml
+      }
+    } catch (e) { /* noop */ }
+
+    // Tabs behavior
+    try {
+      const $tabs = Array.from(this.$alert.querySelectorAll('.end-tab'))
+      const $contents = Array.from(this.$alert.querySelectorAll('.end-tab-content'))
+      $tabs.forEach(btn => btn.addEventListener('click', () => {
+        const key = btn.dataset.tab
+        $tabs.forEach(b => b.classList.remove('active'))
+        btn.classList.add('active')
+        $contents.forEach(c => {
+          c.classList.toggle('hide', c.dataset.tab !== key)
+        })
+      }))
+    } catch (e) { /* noop */ }
   }
 
   #isMe(p) { return p?.id === this.#player.id }

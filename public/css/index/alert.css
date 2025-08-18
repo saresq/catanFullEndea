@@ -95,6 +95,20 @@
       b::after { box-shadow: 0 0 0px 1px #733f05, 0 0 5px 0 #000; }
     }
   }
+
+  /* End Game Tabs */
+  .end-tabs {
+    margin-top: 10px;
+    font-size: 1.5em;
+    .end-tabs-header { display: flex; gap: 16px; justify-content: center; align-items: flex-end; }
+    .end-tab {
+      padding: 0 8px 6px; cursor: pointer;
+      border-bottom: 2px solid color-mix(in srgb, var(--sand-color-dark) 50%, transparent);
+    }
+    .end-tab.active { border-bottom-color: var(--sand-color-dark); }
+    .end-tabs-content { margin-top: 10px; font-size: 1.5em; }
+    .end-tab-content.hide { display: none; }
+  }
 }
 
 #game > .status-history-zone {
