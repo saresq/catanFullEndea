@@ -369,8 +369,8 @@ export default class Game {
     const list = nonVoterNames.map(n => `<li>${n}</li>`).join('')
     $status.innerHTML = `
       <div style="font-size:3em;line-height:1">🫏</div>
-      <div style="font-size:1em;">Estos burritos todavia no votaron:</div>
-      <ul style="list-style:disc; display:inline-block; text-align:left; margin:6px 0 0 20px; font-size:1em;">${list}</ul>
+      <div style="font-size:0.7em;">Estos burritos todavia no votaron:</div>
+      <ul style="display:inline-block; text-align:left; margin:6px 0 0 20px; font-size:1em;">${list}</ul>
     `
   }
 

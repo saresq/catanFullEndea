@@ -46,6 +46,20 @@ export default class AlertUI {
       e.code === 'Backquote' && (this.closeBigAlert(), this.toggleStatusHistory(false))
       e.code === 'KeyH' && this.toggleStatusHistory()
     })
+
+    // Close History when clicking outside of it (same behavior as About/Shortcuts)
+    if (!this._historyOutsideClickHandlerAdded) {
+      this._historyOutsideClickHandlerAdded = true
+      this._historyOutsideClickHandler = (e) => {
+        const toggleBtn = $('#game > .current-player .status-bar-history')
+        if (this.$status_history && this.$status_history.classList.contains('show')) {
+          if (!this.$status_history.contains(e.target) && e.target !== toggleBtn) {
+            this.toggleStatusHistory(false)
+          }
+        }
+      }
+      document.addEventListener('click', this._historyOutsideClickHandler)
+    }
   }
 
   toggleStatusHistory(show = !this.$status_history.classList.contains('show')) {
