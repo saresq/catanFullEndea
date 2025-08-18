@@ -98,8 +98,9 @@ export default class UI {
 
   #setUpEvents() {
     document.addEventListener('keydown', e => {
-      e.code === 'Backquote' && this.#game.clearDevCardUsage()
-      if (e.code === 'KeyP') {
+      e.code === 'Escape' && this.#game.clearDevCardUsage()
+      if (e.key === 'Shift' && !e.repeat) {
+        if (document.querySelector('input:focus, textarea:focus')) return
         e.preventDefault()
         this.all_players_ui.toggleCompact()
       }

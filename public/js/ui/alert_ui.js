@@ -43,7 +43,7 @@ export default class AlertUI {
     this.$status_history.querySelector('.close').addEventListener('click', e => this.toggleStatusHistory(false))
     $('#game > .current-player .status-bar-history').addEventListener('click', e => this.toggleStatusHistory())
     document.addEventListener('keydown', e => {
-      e.code === 'Backquote' && (this.closeBigAlert(), this.toggleStatusHistory(false))
+      e.code === 'Escape' && (this.closeBigAlert(), this.toggleStatusHistory(false))
       e.code === 'KeyH' && this.toggleStatusHistory()
     })
 

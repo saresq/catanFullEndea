@@ -27,7 +27,8 @@ export default class AccessibilityUI {
       ['Toggle Notification Sounds', 'n'],
       ['Show Status History', 'h'],
       ['Show this section', '?'],
-      ['Cancel action / Close stuff', '\` (Backquote)'],
+      ['Toggle players panel', 'Shift'],
+      ['Cancel action / Close stuff', 'Esc'],
     ]
   ]
 
@@ -134,7 +135,7 @@ export default class AccessibilityUI {
         case 'Minus': this.toggleZoom(true); break
         case 'KeyN': this.toggleMuteNotications(); break
         case 'KeyM': this.toggleMuteBgm(); break
-        case 'Backquote':
+        case 'Escape':
           this.showHideKeyboardShortcuts(false)
           this.showHideInfo(false)
           break

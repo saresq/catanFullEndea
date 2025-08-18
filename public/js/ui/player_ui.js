@@ -86,7 +86,7 @@ export default class PlayerUI {
         <div class="cost-tooltip">${resToText(CONST.COST.DEV_C)}</div>
         <img src="/images/dc-back.png"/>
       </button>
-      <button class="trade disabled" title="Trade (t/\`)">Trade</button>
+      <button class="trade disabled" title="Trade (t)">Trade</button>
       <button class="roll-dice disabled" data-mode="roll" title="Roll Dice (Space)"><span class="label">🎲🎲</span></button>
     `
     this.#setRefs()
@@ -174,7 +174,7 @@ export default class PlayerUI {
             }
           }
           break
-        case 'Backquote':
+        case 'Escape':
           if (this.isAnyActionActive()) {
             this.removeActiveActions()
             this.#onPieceClick('', true)
@@ -384,7 +384,7 @@ export default class PlayerUI {
       this.closeCardPreview(true)
     })
     document.addEventListener('keydown', e => {
-      e.code === 'Backquote' && this.closeCardPreview()
+      e.code === 'Escape' && this.closeCardPreview()
       e.code === 'KeyK' && this.$hand.querySelector('.card.dK')?.click()
     })
   }

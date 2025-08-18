@@ -26,7 +26,7 @@ export default class TradeUI {
     this.$type_selection.innerHTML = Object.entries(CONST.TRADE_OFFERS).map(([type, txt]) =>
       `<button class="trade-type ${type.replace(/\*/, '_')}" data-type="${type}">${type == 'Px' ? txt : ''}</button>`
     ).join('')
-    this.$type_selection.innerHTML += `<button class="cancel" title="Cancel (\`)">x</button>`
+    this.$type_selection.innerHTML += `<button class="cancel" title="Cancel (Esc)">x</button>`
     this.$card_selection.innerHTML = `
       <div class="card-section">${Object.keys(CONST.RESOURCES).map(res => `
         <div class="card-container">
