@@ -165,6 +165,8 @@ export const GAME_CONFIG = {
   mapkey: DEFAULT_MAPKEY,
   /** @type {false|'none'|'all'|'number'|'port'|'tile'|'(combo of number-port-tile)'} */
   map_shuffle: 'all',
+  /** @type {'random'|'balanced'} */
+  dice_mode: 'random',
 }
 
 export const GAME_STATES = {

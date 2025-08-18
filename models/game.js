@@ -3,6 +3,7 @@ import { shuffle } from "../public/js/utils.js"
 import Player from "./player.js"
 import Board from "../public/js/board/board.js"
 import IOManager from "./io_manager.js"
+import { createDice } from "./dice.js"
 
 const ST = CONST.GAME_STATES
 const NEXT_STATE = {
@@ -48,6 +49,8 @@ export default class Game {
     this.config = config
     this.player_count = config.player_count
     this.#io_manager = new IOManager({ game: this, io })
+    // Initialize dice engine based on configuration (random | balanced)
+    this._dice = createDice(this.config?.dice_mode || 'random')
     this.players[host.id - 1] = new Player(host.id, host.name, {
       onChange: (...params) => this.#onPlayerUpdate(...params),
       onVpChange: (pid, vp) => this.#onPlayerVpChange(pid, vp),
@@ -205,11 +208,11 @@ export default class Game {
 
   /** Roll Dice */
   #expectedRoll(pid) {
-    // Roll two dice; for each player's first regular-round roll, forbid total 7
-    let d1 = CONST.ROLL(), d2 = CONST.ROLL()
+    // Use configured dice engine; apply first-round protection by avoiding total 7
     const hasProtection = this._firstRoundRollPids instanceof Set && this._firstRoundRollPids.has(pid)
+    const avoidTotals = hasProtection ? [7] : []
+    const { d1, d2 } = this._dice.roll(avoidTotals)
     if (hasProtection) {
-      while (d1 + d2 === 7) { d1 = CONST.ROLL(); d2 = CONST.ROLL() }
       // consume protection for this player
       this._firstRoundRollPids.delete(pid)
       if (!this._firstRoundRollPids.size) this._firstRoundRollPids = null

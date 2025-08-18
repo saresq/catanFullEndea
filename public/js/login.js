@@ -50,6 +50,13 @@ class LoginUI {
                 ${Array.from({ length: 16 }, (_, i) => i + 5).map(v => `<option value="${v}" ${v === 10 ? 'selected' : ''}>${v}</option>`).join('')}
               </select>
             </div>
+            <div class="section-group">
+              <label class="section-label" for="dice-mode">Dice Mode:</label>
+              <select id="dice-mode" class="select dice-mode">
+                <option value="random" selected>Random</option>
+                <option value="balanced">Balanced</option>
+              </select>
+            </div>
             <button class="btn btn-primary host">Start Game</button>
           </div>
           <div class="map-editor-link">
@@ -146,7 +153,8 @@ class LoginUI {
       else if (map_size === 'large') mapkey = CONST.DEFAULT_MAPKEY_7_8
       else if (map_size === 'argentum') mapkey = CONST.ARGENTUM_MAPKEY
 
-      const config = { win_points, mapkey }
+      const dice_mode = this.$container.querySelector('.host-section select.dice-mode')?.value || 'random'
+      const config = { win_points, mapkey, dice_mode }
       const configParam = encodeURIComponent(JSON.stringify(config))
       window.location.href = `/game/new?name=${encodeURIComponent(host_name)}&players=${encodeURIComponent(player_count)}&config=${configParam}`
     })
