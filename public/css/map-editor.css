@@ -2,10 +2,6 @@
 @import "index/board.css";
 @import "constants.css";
 
-@font-face {
-    font-family: Papyrus;
-    src: url(fonts/Papyrus.ttf);
-}
 
 @font-face {
     font-family: EagleLake;

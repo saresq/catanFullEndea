@@ -186,6 +186,22 @@
         /* &:hover { box-shadow: 0 0 10px 0px var(--sand-color-dark); } */
         &:hover { box-shadow: 0 0 10px 0px var(--sand-color), 0 0 20px 0px var(--sand-color); }
       }
+      &.waiting {
+        background: #ddd;
+        color: #888;
+        cursor: wait;
+        border-color: #bbb;
+        pointer-events: none;
+      }
     }
   }
+}
+
+#game > .robber-drop-zone .waiting-text {
+  display: none;
+  color: var(--sand-color);
+  padding: 30px 10px;
+  font-family: EagleLake, Raleway, sans-serif;
+  font-size: 1.4em;
+  text-align: center;
 }

@@ -377,7 +377,13 @@ export default class Game {
   handleRematchNewGameSoc(redirectMap = {}) {
     const myPid = this.#player.id
     const url = redirectMap[myPid] || redirectMap['*']
-    if (url) { window.location.href = url }
+    if (url) {
+      try {
+        localStorage.setItem('status_history', '[]')
+        localStorage.removeItem('status_history_gid')
+      } catch (e) {}
+      window.location.href = url
+    }
   }
 
   // SOC - Update Player Quit
@@ -526,6 +532,7 @@ export default class Game {
   // During Robber & ??? Trade
   onCardClick(type) {
     if (this.state === ST.ROBBER_DROP) {
+      if (this.#ui.robber_drop_ui.isWaiting && this.#ui.robber_drop_ui.isWaiting()) return
       if (this.#ui.robber_drop_ui.hasReachedGoal()) return
       if (!this.#ui.robber_drop_ui.isResourceSlotAvailable(type)) return
       if (!this.#ui.player_ui.toggleHandResource(type)) return

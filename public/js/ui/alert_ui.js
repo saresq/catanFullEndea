@@ -1,5 +1,6 @@
 import { default as MSG, getName } from "../const_messages.js"
 const $ = document.querySelector.bind(document)
+const TURN_SEP = '<<<TURN_SEPARATOR>>>'
 
 export default class AlertUI {
   #player; #alert_time; #alert_timer;
@@ -15,6 +16,17 @@ export default class AlertUI {
     this.#onStatusUpdate = onStatusUpdate
     this.#showCard = showCard
     this.#alert_time = alert_time
+    // Ensure status history doesn't persist across games (e.g., rematch)
+    try {
+      const gid = (window && window.game_obj && window.game_obj.id) ? ('' + window.game_obj.id) : null
+      if (gid) {
+        const prevGid = localStorage.getItem('status_history_gid')
+        if (prevGid && prevGid !== gid) {
+          localStorage.setItem('status_history', '[]')
+        }
+        localStorage.setItem('status_history_gid', gid)
+      }
+    } catch (e) {}
     try {
       this.#status_history = JSON.parse(localStorage.getItem('status_history'))
       if (!(this.#status_history instanceof Array)) { this.#status_history = [] }
@@ -23,9 +35,10 @@ export default class AlertUI {
 
   render() {
     this.$status_bar.innerHTML = this.#player.last_status || '...'
-    this.$status_history_container.innerHTML = this.#status_history.map(s => `
-      <div class="status">${s}</div>
-    `).join('')
+    this.$status_history_container.innerHTML = this.#status_history.map(s => {
+      if (s === TURN_SEP) return '<hr class="turn-separator">'
+      return `<div class="status">${s}</div>`
+    }).join('')
     this.$alert.querySelector('.close').addEventListener('click', e => this.closeBigAlert())
     this.$status_history.querySelector('.close').addEventListener('click', e => this.toggleStatusHistory(false))
     $('#game > .current-player .status-bar-history').addEventListener('click', e => this.toggleStatusHistory())
@@ -39,6 +52,22 @@ export default class AlertUI {
     this.$status_history.classList[show ? 'add' : 'remove']('show')
   }
 
+  addTurnSeparator() {
+    // Avoid duplicate separators in DOM
+    const firstDom = this.$status_history_container.firstElementChild
+    const needDomInsert = !(firstDom && firstDom.classList.contains('turn-separator'))
+    // Persist separator in history if not already at head
+    if (this.#status_history[0] !== TURN_SEP) {
+      this.#status_history.unshift(TURN_SEP)
+      try { localStorage.setItem('status_history', JSON.stringify(this.#status_history)) } catch (e) {}
+    }
+    if (needDomInsert) {
+      const hr = document.createElement('hr')
+      hr.className = 'turn-separator'
+      this.$status_history_container.prepend(hr)
+    }
+  }
+
   closeBigAlert() {
     clearTimeout(this.#alert_timer); this.$alert.classList.remove('show', 'animate')
   }
@@ -50,7 +79,7 @@ export default class AlertUI {
     $alert_text.innerHTML = message
     clearTimeout(this.#alert_timer)
     this.#alert_timer = setTimeout(_ => this.closeBigAlert(), this.#alert_time * 1000)
-    no_status || this.setStatus(message)
+    no_status || this.setStatusBarOnly(message)
   }
 
   setStatus(message = '...') {
@@ -62,11 +91,33 @@ export default class AlertUI {
     this.#onStatusUpdate(msg)
   }
 
+  setStatusBarOnly(message = '...') {
+    const msg = message.replace(/<br\/?>/g, '. ')
+    this.$status_bar.innerHTML = msg
+    this.#onStatusUpdate(msg)
+  }
+
   appendStatus(message = '...') {
-    this.$status_bar.innerHTML += message.replace(/<br\/?>/g, '. ')
-    this.#status_history[0] = this.$status_bar.innerHTML
-    localStorage.setItem('status_history', JSON.stringify(this.#status_history))
-    this.$status_history_container.querySelector('.status:first-child').innerHTML = this.$status_bar.innerHTML
+    const add = message.replace(/<br\/>?/g, '. ')
+    this.$status_bar.innerHTML += add
+    // Determine index of the latest status (skip leading separator if present)
+    let idx = 0
+    if (this.#status_history[0] === TURN_SEP) idx = 1
+    if (typeof this.#status_history[idx] === 'string' && this.#status_history[idx] !== TURN_SEP) {
+      this.#status_history[idx] = this.$status_bar.innerHTML
+      try { localStorage.setItem('status_history', JSON.stringify(this.#status_history)) } catch (e) {}
+      const firstStatusEl = this.$status_history_container.querySelector('.status')
+      if (firstStatusEl) {
+        firstStatusEl.innerHTML = this.$status_bar.innerHTML
+      } else {
+        this.$status_history_container.innerHTML = `<div class="status">${this.$status_bar.innerHTML}</div>` + this.$status_history_container.innerHTML
+      }
+    } else {
+      // No existing status to append to; create a new one at head
+      this.#status_history.unshift(this.$status_bar.innerHTML)
+      try { localStorage.setItem('status_history', JSON.stringify(this.#status_history)) } catch (e) {}
+      this.$status_history_container.innerHTML = `<div class="status">${this.$status_bar.innerHTML}</div>` + this.$status_history_container.innerHTML
+    }
     this.#onStatusUpdate(this.$status_bar.innerHTML)
   }
 
@@ -79,12 +130,15 @@ export default class AlertUI {
   }
   alertRollTurn(p) {
     if (this.#isMe(p)) {
-      if (this._has_shown_roll_alert) { this.setStatus(MSG.ROLL_TURN.self()) }
-      else { this._has_shown_roll_alert = true; this.setStatus(MSG.ROLL_TURN.self()) }
+      if (this._has_shown_roll_alert) { this.setStatusBarOnly(MSG.ROLL_TURN.self()) }
+      else { this._has_shown_roll_alert = true; this.setStatusBarOnly(MSG.ROLL_TURN.self()) }
     }
-    else { this.setStatus(MSG.ROLL_TURN.other(p)) }
+    else { this.setStatusBarOnly(MSG.ROLL_TURN.other(p)) }
   }
-  alertDiceValue(p, d1, d2, rob_res) { this.setStatus(MSG.DICE_VALUE.all(d1, d2, this.#isNotMe(p), rob_res)) }
+  alertDiceValue(p, d1, d2, rob_res) {
+    this.addTurnSeparator()
+    this.setStatus(MSG.DICE_VALUE.all(d1, d2, this.#isNotMe(p), rob_res))
+  }
   alertBuild(p, piece) { this.setStatus(MSG.BUILDING.all(piece, this.#isNotMe(p))) }
   alertResTaken(res) { this.appendStatus(MSG.RES_TAKEN.all(res)) }
   alertDevCardTaken(p, card) { this.setStatus(MSG.DEVELOPMENT_CARD_BUY.all(this.#isNotMe(p), card)) }

@@ -104,7 +104,7 @@ export const DEFAULT_MAPKEY_5_6 =
   `S(br_*3).S.S.S(bl_W2).S
   -S.M10.G2.J9.F6.S(bl_O2)
   -S(r_L2).F12.C6.G4.C10.M3.S
-  -S.F9.J11.D.J3.M8.G5.S(l_*3)
+  -S.F9.J11.D.J3.M8.D.S(l_*3)
   +S(r_B2).J8.M3.F4.G5.C11.S
   +S.C5.F6.G11.J4.S(tl_S2)
   +S(tr_*3).S.S.S(tl_*3).S`

@@ -154,7 +154,14 @@ export default class Game {
             this.robbing_players.push(pl.id)
           }
         })
-        this.setTimer(this.config.robber_drop_time)
+        // Start drop timer with a handler that only auto-drops remaining players,
+        // then transitions to robber move with a fresh timer.
+        this.setTimer(this.config.robber_drop_time, () => {
+          const pending = [...this.robbing_players]
+          pending.forEach(pid => this.#expectedRobberDrop(pid, { forced: true }))
+          // Clear any remaining expected actions from drop phase to avoid double-calls
+          this.expected_actions.splice(0, this.expected_actions.length)
+        })
         break
 
       case ST.ROBBER_MOVE:
@@ -220,7 +227,7 @@ export default class Game {
   }
 
   /** Robber Drop Resource */
-  #expectedRobberDrop(pid, { drop_count = 0, resources } = {}) {
+  #expectedRobberDrop(pid, { drop_count = 0, resources, forced } = {}) {
     const player = this.getPlayer(pid)
     // Only proceed if the player is actually required to drop now
     if (!this.robbing_players.includes(pid)) { return }
@@ -248,8 +255,12 @@ export default class Game {
     if (rob_pl_index >= 0) { this.robbing_players.splice(rob_pl_index, 1) }
     if (!this.robbing_players.length) {
       this.#gotoNextState()
-      // Avoid re-entrancy into #next() during resolution loop
-      setTimeout(() => this.#next(), 0)
+      // Avoid re-entrancy into #next() during resolution loop, unless forced by timeout
+      if (!forced) {
+        // Cancel the drop timer to avoid racing with the scheduled next
+        this.clearTimer()
+        setTimeout(() => this.#next(), 0)
+      }
     }
   }
 

@@ -12,7 +12,6 @@ export default class SocketManager {
 
     /** @event State-Change */
     socket.on(SOC.STATE_CHANGE, (state, active_pid, turn) => game.updateStateChangeSoc(state, active_pid, turn))
-    socket.on(SOC.STATE_CHANGE, (state, active_pid) => game.updateStateChangeSoc(state, active_pid))
 
     /** @event Rematch-Progress */
     socket.on(SOC.REMATCH_PROGRESS, (nonVoterNames) => game.updateRematchProgressSoc(nonVoterNames))
@@ -70,6 +69,9 @@ export default class SocketManager {
 
     /** @event Year-of-Plenty-Used */
     socket.on(SOC.YEAR_OF_PLENTY, (pid, res_obj) => game.updateYearOfPlentyUsedSoc(pid, res_obj))
+
+    /** @event Dice-Roll-Distribution */
+    socket.on(SOC.ROLL_DISTRIBUTION, dist => game.updateRollDistributionSoc(dist))
 
     /** @event Larget-Army */
     socket.on(SOC.LARGEST_ARMY, (pid, count) => game.updateLargestArmySoc(pid, count))

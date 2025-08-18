@@ -75,12 +75,19 @@ export default class AccessibilityUI {
         <div class="info-zone hide">
           <div class="container">
             <div class="text-container">
-              <div class="title">Catan Full Endea</div>
-              <div class="subtitle">
-                Una ampliación de <a href="https://github.com/bigomega/catan" target="_blank">BigOmega's Catan</a><span>☕️</span>
+              <div class="title">
+                Catan Full Endea
+                <br>
+                <small>
+                  Based on <a href="https://github.com/bigomega/catan" target="_blank">BigOmega's Catan</a>
+                </small>
               </div>
-              <div class="subtitle game-title">Como jugar?</div>
-              <p>Podes leer las reglas desde: <a class="rules" href="https://www.catan.com/sites/default/files/2021-06/catan_base_rules_2020_200707.pdf" target="_blank">Game Rules</a> [Están en ingles]
+              <p>
+                Full endea development by Saresq
+                <br>
+                <br>
+                <a class="rules" href="https://www.catan.com/sites/default/files/2021-06/catan_base_rules_2020_200707.pdf" target="_blank">Game Rules</a>
+              </p>
             </div>
           </div>
           <button class="close">X</button>

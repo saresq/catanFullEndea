@@ -1,18 +1,27 @@
 import * as CONST from "../const.js"
 
 export default class RobberDropUI {
-  #res; #total; #goal; #max
+  #res; #total; #goal; #max; #waiting
   #onDropSubmit; #onTakenBack; #onAddRequested
   $el = document.querySelector('#game > .robber-drop-zone')
   $card_area = this.$el.querySelector('.card-area')
   $dropped_count = this.$el.querySelector('.dropped-count')
   $robber_emoji = this.$el.querySelector('.drop-emoji')
   $drop_submit = this.$el.querySelector('.drop-give-button')
+  $drop_actions = this.$el.querySelector('.drop-actions')
+  $waiting_text = null
 
   constructor({ onDropSubmit, onTakenBack, playRobberAudio, onAddRequested }) {
     this.#onDropSubmit = onDropSubmit
     this.#onTakenBack = onTakenBack
     this.#onAddRequested = onAddRequested
+    this.#waiting = false
+    // Prepare waiting text element (hidden by default)
+    this.$waiting_text = document.createElement('div')
+    this.$waiting_text.className = 'waiting-text'
+    this.$waiting_text.textContent = 'Waiting for other players to discard...'
+    this.$waiting_text.style.display = 'none'
+    this.$el.appendChild(this.$waiting_text)
     this.$robber_emoji.addEventListener('click', e => playRobberAudio())
   }
 
@@ -25,6 +34,13 @@ export default class RobberDropUI {
     this.#max = Object.fromEntries(holding_res.map(k => [k, hand_cards[k]]))
     this.#total = 0
     this.#goal = count
+    // Reset any previous waiting state
+    this.#waiting = false
+    this.$drop_submit.classList.remove('waiting')
+    // Ensure normal UI is visible
+    if (this.$waiting_text) this.$waiting_text.style.display = 'none'
+    this.$card_area.style.display = ''
+    this.$drop_actions.style.display = ''
     this.$card_area.innerHTML = holding_res.map(k => `
       <div class="drop-card" data-type="${k}" data-count="0">
         <button class="ctrl minus" title="Remove one">−</button>
@@ -43,6 +59,8 @@ export default class RobberDropUI {
   #addEventListeners() {
     this.$drop_submit.addEventListener('click', e => {
       if (!e.target.classList.contains('active')) return
+      // Enter waiting state immediately to give visual feedback
+      this.setWaiting(true)
       const clean_obj = Object.fromEntries(Object.entries(this.#res)
         .filter(([k]) => CONST.RESOURCES[k]))
       this.#onDropSubmit(clean_obj)
@@ -51,6 +69,7 @@ export default class RobberDropUI {
     this.$card_area.querySelectorAll('.drop-card .ctrl.minus').forEach($btn => {
       $btn.addEventListener('click', e => {
         e.stopPropagation()
+        if (this.#waiting) return
         const $card = e.currentTarget.closest('.drop-card')
         if (!$card) return
         if (!+$card.dataset.count) return
@@ -66,6 +85,7 @@ export default class RobberDropUI {
     this.$card_area.querySelectorAll('.drop-card .ctrl.plus').forEach($btn => {
       $btn.addEventListener('click', e => {
         e.stopPropagation()
+        if (this.#waiting) return
         if (e.currentTarget.classList.contains('disabled')) return
         if (this.hasReachedGoal()) return
         const $card = e.currentTarget.closest('.drop-card')
@@ -116,4 +136,25 @@ export default class RobberDropUI {
 
   hasReachedGoal() { return this.#total >= this.#goal }
   isResourceSlotAvailable(res_type) { return this.#res[res_type] !== undefined }
+  setWaiting(flag) {
+    this.#waiting = !!flag
+    // Hide controls and cards when waiting; show only waiting text
+    if (flag) {
+      this.$card_area.style.display = 'none'
+      this.$drop_actions.style.display = 'none'
+      if (this.$waiting_text) this.$waiting_text.style.display = 'block'
+    } else {
+      if (this.$waiting_text) this.$waiting_text.style.display = 'none'
+      this.$card_area.style.display = ''
+      this.$drop_actions.style.display = ''
+    }
+    // Ensure submit button is not interactive while waiting
+    this.$drop_submit.classList.remove('active')
+    this.$drop_submit.classList[flag ? 'add' : 'remove']('waiting')
+    // Do not place waiting text on the button; keep button label as Discard or X/# when visible
+    if (!flag) {
+      this.$drop_submit.textContent = (this.#goal === this.#total ? 'Discard' : `${this.#total}/${this.#goal}`)
+    }
+  }
+  isWaiting() { return !!this.#waiting }
 }
