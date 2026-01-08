@@ -97,7 +97,7 @@ export default class PlayerUI {
           <div class="cost-tooltip">${resToText(CONST.COST.DEV_C)}</div>
           <img src="/images/dc-back.png"/>
         </button>
-        <button class="roll-dice disabled" data-mode="roll" title="Roll Dice (Space)"><span class="label">🎲🎲</span></button>
+        <button class="roll-dice disabled" data-mode="roll" title="Roll Dice (Space)"><span class="label">🎲</span></button>
       </div>
     `
     this.#setRefs()
@@ -136,21 +136,46 @@ export default class PlayerUI {
     })
     // Road, Settlement & City Click
     const getEventCb = piece => e => {
-      const classList = this.#$keyToEl(piece).classList
+      const $el = this.#$keyToEl(piece)
+      const classList = $el.classList
       if (classList.contains('disabled')) return
-      if (this.#$keyToEl(piece).dataset.count === '0') return
+      if ($el.dataset.count === '0') return
       this.#onPieceClick(piece, classList.contains('active'))
       classList.toggle('active')
     }
+    const setupLongPress = ($el, piece) => {
+      let timer
+      let isLongPress = false
+      $el.addEventListener('touchstart', e => {
+        isLongPress = false
+        timer = setTimeout(() => {
+          $el.classList.add('show-cost')
+          isLongPress = true
+        }, 500)
+      }, { passive: true })
+      $el.addEventListener('touchend', e => {
+        clearTimeout(timer)
+        $el.classList.remove('show-cost')
+        if (isLongPress) e.preventDefault()
+      })
+      $el.addEventListener('touchcancel', e => {
+        clearTimeout(timer)
+        $el.classList.remove('show-cost')
+      })
+    }
     this.$build_road.addEventListener('click', getEventCb('R'))
+    setupLongPress(this.$build_road, 'R')
     this.$build_settlement.addEventListener('click', getEventCb('S'))
+    setupLongPress(this.$build_settlement, 'S')
     this.$build_city.addEventListener('click', getEventCb('C'))
+    setupLongPress(this.$build_city, 'C')
     // Buy Development Card
     this.$buy_dev_card.addEventListener('click', e => {
       if (e.target.classList.contains('disabled')) return
       if (e.target.dataset.count === '0') return
       this.#onBuyDevCardClick()
     })
+    setupLongPress(this.$buy_dev_card, 'DEV_C')
     // Trade
     this.$trade_btn.addEventListener('click', e => {
       if (this.$trade_btn.classList.contains('disabled')) return

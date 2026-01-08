@@ -29,7 +29,7 @@ export default class AnimationUI {
     const box = document.createElement('div')
     box.className = 'dice-float'
     const mk = (n) => `<div class="dice-mini">${Array(n).fill(0).map(_ => '<span class="pip"></span>').join('')}</div>`
-    box.innerHTML = `${mk(d1)}${mk(d2)}`
+    box.innerHTML = `${mk(d1)}`
     btn.appendChild(box)
     // Auto-remove after 5 seconds
     setTimeout(() => { box.remove() }, 5000)

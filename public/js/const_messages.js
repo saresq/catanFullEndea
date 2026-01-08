@@ -16,14 +16,14 @@ const GAME_MESSAGES = {
     other: p => `${getName(p)} is building their second Settlement and Road.`,
   },
   ROLL_TURN: {
-    self: _ => `Roll your Dice 🎲🎲<br><small>You are allowed to play a development card before and after rolling.</small>`,
-    other: p => `${getName(p)} is rolling 🎲🎲`,
+    self: _ => `Roll your Dice 🎲<br><small>You are allowed to play a development card before and after rolling.</small>`,
+    other: p => `${getName(p)} is rolling 🎲`,
   },
   // PLAYER_TURN: {
   //   self: _ => `It's your turn to take actions. "End Turn" when you're done.`,
   //   other: pname => `It's ${pname}'s turn to act.`,
   // },
-  DICE_VALUE: { all: (n, m, p, res) => `🎲 ${getName(p)} rolled a <b>${n + m}</b><small>(${n}+${m})</small>${res ? ` - 🥷 blocking <div class="res-icon ${res}"></div>` : ''}.` },
+  DICE_VALUE: { all: (n, m, p, res) => `🎲 ${getName(p)} rolled a <b>${n}</b>${res ? ` - 🥷 blocking <div class="res-icon ${res}"></div>` : ''}.` },
   RES_TAKEN: {
     all: res_obj => {
       if (!Object.keys(res_obj).length) { return '' }

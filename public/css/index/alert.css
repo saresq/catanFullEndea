@@ -15,6 +15,16 @@
   text-align: center;
   &.show { z-index: 20; opacity: 1; }
 
+  @media screen and (max-width: 768px) {
+    width: 100%;
+    left: 0;
+    transform: none;
+    top: 0;
+    z-index: 10000;
+    &.show { z-index: 10000; }
+    .text { border-radius: 0; }
+  }
+
   small { font-size: .5em; }
 
   .close {

@@ -55,6 +55,11 @@
       height: 8.5rem;
       transition: all .1s linear;
 
+      @media screen and (max-width: 768px) {
+        width: 5rem;
+        height: 7rem;
+      }
+
       @media screen and (min-width: 769px) {
         margin-right: 0.625rem;
       }
@@ -72,9 +77,16 @@
 
       .card {
         /* cursor: pointer; */
+        --card-scale: 1;
         width: 5.25rem;
         height: 8rem;
         box-sizing: border-box;
+
+        @media screen and (max-width: 768px) {
+          --card-scale: 0.8;
+          width: 4.2rem;
+          height: 6.4rem;
+        }
         /* margin-bottom: -100px; */
         background-color: #ebd290;
         border-radius: 0.625rem;
@@ -86,16 +98,16 @@
 
         &.hide { visibility: hidden; }
 
-        &.S { background-size: 41.25rem; background-position: -6.6rem -0.4875rem; }
-        &.L { background-size: 41.5875rem; background-position: -23.9625rem -0.3375rem; }
-        &.B { background-size: 40.3875rem; background-position: -0.45rem -0.5625rem; }
-        &.O { background-size: 40.275rem; background-position: -12.225rem -0.1875rem; }
-        &.W { background-size: 41.1375rem; background-position: -18.15rem -0.3375rem; }
-        &.dK { background-size: 43.7625rem; background-position: -37.6125rem -0.7875rem; }
-        &.dR { background-size: 40.3875rem; background-position: -0.6rem -9.1875rem; }
-        &.dY { background-size: 41.1375rem; background-position: -12.675rem -9.2625rem; }
-        &.dM { background-size: 40.3875rem; background-position: -6.6375rem -8.9625rem; }
-        &.dVp { background-size: 39.2625rem; background-position: -11.775rem -17.25rem; }
+        &.S { background-size: calc(41.25rem * var(--card-scale)); background-position: calc(-6.6rem * var(--card-scale)) calc(-0.4875rem * var(--card-scale)); }
+        &.L { background-size: calc(41.5875rem * var(--card-scale)); background-position: calc(-23.9625rem * var(--card-scale)) calc(-0.3375rem * var(--card-scale)); }
+        &.B { background-size: calc(40.3875rem * var(--card-scale)); background-position: calc(-0.45rem * var(--card-scale)) calc(-0.5625rem * var(--card-scale)); }
+        &.O { background-size: calc(40.275rem * var(--card-scale)); background-position: calc(-12.225rem * var(--card-scale)) calc(-0.1875rem * var(--card-scale)); }
+        &.W { background-size: calc(41.1375rem * var(--card-scale)); background-position: calc(-18.15rem * var(--card-scale)) calc(-0.3375rem * var(--card-scale)); }
+        &.dK { background-size: calc(43.7625rem * var(--card-scale)); background-position: calc(-37.6125rem * var(--card-scale)) calc(-0.7875rem * var(--card-scale)); }
+        &.dR { background-size: calc(40.3875rem * var(--card-scale)); background-position: calc(-0.6rem * var(--card-scale)) calc(-9.1875rem * var(--card-scale)); }
+        &.dY { background-size: calc(41.1375rem * var(--card-scale)); background-position: calc(-12.675rem * var(--card-scale)) calc(-9.2625rem * var(--card-scale)); }
+        &.dM { background-size: calc(40.3875rem * var(--card-scale)); background-position: calc(-6.6375rem * var(--card-scale)) calc(-8.9625rem * var(--card-scale)); }
+        &.dVp { background-size: calc(39.2625rem * var(--card-scale)); background-position: calc(-11.775rem * var(--card-scale)) calc(-17.25rem * var(--card-scale)); }
       }
 
       .card-count {
@@ -103,6 +115,12 @@
         position: absolute;
         top: -0.75rem;
         left: 1.875rem;
+        @media screen and (max-width: 768px) {
+          top: -0.6rem !important;
+          left: 1.5rem !important;
+          transform: scale(0.8);
+          transform-origin: center;
+        }
         z-index: 10;
         /* background: #fff; */
         background: #5a460e;
@@ -364,12 +382,23 @@
         background: var(--sand-color); color: #0009;
         padding: 0.3125rem 0rem 0.3125rem 0.4375rem;
         border-radius: 6.25rem; border: 0.0625rem solid #000;
+        z-index: 10;
+        pointer-events: none;
+        @media screen and (max-width: 768px) {
+          transform: scale(1.2);
+          .res-icon { transform: scale(0.8); }
+        }
         .res-count[data-count="1"] { display: none; }
         .res-count:has(+ .res-icon.disabled) { color: #0004; }
         .res-icon.disabled { filter: grayscale(1) contrast(0.5) brightness(1.5) opacity(1); }
       }
-      &:is(:hover, :focus, .active) .cost-tooltip {
-        display: block;
+      &:not(.show-cost):is(:hover, :focus, .active) .cost-tooltip {
+        @media screen and (min-width: 769px) {
+          display: block;
+        }
+      }
+      &.show-cost .cost-tooltip {
+        display: block !important;
       }
     }
     .build-road::before { top: 2rem; left: 0.1875rem; }
