@@ -23,7 +23,8 @@ export default class AllPlayersUI {
   render() {
     const all_players = [this.player, ...this.opponents].sort((a, b) => a.id - b.id)
     const win_points = (window.game_obj && window.game_obj.config && window.game_obj.config.win_points) || CONST.GAME_CONFIG.win_points
-    const header = `<div class="players-header"><span class="victory-target" title="Victory points needed to win the game">Win at: ${win_points}</span><button class="toggle-players" title="Toggle players panel (Shift)">▤</button></div>`
+   const isMobile = window.innerWidth <= 768
+    const header = `<div class="players-header"><span class="victory-target" title="Victory points needed to win the game">Win at: ${win_points}<span class="turn-indicator"> - Turn: <span class="dot">●</span></span></span><button class="toggle-players" title="Toggle players panel (Shift)">${isMobile ? '▼' : '▤'}</button></div>`
     this.$el.innerHTML = header + all_players.map(player => `
       <div class="player p${player.id} ${player.color_id ? 'pc' + player.color_id : ''} ${player.removed ? 'deactivated' : ''}" data-id="${player.id}">
         <div class="name" data-name="${player.name}">${player.name}</div>
@@ -42,6 +43,7 @@ export default class AllPlayersUI {
     this.$el.dataset.army = all_players.find(_ => _.largest_army)?.id || '-'
     this.$el.dataset.road = all_players.find(_ => _.longest_road)?.id || '-'
     this.#setRefs()
+    this.#updateTurnIndicator()
     this.$el.querySelector('.toggle-players')?.addEventListener('click', _ => this.toggleCompact())
     this.$el.querySelectorAll('.largest-army').forEach($_ => $_.addEventListener('click', e => {
       if (this.$el.dataset.army !== e.target.dataset.id) return
@@ -74,7 +76,21 @@ export default class AllPlayersUI {
     })
   }
 
-  updateActive(pid) { this.$el.dataset.active = pid }
+  updateActive(pid) {
+    this.$el.dataset.active = pid
+    this.#updateTurnIndicator()
+  }
+
+  #updateTurnIndicator() {
+    const pid = this.$el.dataset.active
+    const $dot = this.$el.querySelector('.turn-indicator .dot')
+    if (!$dot || !pid || pid === '-') return
+    const all_players = [this.player, ...this.opponents]
+    const p = all_players.find(_ => _.id == pid)
+    if (p) {
+      $dot.style.color = `var(--player-${p.color_id || p.id}-color)`
+    }
+  }
 
   updatePlayer(player, key) {
     const { $p, $vps, $res, $dc, $army, $road } = this.player_refs[player.id]
@@ -93,6 +109,7 @@ export default class AllPlayersUI {
     if (key?.includes && key.includes('color_id')) {
       const classes = $p.className.split(' ').filter(c => !/^pc\d$/.test(c))
       $p.className = classes.join(' ') + ` pc${player.color_id || player.id}`
+      if (this.$el.dataset.active == player.id) this.#updateTurnIndicator()
     }
     // Reflect name change
     if (key?.includes && key.includes('name')) {
@@ -105,7 +122,8 @@ export default class AllPlayersUI {
       const $name = $p.querySelector('.name')
       if ($name) {
         const base = $name.getAttribute('data-name') || $name.textContent
-        $name.textContent = `${base} - ${total_vps}`
+        const isMobile = window.innerWidth <= 768
+        $name.textContent = isMobile ? base : `${base} - ${total_vps}`
       }
     }
   }
@@ -118,7 +136,14 @@ export default class AllPlayersUI {
     this.#compact = typeof force === 'boolean' ? force : !this.#compact
     this.$el.classList[this.#compact ? 'add' : 'remove']('compact')
     const btn = this.$el.querySelector('.toggle-players')
-    if (btn) btn.textContent = this.#compact ? '▸' : '▤'
+    const isMobile = window.innerWidth <= 768
+    if (btn) {
+      if (isMobile) {
+        btn.textContent = this.#compact ? '▤' : '▲'
+      } else {
+        btn.textContent = this.#compact ? '▸' : '▤'
+      }
+    }
     // Update names
     this.$el.querySelectorAll('.player').forEach($p => {
       const $name = $p.querySelector('.name')
@@ -127,7 +152,7 @@ export default class AllPlayersUI {
       const base = $name.getAttribute('data-name') || $name.textContent
       if (this.#compact) {
         $name.setAttribute('data-name', base)
-        $name.textContent = `${base} - ${$vps.textContent}`
+        $name.textContent = isMobile ? base : `${base} - ${$vps.textContent}`
       } else {
         const original = $name.getAttribute('data-name') || base
         $name.textContent = original

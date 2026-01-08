@@ -1,14 +1,15 @@
 .icon {
   width: 30px; height: 30px; box-sizing: border-box;
   margin-bottom: 10px; margin-right: 10px;
-  background-color: #fff3; color: #fffc;
+  background-color: #000a; color: #fff;
   font-family: monospace; font-size: 1.25rem;
-  border: 2px solid; border-radius: 100px;
-  opacity: 0.5; position: relative;
+  border: 2px solid #fff4; border-radius: 100px;
+  opacity: 0.85; position: relative;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
   &:hover, &:focus {
-    opacity: 1; box-shadow: 0 0 10px 0 #0009; color: #fff; background-color: #0009;
+    opacity: 1; box-shadow: 0 0 10px 0 #000; color: #fff; background-color: #000;
     &::after {
       content: attr(title); white-space: nowrap; position: absolute; left: 35px; top: 2px;
       background: inherit; font-size: 0.8125rem; font-family: Raleway; font-weight: normal;
@@ -25,7 +26,7 @@
   pointer-events: auto;
 
   .settings-gear {
-    opacity: 0.8;
+    opacity: 0.9;
     &::before { content: '⚙'; }
   }
   .icons-container {
@@ -52,36 +53,35 @@
   }
   .question-mark { padding-top: 2px; font-weight: bold; }
   .quit {
-    font-family: Raleway, sans-serif; position: relative;
-    b::before { content: 'o'; position: absolute; top: 0px; left: 6px; font-size: 1.5625rem; line-height: 1.5625rem; font-weight: normal; }
-    b::after { content: '|'; position: absolute; top: 0px; left: 11px; font-size: 0.75rem; font-weight: bold; font-family: EagleLake; }
     &:hover, &:focus { opacity: 1; box-shadow: 0 0 10px 0 #0009; color: #fff; background-color: red; }
   }
 
   .keyboard-shortcuts {
-    position: fixed; left: 50%; top: 0;
-    width: 30%; margin: 30px auto; padding: 60px 0 30px 30px;
+    position: fixed; left: 50%; top: 5vh;
+    width: clamp(300px, 40vw, 800px); margin: 0 auto;
+    padding: 4rem 2rem 2rem;
     transform: translateX(-50%);
-    background: #fff; border-radius: 10px;
-    box-shadow: 0 0 10px 0px #000;
+    max-height: 85vh; overflow: auto;
+    background: #fff; border-radius: 1rem;
+    box-shadow: 0 0 1rem rgba(0,0,0,0.5);
     font-family: Raleway, sans-serif; font-weight: 200;
     display: flex; justify-content: flex-start; flex-wrap: wrap;
     &::before {
-      content: 'Keyboard Shortcuts'; font-size: 1.5em;
-      margin-bottom: 20px;
-      position: absolute; top: 20px; left: 30px;
+      content: 'Keyboard Shortcuts'; font-size: 1.5rem;
+      margin-bottom: 1.25rem;
+      position: absolute; top: 1.25rem; left: 2rem;
     }
-    .shortcuts-container { display: inline-block; margin-right: 30px; flex-grow: 1; }
-    .shortcut { display: flex; padding: 10px; border-bottom: 1px solid #ccc; color: #666; }
+    .shortcuts-container { display: inline-block; margin-right: 2rem; flex: 1 1 15rem; }
+    .shortcut { display: flex; padding: 0.6rem; border-bottom: 1px solid #ccc; color: #666; }
     .shortcut:last-child { border-bottom: none; }
-    .title { flex-grow: 1; margin-right: 30px; font-size: .9em; }
-    .key { font-family: monospace; color: #000; }
+    .title { flex-grow: 1; margin-right: 2rem; font-size: 0.9rem; }
+    .key { font-family: monospace; color: #000; font-weight: 600; }
     &.hide { display: none; }
 
     .close {
-      position: absolute; top: 20px; right: 20px;
-      font-size: 1.25rem; color: #ccc; font-family: monospace; font-weight: 600;
-      height: 30px; width: 30px;
+      position: absolute; top: 1.25rem; right: 1.25rem;
+      font-size: 1.5rem; color: #ccc; font-family: monospace; font-weight: 600;
+      height: 2rem; width: 2rem;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       transform: scaleX(1.3);
@@ -90,43 +90,38 @@
   }
 
   .info-zone {
-    position: fixed; left: 50%; top: 0;
-    width: 30%; margin: 30px auto; padding: 30px;
+    position: fixed; left: 50%; top: 5vh;
+    width: clamp(300px, 40vw, 800px); margin: 0 auto;
+    padding: 2rem;
     transform: translateX(-50%);
-    max-height: calc(100% - 120px); overflow: scroll;
-    background: #fff; border-radius: 10px;
-    box-shadow: 0 0 10px 0px #000;
+    max-height: 85vh; overflow: auto;
+    background: #fff; border-radius: 1rem;
+    box-shadow: 0 0 1rem rgba(0,0,0,0.5);
     font-family: Raleway, sans-serif;
     &.hide { display: none; }
 
     .container {
       display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center;
-      .img-container {
-        display: flex; flex-direction: column; align-items: center;
-        img.logo { padding-top: 18px; margin-left: -65px; width: 80px; }
-        img.dp { width: 200px; padding: 20px 30px 30px 0; }
-      }
       .text-container {
-        flex: 400px 1 0; color: #333;
-        .title { font-size: 3em; font-weight: 600; font-family: Macondo; }
-        .game-title { margin-top: 1.5em; }
+        flex: 1 1 20rem; color: #333;
+        .title { font-size: 2.5rem; font-weight: 600; font-family: Macondo; line-height: 1.1; }
+        .game-title { margin-top: 1rem; }
         .subtitle {
-          font-size: 1.2em;
-          a { font-size: 1.3em; background-color: inherit; color: #8fc045; &:hover { background-color: inherit; filter: brightness(.75);} }
+          font-size: 1.1rem;
+          a { font-size: 1.2rem; background-color: inherit; color: #8fc045; &:hover { background-color: inherit; filter: brightness(.75);} }
         }
-        .rules { font-size: 1.3em; font-family: EagleLake; }
-        b { background-color: #cfeaa5; padding: 0 3px; font-family: EagleLake; font-size: .9em; word-spacing: 2px; }
+        .rules { font-size: 1.2rem; font-family: EagleLake; }
+        b { background-color: #cfeaa5; padding: 0.1rem 0.3rem; font-family: EagleLake; font-size: 0.9rem; word-spacing: 0.1rem; }
         a { color: inherit; &:hover { background-color: #8fc045; }}
-        p { line-height: 2em; }
-        .cheers{ font-size: 2em; line-height: 0; color: #3339; font-family: Macondo; span { color: #000; font-size: 1.5em; } }
-        img.logo { max-width: 100px; }
+        p { line-height: 1.6; margin: 1rem 0; }
+        .cheers{ font-size: 1.8rem; line-height: 1.2; color: #3339; font-family: Macondo; span { color: #000; font-size: 1.4rem; } }
       }
     }
 
     .close {
-      position: absolute; top: 20px; right: 20px;
-      font-size: 1.25rem; color: #ccc; font-family: Macondo; font-weight: 600;
-      height: 30px; width: 30px;
+      position: absolute; top: 1rem; right: 1rem;
+      font-size: 1.5rem; color: #ccc; font-family: Macondo; font-weight: 600;
+      height: 2rem; width: 2rem;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       transform: scaleX(1.3);
@@ -142,17 +137,25 @@
   pointer-events: auto;
 
   .status-bar-history::before { content: '⌛️'; }
+  .show-end-game {
+    background-color: #ffd70066; color: gold; border-color: gold;
+    &::before { content: '🏆'; }
+  }
 }
 
 /* Media query for smaller screens */
 @media screen and (max-width: 768px) {
   .accessibility-zone, .status-history-icon-zone {
     position: relative;
-    top: auto; right: auto; left: auto;
-    margin-top: 5px;
+    top: auto; left: auto; right: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin: 5px 10px 0;
   }
-  .status-history-icon-zone { margin-left: 10px; }
+  .accessibility-zone .icons-container { display: flex; flex-direction: row; flex-wrap: wrap; }
+  .icon { margin-bottom: 5px; margin-right: 5px; }
   .icon::after { display: none; } /* Hide tooltips on mobile */
+  .accessibility-zone .zoom-in, .accessibility-zone .zoom-out { display: none; }
   
   .accessibility-zone .keyboard-shortcuts {
     width: 80%;

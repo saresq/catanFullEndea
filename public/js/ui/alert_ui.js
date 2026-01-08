@@ -66,6 +66,16 @@ export default class AlertUI {
     this.$status_history.classList[show ? 'add' : 'remove']('show')
   }
 
+  showEndGameButton(onClick) {
+    const $container = $('#game .status-history-icon-zone')
+    if (!$container || $('#game .show-end-game')) return
+    const $btn = document.createElement('button')
+    $btn.className = 'icon show-end-game'
+    $btn.title = 'Show End Game Screen'
+    $btn.addEventListener('click', onClick)
+    $container.prepend($btn)
+  }
+
   addTurnSeparator() {
     // Avoid duplicate separators in DOM
     const firstDom = this.$status_history_container.firstElementChild
@@ -179,43 +189,44 @@ export default class AlertUI {
   alertLargestArmy(p, count) { this.setStatus(MSG.LARGEST_ARMY.all(this.#isNotMe(p), count)) }
   alertLongestRoad(p, len) { this.setStatus(MSG.LONGEST_ROAD.all(this.#isNotMe(p), len)) }
   alertPlayerQuit(p, end) { this.bigAlert(MSG.PLAYER_QUIT.all(p, end)) }
-  alertGameEnd(p, context) {
+  alertGameEnd(p, context, game) {
     this.setStatus(MSG.END_STATUS.all(this.#isNotMe(p), context.vps))
-    this.renderEndGameAlert(this.#isNotMe(p), context)
+    this.renderEndGameAlert(this.#isNotMe(p), context, game)
   }
 
-  renderEndGameAlert(p, { pid, color_id, S, C, dVp, largest_army, longest_road }) {
+  renderEndGameAlert(p, { pid, color_id, S, C, dVp, largest_army, longest_road }, game) {
     // Show content in text element only
     const cid = p?.color_id || color_id || pid
     const content = `
-      <div class="game-ended pc${cid}" style="font-family: EagleLake;">
+      <div class="game-ended pc${cid}">
         <div class="title-emoji">🏆</div>
         <div class="player-name">🎖 ${getName(p)} Won 🎖</div>
         <small>
-          ${S ? `<div class="pts S"><b>${S} VP:</b> ${S} Settlement</div>` : ''}
-          ${C ? `<div class="pts C"><b>${C * 2} VP:</b> ${C} City</div>` : ''}
-          ${dVp ? `<div class="pts dVp" data-type="dVp"><b>${dVp} VP:</b> ${dVp} Development Card</div>` : ''}
-          ${largest_army ? `<div class="pts army" data-type="lArmy"><b>2 VP:</b> Largest Army with ${largest_army} Knights</div>` : ''}
-          ${longest_road ? `<div class="pts road" data-type="lRoad"><b>2 VP:</b> Longest Road with ${longest_road} roads</div>` : ''}
+          ${S ? `<div class="pts S"><div class="pts-icon"></div><b>${S} VP</b> <span>${S} Settlement${S>1?'s':''}</span></div>` : ''}
+          ${C ? `<div class="pts C"><div class="pts-icon"></div><b>${C * 2} VP</b> <span>${C} Cit${C>1?'ies':'y'}</span></div>` : ''}
+          ${dVp ? `<div class="pts dVp" data-type="dVp"><div class="pts-icon"></div><b>${dVp} VP</b> <span>${dVp} Card${dVp>1?'s':''}</span></div>` : ''}
+          ${largest_army ? `<div class="pts army" data-type="lArmy"><div class="pts-icon"></div><b>2 VP</b> <span>Largest Army (${largest_army})</span></div>` : ''}
+          ${longest_road ? `<div class="pts road" data-type="lRoad"><div class="pts-icon"></div><b>2 VP</b> <span>Longest Road (${longest_road})</span></div>` : ''}
         </small>
         
         <!-- Tabs Section -->
-        <div class="end-tabs" style="margin-top:10px; font-size:0.6em;">
-          <div class="end-tabs-header" style="display:flex; gap:16px; justify-content:center; align-items:flex-end;">
+        <div class="end-tabs">
+          <div class="end-tabs-header">
             <div class="end-tab active" data-tab="overview">Overview</div>
-            <div class="end-tab" data-tab="wip">Work in progress</div>
+            <div class="end-tab" data-tab="wip">Stats (WIP)</div>
           </div>
-          <div class="end-tabs-content" style="margin-top:10px; font-size:1em;">
+          <div class="end-tabs-content">
             <div class="end-tab-content" data-tab="overview"></div>
-            <div class="end-tab-content hide" data-tab="wip" style="text-align:center;">WIP</div>
+            <div class="end-tab-content hide" data-tab="wip" style="text-align:center;">More detailed stats coming soon...</div>
           </div>
         </div>
 
-        <hr style="margin:10px 0;border-top:1px solid #ccc;"/>
-        <div class="rematch-section" style="text-align:center; font-family: EagleLake;">
-          <button class="vote-rematch" style="background-color:#4a6741;color:var(--sand-color);border:2px solid var(--sand-color);border-radius:50px;font-size:1.1em;font-weight:bold;word-spacing:3px;padding:6px 20px;margin-top:15px;display:inline-block;">Vote Rematch</button>
-          <div class="rematch-timer" style="margin-top:8px;font-size:1em;">⏳ <span class="time-left">240</span>s</div>
-          <div class="rematch-status" style="margin-top:8px;font-size:1em;"></div>
+        <div class="rematch-section">
+          <div class="rematch-vote-row">
+            <button class="vote-rematch">Vote Rematch</button>
+            <div class="rematch-timer">⏳ <span class="time-left">240</span>s</div>
+          </div>
+          <div class="rematch-status"></div>
         </div>
       </div>
     `;
@@ -229,7 +240,7 @@ export default class AlertUI {
     try {
       const $overview = this.$alert.querySelector('.end-tab-content[data-tab="overview"]')
       if ($overview) {
-        const g = window.game
+        const g = game || window.game
         const myId = (window.player_obj && window.player_obj.id) || (p && p.id) || null
         const ids = []
         if (myId) ids.push(myId)
@@ -253,29 +264,29 @@ export default class AlertUI {
         }).sort((a, b) => b.total_vps - a.total_vps || a.name.localeCompare(b.name))
 
         const tableHtml = `
-          <div class="end-overview" style="overflow:auto;">
-            <table class="end-table" style="width:100%; border-collapse:collapse; font-family: EagleLake;">
+          <div class="end-overview">
+            <table class="end-table">
               <thead>
                 <tr>
-                  <th style="text-align:left; padding:6px; border-bottom:1px solid #ccc;">Player</th>
-                  <th title="Victory Points" style="padding:6px; border-bottom:1px solid #ccc;">🏆</th>
-                  <th style="padding:6px; border-bottom:1px solid #ccc;">🏠</th>
-                  <th style="padding:6px; border-bottom:1px solid #ccc;">🏢</th>
-                  <th style="padding:6px; border-bottom:1px solid #ccc;">1VP</th>
-                  <th style="padding:6px; border-bottom:1px solid #ccc;">⚔️</th>
-                  <th style="padding:6px; border-bottom:1px solid #ccc;">Roads</th>
+                  <th style="text-align:left;">Player</th>
+                  <th title="Victory Points">🏆</th>
+                  <th>🏠</th>
+                  <th>🏢</th>
+                  <th>1VP</th>
+                  <th>⚔️</th>
+                  <th>Roads</th>
                 </tr>
               </thead>
               <tbody>
                 ${rows.map(r => `
                   <tr class="pc${r.color}">
-                    <td style="text-align:left; padding:6px; border-bottom:1px solid #eee;"><span class="p-name pc${r.color}">${r.name}</span></td>
-                    <td style="text-align:center; padding:6px; border-bottom:1px solid #eee; font-weight:bold;">${r.total_vps}</td>
-                    <td style="text-align:center; padding:6px; border-bottom:1px solid #eee;">${r.settlements}</td>
-                    <td style="text-align:center; padding:6px; border-bottom:1px solid #eee;">${r.cities}</td>
-                    <td style="text-align:center; padding:6px; border-bottom:1px solid #eee;">${r.dev1vp ?? '-'}</td>
-                    <td style="text-align:center; padding:6px; border-bottom:1px solid #eee;">${r.knights}</td>
-                    <td style="text-align:center; padding:6px; border-bottom:1px solid #eee;">${r.roads}</td>
+                    <td style="text-align:left;"><span class="p-name pc${r.color}">${r.name}</span></td>
+                    <td style="font-weight:bold;">${r.total_vps}</td>
+                    <td>${r.settlements}</td>
+                    <td>${r.cities}</td>
+                    <td>${r.dev1vp ?? '-'}</td>
+                    <td>${r.knights}</td>
+                    <td>${r.roads}</td>
                   </tr>
                 `).join('')}
               </tbody>

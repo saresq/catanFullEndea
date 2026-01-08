@@ -5,135 +5,207 @@
   pointer-events: none;
   transition: opacity .25s linear, visibility .25s linear;
   position: fixed;
-  top: 20px;
+  top: 1.25rem;
   left: 50%;
   transform: translateX(-50%);
-  width: 50%;
-  font-family: Macondo, fantasy;
+  width: 90%;
+  max-width: 37.5rem;
+  font-family: EagleLake, Macondo, fantasy;
   font-weight: bold;
-  font-size: 1.8em;
+  font-size: 1.2rem;
   line-height: 1.5em;
   letter-spacing: 1px;
   text-align: center;
-  &.show { z-index: 20; opacity: 1; visibility: visible; pointer-events: auto; }
+  &.show { z-index: 70; opacity: 1; visibility: visible; pointer-events: auto; }
 
   @media screen and (max-width: 768px) {
-    width: 100%;
-    left: 0;
-    transform: none;
-    top: 0;
-    z-index: -10;
+    width: 98%;
+    top: 0.3rem;
+    font-size: 1rem;
     &.show { z-index: 10000; }
-    .text { border-radius: 0; max-height: 100vh; }
+    .text { border-radius: 0.5rem; max-height: 95vh; padding: 1rem 0.5rem; }
   }
 
-  small { font-size: .5em; }
+  small { font-size: .8em; }
 
   .close {
-    position: absolute; right: 0; top: 0; z-index: 1;
-    margin: 2px 10px 0 0; color: #666; cursor: pointer;
+    position: absolute; right: 0; top: 0; z-index: 5;
+    margin: 0.3rem 0.6rem 0 0; color: #666; cursor: pointer;
+    font-size: 1.2em;
     &:hover, &:focus { color: var(--trade-negative); }
   }
 
   .text {
     background: var(--sand-color);
     color: var(--sand-color-text-dark);
-    padding: 1em;
-    border-radius: 5px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    max-height: calc(100vh - 40px);
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 0.25rem 1.25rem rgba(0, 0, 0, 0.4);
+    max-height: calc(100vh - 2.5rem);
     overflow-y: auto;
+    border: 3px solid var(--sand-color-dark);
     b {
       color: #734101; 
-      padding: 8px;
+      padding: 0.25rem 0.5rem;
       background: rgba(255, 255, 255, 0.5);
-      border-radius: 3px;
+      border-radius: 0.25rem;
     }
   }
 
   .game-ended {
-    .title-emoji { font-size: 2em; }
+    .title-emoji { font-size: 2.5em; margin-bottom: 0.2em; }
     .player-name {
-      border-radius: 100px; width: fit-content;
-      margin: 0 auto 20px; padding: 10px 30px 0;
+      border-radius: 6.25rem; width: fit-content;
+      margin: 0 auto 1.25rem; padding: 0.75rem 2.2rem;
+      font-size: 1.3em;
+      box-shadow: 0 0.25rem 0.6rem rgba(0,0,0,0.2);
     }
-    small { display: flex; flex-direction: column; flex-wrap: wrap; align-content: center; }
-    .pts { line-height: 3em; text-align: left; }
-    .S, .C, .dVp, .army, .road { b { position: relative; margin-right: 40px; } }
+    small { 
+      display: flex; flex-direction: row; flex-wrap: wrap; 
+      justify-content: center; gap: 1rem; margin-bottom: 1.25rem;
+    }
+    .pts { 
+      line-height: 1.2; text-align: center; 
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+      background: rgba(255,255,255,0.2);
+      padding: 0.6rem; border-radius: 0.5rem;
+      width: 8.5rem;
+    }
+    .pts-icon {
+      width: 2.5rem; height: 2.5rem;
+      background-size: contain; background-repeat: no-repeat; background-position: center;
+      margin-bottom: 0.2rem;
+    }
+    .S, .C, .dVp, .army, .road { 
+      b { position: relative; margin-right: 0; display: inline-block; } 
+    }
   }
   .text .game-ended .player-name { color: #fff; background-color: var(--sand-color-text-dark); }
-  .text .game-ended.pc1 .player-name { box-shadow: 0 0 10px 0 var(--player-1-color); background: var(--player-1-color); }
-  .text .game-ended.pc2 .player-name { box-shadow: 0 0 10px 0 var(--player-2-color); background: var(--player-2-color); }
-  .text .game-ended.pc3 .player-name { box-shadow: 0 0 10px 0 var(--player-3-color); background: var(--player-3-color); }
-  .text .game-ended.pc4 .player-name { box-shadow: 0 0 10px 0 var(--player-4-color); background: var(--player-4-color); }
-  .text .game-ended.pc5 .player-name { box-shadow: 0 0 10px 0 var(--player-5-color); background: var(--player-5-color); }
-  .text .game-ended.pc6 .player-name { box-shadow: 0 0 10px 0 var(--player-6-color); background: var(--player-6-color); }
-  .text .game-ended.pc7 .player-name { box-shadow: 0 0 10px 0 var(--player-7-color); background: var(--player-7-color); }
-  .text .game-ended.pc8 .player-name { box-shadow: 0 0 10px 0 var(--player-8-color); background: var(--player-8-color); }
-  .text .game-ended .S b::after, .text .game-ended .C b::after {
-    content: ''; background-size: cover; background-repeat: no-repeat;
-    position: absolute; right: -30px; top: 9px;
-    width: 30px; height: 30px;
+  .text .game-ended.pc1 .player-name { background: var(--player-1-color); }
+  .text .game-ended.pc2 .player-name { background: var(--player-2-color); }
+  .text .game-ended.pc3 .player-name { background: var(--player-3-color); }
+  .text .game-ended.pc4 .player-name { background: var(--player-4-color); }
+  .text .game-ended.pc5 .player-name { background: var(--player-5-color); }
+  .text .game-ended.pc6 .player-name { background: var(--player-6-color); }
+  .text .game-ended.pc7 .player-name { background: var(--player-7-color); }
+  .text .game-ended.pc8 .player-name { background: var(--player-8-color); }
+  
+  .text .game-ended.pc1 .S .pts-icon { background-image: url(/images/pieces/settlement-1.png); }
+  .text .game-ended.pc2 .S .pts-icon { background-image: url(/images/pieces/settlement-2.png); }
+  .text .game-ended.pc3 .S .pts-icon { background-image: url(/images/pieces/settlement-3.png); }
+  .text .game-ended.pc4 .S .pts-icon { background-image: url(/images/pieces/settlement-4.png); }
+  .text .game-ended.pc5 .S .pts-icon { background-image: url(/images/pieces/settlement-5.png); }
+  .text .game-ended.pc6 .S .pts-icon { background-image: url(/images/pieces/settlement-6.png); }
+  .text .game-ended.pc7 .S .pts-icon { background-image: url(/images/pieces/settlement-7.png); }
+  .text .game-ended.pc8 .S .pts-icon { background-image: url(/images/pieces/settlement-8.png); }
+  .text .game-ended.pc1 .C .pts-icon { background-image: url(/images/pieces/city-1.png); }
+  .text .game-ended.pc2 .C .pts-icon { background-image: url(/images/pieces/city-2.png); }
+  .text .game-ended.pc3 .C .pts-icon { background-image: url(/images/pieces/city-3.png); }
+  .text .game-ended.pc4 .C .pts-icon { background-image: url(/images/pieces/city-4.png); }
+  .text .game-ended.pc5 .C .pts-icon { background-image: url(/images/pieces/city-5.png); }
+  .text .game-ended.pc6 .C .pts-icon { background-image: url(/images/pieces/city-6.png); }
+  .text .game-ended.pc7 .C .pts-icon { background-image: url(/images/pieces/city-7.png); }
+  .text .game-ended.pc8 .C .pts-icon { background-image: url(/images/pieces/city-8.png); }
+  
+  .text .game-ended .dVp .pts-icon {
+    background: #daba6a url(/images/cards_sprite.png) -5.125rem -7.4375rem/16.8125rem no-repeat;
+    width: 2.0625rem; height: 3.3125rem;
   }
-  .text .game-ended.pc1 .S b::after { background-image: url(/images/pieces/settlement-1.png); }
-  .text .game-ended.pc2 .S b::after { background-image: url(/images/pieces/settlement-2.png); }
-  .text .game-ended.pc3 .S b::after { background-image: url(/images/pieces/settlement-3.png); }
-  .text .game-ended.pc4 .S b::after { background-image: url(/images/pieces/settlement-4.png); }
-  .text .game-ended.pc5 .S b::after { background-image: url(/images/pieces/settlement-5.png); }
-  .text .game-ended.pc6 .S b::after { background-image: url(/images/pieces/settlement-6.png); }
-  .text .game-ended.pc7 .S b::after { background-image: url(/images/pieces/settlement-7.png); }
-  .text .game-ended.pc8 .S b::after { background-image: url(/images/pieces/settlement-8.png); }
-  .text .game-ended.pc1 .C b::after { background-image: url(/images/pieces/city-1.png); }
-  .text .game-ended.pc2 .C b::after { background-image: url(/images/pieces/city-2.png); }
-  .text .game-ended.pc3 .C b::after { background-image: url(/images/pieces/city-3.png); }
-  .text .game-ended.pc4 .C b::after { background-image: url(/images/pieces/city-4.png); }
-  .text .game-ended.pc5 .C b::after { background-image: url(/images/pieces/city-5.png); }
-  .text .game-ended.pc6 .C b::after { background-image: url(/images/pieces/city-6.png); }
-  .text .game-ended.pc7 .C b::after { background-image: url(/images/pieces/city-7.png); }
-  .text .game-ended.pc8 .C b::after { background-image: url(/images/pieces/city-8.png); }
-  .text .game-ended .dVp b::after {
-    content: ''; position: absolute; right: -35px; top: -4px;
-    background: #daba6a url(/images/cards_sprite.png) -82px -119px/269px no-repeat;
-    width: 33px; height: 53px;
+  .text .game-ended .army .pts-icon, .text .game-ended .road .pts-icon {
+    background: #daba6a url(/images/extra-vps-sprite.png) -1.9375rem -2.3125rem/9.75rem no-repeat;
+    width: 2.7rem; height: 2.7rem;
   }
-  .text .game-ended .army b::after, .text .game-ended .road b::after {
-    content: ''; position: absolute; right: -40px; top: 2px;
-    background: #daba6a url(/images/extra-vps-sprite.png) -31px -37px/156px no-repeat;
-    width: 43px; height: 43px;
-  }
-  .text .game-ended .road b::after { background-position-x: -103px; }
+  .text .game-ended .road .pts-icon { background-position-x: -6.4375rem; }
+
   .text .game-ended :is(.dVp, .army, .road) {
     cursor: pointer;
-    b::after { box-shadow: 0 0 0px 1px #733f05; border-radius: 3px; }
+    .pts-icon { box-shadow: 0 0 0px 1px #733f05; border-radius: 0.2rem; }
     &:hover {
-      b::after { box-shadow: 0 0 0px 1px #733f05, 0 0 5px 0 #000; }
+      .pts-icon { box-shadow: 0 0 0px 1px #733f05, 0 0 0.3rem 0 #000; }
     }
   }
 
   /* End Game Tabs */
   .end-tabs {
-    margin-top: 10px;
-    font-size: 1.5em;
-    .end-tabs-header { display: flex; gap: 16px; justify-content: center; align-items: flex-end; }
+    margin-top: 1.25rem;
+    font-size: 0.8rem;
+    .end-tabs-header { display: flex; gap: 1.25rem; justify-content: center; border-bottom: 1px solid #ccc; }
     .end-tab {
-      padding: 0 8px 6px; cursor: pointer;
-      border-bottom: 2px solid color-mix(in srgb, var(--sand-color-dark) 50%, transparent);
+      padding: 0.6rem 0.9rem; cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.2s;
+      &:hover { background: rgba(0,0,0,0.05); }
     }
-    .end-tab.active { border-bottom-color: var(--sand-color-dark); }
-    .end-tabs-content { margin-top: 10px; font-size: 1.5em; }
+    .end-tab.active { border-bottom-color: var(--sand-color-dark); background: rgba(255,255,255,0.3); }
+    .end-tabs-content { margin-top: 1rem; }
     .end-tab-content.hide { display: none; }
+  }
+
+  .end-overview {
+    overflow: auto;
+    margin-top: 0.6rem;
+    border-radius: 0.5rem;
+    background: rgba(255,255,255,0.2);
+  }
+
+  .end-table {
+    width: 100%; border-collapse: collapse; font-family: EagleLake;
+    font-size: 0.9em;
+    th, td { padding: 0.5rem 0.25rem; border-bottom: 1px solid rgba(0,0,0,0.1); }
+    th { background: rgba(0,0,0,0.05); }
+    .p-name { font-weight: bold; }
+    tr:last-child td { border-bottom: none; }
+
+    @media screen and (max-width: 480px) {
+      font-size: 0.75em;
+      th, td { padding: 0.4rem 0.1rem; }
+    }
+  }
+
+  .rematch-section {
+    margin-top: 1.25rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid #ccc;
+    .rematch-vote-row {
+      display: flex; justify-content: center; align-items: center; gap: 1rem;
+    }
+    .vote-rematch {
+      background-color: #4a6741; color: var(--sand-color);
+      border: 2px solid var(--sand-color-dark); border-radius: 3.125rem;
+      font-size: 1.1em; font-weight: bold; padding: 0.6rem 1.9rem;
+      display: inline-block; transition: transform 0.1s, background-color 0.2s;
+      box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.2);
+      &:hover { background-color: #5a7d4f; }
+      &:active { transform: translateY(2px); box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.2); }
+      &[disabled] { opacity: 0.6; cursor: not-allowed; }
+    }
+    .rematch-timer { font-size: 1.2rem; color: #555; }
+    .rematch-status {
+      margin-top: 1.25rem; font-size: 0.9em; font-weight: normal;
+      .burritos { font-size: 3rem; line-height: 1; }
+      .rematch-text { font-size: 0.8rem; margin-bottom: 0.5rem; }
+      .rematch-list { 
+        display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem;
+        margin: 0; padding: 0; 
+        list-style: none;
+        li { font-weight: bold; color: #734101; }
+        li::before { content: '• '; }
+      }
+    }
   }
 }
 
 #game > .status-history-zone {
-  position: fixed; top: 0; left: 50%;
+  position: fixed; top: 5vh; left: 50%;
   transform: translateX(-50%);
-  width: 30%; height: 50%; overflow: auto;
-  margin: 30px auto;
+  width: clamp(300px, 30vw, 600px); height: 60vh; overflow: auto;
+  margin: 0 auto;
   padding-top: 0; text-align: center;
-  box-sizing: border-box; box-shadow: 0 0 20px 0 #000;
+  box-sizing: border-box; box-shadow: 0 0 1.25rem 0 #000;
   background: var(--sand-color); color: var(--sand-color-text-dark);
   border-bottom: 2px solid var(--sand-color-dark);
+  border-radius: 1rem;
   opacity: 0; z-index: -10;
   visibility: hidden; pointer-events: none;
   transition: opacity .25s linear, visibility .25s linear;
@@ -143,37 +215,37 @@
     width: 100%; height: 100%;
     top: 0; left: 0;
     transform: none; margin: 0;
-    border-bottom: 0;
+    border-bottom: 0; border-radius: 0;
   }
 
   .title {
     position: sticky; top: 0; left: 0;
-    font-size: 1.5em; text-align: center;
-    padding: 5px;
-    box-shadow: 0 0 10px 0; background: var(--sand-color);
+    font-size: 1.5rem; text-align: center;
+    padding: 0.3rem;
+    box-shadow: 0 0 0.6rem 0; background: var(--sand-color);
     z-index: 1;
   }
   .subtitle {
     color: #0003;
     font-family: Raleway, sans-serif;
-      padding: 10px 0;
+    padding: 0.6rem 0;
   }
 
   .close {
-    position: absolute; right: 5px; top: 5px; z-index: 2;
-    font-family: Macondo; font-size: 1.5em;
-    margin: 2px 10px 0 0; color: #666; cursor: pointer;
+    position: absolute; right: 0.3rem; top: 0.3rem; z-index: 2;
+    font-family: Macondo; font-size: 1.5rem;
+    margin: 0.1rem 0.6rem 0 0; color: #666; cursor: pointer;
     &:hover, &:focus { color: var(--trade-negative); text-shadow: 0 0 5px #fff; }
   }
 
   .container { border-top: 1px solid #fff; font-family: Raleway, sans-serif; }
-  .turn-separator { border: 0; border-top: 3px solid #000; margin: 6px 0 }
+  .turn-separator { border: 0; border-top: 3px solid #000; margin: 0.4rem 0 }
   .status {
-    padding: 7px 10px; border-bottom: 1px solid #fff;
+    padding: 0.4rem 0.6rem; border-bottom: 1px solid #fff;
     b { color: #77450b; }
     small { opacity: 0.7; }
     .p-name {
-      border-left: 5px solid; padding-left: 3px;
+      border-left: 5px solid; padding-left: 0.2rem;
       &.pc1 { border-color: var(--player-1-color); }
       &.pc2 { border-color: var(--player-2-color); }
       &.pc3 { border-color: var(--player-3-color); }

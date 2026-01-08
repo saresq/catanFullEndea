@@ -56,7 +56,9 @@ button {
   .title {
     position: absolute; top: 0; left: 0; width: 100%;
     text-align: center; cursor: default;
-    .colored { border-bottom: 2px solid var(--sand-color-dark); background-color: var(--sand-color); }
+    .colored {
+      border-bottom: 2px solid var(--sand-color-dark); background-color: var(--sand-color);
+    }
     .name { font-size: 1em; color: #0006; }
     .text {
       margin-bottom: 10px; margin-top: -5px; font-size: 2em;
@@ -82,7 +84,6 @@ button {
   .wait-box {
     background: #fff3; box-shadow: 0 0px 40px #0009; border-radius: 10px; backdrop-filter: blur(6px);
     padding: 20px; box-sizing: border-box;
-    margin-top: 5em;
   }
   .box-header {
     display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: center;
@@ -99,7 +100,10 @@ button {
     background: var(--sand-color); color: #fff; border: 3px solid var(--sand-color-dark);
     border-radius: 6px; overflow: hidden;
   }
-  .slot .name, .slot .empty-label { width: 100%; padding: 8px 12px; box-sizing: border-box; }
+  .slot .name, .slot .empty-label {
+    width: 100%; padding: 8px 12px; box-sizing: border-box;
+    display: flex; align-items: center; align-self: stretch;
+  }
   .slot.filled .name { background: var(--sand-color-dark); }
   .slot.empty { filter: grayscale(1) contrast(0.7) brightness(0.9); }
 
@@ -186,6 +190,21 @@ button {
   font-weight: 700;
   border: 2px solid #fff5;
   box-shadow: 0 2px 6px #0006;
+}
+#waiting-room .box-header .start-game.hide + .leave-lobby {
+  margin-left: auto;
+}
+#waiting-room .box-header .leave-lobby {
+  background: #0004;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: Raleway, sans-serif;
+  font-weight: 700;
+  border: 2px solid #fff3;
+  transition: all .15s ease;
+  font-size: 0.9rem;
+  &:hover { background: var(--trade-negative); border-color: #fff5; }
 }
 #waiting-room .box-header .start-game:disabled {
   opacity: .6;

@@ -183,6 +183,7 @@ export default class PlayerUI {
     })
     // Dev Toggle
     this.$dev_toggle?.addEventListener('click', e => {
+      if (this.$dev_toggle.classList.contains('disabled')) return
       const $dev_row = this.$hand.querySelector('.dev-cards-row')
       if (!$dev_row) return
       this.#is_dev_row_open = $dev_row.classList.toggle('hide') === false
@@ -243,6 +244,7 @@ export default class PlayerUI {
       // Enable end turn on unified button during action phase
       this.setUnifiedModeEnd(true)
       this.toggleAction(this.$trade_btn, true)
+      this.toggleAction(this.$dev_toggle, true)
       oKeys(CONST.COST).forEach(key => {
         const can_act = this.canIBuy(key)
           && (key == 'DEV_C' || this.#getPossibleLocations(key).length)
@@ -317,6 +319,7 @@ export default class PlayerUI {
     const label = this.$dice.querySelector('.label') || this.#ensureDiceLabel()
     label.textContent = '🎲'
     this.toggleAction(this.$dice, enabled)
+    this.toggleAction(this.$dev_toggle, enabled)
   }
   setUnifiedModeEnd(enabled) {
     if (!this.$dice) return
@@ -471,10 +474,11 @@ export default class PlayerUI {
   }
 
   activateResourceCards() {
-    oKeys(CONST.DEVELOPMENT_CARDS).forEach(k => delete this.hand[k])
     this.renderHand()
     const res_selector = oKeys(CONST.RESOURCES).map(k => `.card-group[data-type="${k}"]`).join(',')
     this.$hand.querySelectorAll(res_selector).forEach($el => $el.classList.add('active'))
+    const dev_selector = oKeys(CONST.DEVELOPMENT_CARDS).map(k => `.card-group[data-type="${k}"]`).join(',')
+    this.$hand.querySelectorAll(dev_selector).forEach($el => $el.classList.add('disabled'))
   }
 
   /** During Robber Drop */

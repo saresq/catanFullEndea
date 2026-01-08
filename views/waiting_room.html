@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/css/waiting_room.css">
   <link rel="shortcut icon" type="image/jpg" href="/images/favicon.png" />
 </head>
+<div id="game"><div class="accessibility-zone"></div></div>
 <div id="waiting-room">
   <div class="title">
     <div class="colored">
@@ -29,12 +30,12 @@
         <div class="info-item"><span class="label">Victory points:</span> <span class="value" id="win-points">-</span></div>
         <div class="info-item"><span class="label">Players remaining:</span> <span class="value p-count">0</span></div>
         <button id="start-game-btn" class="start-game" title="Start the game (host only)" disabled>Start Game</button>
+        <button class="leave-lobby" title="Leave Lobby">Leave</button>
       </div>
       <div id="slots-list" class="slots"></div>
     </div>
   </div>
 </div>
-<div id="game"><div class="accessibility-zone"></div></div>
 
 <script>
   window.game_id = "{{ game_id }}";

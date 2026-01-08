@@ -203,13 +203,17 @@
     background: var(--player-8-color);
   }
 
+  .victory-target {
+    .turn-indicator {
+      display: none; margin-left: 5px;
+      .dot { font-size: 2em; line-height: 0; vertical-align: sub; }
+    }
+  }
+
   &.compact {
     width: 240px; /* keep width; we only hide details */
-    .player {
-      .victory-points, .cards-container { display: none; }
-      .name { font-size: 1.1em; padding: 6px 10px; border-bottom-width: 0; }
-      &::before { top: -15px; }
-    }
+    .player { display: none; }
+    .turn-indicator { display: inline; }
   }
 
   /* Mobile UI Scoreboard */
@@ -233,6 +237,8 @@
       font-size: 0.8em;
       position: sticky; top: 0; z-index: 2;
       border: none;
+      justify-content: center;
+      .toggle-players { position: absolute; right: 4px; }
     }
 
     .player {
@@ -300,10 +306,7 @@
 
     &.compact {
       width: 100%;
-      .player {
-        .cards-container, .victory-points { display: none; }
-        .name { font-size: 0.8em; }
-      }
+      .player { display: none; }
     }
 
     /* Active player indicator on mobile */

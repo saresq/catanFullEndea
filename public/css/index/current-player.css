@@ -66,7 +66,7 @@
       
       &:hover { bottom: 2rem; }
 
-      &.active:is(.S, .L, .B, .O, .A) {
+      &.active:is(.S, .L, .B, .O, .W) {
         animation: card-group-blink .7s infinite alternate ease-in-out;
       }
       &.disabled {
@@ -168,7 +168,7 @@
       margin-bottom: 1rem;
       width: 25%;
       @media screen and (max-width: 768px) {
-        width: 50%;
+        width: 75%;
       }
     }
 
@@ -189,12 +189,16 @@
       font-weight: bold;
       transition: all 0.2s;
       &.hide { display: none; }
+      &.disabled {
+        cursor: not-allowed;
+        filter: brightness(0.7);
+      }
       .caret {
         transition: transform 0.2s;
         font-size: 1.125rem;
-        display: inline-block;
-        line-height: 1;
-        margin-top: -0.125rem;
+        display: flex;
+        align-items: center;
+        height: 100%;
       }
       &.open .caret { transform: rotate(180deg); }
       @media screen and (min-width: 769px) {

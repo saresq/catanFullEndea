@@ -20,6 +20,7 @@ export default class Game {
     this.config = game_obj.config
     this.active_pid = game_obj.active_pid
     this.state = game_obj.state
+    this.end_context = game_obj.end_context
     this.opponents = opponents_obj
 
     this.#board = new Board(game_obj.config.mapkey, game_obj.map_changes)
@@ -78,6 +79,7 @@ export default class Game {
       case ST.PLAYER_ACTIONS: this.#onPlayerAction(); break
       case ST.ROBBER_DROP: this.#onRobberDropCards(); break
       case ST.ROBBER_MOVE: this.#onRobberMove(); break
+      case ST.END: this.#onGameEnd(); break
     }
   }
   //#region
@@ -319,45 +321,53 @@ export default class Game {
     }, 500) // Wait for the road animation
   }
 
-  // SOC - Game Ended
-  updateGameEndSoc(context) {
-    setTimeout(_ => {
-      this.#ui.alert_ui.alertGameEnd(this.getPlayer(context.pid), context)
-      this.#audio_manager.playGameEnd()
-      context.longest_road && this.#ui.board_ui.showLongestEdges(this.#player.longest_road_list)
-      // Wire up rematch vote button
-      const $btn = document.querySelector('#game > .alert .vote-rematch')
-      const $time = document.querySelector('#game > .alert .rematch-timer .time-left')
-      if ($btn) {
-        $btn.addEventListener('click', () => {
+  #onGameEnd(context = this.end_context) {
+    if (!context) return
+    this.#ui.alert_ui.alertGameEnd(this.getPlayer(context.pid), context, this)
+    this.#ui.alert_ui.showEndGameButton(() => this.#ui.alert_ui.alertGameEnd(this.getPlayer(context.pid), context, this))
+    this.#audio_manager.playGameEnd()
+    context.longest_road && this.#ui.board_ui.showLongestEdges(this.#player.longest_road_list)
+    this.#setupRematchUI()
+  }
+
+  #setupRematchUI() {
+    const $btn = document.querySelector('#game > .alert .vote-rematch')
+    const $time = document.querySelector('#game > .alert .rematch-timer .time-left')
+    if ($btn) {
+      $btn.addEventListener('click', () => {
+        $btn.disabled = true
+        // Visually reflect disabled state similar to login btn-secondary
+        $btn.style.backgroundColor = '#344a2d'
+        $btn.style.cursor = 'not-allowed'
+        $btn.textContent = 'Voted'
+        this.#socket_manager.sendRematchVote()
+      }, { once: true })
+    }
+    // Start 240s countdown display
+    clearInterval(this._rematchInterval)
+    let left = 240
+    if ($time) { $time.textContent = '' + left }
+    this._rematchInterval = setInterval(() => {
+      left -= 1
+      if (left < 0) left = 0
+      if ($time) { $time.textContent = '' + left }
+      if (left <= 0) {
+        clearInterval(this._rematchInterval)
+        // Optionally disable button if still present
+        if ($btn && !$btn.disabled) {
           $btn.disabled = true
-          // Visually reflect disabled state similar to login btn-secondary
           $btn.style.backgroundColor = '#344a2d'
           $btn.style.cursor = 'not-allowed'
-          $btn.textContent = 'Voted'
-          this.#socket_manager.sendRematchVote()
-        }, { once: true })
-      }
-      // Start 240s countdown display
-      clearInterval(this._rematchInterval)
-      let left = 240
-      if ($time) { $time.textContent = '' + left }
-      this._rematchInterval = setInterval(() => {
-        left -= 1
-        if (left < 0) left = 0
-        if ($time) { $time.textContent = '' + left }
-        if (left <= 0) {
-          clearInterval(this._rematchInterval)
-          // Optionally disable button if still present
-          if ($btn && !$btn.disabled) {
-            $btn.disabled = true
-            $btn.style.backgroundColor = '#344a2d'
-            $btn.style.cursor = 'not-allowed'
-            $btn.textContent = 'Time\'s Up'
-          }
+          $btn.textContent = 'Time\'s Up'
         }
-      }, 1000)
-    }, 3000) // Waiting for other animations to end
+      }
+    }, 1000)
+  }
+
+  // SOC - Game Ended
+  updateGameEndSoc(context) {
+    this.end_context = context
+    setTimeout(_ => this.#onGameEnd(context), 3000) // Waiting for other animations to end
   }
 
   updateRematchProgressSoc(nonVoterNames = []) {
@@ -366,9 +376,9 @@ export default class Game {
     if (!nonVoterNames.length) { $status.innerHTML = ''; return }
     const list = nonVoterNames.map(n => `<li>${n}</li>`).join('')
     $status.innerHTML = `
-      <div style="font-size:3em;line-height:1">🫏</div>
-      <div style="font-size:0.7em;">Estos burritos todavia no votaron:</div>
-      <ul style="display:inline-block; text-align:left; margin:6px 0 0 20px; font-size:1em;">${list}</ul>
+      <div class="burritos">🫏</div>
+      <div class="rematch-text">Estos burritos todavia no votaron:</div>
+      <ul class="rematch-list">${list}</ul>
     `
   }
 

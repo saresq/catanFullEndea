@@ -74,6 +74,8 @@ class WaitingRoomUI {
     })
     this.$game_key.addEventListener('mouseout', e => this.$game_key.classList.remove('copied'))
 
+    $('.leave-lobby')?.addEventListener('click', e => window.location.href = '/logout')
+
     // Listen for color updates from server
     window.io().on(CONST.SOCKET_EVENTS.PLAYER_COLOR_UPDATED, (pid, color_id) => {
       window.players = window.players || []

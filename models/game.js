@@ -32,6 +32,7 @@ export default class Game {
   longest_road_pid = -1
   godmode = false
   free_resources_active = false
+  end_context = null
 
   get state() { return this.#state }
   set state(s) {
@@ -681,7 +682,7 @@ export default class Game {
     if (vps < this.config.win_points) return
     setTimeout(_ => {
       const player = this.getPlayer(pid)
-      this.#io_manager.updateGameEnd({
+      this.end_context = {
         pid, vps,
         color_id: player.color_id,
         S: player.pieces.S.length,
@@ -689,7 +690,8 @@ export default class Game {
         dVp: player.private_vps,
         largest_army: player.largest_army && player.open_dev_cards.dK,
         longest_road: player.longest_road && player.longest_road_list.length,
-      })
+      }
+      this.#io_manager.updateGameEnd(this.end_context)
       // Keep sockets alive and retain session for potential rematch voting
       this.clearTimer()
       this.state = CONST.GAME_STATES.END
@@ -839,6 +841,7 @@ export default class Game {
       ongoing_trades: this.ongoing_trades,
       timer: timer_left > 1 ? timer_left : 0,
       godmode: !!this.godmode,
+      end_context: this.end_context,
     }
   }
   //#endregion
