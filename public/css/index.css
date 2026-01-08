@@ -67,16 +67,6 @@ button {
 }
 
 #game {
-  .hud-top {
-    position: fixed; top: 0; left: 0; width: 100%;
-    display: flex; justify-content: space-between; align-items: flex-start;
-    pointer-events: none; z-index: 50;
-    @media screen and (max-width: 768px) {
-      flex-direction: row;
-      flex-wrap: wrap;
-    }
-  }
-
   .board-container {
     position: fixed;
     top: 0;

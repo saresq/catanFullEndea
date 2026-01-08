@@ -27,6 +27,7 @@
 
   .settings-gear {
     opacity: 0.9;
+    font-size: 1.2em;
     &::before { content: '⚙'; }
   }
   .icons-container {
@@ -143,8 +144,15 @@
   }
 }
 
+.hud-top {
+  position: fixed; top: 0; left: 0; width: 100%;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  pointer-events: none; z-index: 50;
+}
+
 /* Media query for smaller screens */
 @media screen and (max-width: 768px) {
+  .hud-top { flex-direction: row; flex-wrap: wrap; }
   .accessibility-zone, .status-history-icon-zone {
     position: relative;
     top: auto; left: auto; right: auto;

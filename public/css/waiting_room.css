@@ -37,6 +37,7 @@ body {
   background: url(/images/catan-bg.png) center/cover;
   backdrop-filter: blur(50px);
   transition: all linear .5s;
+  font-family: EagleLake;
   font-size: 1rem;
 }
 
