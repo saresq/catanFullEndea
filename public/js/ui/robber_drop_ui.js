@@ -125,6 +125,10 @@ export default class RobberDropUI {
         const max = this.#max?.[key] ?? Infinity
         $plus.classList[value >= max ? 'add' : 'remove']('disabled')
       }
+      const $minus = $drop.querySelector('.ctrl.minus')
+      if ($minus) {
+        $minus.classList[value <= 0 ? 'add' : 'remove']('disabled')
+      }
     })
   }
 

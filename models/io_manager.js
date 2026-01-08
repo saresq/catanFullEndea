@@ -101,9 +101,9 @@ export default class IOManager {
 
   updateDiceValue(dice_value, pid) { this.emit(SOC.DICE_VALUE, dice_value, pid) }
 
-  updateResourceReceived_Private(player_socket_id, total_resouces) {
+  updateResourceReceived_Private(player_socket_id, total_resources) {
     if (!player_socket_id) { return }
-    this.#io.to(player_socket_id).emit(SOC.RES_RECEIVED, total_resouces)
+    this.#io.to(player_socket_id).emit(SOC.RES_RECEIVED, total_resources)
   }
 
   updateRollDistribution(data) { this.emit(SOC.ROLL_DISTRIBUTION, data) }

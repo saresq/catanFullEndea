@@ -2,6 +2,7 @@
   position: fixed; right: 0; top: 0;
   width: 240px;
   filter: drop-shadow(0px 0px 30px #000);
+  pointer-events: auto;
   &.blur:not(:hover) { filter: blur(2px); }
 
   .players-header {
@@ -10,7 +11,7 @@
     border-left: 3px solid var(--sand-color-dark);
     button.toggle-players {
       appearance: none; border: none; cursor: pointer;
-      font-size: 14px; line-height: 1; padding: 4px 6px; border-radius: 3px;
+      font-size: 0.875rem; line-height: 1; padding: 4px 6px; border-radius: 3px;
       background: #333; color: #fff;
       &:hover { background: #000; }
       &:focus { outline: 1px solid #fff7; }
@@ -209,6 +210,112 @@
       .name { font-size: 1.1em; padding: 6px 10px; border-bottom-width: 0; }
       &::before { top: -15px; }
     }
+  }
+
+  /* Mobile UI Scoreboard */
+  @media screen and (max-width: 768px) {
+    width: 100%;
+    height: auto;
+    max-height: 20vh;
+    position: relative;
+    top: auto; right: auto; left: auto;
+    pointer-events: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: min-content;
+    overflow-y: auto;
+    background: none;
+    border-bottom: none;
+    gap: 2px;
+
+    .players-header {
+      grid-column: span 2;
+      font-size: 0.8em;
+      position: sticky; top: 0; z-index: 2;
+      border: none;
+    }
+
+    .player {
+      border: 1px solid; border-color: inherit;
+      border-radius: 4px;
+      background: color-mix(in srgb, var(--sand-color), transparent 50%);
+      &.p1, &.pc1 { background: color-mix(in srgb, var(--player-1-color), transparent 50%) !important; border-color: var(--player-1-color) !important; }
+      &.p2, &.pc2 { background: color-mix(in srgb, var(--player-2-color), transparent 50%) !important; border-color: var(--player-2-color) !important; }
+      &.p3, &.pc3 { background: color-mix(in srgb, var(--player-3-color), transparent 50%) !important; border-color: var(--player-3-color) !important; }
+      &.p4, &.pc4 { background: color-mix(in srgb, var(--player-4-color), transparent 50%) !important; border-color: var(--player-4-color) !important; }
+      &.p5, &.pc5 { background: color-mix(in srgb, var(--player-5-color), transparent 50%) !important; border-color: var(--player-5-color) !important; }
+      &.p6, &.pc6 { background: color-mix(in srgb, var(--player-6-color), transparent 50%) !important; border-color: var(--player-6-color) !important; }
+      &.p7, &.pc7 { background: color-mix(in srgb, var(--player-7-color), transparent 50%) !important; border-color: var(--player-7-color) !important; }
+      &.p8, &.pc8 { background: color-mix(in srgb, var(--player-8-color), transparent 50%) !important; border-color: var(--player-8-color) !important; }
+      &.pc0 { background: color-mix(in srgb, var(--player-0-color), transparent 50%) !important; border-color: var(--player-0-color) !important; }
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      padding: 2px 5px;
+      min-height: 35px;
+      box-sizing: border-box;
+
+      &::before {
+        position: static;
+        font-size: 1.2em;
+        margin-right: 5px;
+        left: unset; top: unset;
+      }
+
+      .name {
+        font-size: 0.85em;
+        padding: 2px;
+        background: none !important;
+        border: none;
+        flex: 1;
+        width: auto;
+      }
+
+      .victory-points {
+        font-size: 1em;
+        color: #fff;
+        padding: 0 5px;
+        border: none;
+        &::after { display: none; }
+        & span {
+          margin-left: 12px;
+          margin-right: 2px;
+          &::after { left: -12px; width: 10px; height: 10px; box-shadow: 1px 1px 3px #000; }
+        }
+      }
+
+      .cards-container {
+        padding: 0;
+        :is(.largest-army, .longest-road, .resources, .development-cards) {
+          width: 16px; height: 24px;
+          margin-right: 2px;
+          &::after { font-size: 0.7em; padding: 0px 2px; border-radius: 2px; }
+          &::before { background-size: cover; }
+        }
+        :is(.largest-army, .longest-road) {
+          &[data-count="0"] { display: none; }
+        }
+      }
+    }
+
+    &.compact {
+      width: 100%;
+      .player {
+        .cards-container, .victory-points { display: none; }
+        .name { font-size: 0.8em; }
+      }
+    }
+
+    /* Active player indicator on mobile */
+    &[data-active="1"] .player.p1::before
+    , &[data-active="2"] .player.p2::before
+    , &[data-active="3"] .player.p3::before
+    , &[data-active="4"] .player.p4::before
+    , &[data-active="5"] .player.p5::before
+    , &[data-active="6"] .player.p6::before
+    , &[data-active="7"] .player.p7::before
+    , &[data-active="8"] .player.p8::before
+    { content: '👉'; margin-right: 2px; }
   }
 }
 

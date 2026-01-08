@@ -41,7 +41,7 @@ export default class AlertUI {
     }).join('')
     this.$alert.querySelector('.close').addEventListener('click', e => this.closeBigAlert())
     this.$status_history.querySelector('.close').addEventListener('click', e => this.toggleStatusHistory(false))
-    $('#game > .current-player .status-bar-history').addEventListener('click', e => this.toggleStatusHistory())
+    $('#game .status-bar-history').addEventListener('click', e => this.toggleStatusHistory())
     document.addEventListener('keydown', e => {
       e.code === 'Escape' && (this.closeBigAlert(), this.toggleStatusHistory(false))
       e.code === 'KeyH' && this.toggleStatusHistory()
@@ -51,7 +51,7 @@ export default class AlertUI {
     if (!this._historyOutsideClickHandlerAdded) {
       this._historyOutsideClickHandlerAdded = true
       this._historyOutsideClickHandler = (e) => {
-        const toggleBtn = $('#game > .current-player .status-bar-history')
+        const toggleBtn = $('#game .status-bar-history')
         if (this.$status_history && this.$status_history.classList.contains('show')) {
           if (!this.$status_history.contains(e.target) && e.target !== toggleBtn) {
             this.toggleStatusHistory(false)

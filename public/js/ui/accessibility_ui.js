@@ -7,7 +7,7 @@ export default class AccessibilityUI {
     ? true
     : !!+localStorage.getItem('mute-notifications')
   #toggleBoardZoom; #toggleBgm; #toggleNotificationsAudio
-  $el = document.querySelector('#game > .accessibility-zone')
+  $el = document.querySelector('#game .accessibility-zone')
 
   keyboard_shortcuts = [
     [
@@ -18,7 +18,7 @@ export default class AccessibilityUI {
       ['Buy Development Card', 'd'],
       ['Trade options', 't'],
       ['Play Knight Card', 'k'],
-      ['End Turn', 'e (or) SPACE'],
+      ['End Turn ⏭️', 'e (or) SPACE'],
     ], [
       ['Full Screen', 'f'],
       ['Board Zoom In', '='],
@@ -43,24 +43,27 @@ export default class AccessibilityUI {
 
   render() {
     this.$el.innerHTML = `
-      ${this.#shown_icons.fullscreen ? `<button class="icon full-screen" title="Full screen (f)"></button>` : ''}
-      ${this.#shown_icons.zoom ? `<div class="grouped">
-        <button class="icon zoom-in" title="Zoom In (=)">✚</button>
-        <button class="icon zoom-out" title="Zoom Out (-)">-</button>
-      </div>` : ''}
-      <div class="grouped">
-        ${this.#shown_icons.notifcation_sounds
-          ? `<button class="icon notifications ${this.muted_notif ? 'off' : ''}"
-              title="${this.muted_notif ? 'Unmute' : 'Mute'} Notifications (n)">
-            </button>` : ''}
-        ${this.#shown_icons.bgm
-          ? `<button class="icon bgm ${this.muted ? 'off' : ''}"
-              title="${this.muted ? 'Unmute' : 'Mute'} Background Music (m)">♫
-            </button>` : ''}
+      <button class="icon settings-gear" title="Options"></button>
+      <div class="icons-container hide">
+        ${this.#shown_icons.fullscreen ? `<button class="icon full-screen" title="Full screen (f)"></button>` : ''}
+        ${this.#shown_icons.zoom ? `<div class="grouped">
+          <button class="icon zoom-in" title="Zoom In (=)">✚</button>
+          <button class="icon zoom-out" title="Zoom Out (-)">-</button>
+        </div>` : ''}
+        <div class="grouped">
+          ${this.#shown_icons.notifcation_sounds
+            ? `<button class="icon notifications ${this.muted_notif ? 'off' : ''}"
+                title="${this.muted_notif ? 'Unmute' : 'Mute'} Notifications (n)">
+              </button>` : ''}
+          ${this.#shown_icons.bgm
+            ? `<button class="icon bgm ${this.muted ? 'off' : ''}"
+                title="${this.muted ? 'Unmute' : 'Mute'} Background Music (m)">♫
+              </button>` : ''}
+        </div>
+        ${this.#shown_icons.shorcuts ? `<button class="icon question-mark" title="Keyboard Shortcuts (?)">?</button>` : ''}
+        ${this.#shown_icons.info ? `<button class="icon info" title="About">ℹ</button>` : ''}
+        ${this.#shown_icons.quit ? `<button class="icon quit" title="Quit Game"><b></b></button>` : ''}<!-- ☉ -->
       </div>
-      ${this.#shown_icons.shorcuts ? `<button class="icon question-mark" title="Keyboard Shortcuts (?)">?</button>` : ''}
-      ${this.#shown_icons.info ? `<button class="icon info" title="About">ℹ</button>` : ''}
-      ${this.#shown_icons.quit ? `<button class="icon quit" title="Quit Game"><b></b></button>` : ''}<!-- ⦿◎◉●◦◦⚬☉ -->
       ${this.#shown_icons.shorcuts ? `
         <div class="keyboard-shortcuts hide">${this.keyboard_shortcuts.map(group =>
           `<div class="shortcuts-container">${group.map(([title, shortcut]) =>
@@ -99,6 +102,9 @@ export default class AccessibilityUI {
   }
 
   #setupEvents() {
+    this.$el.querySelector('.settings-gear')?.addEventListener('click', e => {
+      this.$el.querySelector('.icons-container').classList.toggle('hide')
+    })
     this.$el.querySelector('.full-screen')?.addEventListener('click', e => this.toggleFullScreen())
     this.$el.querySelector('.zoom-in')?.addEventListener('click', e => this.toggleZoom())
     this.$el.querySelector('.zoom-out')?.addEventListener('click', e => this.toggleZoom(true))
@@ -114,6 +120,7 @@ export default class AccessibilityUI {
     document.addEventListener('click', e => {
       const keyboardShortcuts = this.$el.querySelector('.keyboard-shortcuts')
       const infoZone = this.$el.querySelector('.info-zone')
+      const iconsContainer = this.$el.querySelector('.icons-container')
       
       if (keyboardShortcuts && !keyboardShortcuts.classList.contains('hide')) {
         if (!keyboardShortcuts.contains(e.target) && e.target !== this.$el.querySelector('.question-mark')) {
@@ -124,6 +131,12 @@ export default class AccessibilityUI {
       if (infoZone && !infoZone.classList.contains('hide')) {
         if (!infoZone.contains(e.target) && e.target !== this.$el.querySelector('.info')) {
           this.showHideInfo(false)
+        }
+      }
+
+      if (iconsContainer && !iconsContainer.classList.contains('hide')) {
+        if (!iconsContainer.contains(e.target) && !this.$el.querySelector('.settings-gear').contains(e.target)) {
+          iconsContainer.classList.add('hide')
         }
       }
     })

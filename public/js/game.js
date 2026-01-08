@@ -413,7 +413,7 @@ export default class Game {
       this.#ui.board_ui.updatePlayerColor(pid, 0)
       // Scoreboard recolor for all clients immediately
       try {
-        const $p = document.querySelector(`#game > .all-players .player.p${pid}`)
+        const $p = document.querySelector(`#game .all-players .player.p${pid}`)
         if ($p) {
           const pcs = Array.from({ length: 9 }, (_, i) => 'pc' + i)
           pcs.forEach(c => $p.classList.remove(c))

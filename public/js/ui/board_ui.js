@@ -5,9 +5,14 @@ const oKeys = Object.keys
 
 export default class BoardUI {
   #board; #onClick; #getColorId;
-  #size = { MIN: -7, MAX: 2 }
+  #size = { MIN: 0.1, MAX: 5 }
   #renderedCorners = []
   #renderedEdges = []
+  #scale = parseFloat(localStorage.getItem('board-scale')) || 1
+  #pan = JSON.parse(localStorage.getItem('board-pan')) || { x: 0, y: 0 }
+  #isDragging = false
+  #lastMousePos = { x: 0, y: 0 }
+  #eventsSetup = false
   $el = $('#game .board')
 
   /** @param {Board} board  */
@@ -43,8 +48,15 @@ export default class BoardUI {
 
     this.$el.style.paddingLeft = `calc(var(--tile-width) / 2 * ${maxLeft * -1})`
     this.$el.style.width = `calc(var(--tile-width) * ${maxLength})`
-    const size = localStorage.getItem('board-size')
-    this.$el.dataset.size = (size >= this.#size.MIN && size <= this.#size.MAX) ? size : 0
+
+    if (!localStorage.getItem('board-pan')) {
+      const boardWidth = (maxLength + maxLeft / 2) * 160 // Approximate tile width
+      const boardHeight = this.#board.tile_rows.length * 130 // Approximate row height
+      this.#pan.x = (window.innerWidth - boardWidth * this.#scale) / 2
+      this.#pan.y = (window.innerHeight - boardHeight * this.#scale) / 2
+    }
+
+    this.#updateTransform()
     this.#setupEvents()
   }
 
@@ -154,6 +166,93 @@ export default class BoardUI {
         this.#onClick(CONST.LOCS.TILE, +e.target.parentElement.dataset.id)
       })
     })
+
+    if (this.#eventsSetup) return
+    this.#eventsSetup = true
+
+    const $container = this.$el.parentElement
+    $container.addEventListener('wheel', e => {
+      e.preventDefault()
+      const delta = -e.deltaY
+      const zoomFactor = Math.pow(1.1, delta / 100)
+      this.#zoom(zoomFactor, e.clientX, e.clientY)
+    }, { passive: false })
+
+    $container.addEventListener('mousedown', e => {
+      if (e.button !== 0) return
+      this.#isDragging = true
+      this.#lastMousePos = { x: e.clientX, y: e.clientY }
+    })
+
+    window.addEventListener('mousemove', e => {
+      if (!this.#isDragging) return
+      const dx = e.clientX - this.#lastMousePos.x
+      const dy = e.clientY - this.#lastMousePos.y
+      this.#pan.x += dx
+      this.#pan.y += dy
+      this.#lastMousePos = { x: e.clientX, y: e.clientY }
+      this.#updateTransform()
+    })
+
+    window.addEventListener('mouseup', () => {
+      this.#isDragging = false
+    })
+
+    // Touch events
+    let lastTouchDistance = 0
+    let lastTouchPos = null
+
+    $container.addEventListener('touchstart', e => {
+      if (e.touches.length === 1) {
+        lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+      } else if (e.touches.length === 2) {
+        lastTouchDistance = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        )
+        lastTouchPos = {
+          x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+          y: (e.touches[0].clientY + e.touches[1].clientY) / 2
+        }
+      }
+    }, { passive: false })
+
+    $container.addEventListener('touchmove', e => {
+      if (e.touches.length === 1 && lastTouchPos) {
+        const dx = e.touches[0].clientX - lastTouchPos.x
+        const dy = e.touches[0].clientY - lastTouchPos.y
+        this.#pan.x += dx
+        this.#pan.y += dy
+        lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+        this.#updateTransform()
+      } else if (e.touches.length === 2 && lastTouchPos) {
+        const distance = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        )
+        const factor = distance / lastTouchDistance
+        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2
+        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2
+        this.#zoom(factor, midX, midY)
+        lastTouchDistance = distance
+        lastTouchPos = { x: midX, y: midY }
+      }
+    }, { passive: false })
+  }
+
+  #zoom(factor, mouseX, mouseY) {
+    const newScale = Math.min(Math.max(this.#scale * factor, this.#size.MIN), this.#size.MAX)
+    const actualFactor = newScale / this.#scale
+    this.#pan.x = mouseX - (mouseX - this.#pan.x) * actualFactor
+    this.#pan.y = mouseY - (mouseY - this.#pan.y) * actualFactor
+    this.#scale = newScale
+    this.#updateTransform()
+  }
+
+  #updateTransform() {
+    this.$el.style.transform = `translate(${this.#pan.x}px, ${this.#pan.y}px) scale(${this.#scale})`
+    localStorage.setItem('board-scale', this.#scale)
+    localStorage.setItem('board-pan', JSON.stringify(this.#pan))
   }
 
   build(pid, piece, location) {
@@ -181,11 +280,8 @@ export default class BoardUI {
   }
 
   toggleZoom(out) {
-    const size = (+this.$el.dataset.size || 0) + (out ? -1 : 1)
-    if (size >= this.#size.MIN && size <= this.#size.MAX) {
-      this.$el.dataset.size = size
-      localStorage.setItem('board-size', size)
-    }
+    const factor = out ? 0.9 : 1.1
+    this.#zoom(factor, window.innerWidth / 2, window.innerHeight / 2)
   }
 
   #$getCorner(id) { return this.$el.querySelector(`.corner[data-id="${id}"]`) }

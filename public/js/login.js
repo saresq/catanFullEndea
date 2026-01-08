@@ -32,7 +32,7 @@ class LoginUI {
             <div class="section-group">
               <label class="section-label" for="player-count">Players:</label>
               <select id="player-count" class="select player-count">
-                ${[...Array(7).keys()].map(i => `<option value="${i + 2}" ${i + 2 === 3 ? 'selected' : ''}>${i + 2}</option>`).join('')}
+                ${[...Array(7).keys()].map(i => `<option value="${i + 2}" ${i + 2 === 2 ? 'selected' : ''}>${i + 2}</option>`).join('')}
               </select>
             </div>
             <div class="section-group">

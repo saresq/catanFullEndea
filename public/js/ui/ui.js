@@ -85,6 +85,7 @@ export default class UI {
   }
 
   render() {
+    this.#setUpEvents()
     this.board_ui.render()
     this.accessibility_ui.render()
     this.player_ui.render()
@@ -93,26 +94,15 @@ export default class UI {
     this.trade_ui.render()
     this.res_selection_ui.render()
     this.$splash.classList.add('hide')
-    this.#setUpEvents()
   }
 
   #setUpEvents() {
     document.addEventListener('keydown', e => {
-      e.code === 'Escape' && this.#game.clearDevCardUsage()
-      if (e.key === 'Shift' && !e.repeat) {
-        if (document.querySelector('input:focus, textarea:focus')) return
-        e.preventDefault()
-        this.all_players_ui.toggleCompact()
-      }
-      // GodMode: Backspace + iddqd
-      if (e.code === 'Backspace') {
-        this.#temp.gmStart = Date.now()
-        this.#temp.gmBuf = ''
-        try { clearTimeout(this.#temp.gmT) } catch (err) {}
-        this.#temp.gmT = setTimeout(() => { this.#temp.gmStart = null; this.#temp.gmBuf = '' }, 3000)
-      } else if (this.#temp.gmStart && Date.now() - this.#temp.gmStart < 3000) {
+      if (this.#temp.gmStart && Date.now() - this.#temp.gmStart < 3000) {
         const k = (e.key || '').toLowerCase()
         if (k && k.length === 1 && /[a-z]/.test(k)) {
+          if (document.querySelector('input:focus, textarea:focus')) return
+          e.stopImmediatePropagation()
           this.#temp.gmBuf = (this.#temp.gmBuf || '') + k
           if (this.#temp.gmBuf.length > 5) this.#temp.gmBuf = this.#temp.gmBuf.slice(-5)
           if (this.#temp.gmBuf === 'iddqd') {
@@ -126,7 +116,23 @@ export default class UI {
             try { clearTimeout(this.#temp.gmT) } catch (err) {}
             this.#game.requestGodModeFreeResActivate()
           }
+          return
         }
+      }
+
+      e.code === 'Escape' && this.#game.clearDevCardUsage()
+      if (e.key === 'Shift' && !e.repeat) {
+        if (document.querySelector('input:focus, textarea:focus')) return
+        e.preventDefault()
+        this.all_players_ui.toggleCompact()
+      }
+      // GodMode: Backspace + iddqd
+      if (e.code === 'Backspace') {
+        if (document.querySelector('input:focus, textarea:focus')) return
+        this.#temp.gmStart = Date.now()
+        this.#temp.gmBuf = ''
+        try { clearTimeout(this.#temp.gmT) } catch (err) {}
+        this.#temp.gmT = setTimeout(() => { this.#temp.gmStart = null; this.#temp.gmBuf = '' }, 3000)
       }
     })
   }

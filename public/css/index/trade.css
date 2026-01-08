@@ -1,6 +1,7 @@
 #game > .trade-zone {
   position: fixed; top: 0; left: 0px;
   width: 100%;
+  z-index: 60;
   /* border-bottom: 5px solid var(--sand-color-dark); */
   box-shadow: 0 0px 15px 0px #000;
   font-family: Raleway, sans-serif;
@@ -179,40 +180,41 @@
     background-color: color-mix(in srgb, var(--sand-color-dark) 90%, transparent);
     color: #fff;
     /* background-color: var(--sand-color); */
-    padding-top: 20px;
+    padding-top: 1.25rem;
     &.hide { display: none; }
 
     .card-section {
       display: flex; flex-wrap: wrap; justify-content: center;
 
       .card-container {
-        width: 140px;
-        height: 216px;
-        border-radius: 15px;
+        width: 8.75rem;
+        height: 13.5rem;
+        border-radius: 0.9375rem;
         /* box-shadow: 2px 2px 5px 1px #0006; */
-        margin: 0 0 20px 20px;
+        margin: 0 0 1.25rem 1.25rem;
 
         .card {
-          height: 106px;
+          height: 6.625rem;
           position: relative;
           cursor: pointer;
-          box-shadow: 2px 2px 5px 1px #0006;
+          box-sizing: border-box;
+          box-shadow: 0.125rem 0.125rem 0.3125rem 0.0625rem #0006;
           &.disabled { cursor: not-allowed; filter: grayscale(1) brightness(0.4); }
           &.disabled[data-type=L] { filter: grayscale(1) brightness(0.5); }
           &.full { cursor: not-allowed; }
 
           &.giving-card {
-            border-radius: 15px 15px 0 0;
+            border-radius: 0.9375rem 0.9375rem 0 0;
             &:not(.disabled):not([data-count="0"]) {
-              z-index: 1; box-shadow: 0px 0px 5px 5px var(--trade-negative);
+              z-index: 1; box-shadow: 0rem 0rem 0.3125rem 0.3125rem var(--trade-negative);
               &::before { border-color: color-mix(in srgb, var(--trade-negative), #000); }
               &.full::before { border-color: var(--trade-negative); }
             }
           }
           &.taking-card {
-            height: 110px; border-radius: 0 0 15px 15px;
+            height: 6.875rem; border-radius: 0 0 0.9375rem 0.9375rem;
             &:not(.disabled):not([data-count="0"]) {
-              z-index: 1; box-shadow: 0px 0px 5px 5px var(--trade-positive);
+              z-index: 1; box-shadow: 0rem 0rem 0.3125rem 0.3125rem var(--trade-positive);
               &::before { border-color: color-mix(in srgb, var(--trade-positive), #000); }
               &.full::before { border-color: var(--trade-positive); }
             }
@@ -226,65 +228,65 @@
             background-image: url(/images/cards_sprite.png);
             width: 100%; height: 100%;
             box-sizing: border-box;
-            border: 1px solid #5a460e;
+            border: 0.0625rem solid #5a460e;
           }
           &.giving-card::before {
-            border-bottom: 3px solid var(--sand-color-dark);
-            border-radius: 15px 15px 0 0;
+            border-bottom: 0.1875rem solid var(--sand-color-dark);
+            border-radius: 0.9375rem 0.9375rem 0 0;
           }
           &.taking-card::before {
-            border-top: 3px solid var(--sand-color-dark);
-            border-radius: 0 0 15px 15px;
+            border-top: 0.1875rem solid var(--sand-color-dark);
+            border-radius: 0 0 0.9375rem 0.9375rem;
           }
-          &[data-type=S]::before { background-size: 1100px; background-position: -176px -13px; }
-          &[data-type=L]::before { background-size: 1109px; background-position: -639px -9px; }
-          &[data-type=B]::before { background-size: 1077px; background-position: -12px -15px; }
-          &[data-type=O]::before { background-size: 1074px; background-position: -326px -5px; }
-          &[data-type=W]::before { background-size: 1097px; background-position: -484px -9px; }
+          &[data-type=S]::before { background-size: 68.75rem; background-position: -11rem -0.8125rem; }
+          &[data-type=L]::before { background-size: 69.3125rem; background-position: -39.9375rem -0.5625rem; }
+          &[data-type=B]::before { background-size: 67.3125rem; background-position: -0.75rem -0.9375rem; }
+          &[data-type=O]::before { background-size: 67.125rem; background-position: -20.375rem -0.3125rem; }
+          &[data-type=W]::before { background-size: 68.5625rem; background-position: -30.25rem -0.5625rem; }
 
-          &.taking-card[data-type=S]::before { background-position-y: calc(-106px - 13px); }
-          &.taking-card[data-type=L]::before { background-position-y: calc(-106px - 9px); }
-          &.taking-card[data-type=B]::before { background-position-y: calc(-106px - 15px); }
-          &.taking-card[data-type=O]::before { background-position-y: calc(-106px - 5px); }
-          &.taking-card[data-type=W]::before { background-position-y: calc(-106px - 9px); }
+          &.taking-card[data-type=S]::before { background-position-y: calc(-6.625rem - 0.8125rem); }
+          &.taking-card[data-type=L]::before { background-position-y: calc(-6.625rem - 0.5625rem); }
+          &.taking-card[data-type=B]::before { background-position-y: calc(-6.625rem - 0.9375rem); }
+          &.taking-card[data-type=O]::before { background-position-y: calc(-6.625rem - 0.3125rem); }
+          &.taking-card[data-type=W]::before { background-position-y: calc(-6.625rem - 0.5625rem); }
           &.full:not(.disabled)::before { filter: brightness(0.5); }
 
           /* Text on Card */
           &:not(.disabled){
             &::after {
               position: absolute;
-              width: 40px; height: 25px; padding: 0 3px; border-style: solid;
+              width: 2.5rem; height: 1.5625rem; padding: 0 0.1875rem; border-style: solid;
               display: flex; align-items: center;
               transition: all .05s linear;
             }
             &.giving-card::after {
-              content: attr(data-count) ' →'; bottom: 3px; left: 1px;
+              content: attr(data-count) ' →'; bottom: 0.1875rem; left: 0.0625rem;
               background-color: var(--trade-negative);
-              border-width: 1px 1px 0 0; border-color: color-mix(in srgb, var(--trade-negative), #000);
-              border-top-right-radius: 20px; justify-content: flex-start;
+              border-width: 0.0625rem 0.0625rem 0 0; border-color: color-mix(in srgb, var(--trade-negative), #000);
+              border-top-right-radius: 1.25rem; justify-content: flex-start;
             }
             &.taking-card::after {
-              content: '← ' attr(data-count); top: 3px; right: 1px;
+              content: '← ' attr(data-count); top: 0.1875rem; right: 0.0625rem;
               background-color: var(--trade-positive);
-              border-width: 0 0 1px 1px; border-color: color-mix(in srgb, var(--trade-positive), #000);
-              border-bottom-left-radius: 20px; justify-content: flex-end;
+              border-width: 0 0 0.0625rem 0.0625rem; border-color: color-mix(in srgb, var(--trade-positive), #000);
+              border-bottom-left-radius: 1.25rem; justify-content: flex-end;
             }
 
             &:not(.full):is(:hover, :focus){
               &::after {
-                width: calc(100% - 2px); height: calc(100% - 3px - 1px); padding: 0;
+                width: calc(100% - 0.125rem); height: calc(100% - 0.1875rem - 0.0625rem); padding: 0;
                 display: flex; align-items: center; justify-content: center;
-                text-shadow: 0 0 1px #000, 0 0 1px #000, 0 0 2px #000, 0 0 2px #000;
+                text-shadow: 0 0 0.0625rem #000, 0 0 0.0625rem #000, 0 0 0.125rem #000, 0 0 0.125rem #000;
                 border-width: 0;
               }
               &.giving-card::after {
                 content: 'Give 2 →';
-                border-radius: 13px 13px 0 0;
+                border-radius: 0.8125rem 0.8125rem 0 0;
                 background-color: color-mix(in srgb, var(--trade-negative) 60%, transparent);
               }
               &.taking-card::after {
                 content: '← Take 1';
-                border-radius: 0 0 13px 13px;
+                border-radius: 0 0 0.8125rem 0.8125rem;
                 background-color: color-mix(in srgb, var(--trade-positive) 60%, transparent);
               }
             }
@@ -318,7 +320,7 @@
 
       .reset {
         width: 35px; height: 35px; border-radius: 30px;
-        font-size: 30px; line-height: 32px; text-align: center;
+        font-size: 1.875rem; line-height: 32px; text-align: center;
         background-color: var(--sand-color-dark); color: var(--sand-color);
         border: 2px solid;
         &:hover, &:focus { background-color: var(--sand-color); color: #333; }

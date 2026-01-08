@@ -1,9 +1,11 @@
-#game > .resouce-selection-zone {
+#game > .resource-selection-zone {
   position: fixed; top: 0; left: 0px;
   display: flex; flex-direction: column; align-items: center;
   width: 100%;
-  background: color-mix(in srgb, var(--sand-color) 80%, transparent);
+  z-index: 60;
+  background: color-mix(in srgb, var(--sand-color-dark) 80%, #fff0);
   padding: 0 20px 0;
+  @media screen and (max-width: 768px) { padding: 0; }
   border-bottom: 5px solid var(--sand-color-dark);
   box-sizing: border-box;
   box-shadow: 0 0px 15px 0px #000;
@@ -18,44 +20,57 @@
   }
 
   .content {
-    display: flex; justify-content: center;
+    display: flex; flex-direction: column; align-items: center;
+    width: 100%;
   }
 
   .card-area {
-    display: flex; flex-wrap: wrap; justify-content: center;
+    display: flex; flex-wrap: nowrap; justify-content: center;
+    width: 100%;
+    gap: 0.5rem;
+    overflow-x: auto;
+    box-sizing: border-box;
+    padding: 0 10px 5px;
+
+    @media screen and (max-width: 500px) { justify-content: flex-start; }
 
     .card {
-      position: relative; width: 140px; height: 212px;
+      position: relative; width: 5.5rem; height: 8.5rem;
+      flex-shrink: 0;
+      box-sizing: border-box;
       cursor: pointer;
-      border-radius: 20px; border: 5px dashed #6c5d46;
-      margin-right: 20px; margin-bottom: 20px;
+      border-radius: 1rem; border: 0.25rem dashed var(--sand-color-dark);
+      margin-bottom: 0.5rem;
       &:not([data-count="0"]) { border-color: transparent; }
 
       &::before {
         content: '';
-        width: 100%; height: 100%;
+        position: absolute;
+        top: -0.25rem; left: -0.25rem;
+        width: 5.5rem; height: 8.5rem;
         display: block;
         background-image: url(/images/cards_sprite.png);
+        background-repeat: no-repeat;
         background-color: #ebd290;
-        border-radius: 15px;
+        border-radius: 0.9375rem;
         /* filter: blur(3px) sepia(0.2); */
         /* filter: blur(3px) sepia(0.5) brightness(0.7); */
-        filter: brightness(0.4) sepia(1);
+        filter: brightness(0.4) sepia(0.5);
         transition: all .15s linear;
       }
       &:not([data-count="0"])::before {
-        filter: none; box-shadow: 0px 0px 5px 5px #0006;
+        filter: none; box-shadow: 0rem 0rem 0.3125rem 0.3125rem #0006;
       }
       &:not([data-count="0"]):hover {
         transform: scale(1.1);
-        &::before { box-shadow: 0px 0px 10px 5px #0009; }
+        &::before { box-shadow: 0rem 0rem 0.625rem 0.3125rem #0009; }
       }
 
-      &[data-type=S]::before { background-size: 1100px; background-position: -176px -13px; }
-      &[data-type=L]::before { background-size: 1109px; background-position: -639px -9px; }
-      &[data-type=B]::before { background-size: 1077px; background-position: -12px -15px; }
-      &[data-type=O]::before { background-size: 1074px; background-position: -326px -5px; }
-      &[data-type=W]::before { background-size: 1097px; background-position: -484px -9px; }
+      &[data-type=S]::before { background-size: 43.214rem; background-position: -6.914rem -0.511rem; }
+      &[data-type=L]::before { background-size: 43.567rem; background-position: -25.103rem -0.354rem; }
+      &[data-type=B]::before { background-size: 42.311rem; background-position: -0.471rem -0.589rem; }
+      &[data-type=O]::before { background-size: 42.193rem; background-position: -12.807rem -0.196rem; }
+      &[data-type=W]::before { background-size: 43.096rem; background-position: -19.014rem -0.354rem; }
 
       &::after {
         display: none;
@@ -66,14 +81,14 @@
         width: 100%;
         text-align: center;
         background: var(--sand-color-dark);
-        border-bottom-right-radius: 15px;
-        border-bottom-left-radius: 15px;
+        border-bottom-right-radius: 0.9375rem;
+        border-bottom-left-radius: 0.9375rem;
         color: #fff9;
         /* font-size: 2em;
         font-weight: 600; */
-        padding: 5px 0;
+        padding: 0.3125rem 0;
         /* border-top: 1px solid var(--sand-color); */
-        box-shadow: 0 -5px 5px -3px var(--sand-color);
+        box-shadow: 0 -0.3125rem 0.3125rem -0.1875rem var(--sand-color);
       }
       &:not([data-count="0"], [data-count="1"])::after { content: "Take " attr(data-count) " " attr(data-text);}
       &:not([data-count="0"])::after { display: block; }
@@ -85,23 +100,23 @@
 
 
   .actions {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    margin-left: 20px;
+    display: flex; flex-direction: row; align-items: center; justify-content: center;
 
     .dev-card {
       cursor: pointer;
-      width: 70px; height: 106px; border-radius: 5px;
+      width: 4.375rem; height: 6.625rem; border-radius: 0.3125rem;
       background-color: #ebd290;
-      box-shadow: 0px 0px 5px 2px #0009;
-      &:hover { box-shadow: 0px 0px 10px 2px #0009; transform: scale(1.1);}
-      &[data-type="dM"] { background-image: url(/images/cards_sprite.png); background-size: 548px; background-position: -90px -122px; }
-      &[data-type="dY"] { background-image: url(/images/cards_sprite.png); background-size: 552px; background-position: -170px -124px; background-color: #dcbc64; }
+      box-shadow: 0rem 0rem 0.3125rem 0.125rem #0009;
+      margin-right: 1.25rem;
+      &:hover { box-shadow: 0rem 0rem 0.625rem 0.125rem #0009; transform: scale(1.1);}
+      &[data-type="dM"] { background-image: url(/images/cards_sprite.png); background-size: 34.25rem; background-position: -5.625rem -7.625rem; }
+      &[data-type="dY"] { background-image: url(/images/cards_sprite.png); background-size: 34.5rem; background-position: -10.625rem -7.75rem; background-color: #dcbc64; }
     }
 
     .submit {
-      margin: 30px 10px 20px;
+      margin: 10px;
       padding: 7px 15px;
-      width: 100%;
+      width: 160px;
       box-sizing: border-box;
       text-align: center;
       background: #ccc;

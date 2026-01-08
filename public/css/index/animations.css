@@ -87,14 +87,14 @@
     .res-icon {
       margin: 0;
       &.dK, &.dM, &.dY, &.dR, &.dVp {
-        width: 30px; height: 30px; border-radius: 30px;
-        background: url(/images/cards_sprite.png) -314px -460px/1047px no-repeat;
+        width: 1.875rem; height: 1.875rem; border-radius: 1.875rem;
+        background: url(/images/cards_sprite.png) -19.625rem -28.75rem/65.4375rem no-repeat;
       }
-      &.dK { background-position: -280px -14px; background-size: 321px; }
-      &.dR { background-position: -9px -78px; background-size: 301px; }
-      &.dM { background-position: -51px -71px; background-size: 290px; }
-      &.dY { background-position: -97px -75px; background-size: 301px; }
-      &.dVp { background-position: -96px -139px; background-size: 301px; }
+      &.dK { background-position: -17.5rem -0.875rem; background-size: 20.0625rem; }
+      &.dR { background-position: -0.5625rem -4.875rem; background-size: 18.8125rem; }
+      &.dM { background-position: -3.1875rem -4.4375rem; background-size: 18.125rem; }
+      &.dY { background-position: -6.0625rem -4.6875rem; background-size: 18.8125rem; }
+      &.dVp { background-position: -6rem -8.6875rem; background-size: 18.8125rem; }
     }
   }
   &.start .res-circle { transform: scale(4); }
@@ -107,26 +107,29 @@
   perspective: 300px;
 
   .card-container {
-    width: 196px; height: 302px; margin-top: 61px; margin-left: 2px;
-    perspective: 300px;
+    width: 12.25rem;
+    height: 18.875rem;
+    margin-top: 3.8125rem;
+    margin-left: 0.125rem;
+    perspective: 18.75rem;
   }
 
   .card {
     width: 100%; height: 100%;
-    box-shadow: 0 0 15px 0 #000c;
+    box-shadow: 0 0 0.9375rem 0 #000c;
     background-color: #ebd290; overflow: hidden;
-    position: relative; border-radius: 15px; perspective: 10000px;
+    position: relative; border-radius: 0.9375rem; perspective: 625rem;
 
     &::before {
       content: ''; width: 100%; height: 100%; position: absolute;
       background-image: url(/images/cards_sprite.png);
     }
 
-    &.dK::before { background-size: 1640px; background-position: -1409px -29px; transform: rotateZ(-1deg); }
-    &.dR::before { background-size: 1570px; transform: rotateX(-5deg) rotateY(-15deg) rotateZ(-1deg); background-position: -29px -359px; }
-    &.dY::before { background-size: 1550px; background-position: -478px -346px; transform: rotateZ(-1deg); }
-    &.dM::before { background-size: 1550px; background-position: -257px -344px; transform: rotateX(-5deg) rotateY(-10deg) rotateZ(0deg); }
-    &.dVp::before { background-size: 1520px; background-position: -461px -668px; transform: rotateX(-12deg) rotateY(-4deg) rotateZ(1deg); }
+    &.dK::before { background-size: 102.5rem; background-position: -88.0625rem -1.8125rem; transform: rotateZ(-1deg); }
+    &.dR::before { background-size: 98.125rem; transform: rotateX(-5deg) rotateY(-15deg) rotateZ(-1deg); background-position: -1.8125rem -22.4375rem; }
+    &.dY::before { background-size: 96.875rem; background-position: -29.875rem -21.625rem; transform: rotateZ(-1deg); }
+    &.dM::before { background-size: 96.875rem; background-position: -16.0625rem -21.5rem; transform: rotateX(-5deg) rotateY(-10deg) rotateZ(0deg); }
+    &.dVp::before { background-size: 95rem; background-position: -28.8125rem -41.75rem; transform: rotateX(-12deg) rotateY(-4deg) rotateZ(1deg); }
     &.dR { background-color: #dbbe6a; }
     &.dVp { background-color: #cfaf5d; }
   }
@@ -177,39 +180,39 @@
   }
 
   .container {
-    margin-top: 50px; position: relative;
+    margin-top: 3.125rem; position: relative;
 
     .largest-army-card {
-      height: 210px;
-      width: 327px; position: relative;
-      border: 1px solid; border-radius: 10px;
-      background: #c8b66d url(/images/extra-vps-sprite.png) -23px -146px/700px no-repeat;
-      box-shadow: 5px 5px 15px 0px #000; opacity: 0;
+      height: 13.125rem;
+      width: 20.4375rem; position: relative;
+      border: 0.0625rem solid; border-radius: 0.625rem;
+      background: #c8b66d url(/images/extra-vps-sprite.png) -1.4375rem -9.125rem/43.75rem no-repeat;
+      box-shadow: 0.3125rem 0.3125rem 0.9375rem 0rem #000; opacity: 0;
     }
 
     .knight {
-      width: 92px; height: 139px;
+      width: 5.75rem; height: 8.6875rem;
       position: absolute;
       background-color: #dabd63;
-      border-radius: 5px; overflow: hidden;
-      box-shadow: 0px 0px 5px 2px #000;
+      border-radius: 0.3125rem; overflow: hidden;
+      box-shadow: 0rem 0rem 0.3125rem 0.125rem #000;
       opacity: 0;
       &::before {
         content: ''; width: 100%; height: 100%; display: block;
         background-image: url(/images/cards_sprite.png);
       }
 
-      &.first { top: 54px; left: 72px; transform: rotate(-15deg) scale(1.1); }
+      &.first { top: 3.375rem; left: 4.5rem; transform: rotate(-15deg) scale(1.1); }
       &.first::before {
-        background-size: 755px; background-position: -546px -177px; transform: rotateZ(-2deg) rotateY(10deg) rotateX(-5deg);
+        background-size: 47.1875rem; background-position: -34.125rem -11.0625rem; transform: rotateZ(-2deg) rotateY(10deg) rotateX(-5deg);
       }
-      &.second { top: 47px; left: 148px; transform: scale(1.1); }
+      &.second { top: 2.9375rem; left: 9.25rem; transform: scale(1.1); }
       &.second::before {
-        background-size: 752px; background-position: -643px -181px; transform: rotateZ(-2deg) rotateY(0deg) rotateX(1deg);
+        background-size: 47rem; background-position: -40.1875rem -11.3125rem; transform: rotateZ(-2deg) rotateY(0deg) rotateX(1deg);
       }
-      &.third { top: 60px; left: 226px; transform: rotate(15deg) scale(1.1); }
+      &.third { top: 3.75rem; left: 14.125rem; transform: rotate(15deg) scale(1.1); }
       &.third::before {
-        background-size: 752px; background-position: -338px -170px; transform: rotateZ(-1deg) rotateY(0deg) rotateX(0deg);
+        background-size: 47rem; background-position: -21.125rem -10.625rem; transform: rotateZ(-1deg) rotateY(0deg) rotateX(0deg);
       }
     }
   }
@@ -218,7 +221,7 @@
   &.start .knight.second { opacity: 1; transition: opacity .25s .25s linear; }
   &.start .knight.first { opacity: 1; transition: opacity .25s .5s linear; }
 
-  &.finish .largest-army-card { opacity: 1; height: 403px; transition: opacity .25s ease-in, height .25s 1s ease-in; }
+  &.finish .largest-army-card { opacity: 1; height: 25.1875rem; transition: opacity .25s ease-in, height .25s 1s ease-in; }
   &.finish .knight.third { opacity: 0; transition: opacity .25s .25s linear; }
   &.finish .knight.second { opacity: 0; transition: opacity .25s .25s linear; }
   &.finish .knight.first { opacity: 0; transition: opacity .25s .25s linear; }
@@ -247,14 +250,14 @@
   }
 
   .container {
-    margin-top: 50px; position: relative;
+    margin-top: 3.125rem; position: relative;
 
     .longest-road-card {
-      height: 402px;
-      width: 327px; position: relative;
-      border: 1px solid; border-radius: 10px;
-      background: #c8b66d url(/images/extra-vps-sprite.png) -353px -152px/700px no-repeat;
-      box-shadow: 5px 5px 15px 0px #000;
+      height: 25.125rem;
+      width: 20.4375rem; position: relative;
+      border: 0.0625rem solid; border-radius: 0.625rem;
+      background: #c8b66d url(/images/extra-vps-sprite.png) -22.0625rem -9.5rem/43.75rem no-repeat;
+      box-shadow: 0.3125rem 0.3125rem 0.9375rem 0rem #000;
     }
   }
 

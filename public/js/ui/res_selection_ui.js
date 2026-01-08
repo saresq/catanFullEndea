@@ -3,7 +3,7 @@ import * as CONST from "../const.js"
 export default class ResSelectionUI {
   type; #onSubmit; #onDevCardClick
   selected = []
-  $el = document.querySelector('#game > .resouce-selection-zone')
+  $el = document.querySelector('#game > .resource-selection-zone')
 
   constructor({ onSubmit, onDevCardClick }) {
     this.#onSubmit = onSubmit

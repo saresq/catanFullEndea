@@ -34,6 +34,22 @@
     }
 }
 
+html {
+    font-size: 16px;
+}
+
+@media screen and (max-width: 768px) {
+    html {
+        font-size: 14px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    html {
+        font-size: 12px;
+    }
+}
+
 html,
 body {
     height: 100%;
@@ -41,6 +57,7 @@ body {
     background: var(--water-color);
     font-family: Raleway, sans-serif;
     letter-spacing: .2px;
+    font-size: 1rem;
 }
 
 /* hr { border-top-color: #fff; border-bottom-color: #fff; } */
@@ -115,7 +132,7 @@ body {
  * -------------
 */
 
-#game > .accessibility-zone .info-zone .play-full-game {
+#game .accessibility-zone .info-zone .play-full-game {
     font-family: EagleLake;
     font-size: 2em;
     text-align: center;
@@ -164,7 +181,7 @@ body {
         opacity: 0;
         background: #333;
         color: var(--sand-color);
-        font-size: 50px;
+        font-size: 3.125rem;
         text-align: center;
         line-height: 45px;
         box-shadow: 0 0 10px 0px var(--sand-color), 0 0 20px 0px #333;
@@ -194,7 +211,7 @@ body {
 
     &.picked .tile-replace {
         transform: scale(1.5);
-        font-size: 30px;
+        font-size: 1.875rem;
 
         &::before {
             content: '…' !important;
@@ -634,7 +651,7 @@ body {
                 font-weight: bold;
                 white-space: pre;
                 text-align: center;
-                font-size: 25px;
+                font-size: 1.5625rem;
                 /* letter-spacing: 1px; */
                 line-height: 10px;
                 position: relative;

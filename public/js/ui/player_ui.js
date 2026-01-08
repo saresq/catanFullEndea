@@ -7,7 +7,10 @@ export default class PlayerUI {
   #ui; #onDiceClick; #onPieceClick; #onBuyDevCardClick; #onTradeClick; #onExitTrade;
   #onEndTurnClick; #onCardClick; #getPossibleLocations; #toggleBoardBlur; #onDevCardActivate
   #canPlayDevCard
+  #is_dev_row_open = false
   player; has_timer; timer; auto_roll; hand
+
+  get maxVisualCards() { return window.innerWidth <= 768 ? 3 : 5 }
 
   $timer; $dice; $build_road; $build_settlement; $build_city; $buy_dev_card; $trade_btn; $end_turn
   $el = $('#game > .current-player')
@@ -72,22 +75,30 @@ export default class PlayerUI {
     const cid = (this.player.color_id ?? this.player.id)
     this.$el.classList.add('pc' + cid)
     this.$action_bar.innerHTML = `
-      <div class="timer disabled ${this.has_timer ? '' : 'hide'}">0:00</div>
-      <button class="build-road disabled" title="Build Road (r)" data-count="${CONST.PIECES_COUNT.R}">
-        <div class="cost-tooltip">${resToText(CONST.COST.R)}</div>
-      </button>
-      <button class="build-settlement disabled" title="Build Settlement (s)" data-count="${CONST.PIECES_COUNT.S}">
-        <div class="cost-tooltip">${resToText(CONST.COST.S)}</div>
-      </button>
-      <button class="build-city disabled" title="Build City (c)" data-count="${CONST.PIECES_COUNT.C}">
-        <div class="cost-tooltip">${resToText(CONST.COST.C)}</div>
-      </button>
-      <button class="dev-card disabled" title="Buy Development Card (d)" data-count="-">
-        <div class="cost-tooltip">${resToText(CONST.COST.DEV_C)}</div>
-        <img src="/images/dc-back.png"/>
-      </button>
-      <button class="trade disabled" title="Trade (t)">Trade</button>
-      <button class="roll-dice disabled" data-mode="roll" title="Roll Dice (Space)"><span class="label">🎲🎲</span></button>
+      <div class="row-1">
+        <div class="timer disabled ${this.has_timer ? '' : 'hide'}">0:00</div>
+        <button class="trade disabled" title="Trade (t)">Trade</button>
+        <button class="dev-toggle hide">
+          <span class="text">dev cards</span>
+          <span class="caret">^</span>
+        </button>
+      </div>
+      <div class="row-2">
+        <button class="build-road disabled" title="Build Road (r)" data-count="${CONST.PIECES_COUNT.R}">
+          <div class="cost-tooltip">${resToText(CONST.COST.R)}</div>
+        </button>
+        <button class="build-settlement disabled" title="Build Settlement (s)" data-count="${CONST.PIECES_COUNT.S}">
+          <div class="cost-tooltip">${resToText(CONST.COST.S)}</div>
+        </button>
+        <button class="build-city disabled" title="Build City (c)" data-count="${CONST.PIECES_COUNT.C}">
+          <div class="cost-tooltip">${resToText(CONST.COST.C)}</div>
+        </button>
+        <button class="dev-card disabled" title="Buy Development Card (d)" data-count="-">
+          <div class="cost-tooltip">${resToText(CONST.COST.DEV_C)}</div>
+          <img src="/images/dc-back.png"/>
+        </button>
+        <button class="roll-dice disabled" data-mode="roll" title="Roll Dice (Space)"><span class="label">🎲🎲</span></button>
+      </div>
     `
     this.#setRefs()
     this.#setupActionEvents()
@@ -101,6 +112,7 @@ export default class PlayerUI {
     this.$build_city = this.$action_bar.querySelector('.build-city')
     this.$buy_dev_card = this.$action_bar.querySelector('.dev-card')
     this.$trade_btn = this.$action_bar.querySelector('.trade')
+    this.$dev_toggle = this.$action_bar.querySelector('.dev-toggle')
   }
 
   #$keyToEl(key) {
@@ -144,6 +156,13 @@ export default class PlayerUI {
       if (this.$trade_btn.classList.contains('disabled')) return
       this.#onTradeClick()
     })
+    // Dev Toggle
+    this.$dev_toggle?.addEventListener('click', e => {
+      const $dev_row = this.$hand.querySelector('.dev-cards-row')
+      if (!$dev_row) return
+      this.#is_dev_row_open = $dev_row.classList.toggle('hide') === false
+      this.$dev_toggle.classList.toggle('open', this.#is_dev_row_open)
+    })
     // End Turn (hidden in unified mode)
     // Keyboard shortcuts
     document.addEventListener('keydown', e => {
@@ -179,7 +198,6 @@ export default class PlayerUI {
             this.removeActiveActions()
             this.#onPieceClick('', true)
           }
-          this.#onExitTrade()
           break
       }
     })
@@ -206,7 +224,7 @@ export default class PlayerUI {
         this.toggleAction(this.#$keyToEl(key), can_act)
       })
     } else {
-      for (const $el of this.$action_bar.children) {
+      for (const $el of this.$action_bar.querySelectorAll('.timer, button')) {
         this.toggleAction($el)
       }
       // When actions turn off, also disable unified end-turn state
@@ -216,14 +234,14 @@ export default class PlayerUI {
 
   isAnyActionActive() {
     let active = false
-    for (const $el of this.$action_bar.children) {
+    for (const $el of this.$action_bar.querySelectorAll('.timer, button')) {
       if ($el.classList.contains('active')) { active = true; break }
     }
     return active
   }
 
   removeActiveActions() {
-    for (const $el of this.$action_bar.children) {
+    for (const $el of this.$action_bar.querySelectorAll('.timer, button')) {
       $el.classList.remove('active')
     }
   }
@@ -269,6 +287,7 @@ export default class PlayerUI {
   setUnifiedModeRoll(enabled) {
     if (!this.$dice) return
     this.$dice.dataset.mode = 'roll'
+    this.$dice.classList.remove('end-turn')
     this.$dice.title = 'Roll Dice (Space)'
     const label = this.$dice.querySelector('.label') || this.#ensureDiceLabel()
     label.textContent = '🎲🎲'
@@ -277,9 +296,10 @@ export default class PlayerUI {
   setUnifiedModeEnd(enabled) {
     if (!this.$dice) return
     this.$dice.dataset.mode = 'end'
-    this.$dice.title = 'End Turn (e/Space)'
+    this.$dice.classList.add('end-turn')
+    this.$dice.title = '⏭️ (e/Space)'
     const label = this.$dice.querySelector('.label') || this.#ensureDiceLabel()
-    label.textContent = 'End Turn'
+    label.textContent = '⏭️'
     const effective = !!enabled && !this._isEndCooldown
     this.toggleAction(this.$dice, effective)
   }
@@ -307,45 +327,55 @@ export default class PlayerUI {
    */
   //#region
   renderHand() {
-    const hand_groups = Object.entries(this.hand).sort((a, b) => a[0].length - b[0].length)
-    const group_size = hand_groups.length // cannot be more than 10
-    const CURVE_TRANSLATE = [
-      [0], [0,0], [10,0,20], [20,0,0,30], [30,5,0,9,40],
-      [40,10,0,0,18,50], [50,15,3,0,6,27,60], [55,20,6,0,0,12,36,65],
-      [55,20,6,0,-5,0,12,36,65], [55,20,6,0,-5,-5,0,12,36,65],
-    ][group_size - 1]
+    const res_order = ['S', 'L', 'B', 'O', 'W']
+    const is_mobile = window.innerWidth <= 768
+    const hand_groups = Object.entries(this.hand).sort((a, b) => {
+      const a_res_idx = res_order.indexOf(a[0])
+      const b_res_idx = res_order.indexOf(b[0])
+      if (a_res_idx !== -1 && b_res_idx !== -1) return a_res_idx - b_res_idx
+      if (a_res_idx !== -1) return -1
+      if (b_res_idx !== -1) return 1
+      return a[0].length - b[0].length || a[0].localeCompare(b[0])
+    })
 
-    this.$hand.innerHTML = hand_groups.map(([type, count], i) => {
-      const group_rotation = -15 + (30 / (group_size - 1)) * i
-      const group_translate = CURVE_TRANSLATE[i]
-      let group_margin = group_size < 4
-        ? 50 : (group_size > 6 ? (group_size > 8 ? -50 : -30) : -10)
+    const groupToHtml = ([type, count]) => {
+      const visualCount = Math.min(count, this.maxVisualCards)
       return `
         <div
           class="card-group ${type}" data-type="${type}" data-count="${count}"
           ${type === 'dK' ? ' title="Knight (k)" ' : ''}
-          style="margin-right:${group_margin}px;
-            transform:rotate(${group_rotation}deg) translateY(${group_translate}px);"
         >
-        <div class="card-count ${count < 2 ? 'hide' : ''}">${count}</div>
-        ${[...Array(count)].map((_, j) => {
-        if (count > 7 && j < count - 7) return '' // Max 7 cards rendered
-        const c_rot = 15 * (count - j - 1) / (count - j)
-        const c_mv = 15 * (count - j - 2) / (count - j)
+        <div class="card-count ${count < 2 ? 'hide' : ''}"
+          style="left: calc(1.875rem + ${Math.max(0, visualCount - 1) * 4}px);
+                 top: -0.75rem;"
+        >${count}</div>
+        ${[...Array(visualCount)].map((_, j) => {
         return `
             <div class="card ${type}" data-type="${type}"
-              style="transform:rotate(${c_rot}deg) translate(${c_mv}px, 0px);"
+              style="left: ${j * 4}px; bottom: ${j * 2}px;"
             ></div>
           `
       }).join('')}
         </div>
       `
-    }).join('')
+    }
+
+    const resource_groups = hand_groups.filter(([t]) => res_order.includes(t))
+    const dev_card_groups = hand_groups.filter(([t]) => !res_order.includes(t))
+
+    this.$hand.innerHTML = `
+      <div class="resources-row">${resource_groups.map(groupToHtml).join('')}</div>
+      <div class="dev-cards-row ${this.#is_dev_row_open ? '' : 'hide'}">${dev_card_groups.map(groupToHtml).join('')}</div>
+    `
+    if (this.$dev_toggle) {
+      this.$dev_toggle.classList[dev_card_groups.length ? 'remove' : 'add']('hide')
+      this.$dev_toggle.classList[this.#is_dev_row_open ? 'add' : 'remove']('open')
+    }
     this.#setupHandEvents()
   }
   #setupHandEvents() {
     this.$hand.querySelectorAll('.card, .card-count').forEach($el => $el.addEventListener('click', e => {
-      const $card_group = e.target.parentElement
+      const $card_group = e.target.closest('.card-group')
       const type = $card_group.dataset.type
       const is_active = $card_group.classList.contains('active')
       const is_dc = CONST.DEVELOPMENT_CARDS[type] && type !== 'dVp'
@@ -424,19 +454,28 @@ export default class PlayerUI {
 
   /** During Robber Drop */
   toggleHandResource(type, add) {
+    const $group = this.$hand.querySelector(`.card-group[data-type="${type}"]`)
+    const $count = $group.querySelector('.card-count')
+    const count = +$count.innerHTML + (add ? 1 : -1)
     if (add) {
-      const count = +this.$hand.querySelector(`.card-group[data-type="${type}"] .card-count`).innerHTML
-      this.$hand.querySelector(`.card-group[data-type="${type}"] .card-count`).innerHTML = count + 1
-      this.$hand.querySelector(`.card-group[data-type="${type}"]`).classList.remove('disabled')
-      const hidden_list = this.$hand.querySelectorAll(`.card-group[data-type="${type}"] .card.hide`)
-      if (hidden_list.length) hidden_list[hidden_list.length - 1].classList.remove('hide')
+      $group.classList.remove('disabled')
+      if (count <= this.maxVisualCards) {
+        const $hidden = $group.querySelectorAll('.card.hide')
+        if ($hidden.length) $hidden[0].classList.remove('hide')
+      }
     } else {
-      const count = +this.$hand.querySelector(`.card-group[data-type="${type}"] .card-count`).innerHTML
-      if (!count) return
-      this.$hand.querySelector(`.card-group[data-type="${type}"] .card:not(.hide)`)?.classList.add('hide')
-      this.$hand.querySelector(`.card-group[data-type="${type}"] .card-count`).innerHTML = count - 1
-      if (count === 1) this.$hand.querySelector(`.card-group[data-type="${type}"]`).classList.add('disabled')
+      if (count < 0) return
+      if (count < this.maxVisualCards) {
+        const $visible = $group.querySelectorAll('.card:not(.hide)')
+        if ($visible.length) $visible[$visible.length - 1].classList.add('hide')
+      }
+      if (count === 0) $group.classList.add('disabled')
     }
+    $count.innerHTML = count
+    $count.classList.toggle('hide', count < 2)
+    const visualCount = Math.min(count, this.maxVisualCards)
+    $count.style.left = `calc(1.875rem + ${Math.max(0, visualCount - 1) * 4}px)`
+    $count.style.top = `calc(-0.75rem - ${Math.max(0, visualCount - 1) * 2}px)`
     return 1
   }
   //#endregion

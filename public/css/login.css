@@ -7,11 +7,28 @@
   --box-width: 500px;
 }
 
+html {
+  font-size: 16px;
+}
+
+@media screen and (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  html {
+    font-size: 12px;
+  }
+}
+
 html,
 body {
   height: 100%;
   margin: 0;
   font-family: EagleLake, serif;
+  font-size: 1rem;
 }
 
 /* Base button reset */

@@ -2,79 +2,104 @@
   display: none;
   position: fixed; top: 0; left: 0px;
   width: 100%;
+  z-index: 60;
   /* background: var(--sand-color); */
   background: color-mix(in srgb, var(--sand-color-dark) 80%, #fff0);
   padding: 20px 20px 0;
+  @media screen and (max-width: 768px) { padding: 0; }
   border-bottom: 5px solid var(--sand-color-dark);
   box-sizing: border-box;
   box-shadow: 0 0px 15px 0px #000;
   justify-content: center;
   font-family: Raleway, sans-serif;
 
-  &.show { display: flex; }
+  &.show { display: flex; flex-direction: column; align-items: center; }
 
   .card-area {
-    display: flex; flex-wrap: wrap; justify-content: center;
+    display: flex; flex-wrap: nowrap; justify-content: center;
+    width: 100%;
+    gap: 0.5rem;
+    padding-top: 2.25rem;
+    overflow-x: auto;
+    box-sizing: border-box;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-bottom: 5px;
+
+    @media screen and (max-width: 500px) {
+      justify-content: flex-start;
+    }
   }
 
   .drop-card {
     position: relative;
     cursor: not-allowed;
-    width: 140px;
-    height: 212px;
+    width: 5.5rem;
+    height: 8.5rem;
+    flex-shrink: 0;
+    box-sizing: border-box;
     /* border: 5px dashed var(--sand-color-dark); */
-    border: 5px dashed var(--sand-color);
-    margin-right: 20px;
-    margin-bottom: 20px;
-    border-radius: 20px;
+    border: 0.25rem dashed var(--sand-color);
+    margin-bottom: 0.5rem;
+    border-radius: 1rem;
     &.valued { border-color: transparent; }
 
     &::before {
       content: '';
-      display: block;
+      position: absolute;
+      top: -0.25rem; left: -0.25rem;
+      width: 5.5rem; height: 8.5rem;
+      border-radius: 0.9375rem;
       background-image: url(/images/cards_sprite.png);
+      background-repeat: no-repeat;
       background-color: #ebd290;
-      width: 100%;
-      height: 100%;
-      border-radius: 15px;
       /* filter: blur(3px) sepia(0.2);
       filter: blur(3px) sepia(0.5) brightness(0.7); */
       filter: brightness(0.4) sepia(0.5);
     }
-    &.valued::before { filter: none; box-shadow: 0px 0px 5px 5px #0006; }
+    &.valued::before { filter: none; box-shadow: 0rem 0rem 0.3125rem 0.3125rem #0006; }
     &.valued:hover{
-      position: relative; left: -3px; top: -3px;
-      &::before { box-shadow: 5px 5px 10px 5px #0009; }
+      position: relative; left: -0.1875rem; top: -0.1875rem;
+      &::before { box-shadow: 0.3125rem 0.3125rem 0.625rem 0.3125rem #0009; }
     }
 
     .ctrl {
-      display: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      width: 32px;
-      height: 32px;
+      width: 2.25rem;
+      height: 2.25rem;
       border-radius: 50%;
-      border: 1px solid #333;
+      border: 0.0625rem solid #333;
       background: #222c;
       color: #fff;
-      line-height: 26px;
+      /* line-height: 1.625rem; */
       text-align: center;
       font-weight: 900;
-      font-size: 2.5em;
+      font-size: 2em;
       cursor: pointer;
       user-select: none;
+      z-index: 2;
     }
-    &:hover .ctrl { display: block; }
-    .ctrl.minus { left: 8px; }
-    .ctrl.plus { right: 8px; }
-    .ctrl.plus.disabled { opacity: 0.5; pointer-events: none; }
+    /* &:hover .ctrl { display: block; } */
+    .ctrl.minus { left: 0rem; }
+    .ctrl.plus { right: 0rem; }
+    .ctrl.plus.disabled, .ctrl.minus.disabled { opacity: 0.2; pointer-events: none; }
 
-    &[data-type=S]::before { background-size: 1100px; background-position: -176px -13px; }
-    &[data-type=L]::before { background-size: 1109px; background-position: -639px -9px; }
-    &[data-type=B]::before { background-size: 1077px; background-position: -12px -15px; }
-    &[data-type=O]::before { background-size: 1074px; background-position: -326px -5px; }
-    &[data-type=W]::before { background-size: 1097px; background-position: -484px -9px; }
+    @media screen and (max-width: 768px) {
+      .ctrl.plus, .ctrl.minus { left: 50%; right: auto; transform: translate(-50%, -50%); }
+      .ctrl.plus { top: 25%; }
+      .ctrl.minus { top: 75%; }
+    }
+
+    &[data-type=S]::before { background-size: 43.214rem; background-position: -6.914rem -0.511rem; }
+    &[data-type=L]::before { background-size: 43.567rem; background-position: -25.103rem -0.354rem; }
+    &[data-type=B]::before { background-size: 42.311rem; background-position: -0.471rem -0.589rem; }
+    &[data-type=O]::before { background-size: 42.193rem; background-position: -12.807rem -0.196rem; }
+    &[data-type=W]::before { background-size: 43.096rem; background-position: -19.014rem -0.354rem; }
 
     &::after {
       display: none;
@@ -85,23 +110,23 @@
       width: 100%;
       text-align: center;
       background: var(--sand-color-dark);
-      border-bottom-right-radius: 15px;
-      border-bottom-left-radius: 15px;
+      border-bottom-right-radius: 0.9375rem;
+      border-bottom-left-radius: 0.9375rem;
       color: #fff9;
       /* font-size: 2em;
       font-weight: 600; */
-      padding: 5px 0;
+      padding: 0.3125rem 0;
       /* border-top: 1px solid var(--sand-color); */
-      box-shadow: 0 -5px 5px -3px var(--sand-color);
+      box-shadow: 0 -0.3125rem 0.3125rem -0.1875rem var(--sand-color);
     }
     &.valued::after { display: block; }
   }
 
   .drop-actions {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    display: flex; flex-direction: row; align-items: center; justify-content: center;
 
     .drop-emoji {
-      font-size: 50px;
+      font-size: 3.125rem;
       cursor: pointer;
       filter: drop-shadow(0px 0px 1px #fff) drop-shadow(0px 0px 1px #fff) drop-shadow(0px 0px 1px #fff);
 
@@ -117,8 +142,9 @@
       border-radius: 50%;
       /* border: 2px solid var(--sand-color-dark); */
       border: 2px solid var(--sand-color);
-      margin: 20px;
+      margin: 10px 20px;
       position: relative;
+      flex-shrink: 0;
 
       &::before {
         content: attr(data-count);
@@ -160,7 +186,7 @@
     }
 
     .drop-give-button {
-      margin: 20px 10px;
+      margin: 10px;
       padding: 7px 15px;
       width: 160px;
       box-sizing: border-box;
