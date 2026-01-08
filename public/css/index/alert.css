@@ -1,7 +1,9 @@
 #game > .alert {
   opacity: 0;
   z-index: -10;
-  transition: opacity .25s linear;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .25s linear, visibility .25s linear;
   position: fixed;
   top: 20px;
   left: 50%;
@@ -13,16 +15,16 @@
   line-height: 1.5em;
   letter-spacing: 1px;
   text-align: center;
-  &.show { z-index: 20; opacity: 1; }
+  &.show { z-index: 20; opacity: 1; visibility: visible; pointer-events: auto; }
 
   @media screen and (max-width: 768px) {
     width: 100%;
     left: 0;
     transform: none;
     top: 0;
-    z-index: 10000;
+    z-index: -10;
     &.show { z-index: 10000; }
-    .text { border-radius: 0; }
+    .text { border-radius: 0; max-height: 100vh; }
   }
 
   small { font-size: .5em; }
@@ -39,6 +41,8 @@
     padding: 1em;
     border-radius: 5px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
     b {
       color: #734101; 
       padding: 8px;
@@ -131,8 +135,16 @@
   background: var(--sand-color); color: var(--sand-color-text-dark);
   border-bottom: 2px solid var(--sand-color-dark);
   opacity: 0; z-index: -10;
-  transition: opacity .25s linear;
-  &.show { z-index: 60; opacity: 1; }
+  visibility: hidden; pointer-events: none;
+  transition: opacity .25s linear, visibility .25s linear;
+  &.show { z-index: 60; opacity: 1; visibility: visible; pointer-events: auto; }
+
+  @media screen and (max-width: 768px) {
+    width: 100%; height: 100%;
+    top: 0; left: 0;
+    transform: none; margin: 0;
+    border-bottom: 0;
+  }
 
   .title {
     position: sticky; top: 0; left: 0;
