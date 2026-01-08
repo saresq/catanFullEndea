@@ -6,18 +6,20 @@ const clamp = (num, min, max) => Math.max(min, Math.min(max, num))
 class RandomDice {
   roll(avoidTotals = []) {
     let d1 = Math.ceil(Math.random() * 6)
-    while (avoidTotals?.includes(d1)) {
+    let d2 = Math.ceil(Math.random() * 6)
+    while (avoidTotals?.includes(d1 + d2)) {
       d1 = Math.ceil(Math.random() * 6)
+      d2 = Math.ceil(Math.random() * 6)
     }
-    return { d1, d2: 0 }
+    return { d1, d2 }
   }
 }
 
 class BalancedDice {
   constructor(options = {}) {
     const {
-      minimumCardsBeforeReshuffle = 2, // reshuffle threshold
-      recentMemory = 2,                 // how many recent totals to remember
+      minimumCardsBeforeReshuffle = 12, // reshuffle threshold
+      recentMemory = 5,                 // how many recent totals to remember
       recencyReduction = 0.30,          // ~30% reduction per recent hit
     } = options
 
@@ -27,9 +29,9 @@ class BalancedDice {
 
     this.recentRolls = [] // queue of recent totals
 
-    // Deck grouped by totals 1..6 with their (d1,d2) pairs
+    // Deck grouped by totals 2..12 with their (d1,d2) pairs
     this.deckByTotal = []
-    for (let t = 1; t <= 6; t++) this.deckByTotal.push({ total: t, pairs: [], weight: 0, recentCount: 0 })
+    for (let t = 2; t <= 12; t++) this.deckByTotal.push({ total: t, pairs: [], weight: 0, recentCount: 0 })
 
     this._reshuffle()
     this._updateBaseWeights()
@@ -115,22 +117,23 @@ class BalancedDice {
   }
 
   _byTotal(total) {
-    // totals are 1..6, index offset = 1
-    return this.deckByTotal[total - 1]
+    // totals are 2..12, index offset = 2
+    return this.deckByTotal[total - 2]
   }
 
   _reshuffle() {
-    // Build full standard 6-card deck grouped by total
+    // Build full standard 36-card deck grouped by total
     for (let i = 0; i < this.deckByTotal.length; i++) {
       this.deckByTotal[i].pairs = []
       this.deckByTotal[i].recentCount = 0
     }
     for (let d1 = 1; d1 <= 6; d1++) {
-      const d2 = 0
-      const total = d1 + d2
-      this._byTotal(total).pairs.push({ d1, d2 })
+      for (let d2 = 1; d2 <= 6; d2++) {
+        const total = d1 + d2
+        this._byTotal(total).pairs.push({ d1, d2 })
+      }
     }
-    this.cardsLeft = 6
+    this.cardsLeft = 36
     this.recentRolls.length = 0
   }
 

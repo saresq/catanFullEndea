@@ -315,7 +315,7 @@ export default class PlayerUI {
     this.$dice.classList.remove('end-turn')
     this.$dice.title = 'Roll Dice (Space)'
     const label = this.$dice.querySelector('.label') || this.#ensureDiceLabel()
-    label.textContent = '🎲🎲'
+    label.textContent = '🎲'
     this.toggleAction(this.$dice, enabled)
   }
   setUnifiedModeEnd(enabled) {
