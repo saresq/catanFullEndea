@@ -11,7 +11,7 @@
   box-sizing: border-box;
   box-shadow: 0 0px 15px 0px #000;
   justify-content: center;
-  font-family: Raleway, sans-serif;
+  font-family: var(--font-ui);
 
   &.show { display: flex; flex-direction: column; align-items: center; }
 
@@ -193,7 +193,7 @@
       text-align: center;
       background: #ccc;
       color: #999;
-      font-family: EagleLake;
+      font-family: var(--font-main);
       border-radius: 5px;
       font-weight: bold;
       border: 2px solid transparent;
@@ -227,7 +227,7 @@
   display: none;
   color: var(--sand-color);
   padding: 30px 10px;
-  font-family: EagleLake, Raleway, sans-serif;
+  font-family: var(--font-main), var(--font-ui);
   font-size: 1.4em;
   text-align: center;
 }

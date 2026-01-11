@@ -55,7 +55,7 @@ body {
     height: 100%;
     margin: 0;
     background: var(--water-color);
-    font-family: Raleway, sans-serif;
+    font-family: var(--font-ui);
     letter-spacing: .2px;
     font-size: 1rem;
 }
@@ -80,7 +80,7 @@ body {
     padding: 7px 25px;
     width: fit-content;
     box-sizing: border-box;
-    font-family: EagleLake;
+    font-family: var(--font-main);
     border: 2px solid;
     border-radius: 50px;
     text-align: center;
@@ -133,7 +133,7 @@ body {
 */
 
 #game .accessibility-zone .info-zone .play-full-game {
-    font-family: EagleLake;
+    font-family: var(--font-main);
     font-size: 2em;
     text-align: center;
     margin: 10px 0 30px;
@@ -168,7 +168,7 @@ body {
     cursor: pointer;
 
     .tile-replace {
-        font-family: initial;
+        font-family: var(--font-ui);
         position: absolute;
         top: 0;
         left: 0;
@@ -328,7 +328,7 @@ body {
 */
 
 #tile-selector {
-    font-family: EagleLake;
+    font-family: var(--font-main);
     position: fixed;
     left: 0px;
     top: -230px;
@@ -607,7 +607,7 @@ body {
             .probability-text {
                 margin-top: 20px;
                 text-align: center;
-                font-family: monospace;
+                font-family: var(--font-mono);
                 opacity: 0.3;
 
                 span {
@@ -647,7 +647,7 @@ body {
             &::before {
                 display: block;
                 content: attr(data-num) "\a " attr(data-dots);
-                font-family: serif;
+                font-family: var(--font-main);
                 font-weight: bold;
                 white-space: pre;
                 text-align: center;
@@ -994,13 +994,13 @@ body {
         &.shuffle {
             margin: 20px 0 15px;
             display: block;
-            font-family: EagleLake;
+            font-family: var(--font-main);
         }
         
         &.balance-numbers, &.balance-resources {
             margin: 10px 0;
             display: block;
-            font-family: EagleLake;
+            font-family: var(--font-main);
         }
 
         &.reset {

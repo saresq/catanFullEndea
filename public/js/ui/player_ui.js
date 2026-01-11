@@ -80,7 +80,7 @@ export default class PlayerUI {
         <button class="trade disabled" title="Trade (t)">Trade</button>
         <button class="dev-toggle hide">
           <span class="text">dev cards</span>
-          <span class="caret">^</span>
+          <span class="caret"></span>
         </button>
       </div>
       <div class="row-2">

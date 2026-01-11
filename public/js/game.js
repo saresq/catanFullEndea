@@ -219,10 +219,10 @@ export default class Game {
       if (!Array.isArray(dist)) return
       const entries = dist
         .map(({ pid, res }) => ({ p: this.getPlayer(pid), res: res || {} }))
-        .filter(({ res }) => Object.values(res).some(v => v > 0))
+        .filter(({ res, p }) => p && Object.values(res).some(v => v > 0) && !this.#isMyPid(p.id))
       if (!entries.length) return
-      const parts = entries.map(({ p, res }) => `${getName(p)} took ${resToText(res)}`)
-      const msg = ' :: ' + parts.join('; ')
+      const parts = entries.map(({ p, res }) => `${getName(p)}→ ${resToText(res)}`)
+      const msg = parts.join('| ')
       this.#ui.alert_ui.appendStatus(msg)
     } catch (e) {
       // Fail-safe: do nothing on formatting errors

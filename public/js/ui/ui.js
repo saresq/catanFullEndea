@@ -35,6 +35,7 @@ export default class UI {
 
     this.accessibility_ui = new AccessibilityUI({
       toggleBoardZoom: out => this.board_ui.toggleZoom(out),
+      recenterMap: () => this.board_ui.recenter(),
       toggleBgm: allow => game.toggleBgm(allow),
       toggleNotificationsAudio: allow => game.toggleNotificationsAudio(allow),
     })

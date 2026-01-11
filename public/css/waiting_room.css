@@ -37,7 +37,7 @@ body {
   background: url(/images/catan-bg.png) center/cover;
   backdrop-filter: blur(50px);
   transition: all linear .5s;
-  font-family: EagleLake;
+  font-family: var(--font-main);
   font-size: 1rem;
 }
 
@@ -51,7 +51,7 @@ button {
 
 #waiting-room {
   display: flex; flex-wrap: wrap; align-content: flex-start;
-  font-family: EagleLake;
+  font-family: var(--font-main);
   &.hide { opacity: 0; transition: opacity .5s 1.5s linear; }
 
   .title {
@@ -70,7 +70,7 @@ button {
         filter: drop-shadow(0 0 5px #fff) drop-shadow(0 0 2px #fff);
         &::after {
           content: 'Copy'; position: absolute; bottom: -20px; left: calc(50% - 30px);
-          text-align: center; font-size: 1rem; font-family: Raleway;
+          text-align: center; font-size: 1rem; font-family: var(--font-ui);
           background-color: #000c; color: #fff; padding: 3px 10px; border-radius: 3px;
         }
       }
@@ -88,7 +88,7 @@ button {
   }
   .box-header {
     display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: center;
-    font-family: Raleway, sans-serif; color: #fff; filter: drop-shadow(0 0 5px #000);
+    font-family: var(--font-ui); color: #fff; filter: drop-shadow(0 0 5px #000);
     margin-bottom: 10px;
   }
   .box-header .info-item { background: #0008; padding: 6px 10px; border-radius: 6px; }
@@ -147,7 +147,7 @@ button {
 }
 .color-picker-overlay .picker {
   background: #fff; color: #333; padding: 16px; border-radius: 8px;
-  min-width: 280px; box-shadow: 0 10px 30px #000a; font-family: Raleway, sans-serif;
+  min-width: 280px; box-shadow: 0 10px 30px #000a; font-family: var(--font-ui);
 }
 .color-picker-overlay .picker .title { font-weight: 700; margin-bottom: 10px; text-align: center; }
 .color-picker-overlay .picker .grid {
@@ -187,7 +187,7 @@ button {
   color: #fff;
   padding: 6px 12px;
   border-radius: 6px;
-  font-family: Raleway, sans-serif;
+  font-family: var(--font-ui);
   font-weight: 700;
   border: 2px solid #fff5;
   box-shadow: 0 2px 6px #0006;
@@ -200,7 +200,7 @@ button {
   color: #fff;
   padding: 6px 12px;
   border-radius: 6px;
-  font-family: Raleway, sans-serif;
+  font-family: var(--font-ui);
   font-weight: 700;
   border: 2px solid #fff3;
   transition: all .15s ease;

@@ -60,7 +60,7 @@
     &.p8 .name { background: var(--player-8-color); }
 
     .victory-points {
-      display: flex; justify-content: start; font-family: Raleway, sans-serif;
+      display: flex; justify-content: start; font-family: var(--font-ui);
       font-size: 2.2em; padding: 0px 10px; border-bottom: 1px solid; border-color: inherit;
 
       & span {
@@ -132,7 +132,7 @@
         display: inline-block;
         position: absolute; bottom: 0; left: 0;
         color: #000;
-        font-size: 1em; font-family: monospace;
+        font-size: 1em; font-family: var(--font-mono);
         background: #fff;
         border-top: 1px solid #666;
         border-right: 1px solid #666;

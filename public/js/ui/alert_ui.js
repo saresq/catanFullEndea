@@ -34,6 +34,9 @@ export default class AlertUI {
   }
 
   render() {
+    const pcClass = 'pc' + (this.#player.color_id || this.#player.id)
+    this.$status_history.classList.add(pcClass)
+    this.$alert.classList.add(pcClass)
     this.$status_bar.innerHTML = this.#player.last_status || '...'
     this.$status_history_container.innerHTML = this.#status_history.map(s => {
       if (s === TURN_SEP) return '<hr class="turn-separator">'

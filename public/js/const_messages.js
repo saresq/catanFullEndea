@@ -1,6 +1,6 @@
 import * as CONST from "./const.js"
 
-export const getName = player => player ? `<span class="p-name ${player.color_id ? 'pc' + player.color_id : ''}">${player.name}</span>` : 'You'
+export const getName = player => player ? `<span class="p-name ${player.color_id ? 'pc' + player.color_id : ''}">${player.name}</span>` : `<span class="p-name me">You</span>`
 
 export const resToText = obj => Object.keys(obj).filter(k => obj[k])
   .map(k => `<span class="res-count" data-count="${obj[k]}">${obj[k]}</span><div class="res-icon ${k}"></div>`).join('')
@@ -16,7 +16,7 @@ const GAME_MESSAGES = {
     other: p => `${getName(p)} is building their second Settlement and Road.`,
   },
   ROLL_TURN: {
-    self: _ => `Roll your Dice 🎲<br><small>You are allowed to play a development card before and after rolling.</small>`,
+    self: _ => `Roll your Dice 🎲<br><small>You can play dev card befor roll.</small>`,
     other: p => `${getName(p)} is rolling 🎲`,
   },
   // PLAYER_TURN: {
@@ -27,7 +27,7 @@ const GAME_MESSAGES = {
   RES_TAKEN: {
     all: res_obj => {
       if (!Object.keys(res_obj).length) { return '' }
-      return ' :: you took→ ' + resToText(res_obj)
+      return ' You→ ' + resToText(res_obj)
     }
   },
   BUILDING: { all: (piece, p) => `${getName(p)} built a ${CONST.PIECES[piece]}.` },

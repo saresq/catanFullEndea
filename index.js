@@ -38,8 +38,9 @@ function onGameEnd(id) {
 }
 
 app.get('/', function (req, res) {
-  if (req.cookies.game_id && GAME_SESSIONS[req.cookies.game_id]) {
-    res.redirect('/game/' + req.cookies.game_id)
+  const game_id = (req.cookies.game_id || '').toLowerCase()
+  if (game_id && GAME_SESSIONS[game_id]) {
+    res.redirect('/game/' + game_id)
   } else {
     res.redirect('/login')
   }
@@ -143,8 +144,8 @@ app.get('/game/new', function (req, res) {
 })
 
 app.get('/game/:id', function(req, res) {
-  const game_id = req.params.id
-  if (!game_id || game_id !== req.cookies.game_id || !GAME_SESSIONS[game_id]) {
+  const game_id = (req.params.id || '').toLowerCase()
+  if (!game_id || game_id !== (req.cookies.game_id || '').toLowerCase() || !GAME_SESSIONS[game_id]) {
     // If user comes via a shared link without cookies or game not in session,
     // take them to login with the game_id prefilled instead of showing an error.
     return res.redirect(`/login?game_id=${encodeURIComponent(game_id || '')}`)
@@ -186,7 +187,8 @@ app.get('/game/:id', function(req, res) {
 })
 
 app.get('/login', function (req, res) {
-  const { game_id, name, notice } = req.query
+  const { name, notice } = req.query
+  const game_id = (req.query.game_id || '').toLowerCase()
   res.clearCookie('game_id')
   res.clearCookie('player_id')
   if (notice) { return res.render('login', { notice }) }
@@ -220,7 +222,8 @@ app.get('/login', function (req, res) {
 })
 
 app.get('/logout', function (req, res) {
-  const { game_id, player_id } = req.cookies
+  const game_id = (req.cookies.game_id || '').toLowerCase()
+  const player_id = req.cookies.player_id
   if (game_id && player_id && GAME_SESSIONS[game_id]?.hasPlayer(+player_id)) {
     GAME_SESSIONS[game_id].removePlayer(+player_id)
   }
@@ -249,6 +252,7 @@ const REMATCH_INFO = {}
 const SOCK_INFO = {}
 io.on('connection', (socket) => {
   let { game_id, player_id } = parseCookie(socket.handshake.headers.cookie || '')
+  game_id = (game_id || '').toLowerCase()
   player_id = +player_id
   socket.join(game_id || -1)
   // Only setup socket events for the correct game

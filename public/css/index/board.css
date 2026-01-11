@@ -54,7 +54,7 @@
       &::before {
         display: block;
         content: attr(num) "\a " attr(dots);
-        font-family: serif;
+        font-family: var(--font-main);
         font-weight: bold;
         white-space: pre;
         text-align: center;

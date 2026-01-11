@@ -27,7 +27,7 @@ html,
 body {
   height: 100%;
   margin: 0;
-  font-family: EagleLake, serif;
+  font-family: var(--font-main);
   font-size: 1rem;
 }
 

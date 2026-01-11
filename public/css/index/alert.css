@@ -10,7 +10,7 @@
   transform: translateX(-50%);
   width: 90%;
   max-width: 37.5rem;
-  font-family: EagleLake, Macondo, fantasy;
+  font-family: var(--font-main), var(--font-heading), serif;
   font-weight: bold;
   font-size: 1.2rem;
   line-height: 1.5em;
@@ -49,6 +49,29 @@
       padding: 0.25rem 0.5rem;
       background: rgba(255, 255, 255, 0.5);
       border-radius: 0.25rem;
+    }
+    .p-name {
+      padding-left: 0.2rem;
+      &::before { content: '●'; margin-right: 0.125rem; }
+      &.me::before { content: none; }
+      &.pc1::before { color: var(--player-1-color); }
+      &.pc2::before { color: var(--player-2-color); }
+      &.pc3::before { color: var(--player-3-color); }
+      &.pc4::before { color: var(--player-4-color); }
+      &.pc5::before { color: var(--player-5-color); }
+      &.pc6::before { color: var(--player-6-color); }
+      &.pc7::before { color: var(--player-7-color); }
+      &.pc8::before { color: var(--player-8-color); }
+      &.me::before {
+        .pc1 & { color: var(--player-1-color); }
+        .pc2 & { color: var(--player-2-color); }
+        .pc3 & { color: var(--player-3-color); }
+        .pc4 & { color: var(--player-4-color); }
+        .pc5 & { color: var(--player-5-color); }
+        .pc6 & { color: var(--player-6-color); }
+        .pc7 & { color: var(--player-7-color); }
+        .pc8 & { color: var(--player-8-color); }
+      }
     }
   }
 
@@ -150,7 +173,7 @@
   }
 
   .end-table {
-    width: 100%; border-collapse: collapse; font-family: EagleLake;
+    width: 100%; border-collapse: collapse; font-family: var(--font-main);
     font-size: 0.9em;
     th, td { padding: 0.5rem 0.25rem; border-bottom: 1px solid rgba(0,0,0,0.1); }
     th { background: rgba(0,0,0,0.05); }
@@ -227,33 +250,45 @@
   }
   .subtitle {
     color: #0003;
-    font-family: Raleway, sans-serif;
+    font-family: var(--font-ui);
     padding: 0.6rem 0;
   }
 
   .close {
     position: absolute; right: 0.3rem; top: 0.3rem; z-index: 2;
-    font-family: Macondo; font-size: 1.5rem;
+    font-family: var(--font-heading); font-size: 1.5rem;
     margin: 0.1rem 0.6rem 0 0; color: #666; cursor: pointer;
     &:hover, &:focus { color: var(--trade-negative); text-shadow: 0 0 5px #fff; }
   }
 
-  .container { border-top: 1px solid #fff; font-family: Raleway, sans-serif; }
+  .container { border-top: 1px solid #fff; font-family: var(--font-ui); }
   .turn-separator { border: 0; border-top: 3px solid #000; margin: 0.4rem 0 }
   .status {
     padding: 0.4rem 0.6rem; border-bottom: 1px solid #fff;
     b { color: #77450b; }
     small { opacity: 0.7; }
     .p-name {
-      border-left: 5px solid; padding-left: 0.2rem;
-      &.pc1 { border-color: var(--player-1-color); }
-      &.pc2 { border-color: var(--player-2-color); }
-      &.pc3 { border-color: var(--player-3-color); }
-      &.pc4 { border-color: var(--player-4-color); }
-      &.pc5 { border-color: var(--player-5-color); }
-      &.pc6 { border-color: var(--player-6-color); }
-      &.pc7 { border-color: var(--player-7-color); }
-      &.pc8 { border-color: var(--player-8-color); }
+      padding-left: 0.2rem;
+      &::before { content: '●'; margin-right: 0.125rem; }
+      &.me::before { content: none; }
+      &.pc1::before { color: var(--player-1-color); }
+      &.pc2::before { color: var(--player-2-color); }
+      &.pc3::before { color: var(--player-3-color); }
+      &.pc4::before { color: var(--player-4-color); }
+      &.pc5::before { color: var(--player-5-color); }
+      &.pc6::before { color: var(--player-6-color); }
+      &.pc7::before { color: var(--player-7-color); }
+      &.pc8::before { color: var(--player-8-color); }
+      &.me::before {
+        .pc1 & { color: var(--player-1-color); }
+        .pc2 & { color: var(--player-2-color); }
+        .pc3 & { color: var(--player-3-color); }
+        .pc4 & { color: var(--player-4-color); }
+        .pc5 & { color: var(--player-5-color); }
+        .pc6 & { color: var(--player-6-color); }
+        .pc7 & { color: var(--player-7-color); }
+        .pc8 & { color: var(--player-8-color); }
+      }
     }
   }
 }

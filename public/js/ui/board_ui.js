@@ -6,10 +6,12 @@ const oKeys = Object.keys
 export default class BoardUI {
   #board; #onClick; #getColorId;
   #size = { MIN: 0.1, MAX: 5 }
+  #boardWidth = 0
+  #boardHeight = 0
   #renderedCorners = []
   #renderedEdges = []
-  #scale = parseFloat(localStorage.getItem('board-scale')) || 1
-  #pan = JSON.parse(localStorage.getItem('board-pan')) || { x: 0, y: 0 }
+  #scale = 1
+  #pan = { x: 0, y: 0 }
   #isDragging = false
   #lastMousePos = { x: 0, y: 0 }
   #eventsSetup = false
@@ -21,11 +23,26 @@ export default class BoardUI {
     this.#onClick = onClick
     this.#size = size || this.#size
     this.#getColorId = (typeof getColorId === 'function') ? getColorId : (pid => pid)
+
+    try {
+      const savedScale = parseFloat(localStorage.getItem('board-scale'))
+      if (!isNaN(savedScale) && isFinite(savedScale)) {
+        this.#scale = savedScale
+      }
+      const savedPan = JSON.parse(localStorage.getItem('board-pan'))
+      if (savedPan && !isNaN(savedPan.x) && !isNaN(savedPan.y) && isFinite(savedPan.x) && isFinite(savedPan.y)) {
+        this.#pan = savedPan
+      }
+    } catch (e) {
+      console.error('BoardUI: Error loading from localStorage', e)
+    }
   }
 
   toggleBlur(bool) { this.$el.classList[bool ? 'add' : 'remove']('blur') }
 
   render() {
+    this.#renderedCorners = []
+    this.#renderedEdges = []
     /** @todo fix the variable names base on convention */
     let startDiff = 0
     let maxLeft = 0
@@ -49,15 +66,33 @@ export default class BoardUI {
     this.$el.style.paddingLeft = `calc(var(--tile-width) / 2 * ${maxLeft * -1})`
     this.$el.style.width = `calc(var(--tile-width) * ${maxLength})`
 
-    if (!localStorage.getItem('board-pan')) {
-      const boardWidth = (maxLength + maxLeft / 2) * 160 // Approximate tile width
-      const boardHeight = this.#board.tile_rows.length * 130 // Approximate row height
-      this.#pan.x = (window.innerWidth - boardWidth * this.#scale) / 2
-      this.#pan.y = (window.innerHeight - boardHeight * this.#scale) / 2
+    this.#boardWidth = Math.max(100, (maxLength + maxLeft / 2) * 160) // Approximate tile width
+    this.#boardHeight = Math.max(100, this.#board.tile_rows.length * 130) // Approximate row height
+
+    const savedPanStr = localStorage.getItem('board-pan')
+    let hasValidSavedPan = false
+    if (savedPanStr) {
+      try {
+        const savedPan = JSON.parse(savedPanStr)
+        hasValidSavedPan = savedPan && !isNaN(savedPan.x) && !isNaN(savedPan.y) && isFinite(savedPan.x) && isFinite(savedPan.y)
+      } catch (e) {}
     }
 
+    if (!hasValidSavedPan) {
+      this.#pan.x = (window.innerWidth - this.#boardWidth * this.#scale) / 2
+      this.#pan.y = (window.innerHeight - this.#boardHeight * this.#scale) / 2
+    }
+
+    this.#updateZoomLimits()
     this.#updateTransform()
     this.#setupEvents()
+  }
+
+  #updateZoomLimits() {
+    const fitScale = Math.min(window.innerWidth / this.#boardWidth, window.innerHeight / this.#boardHeight)
+    // Zoom out limit: half of what's needed to fit the screen,
+    // but not more restrictive than 0.5 and not less than 0.1
+    this.#size.MIN = Math.max(0.1, Math.min(0.5, fitScale * 0.5))
   }
 
   renderRow(row) {
@@ -170,6 +205,11 @@ export default class BoardUI {
     if (this.#eventsSetup) return
     this.#eventsSetup = true
 
+    window.addEventListener('resize', () => {
+      this.#updateZoomLimits()
+      this.#updateTransform()
+    })
+
     const $container = this.$el.parentElement
     $container.addEventListener('wheel', e => {
       e.preventDefault()
@@ -219,6 +259,7 @@ export default class BoardUI {
 
     $container.addEventListener('touchmove', e => {
       if (e.touches.length === 1 && lastTouchPos) {
+        e.preventDefault()
         const dx = e.touches[0].clientX - lastTouchPos.x
         const dy = e.touches[0].clientY - lastTouchPos.y
         this.#pan.x += dx
@@ -226,18 +267,40 @@ export default class BoardUI {
         lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY }
         this.#updateTransform()
       } else if (e.touches.length === 2 && lastTouchPos) {
+        e.preventDefault()
         const distance = Math.hypot(
           e.touches[0].clientX - e.touches[1].clientX,
           e.touches[0].clientY - e.touches[1].clientY
         )
-        const factor = distance / lastTouchDistance
+        const factor = lastTouchDistance ? (distance / lastTouchDistance) : 1
         const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2
         const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2
+        this.#pan.x += midX - lastTouchPos.x
+        this.#pan.y += midY - lastTouchPos.y
         this.#zoom(factor, midX, midY)
         lastTouchDistance = distance
         lastTouchPos = { x: midX, y: midY }
       }
     }, { passive: false })
+
+    const resetTouch = e => {
+      if (e.touches.length === 1) {
+        lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+      } else if (e.touches.length === 2) {
+        lastTouchDistance = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        )
+        lastTouchPos = {
+          x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+          y: (e.touches[0].clientY + e.touches[1].clientY) / 2
+        }
+      } else {
+        lastTouchPos = null
+      }
+    }
+    $container.addEventListener('touchend', resetTouch)
+    $container.addEventListener('touchcancel', resetTouch)
   }
 
   #zoom(factor, mouseX, mouseY) {
@@ -249,10 +312,37 @@ export default class BoardUI {
     this.#updateTransform()
   }
 
+  #clampPan() {
+    const margin = 100 // Minimum pixels of board to keep visible
+    const scaledWidth = this.#boardWidth * this.#scale
+    const scaledHeight = this.#boardHeight * this.#scale
+
+    // Calculate limits based on viewport size and scaled board size
+    const minX = margin - scaledWidth
+    const maxX = window.innerWidth - margin
+    const minY = margin - scaledHeight
+    const maxY = window.innerHeight - margin
+
+    this.#pan.x = Math.min(Math.max(this.#pan.x, minX), maxX)
+    this.#pan.y = Math.min(Math.max(this.#pan.y, minY), maxY)
+  }
+
   #updateTransform() {
+    this.#scale = Math.min(Math.max(this.#scale, this.#size.MIN), this.#size.MAX)
+    if (isNaN(this.#scale) || !isFinite(this.#scale)) { this.#scale = 1 }
+    this.#clampPan()
     this.$el.style.transform = `translate(${this.#pan.x}px, ${this.#pan.y}px) scale(${this.#scale})`
-    localStorage.setItem('board-scale', this.#scale)
-    localStorage.setItem('board-pan', JSON.stringify(this.#pan))
+    try {
+      localStorage.setItem('board-scale', this.#scale)
+      localStorage.setItem('board-pan', JSON.stringify(this.#pan))
+    } catch (e) {}
+  }
+
+  recenter() {
+    this.#scale = 1
+    this.#pan.x = (window.innerWidth - this.#boardWidth * this.#scale) / 2
+    this.#pan.y = (window.innerHeight - this.#boardHeight * this.#scale) / 2
+    this.#updateTransform()
   }
 
   build(pid, piece, location) {

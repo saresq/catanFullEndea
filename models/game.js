@@ -93,7 +93,6 @@ export default class Game {
   join(name) {
     const joined_players = this.players.filter(p => p?.id)
     if (joined_players.length >= this.player_count) { return }
-    // Array.from({ length: this.player_count }, (_, i) => i + 1)
     const remaining_ids = [...Array(this.player_count).keys()].map(_ => _+1)
       .filter(id => !this.players[id - 1])
     const id = remaining_ids[Math.floor(Math.random() * remaining_ids.length)]
@@ -101,6 +100,17 @@ export default class Game {
       onChange: (...params) => this.#onPlayerUpdate(...params),
       onVpChange: (pid, vp) => this.#onPlayerVpChange(pid, vp),
     })
+
+    // Assign an unused color
+    const taken_colors = this.players.filter(p => p?.id).map(p => p.color_id)
+    if (taken_colors.includes(player.color_id)) {
+      const available_colors = [...Array(8).keys()].map(_ => _ + 1)
+        .filter(c => !taken_colors.includes(c))
+      if (available_colors.length) {
+        player.color_id = available_colors[0]
+      }
+    }
+
     this.players[id - 1] = player
     this.#io_manager.updateWaitingRoom(player)
     return player
@@ -715,14 +725,16 @@ export default class Game {
       if (!this._firstRoundRollPids.size) this._firstRoundRollPids = null
     }
     // In Waiting Room
-    const joined_player_count = this.players.filter(p => p?.id).length
-    if (!this.state && joined_player_count < this.player_count) {
+    if (!this.state) {
       delete this.players[pid - 1]
-      joined_player_count < 2 && this.#onGameEnd(this.id)
+      const joined_players = this.players.filter(p => p?.id)
+      if (pid === this.host_pid || !joined_players.length) {
+        this.#onGameEnd(this.id)
+      }
       return
     }
     // Initial Build Phase - End Game
-    if (!this.state || this.state === ST.INITIAL_SETUP) {
+    if (this.state === ST.INITIAL_SETUP) {
       this.players.forEach(p => this.removePlayerSocket(p.id))
       this.clearTimer()
       return this.#onGameEnd(this.id)

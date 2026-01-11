@@ -55,6 +55,12 @@
   --player-7-color-dark: color-mix(in srgb, var(--player-7-color) 100%, #000 40%);
   --player-8-color-dark: color-mix(in srgb, var(--player-8-color) 100%, #000 40%);
   --player-0-color-dark: color-mix(in srgb, var(--player-0-color) 100%, #000 40%);
+
+  /* Font Stacks */
+  --font-main: 'EagleLake', Georgia, "Times New Roman", serif;
+  --font-ui: 'Raleway', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-heading: 'Macondo', cursive, serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 :root.godmode {

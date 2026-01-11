@@ -1,8 +1,12 @@
+* {
+  touch-action: manipulation;
+}
+
 .icon {
   width: 30px; height: 30px; box-sizing: border-box;
   margin-bottom: 10px; margin-right: 10px;
   background-color: #000a; color: #fff;
-  font-family: monospace; font-size: 1.25rem;
+  font-family: var(--font-mono); font-size: 1.25rem;
   border: 2px solid #fff4; border-radius: 100px;
   opacity: 0.85; position: relative;
   display: flex; align-items: center; justify-content: center;
@@ -12,7 +16,7 @@
     opacity: 1; box-shadow: 0 0 10px 0 #000; color: #fff; background-color: #000;
     &::after {
       content: attr(title); white-space: nowrap; position: absolute; left: 35px; top: 2px;
-      background: inherit; font-size: 0.8125rem; font-family: Raleway; font-weight: normal;
+      background: inherit; font-size: 0.8125rem; font-family: var(--font-ui); font-weight: normal;
       padding: 3px 7px; border-radius: 3px;
     }
   }
@@ -65,7 +69,7 @@
     max-height: 85vh; overflow: auto;
     background: #fff; border-radius: 1rem;
     box-shadow: 0 0 1rem rgba(0,0,0,0.5);
-    font-family: Raleway, sans-serif; font-weight: 200;
+    font-family: var(--font-ui); font-weight: 200;
     display: flex; justify-content: flex-start; flex-wrap: wrap;
     &::before {
       content: 'Keyboard Shortcuts'; font-size: 1.5rem;
@@ -76,12 +80,12 @@
     .shortcut { display: flex; padding: 0.6rem; border-bottom: 1px solid #ccc; color: #666; }
     .shortcut:last-child { border-bottom: none; }
     .title { flex-grow: 1; margin-right: 2rem; font-size: 0.9rem; }
-    .key { font-family: monospace; color: #000; font-weight: 600; }
+    .key { font-family: var(--font-mono); color: #000; font-weight: 600; }
     &.hide { display: none; }
 
     .close {
       position: absolute; top: 1.25rem; right: 1.25rem;
-      font-size: 1.5rem; color: #ccc; font-family: monospace; font-weight: 600;
+      font-size: 1.5rem; color: #ccc; font-family: var(--font-mono); font-weight: 600;
       height: 2rem; width: 2rem;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
@@ -98,30 +102,30 @@
     max-height: 85vh; overflow: auto;
     background: #fff; border-radius: 1rem;
     box-shadow: 0 0 1rem rgba(0,0,0,0.5);
-    font-family: Raleway, sans-serif;
+    font-family: var(--font-ui);
     &.hide { display: none; }
 
     .container {
       display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center;
       .text-container {
         flex: 1 1 20rem; color: #333;
-        .title { font-size: 2.5rem; font-weight: 600; font-family: Macondo; line-height: 1.1; }
+        .title { font-size: 2.5rem; font-weight: 600; font-family: var(--font-heading); line-height: 1.1; }
         .game-title { margin-top: 1rem; }
         .subtitle {
           font-size: 1.1rem;
           a { font-size: 1.2rem; background-color: inherit; color: #8fc045; &:hover { background-color: inherit; filter: brightness(.75);} }
         }
-        .rules { font-size: 1.2rem; font-family: EagleLake; }
-        b { background-color: #cfeaa5; padding: 0.1rem 0.3rem; font-family: EagleLake; font-size: 0.9rem; word-spacing: 0.1rem; }
+        .rules { font-size: 1.2rem; font-family: var(--font-main); }
+        b { background-color: #cfeaa5; padding: 0.1rem 0.3rem; font-family: var(--font-main); font-size: 0.9rem; word-spacing: 0.1rem; }
         a { color: inherit; &:hover { background-color: #8fc045; }}
         p { line-height: 1.6; margin: 1rem 0; }
-        .cheers{ font-size: 1.8rem; line-height: 1.2; color: #3339; font-family: Macondo; span { color: #000; font-size: 1.4rem; } }
+        .cheers{ font-size: 1.8rem; line-height: 1.2; color: #3339; font-family: var(--font-heading); span { color: #000; font-size: 1.4rem; } }
       }
     }
 
     .close {
       position: absolute; top: 1rem; right: 1rem;
-      font-size: 1.5rem; color: #ccc; font-family: Macondo; font-weight: 600;
+      font-size: 1.5rem; color: #ccc; font-family: var(--font-heading); font-weight: 600;
       height: 2rem; width: 2rem;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;

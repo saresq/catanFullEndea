@@ -6,7 +6,7 @@ export default class AccessibilityUI {
   muted_notif = (localStorage.getItem('mute-notifications') === null)
     ? true
     : !!+localStorage.getItem('mute-notifications')
-  #toggleBoardZoom; #toggleBgm; #toggleNotificationsAudio
+  #toggleBoardZoom; #recenterMap; #toggleBgm; #toggleNotificationsAudio
   $el = document.querySelector('#game .accessibility-zone')
 
   keyboard_shortcuts = [
@@ -23,6 +23,7 @@ export default class AccessibilityUI {
       ['Full Screen', 'f'],
       ['Board Zoom In', '='],
       ['Board Zoom Out', '-'],
+      ['Recenter Map', 'Home'],
       ['Toggle Background Music', 'm'],
       ['Toggle Notification Sounds', 'n'],
       ['Show Status History', 'h'],
@@ -32,11 +33,12 @@ export default class AccessibilityUI {
     ]
   ]
 
-  constructor({ toggleBoardZoom = _dummyFn, toggleBgm = _dummyFn, toggleNotificationsAudio = _dummyFn,
+  constructor({ toggleBoardZoom = _dummyFn, recenterMap = _dummyFn, toggleBgm = _dummyFn, toggleNotificationsAudio = _dummyFn,
     icons: { fullscreen = true, zoom = true, bgm = true, notifcation_sounds = true,
       shorcuts = true, info = true, quit = true } = {}} = {}) {
     this.#shown_icons = { fullscreen, zoom, bgm, notifcation_sounds, shorcuts, info, quit }
     this.#toggleBoardZoom = toggleBoardZoom
+    this.#recenterMap = recenterMap
     this.#toggleBgm = toggleBgm
     this.#toggleNotificationsAudio = toggleNotificationsAudio
   }
@@ -49,6 +51,7 @@ export default class AccessibilityUI {
         ${this.#shown_icons.zoom ? `<div class="grouped">
           <button class="icon zoom-in" title="Zoom In (=)">✚</button>
           <button class="icon zoom-out" title="Zoom Out (-)">-</button>
+          <button class="icon recenter" title="Recenter Map (Home)">🏠</button>
         </div>` : ''}
         <div class="grouped">
           ${this.#shown_icons.notifcation_sounds
@@ -108,6 +111,7 @@ export default class AccessibilityUI {
     this.$el.querySelector('.full-screen')?.addEventListener('click', e => this.toggleFullScreen())
     this.$el.querySelector('.zoom-in')?.addEventListener('click', e => this.toggleZoom())
     this.$el.querySelector('.zoom-out')?.addEventListener('click', e => this.toggleZoom(true))
+    this.$el.querySelector('.recenter')?.addEventListener('click', e => this.#recenterMap())
     this.$el.querySelector('.notifications')?.addEventListener('click', e => this.toggleMuteNotications())
     this.$el.querySelector('.bgm')?.addEventListener('click', e => this.toggleMuteBgm())
     this.$el.querySelector('.question-mark')?.addEventListener('click', e => this.showHideKeyboardShortcuts(true))
@@ -146,6 +150,7 @@ export default class AccessibilityUI {
         case 'KeyF': this.toggleFullScreen(); break
         case 'Equal': this.toggleZoom(); break
         case 'Minus': this.toggleZoom(true); break
+        case 'Home': this.#recenterMap(); break
         case 'KeyN': this.toggleMuteNotications(); break
         case 'KeyM': this.toggleMuteBgm(); break
         case 'Escape':
@@ -184,7 +189,7 @@ export default class AccessibilityUI {
   toggleMuteNotications() {
     if (!this.#shown_icons.notifcation_sounds) return
     this.muted_notif = !this.muted_notif
-    localStorage.setItem('mute-notifications', +this.muted_notif)
+    try { localStorage.setItem('mute-notifications', +this.muted_notif) } catch (e) {}
     this.#toggleNotificationsAudio(!this.muted_notif)
     this.$el.querySelector('.notifications').classList[this.muted_notif ? 'add' : 'remove']('off')
     this.$el.querySelector('.notifications').setAttribute('title', (this.muted_notif ? 'Unm' : 'M') + 'ute Notifications (n)')

@@ -72,7 +72,7 @@ class LoginUI {
     `
     // If a game_id is present in the URL, prefill and switch to Join tab
     const params = new URLSearchParams(window.location.search)
-    const preGameId = params.get('game_id')
+    const preGameId = (params.get('game_id') || '').toLowerCase()
     const preName = params.get('name')
     if (preGameId) {
       const joinRadio = this.$container.querySelector('input[type="radio"][value="join"]')
@@ -167,7 +167,7 @@ class LoginUI {
     // Setup join submit button
     this.$container.querySelector('.join-section .btn-primary').addEventListener('click', e => {
       const name = (this.$container.querySelector('.join-section input.name').value || '').trim()
-      const game_key = (this.$container.querySelector('.join-section input.game-key').value || '').trim()
+      const game_key = (this.$container.querySelector('.join-section input.game-key').value || '').trim().toLowerCase()
       if (!name) {
         const nameInput = this.$container.querySelector('.join-section input.name')
         nameInput && nameInput.focus()
@@ -186,7 +186,7 @@ class LoginUI {
 
     // Setup name storage
     this.$container.querySelectorAll('.name').forEach($_ => $_.addEventListener('input', e => {
-      localStorage.setItem('player-name', e.target.value)
+      try { localStorage.setItem('player-name', e.target.value) } catch (e) {}
     }))
     
     // Setup map editor button

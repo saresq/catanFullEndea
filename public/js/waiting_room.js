@@ -69,7 +69,7 @@ class WaitingRoomUI {
     })
 
     this.$game_key.addEventListener('click', e => {
-      window.navigator.clipboard.writeText(window.game_id)
+      window.navigator.clipboard.writeText(window.location.href)
       this.$game_key.classList.add('copied')
     })
     this.$game_key.addEventListener('mouseout', e => this.$game_key.classList.remove('copied'))
