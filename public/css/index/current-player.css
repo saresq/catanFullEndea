@@ -558,11 +558,11 @@
     small { opacity: 0.7; }
     .p-name {
       padding-left: 0.1875rem;
-      &::before { content: '●'; margin-right: 0.125rem; }
+      &::before { content: '⬢'; font-size: 1.5rem; margin-right: 0.125rem; }
       &.me::before { content: none; }
       @media screen and (max-width: 768px) {
         &:not(.me) { font-size: 0; }
-        &::before { font-size: 1.2rem; margin-right: 0; }
+        &::before { font-size: 2rem; margin-right: 0; }
       }
       /* Support color-based class as well */
       &.pc1::before { color: var(--player-1-color); }

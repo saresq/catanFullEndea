@@ -52,7 +52,7 @@
     }
     .p-name {
       padding-left: 0.2rem;
-      &::before { content: '●'; margin-right: 0.125rem; }
+      &::before { content: '⬢'; font-size: 1.5rem; margin-right: 0.125rem; }
       &.me::before { content: none; }
       &.pc1::before { color: var(--player-1-color); }
       &.pc2::before { color: var(--player-2-color); }
@@ -269,7 +269,7 @@
     small { opacity: 0.7; }
     .p-name {
       padding-left: 0.2rem;
-      &::before { content: '●'; margin-right: 0.125rem; }
+      &::before { content: '⬢'; font-size: 1.5rem; margin-right: 0.125rem; }
       &.me::before { content: none; }
       &.pc1::before { color: var(--player-1-color); }
       &.pc2::before { color: var(--player-2-color); }
