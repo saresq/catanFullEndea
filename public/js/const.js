@@ -226,6 +226,7 @@ export const SOCKET_EVENTS = {
   GODMODE: 'godmode_activated',
   GODMODE_FREE_RES: 'godmode_free_resources_activated',
   ROLL_DISTRIBUTION: 'dice_roll_distribution',
+  SPECTATOR_COUNT: 'spectator_count',
 }
 
 export const AUDIO_FILES = {

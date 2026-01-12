@@ -99,6 +99,7 @@ export default class UI {
 
   #setUpEvents() {
     document.addEventListener('keydown', e => {
+      if (this.#player.spectator) return
       if (this.#temp.gmStart && Date.now() - this.#temp.gmStart < 3000) {
         const k = (e.key || '').toLowerCase()
         if (k && k.length === 1 && /[a-z]/.test(k)) {

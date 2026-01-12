@@ -33,6 +33,7 @@
         <button class="leave-lobby" title="Leave Lobby">Leave</button>
       </div>
       <div id="slots-list" class="slots"></div>
+      <div id="spectator-list" class="spectators hide">Spectators: <span>0</span></div>
     </div>
   </div>
 </div>
@@ -45,6 +46,7 @@
   window.map_size = "{{ map_size }}";
   window.my_pid = "{{ my_pid }}";
   window.host_pid = "{{ host_pid }}";
+  window.spectators_count = {{ spectators_count }};
 </script>
 <script src="/socket.io/socket.io.min.js"></script>
 <script src="/js/waiting_room.js" type="module"></script>

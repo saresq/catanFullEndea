@@ -96,6 +96,13 @@ button {
   .box-header .value { font-weight: 700; }
 
   .slots { display: flex; flex-direction: column; gap: 8px; }
+  .spectators {
+    margin-top: 15px; padding: 5px 10px; border-radius: 6px;
+    background: #0004; color: #fff; font-family: var(--font-ui);
+    text-align: center; font-size: 0.9em;
+    &.hide { display: none; }
+    span { font-weight: 700; }
+  }
   .slot {
     display: flex; align-items: center; min-height: 44px;
     background: var(--sand-color); color: #fff; border: 3px solid var(--sand-color-dark);

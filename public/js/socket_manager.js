@@ -90,6 +90,9 @@ export default class SocketManager {
 
     /** @event GodMode Free Resources Activated (broadcast) */
     socket.on(SOC.GODMODE_FREE_RES, pid => game.updateGodModeFreeResSoc(pid))
+
+    /** @event Spectator-Count */
+    socket.on(SOC.SPECTATOR_COUNT, count => game.updateSpectatorCountSoc(count))
   }
 
   sendInitialSetup({ settlement_loc, road_loc }) { this.#socket.emit(SOC.INITIAL_SETUP, settlement_loc, road_loc) }

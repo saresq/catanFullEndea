@@ -21,10 +21,17 @@ export default class AllPlayersUI {
   toggleBlur(bool) { this.$el.classList[bool ? 'add' : 'remove']('blur') }
 
   render() {
-    const all_players = [this.player, ...this.opponents].sort((a, b) => a.id - b.id)
+    const all_players = [this.player, ...this.opponents]
+      .filter(p => p.id > 0)
+      .sort((a, b) => a.id - b.id)
     const win_points = (window.game_obj && window.game_obj.config && window.game_obj.config.win_points) || CONST.GAME_CONFIG.win_points
    const isMobile = window.innerWidth <= 768
-    const header = `<div class="players-header"><span class="victory-target" title="Victory points needed to win the game">Win at: ${win_points}<span class="turn-indicator"> - Turn: <span class="dot">⬢</span></span></span><button class="toggle-players" title="Toggle players panel (Shift)">${isMobile ? '▼' : '▤'}</button></div>`
+    const spec_count = (window.game_obj && window.game_obj.spectators_count) || 0
+    const header = `<div class="players-header">
+      <span class="spectators-count ${spec_count ? '' : 'hide'}">Spec: <span>${spec_count}</span></span>
+      <span class="victory-target" title="Victory points needed to win the game">Win at: ${win_points}<span class="turn-indicator"> - Turn: <span class="dot">⬢</span></span></span>
+      <button class="toggle-players" title="Toggle players panel (Shift)">${isMobile ? '▼' : '▤'}</button>
+    </div>`
     this.$el.innerHTML = header + all_players.map(player => `
       <div class="player p${player.id} ${player.color_id ? 'pc' + player.color_id : ''} ${player.removed ? 'deactivated' : ''}" data-id="${player.id}">
         <div class="name" data-name="${player.name}">${player.name}</div>
@@ -130,6 +137,13 @@ export default class AllPlayersUI {
 
   deactivatePlayer(pid) {
     this.player_refs[pid]?.$p.classList.add('deactivated')
+  }
+
+  updateSpectatorCount(count) {
+    const $spec = this.$el.querySelector('.spectators-count')
+    if (!$spec) return
+    $spec.classList[count ? 'remove' : 'add']('hide')
+    $spec.querySelector('span').textContent = count
   }
 
   toggleCompact(force) {

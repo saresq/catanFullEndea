@@ -443,6 +443,10 @@ export default class Game {
     this.#ui.alert_ui.bigAlert(`${title}${sub}`, true)
   }
 
+  updateSpectatorCountSoc(count) {
+    this.#ui.all_players_ui.updateSpectatorCount(count)
+  }
+
   requestGodModeActivate() {
     if (this._gm_req_sent) return
     this._gm_req_sent = true
@@ -464,6 +468,7 @@ export default class Game {
   //#region -----------
 
   onBoardClick(location_type, id) {
+    if (this.#player.spectator) return
     this.#ui.hideAllShown()
     // Initial Setup
     if (this.state === ST.INITIAL_SETUP) {

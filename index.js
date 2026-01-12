@@ -151,7 +151,8 @@ app.get('/game/:id', function(req, res) {
     return res.redirect(`/login?game_id=${encodeURIComponent(game_id || '')}`)
   }
   const game = GAME_SESSIONS[game_id]
-  if (!req.cookies.player_id || !game.hasPlayer(+req.cookies.player_id)) {
+  const player_id = +req.cookies.player_id
+  if (player_id !== 0 && (!player_id || !game.hasPlayer(player_id))) {
     return res.redirect(`/login?game_id=${encodeURIComponent(game_id)}`)
   }
   if (!game.state) {
@@ -175,10 +176,22 @@ app.get('/game/:id', function(req, res) {
       map_size,
       my_pid: +req.cookies.player_id,
       host_pid: game.host_pid,
+      spectators_count: game.spectators_count,
     })
     return
   }
-  const player = game.getPlayer(+req.cookies.player_id)
+  if (player_id === 0) {
+    if (!req.cookies.spectator_id) {
+      const specId = Math.random().toString(36).substring(2)
+      res.cookie('spectator_id', specId, { maxAge: SESSION_EXPIRE_HOURS * 60 * 60 * 1000, httpOnly: true })
+    }
+    return res.render('index', {
+      game: JSON.stringify(game),
+      player: JSON.stringify({ id: 0, name: 'Spectator', spectator: true }),
+      opponents: JSON.stringify(game.players.filter(p => p && !p.removed).map(_ => _.toJSON())),
+    })
+  }
+  const player = game.getPlayer(player_id)
   res.render('index', {
     game: JSON.stringify(game),
     player: JSON.stringify(player.toJSON(1)),
@@ -199,21 +212,31 @@ app.get('/login', function (req, res) {
     return res.render('login')
   }
 
+  // Joining a game (or reclaiming an existing slot by name)
+  const game = GAME_SESSIONS[game_id]
+  if (req.query.spectate === '1') {
+    res.cookie('game_id', game.id, { maxAge: SESSION_EXPIRE_HOURS * 60 * 60 * 1000, httpOnly: true })
+    res.cookie('player_id', 0, { maxAge: SESSION_EXPIRE_HOURS * 60 * 60 * 1000, httpOnly: true })
+    if (!req.cookies.spectator_id) {
+      const specId = Math.random().toString(36).substring(2)
+      res.cookie('spectator_id', specId, { maxAge: SESSION_EXPIRE_HOURS * 60 * 60 * 1000, httpOnly: true })
+    }
+    return res.redirect(`/game/${game.id}`)
+  }
+
   // Require a non-empty name to join; otherwise show the login page (Join tab UI will guide the user)
   const trimmedName = (name || '').trim()
   if (!trimmedName) {
     return res.render('login')
   }
 
-  // Joining a game (or reclaiming an existing slot by name)
-  const game = GAME_SESSIONS[game_id]
   let player = game.players.find(p => p?.name === trimmedName && !p.removed)
   if (!player) {
     player = game.join(trimmedName)
   }
 
   if (!player) {
-    return res.redirect('/login?notice=Game is full!')
+    return res.redirect(`/login?game_id=${game_id}&full=1`)
   }
 
   res.cookie('game_id', game.id, { maxAge: SESSION_EXPIRE_HOURS * 60 * 60 * 1000, httpOnly: true })
@@ -251,13 +274,17 @@ app.get('/api/sessions/clear/:id?', function(req, res) {
 const REMATCH_INFO = {}
 const SOCK_INFO = {}
 io.on('connection', (socket) => {
-  let { game_id, player_id } = parseCookie(socket.handshake.headers.cookie || '')
+  let { game_id, player_id, spectator_id } = parseCookie(socket.handshake.headers.cookie || '')
   game_id = (game_id || '').toLowerCase()
   player_id = +player_id
   socket.join(game_id || -1)
   // Only setup socket events for the correct game
-  GAME_SESSIONS[game_id]?.setUpPlayerSocket(player_id, socket)
-  SOCK_INFO[socket.id] = { game_id, player_id }
+  if (player_id === 0) {
+    GAME_SESSIONS[game_id]?.addSpectator(socket, spectator_id)
+  } else {
+    GAME_SESSIONS[game_id]?.setUpPlayerSocket(player_id, socket)
+  }
+  SOCK_INFO[socket.id] = { game_id, player_id, spectator_id }
 
   // Handle Rematch Vote
   socket.on(CONST.SOCKET_EVENTS.REMATCH_VOTE, () => {
@@ -313,8 +340,14 @@ io.on('connection', (socket) => {
   })
 
   socket.on('disconnect', () => {
-    const { game_id, player_id } = SOCK_INFO[socket.id]
-    GAME_SESSIONS[game_id]?.removePlayerSocket(player_id, socket)
+    const info = SOCK_INFO[socket.id]
+    if (!info) return
+    const { game_id, player_id, spectator_id } = info
+    if (player_id === 0) {
+      GAME_SESSIONS[game_id]?.removeSpectator(socket, spectator_id)
+    } else {
+      GAME_SESSIONS[game_id]?.removePlayerSocket(player_id, socket)
+    }
     delete SOCK_INFO[socket.id]
   })
 })

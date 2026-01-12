@@ -149,5 +149,7 @@ export default class IOManager {
 
   updateGodModeFreeRes(pid) { this.emit(SOC.GODMODE_FREE_RES, pid) }
 
+  updateSpectatorCount(count) { this.emit(SOC.SPECTATOR_COUNT, count) }
+
   emit(type, ...data) { this.#io.to(this.#game.id).emit(type, ...data) }
 }

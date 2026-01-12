@@ -18,6 +18,29 @@ class LoginUI {
   }
 
   render() {
+    const params = new URLSearchParams(window.location.search)
+    const isFull = params.get('full') === '1'
+    const preGameId = (params.get('game_id') || '').toLowerCase()
+
+    if (isFull) {
+      this.$container.innerHTML = `
+        <div class="full-game-section">
+          <div class="notice">The game you are trying to join is currently full</div>
+          <div class="actions">
+            <button class="btn btn-secondary back">Go Back</button>
+            <button class="btn btn-primary spectate">Spectate</button>
+          </div>
+        </div>
+      `
+      this.$container.querySelector('.btn.back').addEventListener('click', () => {
+        window.location.href = '/login'
+      })
+      this.$container.querySelector('.btn.spectate').addEventListener('click', () => {
+        window.location.href = `/login?game_id=${preGameId}&spectate=1`
+      })
+      return
+    }
+
     const name = localStorage.getItem('player-name') || ''
     this.accessibility_ui.render()
     this.$container.innerHTML = `
@@ -71,8 +94,6 @@ class LoginUI {
       </div>
     `
     // If a game_id is present in the URL, prefill and switch to Join tab
-    const params = new URLSearchParams(window.location.search)
-    const preGameId = (params.get('game_id') || '').toLowerCase()
     const preName = params.get('name')
     if (preGameId) {
       const joinRadio = this.$container.querySelector('input[type="radio"][value="join"]')

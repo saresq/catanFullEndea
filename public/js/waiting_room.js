@@ -54,6 +54,15 @@ class WaitingRoomUI {
     this.renderSlots()
     this.updateStartBtnState()
 
+    // Initialize spectator count
+    if (window.spectators_count) {
+      const $spec = $('#spectator-list')
+      if ($spec) {
+        $spec.classList.remove('hide')
+        $spec.querySelector('span').textContent = window.spectators_count
+      }
+    }
+
     /** @event Player-Join */
     window.io().on(CONST.SOCKET_EVENTS.JOINED_WAITING_ROOM, player => {
       this.addPlayer(player)
@@ -91,6 +100,14 @@ class WaitingRoomUI {
         $('#waiting-room')?.classList.add('hide')
         setTimeout(() => window.location.reload(), 300)
       }
+    })
+
+    /** @event Spectator-Count */
+    window.io().on(CONST.SOCKET_EVENTS.SPECTATOR_COUNT, count => {
+      const $spec = $('#spectator-list')
+      if (!$spec) return
+      $spec.classList[count ? 'remove' : 'add']('hide')
+      $spec.querySelector('span').textContent = count
     })
 
     // Helpers to open/close color picker

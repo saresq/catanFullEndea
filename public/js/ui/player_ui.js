@@ -74,6 +74,16 @@ export default class PlayerUI {
     // Apply selected color class to the player container so UI uses color_id theme
     const cid = (this.player.color_id ?? this.player.id)
     this.$el.classList.add('pc' + cid)
+    if (this.player.spectator) {
+      this.$action_bar.innerHTML = `
+        <div class="row-1">
+          <div class="timer disabled ${this.has_timer ? '' : 'hide'}">0:00</div>
+          <div class="spectating-label">Spectating</div>
+        </div>
+      `
+      this.$timer = this.$action_bar.querySelector('.timer')
+      return
+    }
     this.$action_bar.innerHTML = `
       <div class="row-1">
         <div class="timer disabled ${this.has_timer ? '' : 'hide'}">0:00</div>
@@ -239,6 +249,7 @@ export default class PlayerUI {
   }
 
   checkAndToggleActions(toggle) {
+    if (this.player.spectator) return
     this.removeActiveActions()
     if (toggle) {
       // Enable end turn on unified button during action phase
@@ -303,12 +314,16 @@ export default class PlayerUI {
   }
 
   updatePiecesCount() {
+    if (this.player.spectator) return
     this.$build_road.dataset.count = CONST.PIECES_COUNT.R - this.player.pieces.R.length
     this.$build_settlement.dataset.count = CONST.PIECES_COUNT.S - this.player.pieces.S.length
     this.$build_city.dataset.count = CONST.PIECES_COUNT.C - this.player.pieces.C.length
   }
 
-  setDevCardCount(n) { this.$buy_dev_card.dataset.count = n }
+  setDevCardCount(n) {
+    if (this.player.spectator) return
+    this.$buy_dev_card.dataset.count = n
+  }
 
   // Unified button modes
   setUnifiedModeRoll(enabled) {
@@ -355,6 +370,11 @@ export default class PlayerUI {
    */
   //#region
   renderHand() {
+    if (this.player.spectator) {
+      this.$hand.innerHTML = ''
+      this.$hand.classList.add('hide')
+      return
+    }
     const res_order = ['S', 'L', 'B', 'O', 'W']
     const is_mobile = window.innerWidth <= 768
     const hand_groups = Object.entries(this.hand).sort((a, b) => {
@@ -464,10 +484,12 @@ export default class PlayerUI {
   }
 
   #cleanHandData(cards_obj) {
+    if (!cards_obj) return {}
     return Object.fromEntries(Object.entries(cards_obj).filter(([_, v]) => v))
   }
 
   updateHand(player, cards) {
+    if (this.player.spectator) return
     this.hand = this.#cleanHandData(player.closed_cards)
     this.renderHand()
     oKeys(CONST.COST).forEach(key => this.canIBuy(key))

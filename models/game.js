@@ -19,6 +19,7 @@ export default class Game {
   id; player_count
   #state; #timer; #io_manager; #onGameEnd
   #active_pid = 0
+  #spectators = new Map() // spectator_id -> Set(sockets)
   config = CONST.GAME_CONFIG
   /** @type {Player[]} */ players = []
   map_changes = []; expected_actions = []; robbing_players = []
@@ -44,6 +45,7 @@ export default class Game {
     if (pid < 1 || pid > this.player_count) { this.turn++ }
     this.#active_pid = (pid - 1) % this.player_count
   }
+  get spectators_count() { return this.#spectators.size }
 
   constructor({ id, host, config, io, onGameEnd }) {
     this.host_pid = host?.id
@@ -805,6 +807,24 @@ export default class Game {
   #canAct(pid) { return this.#isActive(pid) && this.state === ST.PLAYER_ACTIONS }
   #isActive(pid) { return pid === this.active_pid }
 
+  addSpectator(socket, spectator_id = socket.id) {
+    if (!this.#spectators.has(spectator_id)) {
+      this.#spectators.set(spectator_id, new Set())
+    }
+    this.#spectators.get(spectator_id).add(socket)
+    this.#io_manager.updateSpectatorCount(this.#spectators.size)
+  }
+  removeSpectator(socket, spectator_id = socket.id) {
+    const sockets = this.#spectators.get(spectator_id)
+    if (sockets) {
+      sockets.delete(socket)
+      if (sockets.size === 0) {
+        this.#spectators.delete(spectator_id)
+      }
+    }
+    this.#io_manager.updateSpectatorCount(this.#spectators.size)
+  }
+
   #getRandom(list) { return list[Math.floor(Math.random() * list.length)] }
   #gotoNextState() { this.state = NEXT_STATE[this.state] }
 
@@ -853,6 +873,7 @@ export default class Game {
       ongoing_trades: this.ongoing_trades,
       timer: timer_left > 1 ? timer_left : 0,
       godmode: !!this.godmode,
+      spectators_count: this.#spectators.size,
       end_context: this.end_context,
     }
   }
