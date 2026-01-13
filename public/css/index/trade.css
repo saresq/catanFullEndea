@@ -217,6 +217,34 @@
                 border-color: var(--player-4-color);
             }
 
+            &.p5 .text {
+                border-color: var(--player-5-color);
+            }
+
+            &.p6 .text {
+                border-color: var(--player-6-color);
+            }
+
+            &.p7 .text {
+                border-color: var(--player-7-color);
+            }
+
+            &.p8 .text {
+                border-color: var(--player-8-color);
+            }
+
+            &.p9 .text {
+                border-color: var(--player-9-color);
+            }
+
+            &.p10 .text {
+                border-color: var(--player-10-color);
+            }
+
+            &.pc0 .text {
+                border-color: var(--player-0-color);
+            }
+
             .actions {
                 display: flex;
                 border-left: 1px solid #999;

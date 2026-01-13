@@ -58,7 +58,7 @@ export default class PlayerUI {
   togglePlayerBlur(bool) { this.$el.classList[bool ? 'add' : 'remove']('blur') }
 
   updateColor(cid) {
-    const pcs = Array.from({ length: 9 }, (_, i) => 'pc' + i)
+    const pcs = Array.from({ length: 11 }, (_, i) => 'pc' + i)
     pcs.forEach(c => this.$el.classList.remove(c))
     this.$el.classList.add('pc' + cid)
   }

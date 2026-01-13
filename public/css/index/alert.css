@@ -168,6 +168,14 @@
         background: var(--player-8-color);
     }
 
+    .text .game-ended.pc9 .player-name {
+        background: var(--player-9-color);
+    }
+
+    .text .game-ended.pc10 .player-name {
+        background: var(--player-10-color);
+    }
+
     .text .game-ended.pc1 .S .pts-icon {
         background-image: url(/images/pieces/settlement-1.png);
     }
@@ -200,6 +208,14 @@
         background-image: url(/images/pieces/settlement-8.png);
     }
 
+    .text .game-ended.pc9 .S .pts-icon {
+        background-image: url(/images/pieces/settlement-9.png);
+    }
+
+    .text .game-ended.pc10 .S .pts-icon {
+        background-image: url(/images/pieces/settlement-10.png);
+    }
+
     .text .game-ended.pc1 .C .pts-icon {
         background-image: url(/images/pieces/city-1.png);
     }
@@ -230,6 +246,14 @@
 
     .text .game-ended.pc8 .C .pts-icon {
         background-image: url(/images/pieces/city-8.png);
+    }
+
+    .text .game-ended.pc9 .C .pts-icon {
+        background-image: url(/images/pieces/city-9.png);
+    }
+
+    .text .game-ended.pc10 .C .pts-icon {
+        background-image: url(/images/pieces/city-10.png);
     }
 
     .text .game-ended .dVp .pts-icon {
@@ -567,6 +591,14 @@
         color: var(--player-8-color);
     }
 
+    &.pc9::before {
+        color: var(--player-9-color);
+    }
+
+    &.pc10::before {
+        color: var(--player-10-color);
+    }
+
     &.me::before {
         .pc1 & {
             color: var(--player-1-color);
@@ -598,6 +630,14 @@
 
         .pc8 & {
             color: var(--player-8-color);
+        }
+
+        .pc9 & {
+            color: var(--player-9-color);
+        }
+
+        .pc10 & {
+            color: var(--player-10-color);
         }
     }
 }

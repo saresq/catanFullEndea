@@ -51,15 +51,16 @@ class LoginUI {
             <div class="section-group">
               <label class="section-label" for="player-count">Players:</label>
               <select id="player-count" class="select player-count">
-                ${[...Array(7).keys()].map(i => `<option value="${i + 2}" ${i + 2 === 2 ? 'selected' : ''}>${i + 2}</option>`).join('')}
+                ${[...Array(9).keys()].map(i => `<option value="${i + 2}" ${i + 2 === 2 ? 'selected' : ''}>${i + 2}</option>`).join('')}
               </select>
             </div>
             <div class="section-group">
               <label class="section-label" for="map-size">Map Size:</label>
               <select id="map-size" class="select map-size">
-                <option value="small" selected>Small</option>
-                <option value="medium">Medium</option>
+                <option value="small" selected>Standard</option>
+                <option value="medium">Extended</option>
                 <option value="large">Large</option>
+                <option value="extra-large">Extra Large</option>
                 <option value="argentum">Argentum</option>
               </select>
             </div>
@@ -126,21 +127,14 @@ class LoginUI {
     const enforceMapSizeOptions = () => {
       const pc = +(pcSelect?.value || 3)
       if (!msSelect) return
-      // Enable all by default
-      Array.from(msSelect.options).forEach(opt => { opt.disabled = false; opt.hidden = false })
-      // Apply constraints: never smaller than required for the player count
-      if (pc >= 7) {
-        // Only Large is allowed
-        Array.from(msSelect.options).forEach(opt => {
-          if (opt.value !== 'large') { opt.disabled = true; opt.hidden = true }
-        })
-        msSelect.value = 'large'
-      } else if (pc >= 5) {
-        // Small is not allowed; Medium or Large are okay
-        const smallOpt = Array.from(msSelect.options).find(o => o.value === 'small')
-        if (smallOpt) { smallOpt.disabled = true; smallOpt.hidden = true }
-        if (msSelect.value === 'small') { msSelect.value = 'medium' }
-      }
+      const options = Array.from(msSelect.options)
+      // minIdx: 0:Standard, 1:Extended, 2:Large, 3:ExtraLarge, 4:Argentum
+      const minIdx = pc >= 9 ? 3 : (pc >= 7 ? 2 : (pc >= 5 ? 1 : 0))
+      options.forEach((opt, idx) => {
+        const isSmaller = idx < minIdx
+        opt.disabled = isSmaller; opt.hidden = isSmaller
+      })
+      if (msSelect.selectedIndex < minIdx) { msSelect.selectedIndex = minIdx }
     }
     pcSelect?.addEventListener('change', enforceMapSizeOptions)
     // Initialize constraints on first render
@@ -157,6 +151,7 @@ class LoginUI {
       let mapkey = CONST.DEFAULT_MAPKEY
       if (map_size === 'medium') mapkey = CONST.DEFAULT_MAPKEY_5_6
       else if (map_size === 'large') mapkey = CONST.DEFAULT_MAPKEY_7_8
+      else if (map_size === 'extra-large') mapkey = CONST.DEFAULT_MAPKEY_9_10
       else if (map_size === 'argentum') mapkey = CONST.ARGENTUM_MAPKEY
 
       const dice_mode = this.$container.querySelector('.host-section select.dice-mode')?.value || 'random'

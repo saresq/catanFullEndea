@@ -50,7 +50,7 @@ app.get('/game/new', function (req, res) {
   let id
   do { id = generateRandomWords({ min: 2, max: 2, join: '-' }) } while (GAME_SESSIONS[id])
   const { name, players = CONST.GAME_CONFIG.player_count, config: query_config } = req.query
-  if (+players < 2 || +players > 8) { return res.redirect('/login?notice=Player count must be between 2 and 8.') }
+  if (+players < 2 || +players > 10) { return res.redirect('/login?notice=Player count must be between 2 and 10.') }
   let config = Object.assign({}, CONST.GAME_CONFIG, { player_count: +players || 2 })
   try { config = Object.assign(config, JSON.parse(decodeURIComponent(query_config))) } catch(e){}
   
@@ -59,7 +59,10 @@ app.get('/game/new', function (req, res) {
 
   // If no mapkey provided, choose based on player count
   if (!providedConfig.mapkey) {
-    if (config.player_count >= 7) {
+    if (config.player_count >= 9) {
+      config.mapkey = CONST.DEFAULT_MAPKEY_9_10
+      config.map_size = 'Extra Large'
+    } else if (config.player_count >= 7) {
       config.mapkey = CONST.DEFAULT_MAPKEY_7_8
       config.map_size = 'Large'
     } else if (config.player_count >= 5) {
@@ -71,7 +74,9 @@ app.get('/game/new', function (req, res) {
     }
   } else {
     // Map provided mapkey to a size label if it matches known presets
-    if (providedConfig.mapkey === CONST.DEFAULT_MAPKEY_7_8) {
+    if (providedConfig.mapkey === CONST.DEFAULT_MAPKEY_9_10) {
+      config.map_size = 'Extra Large'
+    } else if (providedConfig.mapkey === CONST.DEFAULT_MAPKEY_7_8) {
       config.map_size = 'Large'
     } else if (providedConfig.mapkey === CONST.DEFAULT_MAPKEY_5_6) {
       config.map_size = 'Extended'
@@ -86,13 +91,21 @@ app.get('/game/new', function (req, res) {
   }
 
   // Enforce minimal map size based on player count (auto-upsize if needed)
-  if (config.player_count >= 7) {
-    if (config.mapkey !== CONST.DEFAULT_MAPKEY_7_8) {
+  if (config.player_count >= 9) {
+    const allowed = [CONST.DEFAULT_MAPKEY_9_10, CONST.ARGENTUM_MAPKEY]
+    if (!allowed.includes(config.mapkey)) {
+      config.mapkey = CONST.DEFAULT_MAPKEY_9_10
+      config.map_size = 'Extra Large'
+    }
+  } else if (config.player_count >= 7) {
+    const allowed = [CONST.DEFAULT_MAPKEY_7_8, CONST.DEFAULT_MAPKEY_9_10, CONST.ARGENTUM_MAPKEY]
+    if (!allowed.includes(config.mapkey)) {
       config.mapkey = CONST.DEFAULT_MAPKEY_7_8
       config.map_size = 'Large'
     }
   } else if (config.player_count >= 5) {
-    if (config.mapkey === CONST.DEFAULT_MAPKEY) {
+    const disallowed = [CONST.DEFAULT_MAPKEY]
+    if (disallowed.includes(config.mapkey)) {
       // Small not allowed for 5-6 players; bump to Extended
       config.mapkey = CONST.DEFAULT_MAPKEY_5_6
       config.map_size = 'Extended'
@@ -164,6 +177,7 @@ app.get('/game/:id', function(req, res) {
       if (mk === CONST.DEFAULT_MAPKEY) map_size = 'Standard'
       else if (mk === CONST.DEFAULT_MAPKEY_5_6) map_size = 'Extended'
       else if (mk === CONST.DEFAULT_MAPKEY_7_8) map_size = 'Large'
+      else if (mk === CONST.DEFAULT_MAPKEY_9_10) map_size = 'Extra Large'
       else if (mk === CONST.ARGENTUM_MAPKEY) map_size = 'Argentum'
       else if (!map_size) map_size = 'Custom'
     }

@@ -30,7 +30,7 @@ Free to play multiplayer Catan board game
 Tips:
 - The editor URL always contains your current mapkey. You can copy the URL with the “Copy” button.
 - Advanced: You can change the players count by editing the players query param on the /game/new URL before loading it.
-- For 7–8 players, the server enforces a Large preset map to ensure enough tiles, so custom maps for 7–8 are currently not auto-accepted.
+- For 7–10 players, the server enforces a preset map to ensure enough tiles, so custom maps for 7–10 are currently not auto-accepted.
 
 ## Local Installation & Running
 ```bash
@@ -42,7 +42,7 @@ The server will be reachable at [localhost:3000](http://localhost:3000/). You're
 
 ## Game Features
 - [x] Design your own map
-- [x] 2/3/4/5/6/7/8 Players
+- [x] 2/3/4/5/6/7/8/9/10 Players
 - [x] Build Houses, Roads, and Cities
 - [x] Robber Mechanics
 - [x] Trade Requests
@@ -54,8 +54,8 @@ The server will be reachable at [localhost:3000](http://localhost:3000/). You're
 - [x] Smart Map Shuffler
 - [x] Optional Timer
 
-## 5-8 Player Support
-The game now supports up to 8 players with the following adjustments:
+## 5-10 Player Support
+The game now supports up to 10 players with the following adjustments:
 
 ### 5-6 Players
 - Larger board layout with more resource tiles
@@ -68,6 +68,12 @@ The game now supports up to 8 players with the following adjustments:
 - Further increased development card deck (24 Knights, 12 Progress cards, 8 Victory Points)
 - Victory point requirement increased to 12 (configurable)
 - Robber hand limit increased to 11 (configurable)
+
+### 9-10 Players
+- Extra Large board layout with many more resource tiles
+- Maximum development card deck (30 Knights, 15 Progress cards, 10 Victory Points)
+- Victory point requirement increased to 13 (configurable)
+- Robber hand limit set to 10 (configurable)
 
 ## Future Ideas
 - Browser Notifications

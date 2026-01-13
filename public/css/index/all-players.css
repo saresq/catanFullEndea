@@ -126,6 +126,16 @@
             border-color: var(--player-8-color-dark);
         }
 
+        &.p9 {
+            background: var(--player-9-color-light);
+            border-color: var(--player-9-color-dark);
+        }
+
+        &.p10 {
+            background: var(--player-10-color-light);
+            border-color: var(--player-10-color-dark);
+        }
+
         .name {
             width: 100%;
             overflow: hidden;
@@ -171,6 +181,14 @@
 
         &.p8 .name {
             background: var(--player-8-color);
+        }
+
+        &.p9 .name {
+            background: var(--player-9-color);
+        }
+
+        &.p10 .name {
+            background: var(--player-10-color);
         }
 
         .victory-points {
@@ -304,12 +322,12 @@
         }
     }
 
-    &[data-active="1"] .player.p1::before, &[data-active="2"] .player.p2::before, &[data-active="3"] .player.p3::before, &[data-active="4"] .player.p4::before, &[data-active="5"] .player.p5::before, &[data-active="6"] .player.p6::before, &[data-active="7"] .player.p7::before, &[data-active="8"] .player.p8::before {
+    &[data-active="1"] .player.p1::before, &[data-active="2"] .player.p2::before, &[data-active="3"] .player.p3::before, &[data-active="4"] .player.p4::before, &[data-active="5"] .player.p5::before, &[data-active="6"] .player.p6::before, &[data-active="7"] .player.p7::before, &[data-active="8"] .player.p8::before, &[data-active="9"] .player.p9::before, &[data-active="10"] .player.p10::before {
         content: '👉';
     }
 
 
-    &[data-army="1"] .player.p1 .largest-army, &[data-army="2"] .player.p2 .largest-army, &[data-army="3"] .player.p3 .largest-army, &[data-army="4"] .player.p4 .largest-army, &[data-army="5"] .player.p5 .largest-army, &[data-army="6"] .player.p6 .largest-army, &[data-army="7"] .player.p7 .largest-army, &[data-army="8"] .player.p8 .largest-army, &[data-road="1"] .player.p1 .longest-road, &[data-road="2"] .player.p2 .longest-road, &[data-road="3"] .player.p3 .longest-road, &[data-road="4"] .player.p4 .longest-road, &[data-road="5"] .player.p5 .longest-road, &[data-road="6"] .player.p6 .longest-road, &[data-road="7"] .player.p7 .longest-road, &[data-road="8"] .player.p8 .longest-road {
+    &[data-army="1"] .player.p1 .largest-army, &[data-army="2"] .player.p2 .largest-army, &[data-army="3"] .player.p3 .largest-army, &[data-army="4"] .player.p4 .largest-army, &[data-army="5"] .player.p5 .largest-army, &[data-army="6"] .player.p6 .largest-army, &[data-army="7"] .player.p7 .largest-army, &[data-army="8"] .player.p8 .largest-army, &[data-army="9"] .player.p9 .largest-army, &[data-army="10"] .player.p10 .largest-army, &[data-road="1"] .player.p1 .longest-road, &[data-road="2"] .player.p2 .longest-road, &[data-road="3"] .player.p3 .longest-road, &[data-road="4"] .player.p4 .longest-road, &[data-road="5"] .player.p5 .longest-road, &[data-road="6"] .player.p6 .longest-road, &[data-road="7"] .player.p7 .longest-road, &[data-road="8"] .player.p8 .longest-road, &[data-road="9"] .player.p9 .longest-road, &[data-road="10"] .player.p10 .longest-road {
         width: 67px;
         cursor: pointer;
 
@@ -367,6 +385,14 @@
 
     &[data-army="8"] .player.p8 .largest-army::after, &[data-road="8"] .player.p8 .longest-road::after {
         background: var(--player-8-color);
+    }
+
+    &[data-army="9"] .player.p9 .largest-army::after, &[data-road="9"] .player.p9 .longest-road::after {
+        background: var(--player-9-color);
+    }
+
+    &[data-army="10"] .player.p10 .largest-army::after, &[data-road="10"] .player.p10 .longest-road::after {
+        background: var(--player-10-color);
     }
 
     .victory-target {
@@ -468,6 +494,16 @@
                 border-color: var(--player-8-color) !important;
             }
 
+            &.p9, &.pc9 {
+                background: color-mix(in srgb, var(--player-9-color), transparent 50%) !important;
+                border-color: var(--player-9-color) !important;
+            }
+
+            &.p10, &.pc10 {
+                background: color-mix(in srgb, var(--player-10-color), transparent 50%) !important;
+                border-color: var(--player-10-color) !important;
+            }
+
             &.pc0 {
                 background: color-mix(in srgb, var(--player-0-color), transparent 50%) !important;
                 border-color: var(--player-0-color) !important;
@@ -556,7 +592,7 @@
         }
 
         /* Active player indicator on mobile */
-        &[data-active="1"] .player.p1::before, &[data-active="2"] .player.p2::before, &[data-active="3"] .player.p3::before, &[data-active="4"] .player.p4::before, &[data-active="5"] .player.p5::before, &[data-active="6"] .player.p6::before, &[data-active="7"] .player.p7::before, &[data-active="8"] .player.p8::before {
+        &[data-active="1"] .player.p1::before, &[data-active="2"] .player.p2::before, &[data-active="3"] .player.p3::before, &[data-active="4"] .player.p4::before, &[data-active="5"] .player.p5::before, &[data-active="6"] .player.p6::before, &[data-active="7"] .player.p7::before, &[data-active="8"] .player.p8::before, &[data-active="9"] .player.p9::before, &[data-active="10"] .player.p10::before {
             content: '👉';
             margin-right: 2px;
         }
@@ -605,6 +641,16 @@
     border-color: var(--player-8-color-dark);
 }
 
+.all-players .player.pc9 {
+    background: var(--player-9-color-light);
+    border-color: var(--player-9-color-dark);
+}
+
+.all-players .player.pc10 {
+    background: var(--player-10-color-light);
+    border-color: var(--player-10-color-dark);
+}
+
 .all-players .player.pc0 {
     background: var(--player-0-color-light);
     border-color: var(--player-0-color-dark);
@@ -640,6 +686,14 @@
 
 .all-players .player.pc8 .name {
     background: var(--player-8-color);
+}
+
+.all-players .player.pc9 .name {
+    background: var(--player-9-color);
+}
+
+.all-players .player.pc10 .name {
+    background: var(--player-10-color);
 }
 
 .all-players .player.pc0 .name {

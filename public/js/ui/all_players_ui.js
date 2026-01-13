@@ -114,7 +114,7 @@ export default class AllPlayersUI {
 
     // Reflect color change
     if (key?.includes && key.includes('color_id')) {
-      const classes = $p.className.split(' ').filter(c => !/^pc\d$/.test(c))
+      const classes = $p.className.split(' ').filter(c => !/^pc\d+$/.test(c))
       $p.className = classes.join(' ') + ` pc${player.color_id || player.id}`
       if (this.$el.dataset.active == player.id) this.#updateTurnIndicator()
     }

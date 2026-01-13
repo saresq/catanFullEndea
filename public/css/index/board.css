@@ -382,6 +382,14 @@
             background-image: url(/images/pieces/settlement-8.png);
         }
 
+        &.p9[data-taken=S] {
+            background-image: url(/images/pieces/settlement-9.png);
+        }
+
+        &.p10[data-taken=S] {
+            background-image: url(/images/pieces/settlement-10.png);
+        }
+
         &[data-taken=C] {
             width: 40px;
             height: 40px;
@@ -418,6 +426,14 @@
 
             &.p8 {
                 background-image: url(/images/pieces/city-8.png);
+            }
+
+            &.p9 {
+                background-image: url(/images/pieces/city-9.png);
+            }
+
+            &.p10 {
+                background-image: url(/images/pieces/city-10.png);
             }
         }
 
@@ -550,7 +566,7 @@
             height: 150px;
             z-index: 5;
 
-            &.p1, &.p2, &.p3, &.p4, &.p5, &.p6, &.p7, &.p8 {
+            &.p1, &.p2, &.p3, &.p4, &.p5, &.p6, &.p7, &.p8, &.p9, &.p10 {
                 transition: z-index 0s .25s linear, width 0.25s ease-in, height 0.25s ease-in;
                 width: 7px;
                 height: 50px;
@@ -595,6 +611,16 @@
             &.p8 {
                 background: var(--player-8-color);
                 box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-8-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+            }
+
+            &.p9 {
+                background: var(--player-9-color);
+                box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-9-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+            }
+
+            &.p10 {
+                background: var(--player-10-color);
+                box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-10-color-dark) 50%, #000), 4px 4px 6px 0px #000;
             }
 
 
@@ -737,6 +763,14 @@
     background-image: url(/images/pieces/settlement-8.png);
 }
 
+.board .tile .corner.taken.pc9[data-taken=S] {
+    background-image: url(/images/pieces/settlement-9.png);
+}
+
+.board .tile .corner.taken.pc10[data-taken=S] {
+    background-image: url(/images/pieces/settlement-10.png);
+}
+
 .board .tile .corner.taken.pc0[data-taken=S] {
     background-image: url(/images/pieces/settlement-0.png);
 }
@@ -772,6 +806,14 @@
 
 .board .tile .corner[data-taken=C].pc8 {
     background-image: url(/images/pieces/city-8.png);
+}
+
+.board .tile .corner[data-taken=C].pc9 {
+    background-image: url(/images/pieces/city-9.png);
+}
+
+.board .tile .corner[data-taken=C].pc10 {
+    background-image: url(/images/pieces/city-10.png);
 }
 
 .board .tile .corner[data-taken=C].pc0 {
@@ -817,6 +859,16 @@
 .board .tile .edge.taken.pc8 {
     background: var(--player-8-color);
     box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-8-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+}
+
+.board .tile .edge.taken.pc9 {
+    background: var(--player-9-color);
+    box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-9-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+}
+
+.board .tile .edge.taken.pc10 {
+    background: var(--player-10-color);
+    box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-10-color-dark) 50%, #000), 4px 4px 6px 0px #000;
 }
 
 .board .tile .edge.taken.pc0 {

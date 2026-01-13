@@ -273,6 +273,16 @@ button {
         border-color: var(--player-8-color-dark);
     }
 
+    .slot.filled.p9 {
+        background: var(--player-9-color-light);
+        border-color: var(--player-9-color-dark);
+    }
+
+    .slot.filled.p10 {
+        background: var(--player-10-color-light);
+        border-color: var(--player-10-color-dark);
+    }
+
     .slot.filled.p1 .name {
         background: var(--player-1-color);
     }
@@ -303,6 +313,14 @@ button {
 
     .slot.filled.p8 .name {
         background: var(--player-8-color);
+    }
+
+    .slot.filled.p9 .name {
+        background: var(--player-9-color);
+    }
+
+    .slot.filled.p10 .name {
+        background: var(--player-10-color);
     }
 }
 
@@ -438,6 +456,16 @@ button {
     border-color: var(--player-8-color-dark);
 }
 
+#waiting-room .slot.filled.pc9 {
+    background: var(--player-9-color-light);
+    border-color: var(--player-9-color-dark);
+}
+
+#waiting-room .slot.filled.pc10 {
+    background: var(--player-10-color-light);
+    border-color: var(--player-10-color-dark);
+}
+
 #waiting-room .slot.filled.pc1 .name {
     background: var(--player-1-color);
 }
@@ -468,6 +496,14 @@ button {
 
 #waiting-room .slot.filled.pc8 .name {
     background: var(--player-8-color);
+}
+
+#waiting-room .slot.filled.pc9 .name {
+    background: var(--player-9-color);
+}
+
+#waiting-room .slot.filled.pc10 .name {
+    background: var(--player-10-color);
 }
 
 /* Start Game button */

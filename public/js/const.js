@@ -8,16 +8,16 @@ export const TILES = {
   S: 'Sea',
 }
 
-export const RESOURCES = { S: 'Sheep', L: 'Lumber', B: 'Brick', O: 'Ore', W: 'Wheat'}
+export const RESOURCES = {S: 'Sheep', L: 'Lumber', B: 'Brick', O: 'Ore', W: 'Wheat'}
 
-export const RESOURCE_EMOJIS = { S: '🐑', L: '🪵', B: '🧱', O: '🏔', W: '🌾' }
-export const TILE_EMOJIS = { G: '🐑', J: '🪵', C: '🧱', M: '🏔', F: '🌾', S: '🌊', D: '🌵' }
+export const RESOURCE_EMOJIS = {S: '🐑', L: '🪵', B: '🧱', O: '🏔', W: '🌾'}
+export const TILE_EMOJIS = {G: '🐑', J: '🪵', C: '🧱', M: '🏔', F: '🌾', S: '🌊', D: '🌵'}
 
 export const SEA_REGEX = `S\\((?<dir>tl|tr|l|r|bl|br)_(?<res>${Object.keys(RESOURCES).join('|')}|\\*)(?<num>\\d*)\\)`
 
 export const RESOURCE_REGEX = `(?<tile_type>[${Object.keys(TILES).join('|')}])(?<num>\\d*)`
 
-export const TILE_RES = { G: 'S',  J: 'L',  C: 'B',  M: 'O',  F: 'W'}
+export const TILE_RES = {G: 'S', J: 'L', C: 'B', M: 'O', F: 'W'}
 
 export const DEVELOPMENT_CARDS = {
   dK: 'Knight', dVp: 'Victory Point',
@@ -27,20 +27,26 @@ export const DEVELOPMENT_CARDS = {
 // Standard deck for 2-4 players
 export const DEVELOPMENT_CARDS_DECK_STANDARD = []
 DEVELOPMENT_CARDS_DECK_STANDARD.push(...[...Array(14)].map(_ => 'dK')) // 14 Knights
-DEVELOPMENT_CARDS_DECK_STANDARD.push('dR','dR', 'dY','dY', 'dM','dM') // 2 of each power cards
+DEVELOPMENT_CARDS_DECK_STANDARD.push('dR', 'dR', 'dY', 'dY', 'dM', 'dM') // 2 of each power cards
 DEVELOPMENT_CARDS_DECK_STANDARD.push(...[...Array(5)].map(_ => 'dVp')) // 5 victory points
 
 // Extended deck for 5-6 players
 export const DEVELOPMENT_CARDS_DECK_5_6 = []
 DEVELOPMENT_CARDS_DECK_5_6.push(...[...Array(20)].map(_ => 'dK')) // 20 Knights
-DEVELOPMENT_CARDS_DECK_5_6.push('dR','dR','dR', 'dY','dY','dY', 'dM','dM','dM') // 3 of each power cards
+DEVELOPMENT_CARDS_DECK_5_6.push('dR', 'dR', 'dR', 'dY', 'dY', 'dY', 'dM', 'dM', 'dM') // 3 of each power cards
 DEVELOPMENT_CARDS_DECK_5_6.push(...[...Array(6)].map(_ => 'dVp')) // 6 victory points
 
 // Extended deck for 7-8 players
 export const DEVELOPMENT_CARDS_DECK_7_8 = []
 DEVELOPMENT_CARDS_DECK_7_8.push(...[...Array(24)].map(_ => 'dK')) // 24 Knights
-DEVELOPMENT_CARDS_DECK_7_8.push('dR','dR','dR','dR', 'dY','dY','dY','dY', 'dM','dM','dM','dM') // 4 of each power cards
+DEVELOPMENT_CARDS_DECK_7_8.push('dR', 'dR', 'dR', 'dR', 'dY', 'dY', 'dY', 'dY', 'dM', 'dM', 'dM', 'dM') // 4 of each power cards
 DEVELOPMENT_CARDS_DECK_7_8.push(...[...Array(8)].map(_ => 'dVp')) // 8 victory points
+
+// Extended deck for 9-10 players
+export const DEVELOPMENT_CARDS_DECK_9_10 = []
+DEVELOPMENT_CARDS_DECK_9_10.push(...[...Array(30)].map(_ => 'dK')) // 30 Knights
+DEVELOPMENT_CARDS_DECK_9_10.push('dR', 'dR', 'dR', 'dR', 'dR', 'dY', 'dY', 'dY', 'dY', 'dY', 'dM', 'dM', 'dM', 'dM', 'dM') // 5 of each power cards
+DEVELOPMENT_CARDS_DECK_9_10.push(...[...Array(10)].map(_ => 'dVp')) // 10 victory points
 
 // Default to standard deck, will be updated based on player count
 export const DEVELOPMENT_CARDS_DECK = DEVELOPMENT_CARDS_DECK_STANDARD
@@ -48,16 +54,16 @@ export const DEVELOPMENT_CARDS_DECK = DEVELOPMENT_CARDS_DECK_STANDARD
 export const DC_VICTORY_POINT_CARD_VARIETIES = ['dL', 'dMr', 'dG', 'dC', 'dU']
 // dL: 'Library', dMr: 'Market', dG: 'Great Hall', dC: 'Chapel', dU: 'University',
 
-export const LOCS = { CORNER: 'C', EDGE: 'E', TILE: 'T' }
+export const LOCS = {CORNER: 'C', EDGE: 'E', TILE: 'T'}
 
-export const PIECES = { S: 'Settlement', C: 'City', R: 'Road' }
-export const PIECES_COUNT = { S: 5, C: 4, R: 15 }
+export const PIECES = {S: 'Settlement', C: 'City', R: 'Road'}
+export const PIECES_COUNT = {S: 5, C: 4, R: 15}
 
 export const COST = {
-  R: { L: 1, B: 1 },
-  S: { L: 1, B: 1, W: 1, S: 1 },
-  C: { W: 2, O: 3 },
-  DEV_C: { W: 1, S: 1, O: 1 },
+  R: {L: 1, B: 1},
+  S: {L: 1, B: 1, W: 1, S: 1},
+  C: {W: 2, O: 3},
+  DEV_C: {W: 1, S: 1, O: 1},
 }
 
 export const TRADE_OFFERS = {
@@ -73,8 +79,8 @@ export const TRADE_OFFERS = {
 
 /** @todo Use this in tile.js, board_shuffler.js (and any other places) */
 export const DIR_HELPER = {
-  KEYS: { tl: 'top_left', tr: 'top_right', r: 'right', br: 'bottom_right', bl: 'bottom_left', l: 'left' },
-  MAPKEYS: { top_left: 'tl', top_right: 'tr', right: 'r', bottom_right: 'br', bottom_left: 'bl', left: 'l' },
+  KEYS: {tl: 'top_left', tr: 'top_right', r: 'right', br: 'bottom_right', bl: 'bottom_left', l: 'left'},
+  MAPKEYS: {top_left: 'tl', top_right: 'tr', right: 'r', bottom_right: 'br', bottom_left: 'bl', left: 'l'},
 
   OPPOSITES: {
     top_left: 'bottom_right', top_right: 'bottom_left', left: 'r',
@@ -120,29 +126,41 @@ export const DEFAULT_MAPKEY_7_8 =
   +S.C5.F6.G11.J4.M2.S(tl_S2)
   +S(tr_*3).S.S.S.S(tl_*3).S`
 
+// 9-10 player board layout (custom even larger board)
+export const DEFAULT_MAPKEY_9_10 =
+  `S.S.S(bl_*3).S.S(bl_*3).S.S.S
+  -S(br_S2).M12.J11.G9.C4.F9.G11.S(l_L2)
+  -S.M6.C2.G6.M11.C6.M3.S
+  -S.C11.F3.F10.D.F5.J4.J2.S(l_O2)
+  -S.S(r_B2).F6.F5.C8.G10.J5.G12.S
+  +S.G5.M9.J4.M3.J2.F8.M12.S(l_*3)
+  +S.M2.D.J10.F12.D.J3.S
+  +S(tr_W2).C8.G9.G8.C4.C10.S
+  +S.S(tr_*3).S.S.S(tl_*3).S.S.S`
+
 export const ARGENTUM_MAPKEY =
   `S.S.S.S.S.S.S.S.S.S.S.S
   +S.S.G5.D.C6.S.S.S.S.S.S.S
-  +S.F8.M4.F5.J9.S.C6.S.S.S.S.S.S
+  +S(br_S2).F8.M4.F5.J9.S(bl_*3).C6.S.S.S.S.S.S
   -S.J12.C3.G6.J9.M4.M11.S.S.S.S
   -S.G8.G4.M10.C12.M6.M5.S.S.S.S
   -S.S.F2.C6.F10.G4.M11.S.S.S
   +S.D.G10.G10.J8.J3.S.S.S
-  +S.C8.F11.F10.J4.C6.S.S.S
+  +S(r_L2).C8.F11.F10.J4.C6.S(bl_*3).S.S
   -S.J9.D.C6.M5.J2.J4.S.S
   +S.J6.G2.C5.J3.M8.F9.S.S
   -S.G11.M11.M12.F12.M11.C5.S.S
-  +S.M4.F9.J4.F12.S.S.S.S
-  -S.M4.G5.C10.D.S.S.S.S
+  +S(r_B2).M4.F9.J4.F12.S.S.S.S
+  -S.M4.G5.C10.D.S(tl_*3).S.S.S
   +S.F8.J12.C3.S.S.S.S.S
-  -S.S.F10.F2.M9.S.S.S
+  -S.S(r_O2).F10.F2.M9.S.S.S
   +S.F9.G12.G2.S.S.S
-  -S.S.F2.J8.G3.S.S
+  -S.S.F2.J8.G3.S(l_*3).S
   +S.G10.F3.C2.S.S.S.S
-  -S.S.G9.G10.S.S.J9.C3.S
+  -S.S(r_W2).G9.G10.S.S.J9.C3.S
   +S.S.C11.M8.S.S.S.S
   -S.S.S.J5.C5.S.S.S
-  +S.S.S.S.S.S`
+  +S.S.S.S(tl_*3).S.S`
 
 export const GAME_CONFIG = {
   // private_game: true,

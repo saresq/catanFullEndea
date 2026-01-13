@@ -356,6 +356,30 @@
         &.p4 {
             background-color: var(--player-4-color);
         }
+
+        &.p5 {
+            background-color: var(--player-5-color);
+        }
+
+        &.p6 {
+            background-color: var(--player-6-color);
+        }
+
+        &.p7 {
+            background-color: var(--player-7-color);
+        }
+
+        &.p8 {
+            background-color: var(--player-8-color);
+        }
+
+        &.p9 {
+            background-color: var(--player-9-color);
+        }
+
+        &.p10 {
+            background-color: var(--player-10-color);
+        }
     }
 
     .container {
@@ -504,6 +528,30 @@
 
         &.p4 {
             background-color: var(--player-4-color);
+        }
+
+        &.p5 {
+            background-color: var(--player-5-color);
+        }
+
+        &.p6 {
+            background-color: var(--player-6-color);
+        }
+
+        &.p7 {
+            background-color: var(--player-7-color);
+        }
+
+        &.p8 {
+            background-color: var(--player-8-color);
+        }
+
+        &.p9 {
+            background-color: var(--player-9-color);
+        }
+
+        &.p10 {
+            background-color: var(--player-10-color);
         }
     }
 

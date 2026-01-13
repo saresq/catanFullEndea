@@ -14,11 +14,11 @@ This document provides a comprehensive overview of the Catan game implementation
 
 ## Project Overview
 
-This project is a web-based implementation of the popular board game Settlers of Catan. It allows multiple players (2-8) to play the game in real-time over the internet. The game includes all the core mechanics of Catan, including resource collection, building, trading, development cards, and special achievements.
+This project is a web-based implementation of the popular board game Settlers of Catan. It allows multiple players (2-10) to play the game in real-time over the internet. The game includes all the core mechanics of Catan, including resource collection, building, trading, development cards, and special achievements.
 
 ### Features
 
-- Multiplayer gameplay with 2-8 players
+- Multiplayer gameplay with 2-10 players
 - Real-time communication between players
 - Customizable game rules and board layouts
 - Responsive design for different screen sizes

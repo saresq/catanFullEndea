@@ -401,7 +401,7 @@ export default class BoardUI {
   }
 
   updatePlayerColor(pid, cid) {
-    const pcs = Array.from({ length: 9 }, (_, i) => 'pc' + i)
+    const pcs = Array.from({ length: 11 }, (_, i) => 'pc' + i)
     // Update corners and edges belonging to this pid
     this.$el.querySelectorAll(`.corner.taken.p${pid}, .edge.taken.p${pid}`).forEach($el => {
       pcs.forEach(c => $el.classList.remove(c))

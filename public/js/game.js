@@ -423,7 +423,7 @@ export default class Game {
       try {
         const $p = document.querySelector(`#game .all-players .player.p${pid}`)
         if ($p) {
-          const pcs = Array.from({ length: 9 }, (_, i) => 'pc' + i)
+          const pcs = Array.from({ length: 11 }, (_, i) => 'pc' + i)
           pcs.forEach(c => $p.classList.remove(c))
           $p.classList.add('pc0')
           const $name = $p.querySelector('.name')

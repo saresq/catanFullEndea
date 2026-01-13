@@ -846,6 +846,48 @@
         color: var(--player-8-color);
     }
 
+    &.id-9 .actions {
+        background: var(--player-9-color-dark);
+        border-color: var(--player-9-color);
+    }
+
+    &.id-10 .actions {
+        background: var(--player-10-color-dark);
+        border-color: var(--player-10-color);
+    }
+
+    &.id-9 .actions .build-road:not(.disabled) .image {
+        background: var(--player-9-color);
+    }
+
+    &.id-10 .actions .build-road:not(.disabled) .image {
+        background: var(--player-10-color);
+    }
+
+    &.id-9 .actions .build-settlement .image {
+        background-image: url(/images/pieces/settlement-9.png);
+    }
+
+    &.id-10 .actions .build-settlement .image {
+        background-image: url(/images/pieces/settlement-10.png);
+    }
+
+    &.id-9 .actions .build-city .image {
+        background-image: url(/images/pieces/city-9.png);
+    }
+
+    &.id-10 .actions .build-city .image {
+        background-image: url(/images/pieces/city-10.png);
+    }
+
+    &.id-9 .actions .end-turn {
+        color: var(--player-9-color);
+    }
+
+    &.id-10 .actions .end-turn {
+        color: var(--player-10-color);
+    }
+
     /* Also support color-based classes (pc1..pc8) so selected color drives the theme */
 
     &.pc1 .actions {
@@ -1016,6 +1058,48 @@
         color: var(--player-8-color);
     }
 
+    &.pc9 .actions {
+        background: var(--player-9-color-dark);
+        border-color: var(--player-9-color);
+    }
+
+    &.pc10 .actions {
+        background: var(--player-10-color-dark);
+        border-color: var(--player-10-color);
+    }
+
+    &.pc9 .actions .build-road:not(.disabled) .image {
+        background: var(--player-9-color);
+    }
+
+    &.pc10 .actions .build-road:not(.disabled) .image {
+        background: var(--player-10-color);
+    }
+
+    &.pc9 .actions .build-settlement .image {
+        background-image: url(/images/pieces/settlement-9.png);
+    }
+
+    &.pc10 .actions .build-settlement .image {
+        background-image: url(/images/pieces/settlement-10.png);
+    }
+
+    &.pc9 .actions .build-city .image {
+        background-image: url(/images/pieces/city-9.png);
+    }
+
+    &.pc10 .actions .build-city .image {
+        background-image: url(/images/pieces/city-10.png);
+    }
+
+    &.pc9 .actions .end-turn {
+        color: var(--player-9-color);
+    }
+
+    &.pc10 .actions .end-turn {
+        color: var(--player-10-color);
+    }
+
     .status-bar {
         font-family: var(--font-ui), sans-serif;
         background: var(--sand-color);;
@@ -1096,6 +1180,14 @@
                 color: var(--player-8-color);
             }
 
+            &.pc9::before {
+                color: var(--player-9-color);
+            }
+
+            &.pc10::before {
+                color: var(--player-10-color);
+            }
+
             &.me::before {
                 .pc1 & {
                     color: var(--player-1-color);
@@ -1127,6 +1219,14 @@
 
                 .pc8 & {
                     color: var(--player-8-color);
+                }
+
+                .pc9 & {
+                    color: var(--player-9-color);
+                }
+
+                .pc10 & {
+                    color: var(--player-10-color);
                 }
             }
         }

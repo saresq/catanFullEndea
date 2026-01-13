@@ -67,7 +67,15 @@ export default class Game {
     })
     
     // Initialize development card deck and adjust game rules based on player count
-    if (this.player_count >= 7) {
+    if (this.player_count >= 9) {
+      this.dev_cards = shuffle(CONST.DEVELOPMENT_CARDS_DECK_9_10)
+      if (!config.hasOwnProperty('win_points')) {
+        this.config.win_points = 13
+      }
+      if (!config.hasOwnProperty('robber_hand_limit')) {
+        this.config.robber_hand_limit = 10
+      }
+    } else if (this.player_count >= 7) {
       this.dev_cards = shuffle(CONST.DEVELOPMENT_CARDS_DECK_7_8)
       // Adjust victory points for 7-8 players if not explicitly set in config
       if (!config.hasOwnProperty('win_points')) {
@@ -75,7 +83,7 @@ export default class Game {
       }
       // Adjust robber hand limit for 7-8 players if not explicitly set in config
       if (!config.hasOwnProperty('robber_hand_limit')) {
-        this.config.robber_hand_limit = 11
+        this.config.robber_hand_limit = 10
       }
     } else if (this.player_count >= 5) {
       this.dev_cards = shuffle(CONST.DEVELOPMENT_CARDS_DECK_5_6)
@@ -85,7 +93,7 @@ export default class Game {
       }
       // Adjust robber hand limit for 5-6 players if not explicitly set in config
       if (!config.hasOwnProperty('robber_hand_limit')) {
-        this.config.robber_hand_limit = 9
+        this.config.robber_hand_limit = 8
       }
     } else {
       this.dev_cards = shuffle(CONST.DEVELOPMENT_CARDS_DECK_STANDARD)
@@ -106,7 +114,7 @@ export default class Game {
     // Assign an unused color
     const taken_colors = this.players.filter(p => p?.id).map(p => p.color_id)
     if (taken_colors.includes(player.color_id)) {
-      const available_colors = [...Array(8).keys()].map(_ => _ + 1)
+      const available_colors = [...Array(10).keys()].map(_ => _ + 1)
         .filter(c => !taken_colors.includes(c))
       if (available_colors.length) {
         player.color_id = available_colors[0]
@@ -403,7 +411,7 @@ export default class Game {
     const player = this.getPlayer(pid)
     if (!player) return
     const cid = +color_id
-    if (!(cid >= 1 && cid <= 8)) return
+    if (!(cid >= 1 && cid <= 10)) return
     // Disallow if color already taken by another joined player
     const isTaken = this.players.filter(p => p?.id).some(p => p.id !== pid && p.color_id === cid)
     if (isTaken) return

@@ -124,7 +124,7 @@ class WaitingRoomUI {
         <div class="picker">
           <div class="title">Choose your color</div>
           <div class="grid">
-            ${Array.from({length: 8}, (_,i)=>i+1).map(i=>`
+            ${Array.from({length: 10}, (_,i)=>i+1).map(i=>`
               <div class="color-option ${takenColors.has(i) ? 'taken' : ''}" data-id="${i}"
                    style="background-image:url('/images/pieces/city-${i}.png')" title="Color ${i}"></div>
             `).join('')}
