@@ -160,16 +160,20 @@
 
     .row-1, .row-2 {
       display: flex;
-      justify-content: space-around;
       align-items: center;
       height: 2.5rem;
     }
     .row-1 {
       margin-bottom: 1rem;
       width: 25%;
+      justify-content: space-around;
       @media screen and (max-width: 768px) {
         width: 75%;
       }
+    }
+    .row-2 {
+      justify-content: space-between;
+      gap: 0.5rem;
     }
 
     .dev-toggle {
@@ -310,44 +314,34 @@
     /* BUILD ROAD */
     .build-road {
       position: relative;
-      width: 0.375rem;
-      height: 2.5rem;
-      box-shadow: 0rem 0rem 0rem 0.125rem #fff;
-      background: var(--sand-color-dark);
+      height: 100%;
+      flex: 1;
+      display: flex; justify-content: center; align-items: center;
 
       &::after {
         content: '';
-        display: block;
-        width: 2.5rem;
+        width: 0.375rem;
         height: 2.5rem;
-        border-radius: 50%;
-        background: #fff;
-        opacity: 0.3;
-        position: absolute;
-        left: -1.0625rem;
-        top: 0rem;
-        z-index: -1;
+        background: var(--sand-color-dark);
+        box-shadow: 0rem 0rem 0rem 0.125rem #fff;
       }
 
-      &:is(:hover, :focus):not(.disabled), &.active {
-        border-color: #333;
-        box-shadow: 0.125rem 0rem 0rem 0.125rem #000;
-        border-color: transparent;
-      }
+      &:is(:hover, :focus):not(.disabled)::after, &.active::after { filter: brightness(0.7); }
 
       &.disabled, &[data-count="0"] {
         cursor: not-allowed;
-        background: #919191c0;
-        box-shadow: 0rem 0rem 0rem 0.125rem #666666c0;
-        &::after { visibility: hidden; }
+        &::after {
+          filter: grayscale(1) brightness(2); opacity: 0.8;
+        }
       }
     }
 
-    /* BUILD SETTL, CITY */
     .build-city,
     .build-settlement
     {
       height: 100%; position: relative;
+      flex: 1;
+      display: flex; justify-content: center; align-items: center;
       &::after {
         content: ''; position: absolute; top: 0; left: 0;
         width: 100%; height: 100%;
@@ -363,12 +357,14 @@
         }
       }
     }
-    .build-settlement { width: 1.875rem; &::after { background-size: 1.875rem; } }
-    .build-city { width: 2.5rem; &::after { background-size: 2.5rem; } }
+    .build-settlement { &::after { background-size: 1.875rem; } }
+    .build-city { &::after { background-size: 2.5rem; } }
 
     /* DEV CARD */
     .dev-card {
       position: relative;
+      flex: 1; height: 100%;
+      display: flex; justify-content: center; align-items: center;
       img { width: 1.875rem; }
       &:is(:hover, :focus) img { filter: brightness(0.7); }
       &.disabled, &[data-count="0"] {
@@ -378,9 +374,11 @@
     }
 
     .build-road, .build-settlement, .build-city, .dev-card {
+      flex: 1; height: 100%;
+      display: flex; justify-content: center; align-items: center;
       &::before {
         content: attr(data-count);
-        position: absolute; top: 2.3125rem; left: 1.375rem;
+        position: absolute; bottom: 0.125rem; right: 0.125rem;
         width: 0.875rem; height: 0.75rem;
         font-family: var(--font-mono); font-size: 0.625rem;
         color: #999; background: #fff;
@@ -393,9 +391,11 @@
 
       .cost-tooltip {
         position: absolute; bottom: 4.625rem; font-family: var(--font-ui);
-        display: none; transform: scale(2);
+        display: none; transform: translateX(-50%) scale(2);
+        left: 50%;
         background: var(--sand-color); color: #0009;
-        padding: 0.3125rem 0rem 0.3125rem 0.4375rem;
+        padding: 1em;
+        width: max-content;
         border-radius: 6.25rem; border: 0.0625rem solid #000;
         z-index: 10;
         pointer-events: none;
@@ -404,7 +404,7 @@
           .res-icon { transform: scale(0.8); }
         }
         .res-count[data-count="1"] { display: none; }
-        .res-count:has(+ .res-icon.disabled) { color: #0004; }
+        .res-count:has(+ .res-icon.disabled) { opacity: 0.4; }
         .res-icon.disabled { filter: grayscale(1) contrast(0.5) brightness(1.5) opacity(1); }
       }
       &:not(.show-cost):is(:hover, :focus, .active) .cost-tooltip {
@@ -416,14 +416,7 @@
         display: block !important;
       }
     }
-    .build-road::before { top: 2rem; left: 0.1875rem; }
-    .build-settlement::before { top: 1.25rem; }
-    .build-city::before { left: 1.9375rem; top: 1.75rem; }
-
-    .build-road .cost-tooltip { width: 4.6875rem; left: -2.0625rem; }
-    .build-settlement .cost-tooltip { width: 8.5rem; left: -3.75rem; }
-    .build-city .cost-tooltip { width: 4.6875rem; padding-left: 0.625rem; left: -1.4375rem; }
-    .dev-card .cost-tooltip { width: 5.4375rem; left: -1.875rem; bottom: 5rem; }
+    .dev-card .cost-tooltip { bottom: 5rem; }
 
     /* TRADE */
     .trade {
@@ -454,17 +447,17 @@
   &.id-4 .actions { background: var(--player-4-color-dark); border-color: var(--player-4-color);}
   &.id-5 .actions { background: var(--player-5-color-dark); border-color: var(--player-5-color);}
   &.id-6 .actions { background: var(--player-6-color-dark); border-color: var(--player-6-color);}
-  &.id-7 .actions { background: var(--player-7-color-dark); border-color: var(--player-7-color);}
+  &.id-7 .actions { background: var(--player-7-color-dark); border-color: var(--player-7-color-light);}
   &.id-8 .actions { background: var(--player-8-color-dark); border-color: var(--player-8-color);}
 
-  &.id-1 .actions .build-road:not(.disabled) { background: var(--player-1-color-dark); }
-  &.id-2 .actions .build-road:not(.disabled) { background: var(--player-2-color-dark); }
-  &.id-3 .actions .build-road:not(.disabled) { background: var(--player-3-color-dark); }
-  &.id-4 .actions .build-road:not(.disabled) { background: var(--player-4-color-dark); }
-  &.id-5 .actions .build-road:not(.disabled) { background: var(--player-5-color-dark); }
-  &.id-6 .actions .build-road:not(.disabled) { background: var(--player-6-color-dark); }
-  &.id-7 .actions .build-road:not(.disabled) { background: var(--player-7-color-dark); }
-  &.id-8 .actions .build-road:not(.disabled) { background: var(--player-8-color-dark); }
+  &.id-1 .actions .build-road:not(.disabled)::after { background: var(--player-1-color-dark); }
+  &.id-2 .actions .build-road:not(.disabled)::after { background: var(--player-2-color-dark); }
+  &.id-3 .actions .build-road:not(.disabled)::after { background: var(--player-3-color-dark); }
+  &.id-4 .actions .build-road:not(.disabled)::after { background: var(--player-4-color-dark); }
+  &.id-5 .actions .build-road:not(.disabled)::after { background: var(--player-5-color-dark); }
+  &.id-6 .actions .build-road:not(.disabled)::after { background: var(--player-6-color-dark); }
+  &.id-7 .actions .build-road:not(.disabled)::after { background: var(--player-7-color-dark); }
+  &.id-8 .actions .build-road:not(.disabled)::after { background: var(--player-8-color-dark); }
 
   &.id-1 .actions .build-settlement::after { background-image: url(/images/pieces/settlement-1.png); }
   &.id-2 .actions .build-settlement::after { background-image: url(/images/pieces/settlement-2.png); }
@@ -490,7 +483,7 @@
   &.id-4 .actions .end-turn { color: var(--player-4-color); }
   &.id-5 .actions .end-turn { color: var(--player-5-color); }
   &.id-6 .actions .end-turn { color: var(--player-6-color); }
-  &.id-7 .actions .end-turn { color: var(--player-7-color); }
+  &.id-7 .actions .end-turn { color: var(--player-7-color-light); }
   &.id-8 .actions .end-turn { color: var(--player-8-color); }
 
   /* Also support color-based classes (pc1..pc8) so selected color drives the theme */
@@ -500,17 +493,17 @@
   &.pc4 .actions { background: var(--player-4-color-dark); border-color: var(--player-4-color);} 
   &.pc5 .actions { background: var(--player-5-color-dark); border-color: var(--player-5-color);} 
   &.pc6 .actions { background: var(--player-6-color-dark); border-color: var(--player-6-color);} 
-  &.pc7 .actions { background: var(--player-7-color-dark); border-color: var(--player-7-color);} 
+  &.pc7 .actions { background: var(--player-7-color-dark); border-color: var(--player-7-color-light);} 
   &.pc8 .actions { background: var(--player-8-color-dark); border-color: var(--player-8-color);} 
 
-  &.pc1 .actions .build-road:not(.disabled) { background: var(--player-1-color-dark); }
-  &.pc2 .actions .build-road:not(.disabled) { background: var(--player-2-color-dark); }
-  &.pc3 .actions .build-road:not(.disabled) { background: var(--player-3-color-dark); }
-  &.pc4 .actions .build-road:not(.disabled) { background: var(--player-4-color-dark); }
-  &.pc5 .actions .build-road:not(.disabled) { background: var(--player-5-color-dark); }
-  &.pc6 .actions .build-road:not(.disabled) { background: var(--player-6-color-dark); }
-  &.pc7 .actions .build-road:not(.disabled) { background: var(--player-7-color-dark); }
-  &.pc8 .actions .build-road:not(.disabled) { background: var(--player-8-color-dark); }
+  &.pc1 .actions .build-road:not(.disabled)::after { background: var(--player-1-color-dark); }
+  &.pc2 .actions .build-road:not(.disabled)::after { background: var(--player-2-color-dark); }
+  &.pc3 .actions .build-road:not(.disabled)::after { background: var(--player-3-color-dark); }
+  &.pc4 .actions .build-road:not(.disabled)::after { background: var(--player-4-color-dark); }
+  &.pc5 .actions .build-road:not(.disabled)::after { background: var(--player-5-color-dark); }
+  &.pc6 .actions .build-road:not(.disabled)::after { background: var(--player-6-color-dark); }
+  &.pc7 .actions .build-road:not(.disabled)::after { background: var(--player-7-color-dark); }
+  &.pc8 .actions .build-road:not(.disabled)::after { background: var(--player-8-color-dark); }
 
   &.pc1 .actions .build-settlement::after { background-image: url(/images/pieces/settlement-1.png); }
   &.pc2 .actions .build-settlement::after { background-image: url(/images/pieces/settlement-2.png); }
@@ -536,7 +529,7 @@
   &.pc4 .actions .end-turn { color: var(--player-4-color); }
   &.pc5 .actions .end-turn { color: var(--player-5-color); }
   &.pc6 .actions .end-turn { color: var(--player-6-color); }
-  &.pc7 .actions .end-turn { color: var(--player-7-color); }
+  &.pc7 .actions .end-turn { color: var(--player-7-color-light); }
   &.pc8 .actions .end-turn { color: var(--player-8-color); }
 
   .status-bar {
@@ -713,12 +706,12 @@
 }
 #game > .current-player .actions .roll-dice:not(.disabled) { top: -0.625rem; }
 #game > .current-player .actions .timer { top: 0; color: inherit; opacity: 1; text-shadow: none; }
-#game > .current-player .actions .timer.disabled { color: #0004; font-weight: 600; }
+#game > .current-player .actions .timer.disabled { opacity: 0.4; font-weight: 600; }
 
 
 /* GodMode special color theme mappings for current player (pc0) */
 #game > .current-player.pc0 .actions { background: var(--player-0-color-dark); border-color: var(--player-0-color);} 
-#game > .current-player.pc0 .actions .build-road:not(.disabled) { background: var(--player-0-color-dark); }
+#game > .current-player.pc0 .actions .build-road:not(.disabled)::after { background: var(--player-0-color-dark); }
 #game > .current-player.pc0 .actions .build-settlement::after { background-image: url(/images/pieces/settlement-0.png); }
 #game > .current-player.pc0 .actions .build-city::after { background-image: url(/images/pieces/city-0.png); }
 #game > .current-player.pc0 .actions .end-turn { color: var(--player-0-color); }

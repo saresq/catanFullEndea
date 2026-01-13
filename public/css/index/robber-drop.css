@@ -87,7 +87,7 @@
     /* &:hover .ctrl { display: block; } */
     .ctrl.minus { left: 0rem; }
     .ctrl.plus { right: 0rem; }
-    .ctrl.plus.disabled, .ctrl.minus.disabled { opacity: 0.2; pointer-events: none; }
+    .ctrl.plus.disabled, .ctrl.minus.disabled { opacity: 0.5; filter: grayscale(1); pointer-events: none; }
 
     @media screen and (max-width: 768px) {
       .ctrl.plus, .ctrl.minus { left: 50%; right: auto; transform: translate(-50%, -50%); }

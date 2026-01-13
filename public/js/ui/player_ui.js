@@ -1,5 +1,5 @@
 import * as CONST from "../const.js"
-import { resToText } from "../const_messages.js"
+import { resToText, resToIcons } from "../const_messages.js"
 const $ = document.querySelector.bind(document)
 const oKeys = Object.keys
 
@@ -95,16 +95,16 @@ export default class PlayerUI {
       </div>
       <div class="row-2">
         <button class="build-road disabled" title="Build Road (r)" data-count="${CONST.PIECES_COUNT.R}">
-          <div class="cost-tooltip">${resToText(CONST.COST.R)}</div>
+          <div class="cost-tooltip">${resToIcons(CONST.COST.R)}</div>
         </button>
         <button class="build-settlement disabled" title="Build Settlement (s)" data-count="${CONST.PIECES_COUNT.S}">
-          <div class="cost-tooltip">${resToText(CONST.COST.S)}</div>
+          <div class="cost-tooltip">${resToIcons(CONST.COST.S)}</div>
         </button>
         <button class="build-city disabled" title="Build City (c)" data-count="${CONST.PIECES_COUNT.C}">
-          <div class="cost-tooltip">${resToText(CONST.COST.C)}</div>
+          <div class="cost-tooltip">${resToIcons(CONST.COST.C)}</div>
         </button>
         <button class="dev-card disabled" title="Buy Development Card (d)" data-count="-">
-          <div class="cost-tooltip">${resToText(CONST.COST.DEV_C)}</div>
+          <div class="cost-tooltip">${resToIcons(CONST.COST.DEV_C)}</div>
           <img src="/images/dc-back.png"/>
         </button>
         <button class="roll-dice disabled" data-mode="roll" title="Roll Dice (Space)"><span class="label">🎲</span></button>
@@ -242,9 +242,10 @@ export default class PlayerUI {
   canIBuy(type) {
     const costs = CONST.COST[type]
     return oKeys(costs).reduce((mem, res_key) => {
-      const has_resource = this.hand[res_key] >= costs[res_key]
-      this.toggleAction(this.#$keyToEl(type).querySelector('.cost-tooltip .res-icon.'+res_key), has_resource)
-      return mem && has_resource
+      const has_count = this.hand[res_key]
+      const icons = this.#$keyToEl(type).querySelectorAll('.cost-tooltip .res-icon.'+res_key)
+      icons.forEach(($el, i) => this.toggleAction($el, has_count > i))
+      return mem && (has_count >= costs[res_key])
     }, true)
   }
 
@@ -262,7 +263,7 @@ export default class PlayerUI {
         this.toggleAction(this.#$keyToEl(key), can_act)
       })
     } else {
-      for (const $el of this.$action_bar.querySelectorAll('.timer, button')) {
+      for (const $el of this.$action_bar.querySelectorAll('.timer, button:not(.dev-toggle)')) {
         this.toggleAction($el)
       }
       // When actions turn off, also disable unified end-turn state
@@ -334,7 +335,7 @@ export default class PlayerUI {
     const label = this.$dice.querySelector('.label') || this.#ensureDiceLabel()
     label.textContent = '🎲'
     this.toggleAction(this.$dice, enabled)
-    this.toggleAction(this.$dev_toggle, enabled)
+    this.toggleAction(this.$dev_toggle, true)
   }
   setUnifiedModeEnd(enabled) {
     if (!this.$dice) return
@@ -457,6 +458,7 @@ export default class PlayerUI {
         const type = this.$card_preview.querySelector('.card').dataset.type
         if (!CONST.DEVELOPMENT_CARDS[type] || type === 'dVp') { return }
         this.#onDevCardActivate(type)
+        this.#is_dev_row_open = false
       }
       if (['card', 'card-front', 'card-back'].includes(e.target.className)) { return }
       this.closeCardPreview(true)
