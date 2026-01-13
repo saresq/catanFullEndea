@@ -1,233 +1,309 @@
 #game > .robber-drop-zone {
-  display: none;
-  position: fixed; top: 0; left: 0px;
-  width: 100%;
-  z-index: 60;
-  /* background: var(--sand-color); */
-  background: color-mix(in srgb, var(--sand-color-dark) 80%, #fff0);
-  padding: 20px 20px 0;
-  @media screen and (max-width: 768px) { padding: 0; }
-  border-bottom: 5px solid var(--sand-color-dark);
-  box-sizing: border-box;
-  box-shadow: 0 0px 15px 0px #000;
-  justify-content: center;
-  font-family: var(--font-ui);
-
-  &.show { display: flex; flex-direction: column; align-items: center; }
-
-  .card-area {
-    display: flex; flex-wrap: nowrap; justify-content: center;
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0px;
     width: 100%;
-    gap: 0.5rem;
-    padding-top: 2.25rem;
-    overflow-x: auto;
-    box-sizing: border-box;
-    padding-left: 10px;
-    padding-right: 10px;
-    padding-bottom: 5px;
-
-    @media screen and (max-width: 500px) {
-      justify-content: flex-start;
-    }
-  }
-
-  .drop-card {
-    position: relative;
-    cursor: not-allowed;
-    width: 5.5rem;
-    height: 8.5rem;
-    flex-shrink: 0;
-    box-sizing: border-box;
-    /* border: 5px dashed var(--sand-color-dark); */
-    border: 0.25rem dashed var(--sand-color);
-    margin-bottom: 0.5rem;
-    border-radius: 1rem;
-    &.valued { border-color: transparent; }
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: -0.25rem; left: -0.25rem;
-      width: 5.5rem; height: 8.5rem;
-      border-radius: 0.9375rem;
-      background-image: url(/images/cards_sprite.png);
-      background-repeat: no-repeat;
-      background-color: #ebd290;
-      /* filter: blur(3px) sepia(0.2);
-      filter: blur(3px) sepia(0.5) brightness(0.7); */
-      filter: brightness(0.4) sepia(0.5);
-    }
-    &.valued::before { filter: none; box-shadow: 0rem 0rem 0.3125rem 0.3125rem #0006; }
-    &.valued:hover{
-      position: relative; left: -0.1875rem; top: -0.1875rem;
-      &::before { box-shadow: 0.3125rem 0.3125rem 0.625rem 0.3125rem #0009; }
-    }
-
-    .ctrl {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 2.25rem;
-      height: 2.25rem;
-      border-radius: 50%;
-      border: 0.0625rem solid #333;
-      background: #222c;
-      color: #fff;
-      /* line-height: 1.625rem; */
-      text-align: center;
-      font-weight: 900;
-      font-size: 2em;
-      cursor: pointer;
-      user-select: none;
-      z-index: 2;
-    }
-    /* &:hover .ctrl { display: block; } */
-    .ctrl.minus { left: 0rem; }
-    .ctrl.plus { right: 0rem; }
-    .ctrl.plus.disabled, .ctrl.minus.disabled { opacity: 0.5; filter: grayscale(1); pointer-events: none; }
-
+    z-index: 60;
+    /* background: var(--sand-color); */
+    background: color-mix(in srgb, var(--sand-color-dark) 80%, #fff0);
+    padding: 20px 20px 0;
     @media screen and (max-width: 768px) {
-      .ctrl.plus, .ctrl.minus { left: 50%; right: auto; transform: translate(-50%, -50%); }
-      .ctrl.plus { top: 25%; }
-      .ctrl.minus { top: 75%; }
+        padding: 0;
     }
+    border-bottom: 5px solid var(--sand-color-dark);
+    box-sizing: border-box;
+    box-shadow: 0 0px 15px 0px #000;
+    justify-content: center;
+    font-family: var(--font-ui);
 
-    &[data-type=S]::before { background-size: 43.214rem; background-position: -6.914rem -0.511rem; }
-    &[data-type=L]::before { background-size: 43.567rem; background-position: -25.103rem -0.354rem; }
-    &[data-type=B]::before { background-size: 42.311rem; background-position: -0.471rem -0.589rem; }
-    &[data-type=O]::before { background-size: 42.193rem; background-position: -12.807rem -0.196rem; }
-    &[data-type=W]::before { background-size: 43.096rem; background-position: -19.014rem -0.354rem; }
-
-    &::after {
-      display: none;
-      content: "Giving " attr(data-count);
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      text-align: center;
-      background: var(--sand-color-dark);
-      border-bottom-right-radius: 0.9375rem;
-      border-bottom-left-radius: 0.9375rem;
-      color: #fff9;
-      /* font-size: 2em;
-      font-weight: 600; */
-      padding: 0.3125rem 0;
-      /* border-top: 1px solid var(--sand-color); */
-      box-shadow: 0 -0.3125rem 0.3125rem -0.1875rem var(--sand-color);
-    }
-    &.valued::after { display: block; }
-  }
-
-  .drop-actions {
-    display: flex; flex-direction: row; align-items: center; justify-content: center;
-
-    .drop-emoji {
-      font-size: 3.125rem;
-      cursor: pointer;
-      filter: drop-shadow(0px 0px 1px #fff) drop-shadow(0px 0px 1px #fff) drop-shadow(0px 0px 1px #fff);
-
-      &:hover {
-        filter: drop-shadow(0px 0px 1px #fff) drop-shadow(0px 0px 1px #fff) drop-shadow(0px 0px 5px #fff);
-        transform: scale(1.3);
-      }
-    }
-
-    .dropped-count {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      /* border: 2px solid var(--sand-color-dark); */
-      border: 2px solid var(--sand-color);
-      margin: 10px 20px;
-      position: relative;
-      flex-shrink: 0;
-
-      &::before {
-        content: attr(data-count);
-        /* color: var(--sand-color-dark); */
-        color: var(--sand-color);
-        /* background-color: var(--sand-color); */
-        background-color: var(--sand-color-dark);
-        position: absolute;
-        left: 0px;
-        top: 0px;
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        font-size: 2em;
+    &.show {
         display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .card-area {
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: center;
+        width: 100%;
+        gap: 0.5rem;
+        padding-top: 2.25rem;
+        overflow-x: auto;
+        box-sizing: border-box;
+        padding-left: 10px;
+        padding-right: 10px;
+        padding-bottom: 5px;
+
+        @media screen and (max-width: 500px) {
+            justify-content: flex-start;
+        }
+    }
+
+    .drop-card {
+        position: relative;
+        cursor: not-allowed;
+        width: 5.5rem;
+        height: 8.5rem;
+        flex-shrink: 0;
+        box-sizing: border-box;
+        /* border: 5px dashed var(--sand-color-dark); */
+        border: 0.25rem dashed var(--sand-color);
+        margin-bottom: 0.5rem;
+        border-radius: 1rem;
+
+        &.valued {
+            border-color: transparent;
+        }
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: -0.25rem;
+            left: -0.25rem;
+            width: 5.5rem;
+            height: 8.5rem;
+            border-radius: 0.9375rem;
+            background-image: url(/images/cards_sprite.png);
+            background-repeat: no-repeat;
+            background-color: #ebd290;
+            /* filter: blur(3px) sepia(0.2);
+            filter: blur(3px) sepia(0.5) brightness(0.7); */
+            filter: brightness(0.4) sepia(0.5);
+        }
+
+        &.valued::before {
+            filter: none;
+            box-shadow: 0rem 0rem 0.3125rem 0.3125rem #0006;
+        }
+
+        &.valued:hover {
+            position: relative;
+            left: -0.1875rem;
+            top: -0.1875rem;
+
+            &::before {
+                box-shadow: 0.3125rem 0.3125rem 0.625rem 0.3125rem #0009;
+            }
+        }
+
+        .ctrl {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 2.25rem;
+            height: 2.25rem;
+            border-radius: 50%;
+            border: 0.0625rem solid #333;
+            background: #222c;
+            color: #fff;
+            /* line-height: 1.625rem; */
+            text-align: center;
+            font-weight: 900;
+            font-size: 2em;
+            cursor: pointer;
+            user-select: none;
+            z-index: 2;
+        }
+
+        /* &:hover .ctrl { display: block; } */
+
+        .ctrl.minus {
+            left: 0rem;
+        }
+
+        .ctrl.plus {
+            right: 0rem;
+        }
+
+        .ctrl.plus.disabled, .ctrl.minus.disabled {
+            opacity: 0.5;
+            filter: grayscale(1);
+            pointer-events: none;
+        }
+
+        @media screen and (max-width: 768px) {
+            .ctrl.plus, .ctrl.minus {
+                left: 50%;
+                right: auto;
+                transform: translate(-50%, -50%);
+            }
+
+            .ctrl.plus {
+                top: 25%;
+            }
+
+            .ctrl.minus {
+                top: 75%;
+            }
+        }
+
+        &[data-type=S]::before {
+            background-size: 43.214rem;
+            background-position: -6.914rem -0.511rem;
+        }
+
+        &[data-type=L]::before {
+            background-size: 43.567rem;
+            background-position: -25.103rem -0.354rem;
+        }
+
+        &[data-type=B]::before {
+            background-size: 42.311rem;
+            background-position: -0.471rem -0.589rem;
+        }
+
+        &[data-type=O]::before {
+            background-size: 42.193rem;
+            background-position: -12.807rem -0.196rem;
+        }
+
+        &[data-type=W]::before {
+            background-size: 43.096rem;
+            background-position: -19.014rem -0.354rem;
+        }
+
+        &::after {
+            display: none;
+            content: "Giving " attr(data-count);
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            background: var(--sand-color-dark);
+            border-bottom-right-radius: 0.9375rem;
+            border-bottom-left-radius: 0.9375rem;
+            color: #fff9;
+            /* font-size: 2em;
+            font-weight: 600; */
+            padding: 0.3125rem 0;
+            /* border-top: 1px solid var(--sand-color); */
+            box-shadow: 0 -0.3125rem 0.3125rem -0.1875rem var(--sand-color);
+        }
+
+        &.valued::after {
+            display: block;
+        }
+    }
+
+    .drop-actions {
+        display: flex;
+        flex-direction: row;
         align-items: center;
         justify-content: center;
-      }
 
-      .dropped-count-light {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: #999;
-        border: 1px solid #333;
-        position: absolute;
-        left: 20px;
-        top: -17px;
-        transform-origin: 5px 42px;
-        opacity: 0.3;
+        .drop-emoji {
+            font-size: 3.125rem;
+            cursor: pointer;
+            filter: drop-shadow(0px 0px 1px #fff) drop-shadow(0px 0px 1px #fff) drop-shadow(0px 0px 1px #fff);
 
-        &.on {
-          background: #8ee529;
-          box-shadow: 0 0 5px 2px #8ee529;
-          border-color: #d0fa9e;
-          opacity: 1;
+            &:hover {
+                filter: drop-shadow(0px 0px 1px #fff) drop-shadow(0px 0px 1px #fff) drop-shadow(0px 0px 5px #fff);
+                transform: scale(1.3);
+            }
         }
-      }
+
+        .dropped-count {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            /* border: 2px solid var(--sand-color-dark); */
+            border: 2px solid var(--sand-color);
+            margin: 10px 20px;
+            position: relative;
+            flex-shrink: 0;
+
+            &::before {
+                content: attr(data-count);
+                /* color: var(--sand-color-dark); */
+                color: var(--sand-color);
+                /* background-color: var(--sand-color); */
+                background-color: var(--sand-color-dark);
+                position: absolute;
+                left: 0px;
+                top: 0px;
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+                font-size: 2em;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .dropped-count-light {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background: #999;
+                border: 1px solid #333;
+                position: absolute;
+                left: 20px;
+                top: -17px;
+                transform-origin: 5px 42px;
+                opacity: 0.3;
+
+                &.on {
+                    background: #8ee529;
+                    box-shadow: 0 0 5px 2px #8ee529;
+                    border-color: #d0fa9e;
+                    opacity: 1;
+                }
+            }
+        }
+
+        .drop-give-button {
+            margin: 10px;
+            padding: 7px 15px;
+            width: 160px;
+            box-sizing: border-box;
+            text-align: center;
+            background: #ccc;
+            color: #999;
+            font-family: var(--font-main);
+            border-radius: 5px;
+            font-weight: bold;
+            border: 2px solid transparent;
+            cursor: not-allowed;
+
+            &.active {
+                /* background: var(--sand-color-dark);
+                background: var(--sand-color); */
+                background: #333;
+                /* color: var(--sand-color);
+                color: var(--sand-color-dark); */
+                color: var(--sand-color);
+                cursor: pointer;
+                border-color: var(--sand-color);
+
+                /* &:hover { box-shadow: 0 0 10px 0px var(--sand-color-dark); } */
+
+                &:hover {
+                    box-shadow: 0 0 10px 0px var(--sand-color), 0 0 20px 0px var(--sand-color);
+                }
+            }
+
+            &.waiting {
+                background: #ddd;
+                color: #888;
+                cursor: wait;
+                border-color: #bbb;
+                pointer-events: none;
+            }
+        }
     }
-
-    .drop-give-button {
-      margin: 10px;
-      padding: 7px 15px;
-      width: 160px;
-      box-sizing: border-box;
-      text-align: center;
-      background: #ccc;
-      color: #999;
-      font-family: var(--font-main);
-      border-radius: 5px;
-      font-weight: bold;
-      border: 2px solid transparent;
-      cursor: not-allowed;
-
-      &.active {
-        /* background: var(--sand-color-dark);
-        background: var(--sand-color); */
-        background: #333;
-        /* color: var(--sand-color);
-        color: var(--sand-color-dark); */
-        color: var(--sand-color);
-        cursor: pointer;
-        border-color: var(--sand-color);
-
-        /* &:hover { box-shadow: 0 0 10px 0px var(--sand-color-dark); } */
-        &:hover { box-shadow: 0 0 10px 0px var(--sand-color), 0 0 20px 0px var(--sand-color); }
-      }
-      &.waiting {
-        background: #ddd;
-        color: #888;
-        cursor: wait;
-        border-color: #bbb;
-        pointer-events: none;
-      }
-    }
-  }
 }
 
 #game > .robber-drop-zone .waiting-text {
-  display: none;
-  color: var(--sand-color);
-  padding: 30px 10px;
-  font-family: var(--font-main), var(--font-ui);
-  font-size: 1.4em;
-  text-align: center;
+    display: none;
+    color: var(--sand-color);
+    padding: 30px 10px;
+    font-family: var(--font-main), var(--font-ui);
+    font-size: 1.4em;
+    text-align: center;
 }

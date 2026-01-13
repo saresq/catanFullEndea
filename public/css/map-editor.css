@@ -996,7 +996,7 @@ body {
             display: block;
             font-family: var(--font-main);
         }
-        
+
         &.balance-numbers, &.balance-resources {
             margin: 10px 0;
             display: block;
@@ -1070,19 +1070,19 @@ body {
             min-height: 115px;
         }
     }
-    
+
     .info-section {
         .info-title {
             font-weight: bold;
             margin-top: 10px;
             margin-bottom: 5px;
         }
-        
+
         .info-item {
             margin-left: 10px;
             margin-bottom: 3px;
         }
-        
+
         #resource-info, #number-info {
             margin-bottom: 15px;
         }

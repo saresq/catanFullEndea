@@ -21,32 +21,28 @@ class LoginUI {
     const params = new URLSearchParams(window.location.search)
     const isFull = params.get('full') === '1'
     const preGameId = (params.get('game_id') || '').toLowerCase()
+    const preName = params.get('name') || ''
 
-    if (isFull) {
-      this.$container.innerHTML = `
-        <div class="full-game-section">
-          <div class="notice">The game you are trying to join is currently full</div>
-          <div class="actions">
-            <button class="btn btn-secondary back">Go Back</button>
-            <button class="btn btn-primary spectate">Spectate</button>
-          </div>
+    const name = preName || localStorage.getItem('player-name') || ''
+    const joinSectionContent = isFull ? `
+      <div class="full-game-section">
+        <div class="notice">The game you are trying to join is currently full</div>
+        <div class="actions">
+          <button class="btn btn-secondary back">Go Back</button>
+          <button class="btn btn-primary spectate">Spectate</button>
         </div>
-      `
-      this.$container.querySelector('.btn.back').addEventListener('click', () => {
-        window.location.href = '/login'
-      })
-      this.$container.querySelector('.btn.spectate').addEventListener('click', () => {
-        window.location.href = `/login?game_id=${preGameId}&spectate=1`
-      })
-      return
-    }
+      </div>
+    ` : `
+      <input type="text" class="name" name="name" placeholder="Your Name" value="${name}"/>
+      <input type="text" class="game-key" name="game_id" placeholder="Game Key" value="${preGameId}"/>
+      <button class="btn btn-primary join">Join Game</button>
+    `
 
-    const name = localStorage.getItem('player-name') || ''
     this.accessibility_ui.render()
     this.$container.innerHTML = `
       <div class="action-types">
-        <label><span>Host</span><input type="radio" name="action_type" value="host" checked="checked"/></label>
-        <label><span>Join</span><input type="radio" name="action_type" value="join"/></label>
+        <label><span>Host</span><input type="radio" name="action_type" value="host" ${isFull ? '' : 'checked="checked"'}/></label>
+        <label><span>Join</span><input type="radio" name="action_type" value="join" ${(isFull || preGameId) ? 'checked="checked"' : ''}/></label>
       </div>
       <div class="action-container">
         <div class="section host-section">
@@ -87,33 +83,20 @@ class LoginUI {
           </div>
         </div>
         <div class="section join-section">
-          <input type="text" class="name" name="name" placeholder="Your Name" value="${name}"/>
-          <input type="text" class="game-key" name="game_id" placeholder="Game Key"/>
-          <button class="btn btn-primary join">Join Game</button>
+          ${joinSectionContent}
         </div>
       </div>
     `
-    // If a game_id is present in the URL, prefill and switch to Join tab
-    const preName = params.get('name')
-    if (preGameId) {
-      const joinRadio = this.$container.querySelector('input[type="radio"][value="join"]')
-      const hostRadio = this.$container.querySelector('input[type="radio"][value="host"]')
-      joinRadio && (joinRadio.checked = true)
-      hostRadio && (hostRadio.checked = false)
-      const gameKeyInput = this.$container.querySelector('.join-section input.game-key')
-      if (gameKeyInput) gameKeyInput.value = preGameId
-      // Prefill name if present in URL, otherwise focus the name input to prompt selection
+
+    // Focus name input if empty to prompt selection
+    if (!isFull) {
       const nameInput = this.$container.querySelector('.join-section input.name')
-      if (nameInput) {
-        if (preName && preName.trim()) {
-          nameInput.value = preName
-        } else if (!(nameInput.value || '').trim()) {
-          // focus so the user picks a name immediately
-          setTimeout(() => nameInput.focus(), 0)
-        }
+      if (nameInput && !(nameInput.value || '').trim()) {
+        // focus so the user picks a name immediately
+        setTimeout(() => nameInput.focus(), 0)
       }
     }
-    this.#setupEvents()
+    this.#setupEvents(isFull, preGameId)
     setTimeout(_ => $('.notice')?.classList.add('hide'), 5000)
     // console.log('%c🛠 Advanced Game Configurations 🪚', 'border-radius: 100px; padding: 10px 25px; font: 2em EagleLake, fantasy, cursive; background: #e8d49c; color: #9c5e15;')
     // console.log('%c→ Edit %cwindow.config', 'font-size: 1.2em', 'font-size: 1.2em; background: #eee; color: #333; padding: 2px 5px')
@@ -128,17 +111,21 @@ class LoginUI {
     // console.log('%c→ Have Fun Playing Around. Come say Hi here https://github.com/bigomega/catan when you break things badly!\nThe README.md has the rules for writing your own mapkeys.\n%cCheers%c🍻', 'font-size: 1.2em', 'font-size: 3em', 'font-size: 6em')
   }
 
-  #setupEvents() {
+  #setupEvents(isFull, preGameId) {
     // Setup name input enter key handler
     this.$container.querySelector('.host-section input').addEventListener('keydown', e => {
-      e.code === 'Enter' && this.$container.querySelector('.host-section .btn-primary').click()
+      if (e.code === 'Enter') {
+        const btn = this.$container.querySelector('.host-section .btn-primary')
+        btn && btn.click()
+      }
     })
 
-    // Enforce valid map size options based on selected player count
+    // Enforce valid map size options based on the selected player count
     const pcSelect = this.$container.querySelector('.host-section select.player-count')
     const msSelect = this.$container.querySelector('.host-section select.map-size')
     const enforceMapSizeOptions = () => {
       const pc = +(pcSelect?.value || 3)
+      if (!msSelect) return
       // Enable all by default
       Array.from(msSelect.options).forEach(opt => { opt.disabled = false; opt.hidden = false })
       // Apply constraints: never smaller than required for the player count
@@ -153,8 +140,6 @@ class LoginUI {
         const smallOpt = Array.from(msSelect.options).find(o => o.value === 'small')
         if (smallOpt) { smallOpt.disabled = true; smallOpt.hidden = true }
         if (msSelect.value === 'small') { msSelect.value = 'medium' }
-      } else {
-        // 2–4 players: all sizes allowed
       }
     }
     pcSelect?.addEventListener('change', enforceMapSizeOptions)
@@ -180,30 +165,42 @@ class LoginUI {
       window.location.href = `/game/new?name=${encodeURIComponent(host_name)}&players=${encodeURIComponent(player_count)}&config=${configParam}`
     })
 
-    // Setup join section input enter key handlers
-    this.$container.querySelectorAll('.join-section input').forEach($_ => $_.addEventListener('keydown', e => {
-      e.code === 'Enter' && this.$container.querySelector('.join-section .btn-primary').click()
-    }))
-    
-    // Setup join submit button
-    this.$container.querySelector('.join-section .btn-primary').addEventListener('click', e => {
-      const name = (this.$container.querySelector('.join-section input.name').value || '').trim()
-      const game_key = (this.$container.querySelector('.join-section input.game-key').value || '').trim().toLowerCase()
-      if (!name) {
-        const nameInput = this.$container.querySelector('.join-section input.name')
-        nameInput && nameInput.focus()
-        return
-      }
-      window.location.href = `/login?name=${encodeURIComponent(name)}&game_id=${encodeURIComponent(game_key)}`
-    })
+    if (isFull) {
+      this.$container.querySelector('.join-section .btn.back').addEventListener('click', () => {
+        window.location.href = '/login'
+      })
+      this.$container.querySelector('.join-section .btn.spectate').addEventListener('click', () => {
+        window.location.href = `/login?game_id=${preGameId}&spectate=1`
+      })
+    } else {
+      // Setup join section input enter key handlers
+      this.$container.querySelectorAll('.join-section input').forEach($_ => $_.addEventListener('keydown', e => {
+        if (e.code === 'Enter') {
+          const btn = this.$container.querySelector('.join-section .btn-primary')
+          btn && btn.click()
+        }
+      }))
+      
+      // Setup join submit button
+      this.$container.querySelector('.join-section .btn-primary').addEventListener('click', e => {
+        const name = (this.$container.querySelector('.join-section input.name').value || '').trim()
+        const game_key = (this.$container.querySelector('.join-section input.game-key').value || '').trim().toLowerCase()
+        if (!name) {
+          const nameInput = this.$container.querySelector('.join-section input.name')
+          nameInput && nameInput.focus()
+          return
+        }
+        window.location.href = `/login?name=${encodeURIComponent(name)}&game_id=${encodeURIComponent(game_key)}`
+      })
 
-    // Setup game key input special handling
-    this.$container.querySelector('.join-section input.game-key').addEventListener('keydown', e => {
-      if (e.code === 'Space') {
-        e.target.value += '-'
-        e.preventDefault()
-      }
-    })
+      // Setup game key input special handling
+      this.$container.querySelector('.join-section input.game-key').addEventListener('keydown', e => {
+        if (e.code === 'Space') {
+          e.target.value += '-'
+          e.preventDefault()
+        }
+      })
+    }
 
     // Setup name storage
     this.$container.querySelectorAll('.name').forEach($_ => $_.addEventListener('input', e => {

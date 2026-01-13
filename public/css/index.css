@@ -12,79 +12,85 @@
 @import './fonts.css';
 
 html {
-  font-size: 16px;
+    font-size: 16px;
 }
 
 @media screen and (max-width: 768px) {
-  html {
-    font-size: 14px;
-  }
+    html {
+        font-size: 14px;
+    }
 }
 
 @media screen and (max-width: 480px) {
-  html {
-    font-size: 12px;
-  }
+    html {
+        font-size: 12px;
+    }
 }
 
 body {
-  margin: 0;
-  background: var(--water-color);
-  font-family: var(--font-main);
-  overflow: hidden;
-  width: 100vw;
-  height: 100vh;
-  font-size: 1rem;
-  user-select: none;
-  -webkit-user-select: none;
+    margin: 0;
+    background: var(--water-color);
+    font-family: var(--font-main);
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    font-size: 1rem;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 button {
-  display: block;
-  background: none; color: inherit; border: none;
-  font: inherit; cursor: pointer;
-  outline: inherit; appearance: unset;
-  padding: 0; padding-block: 0px; padding-inline: 0px;
+    display: block;
+    background: none;
+    color: inherit;
+    border: none;
+    font: inherit;
+    cursor: pointer;
+    outline: inherit;
+    appearance: unset;
+    padding: 0;
+    padding-block: 0px;
+    padding-inline: 0px;
 }
 
 .splash {
-  background: url(/images/catan-bg.png);
-  background-size: cover;
-  background-position: center;
-  position: fixed;
-  top: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 100;
+    background: url(/images/catan-bg.png);
+    background-size: cover;
+    background-position: center;
+    position: fixed;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 100;
 
-  &.hide {
-    opacity: 0;
-    z-index: -100;
-    transition: opacity .5s .5s linear, z-index 0s 1s linear, width .5s linear, height .5s linear;
-    /* height: 100%;
-    width: 100%; */
-  }
+    &.hide {
+        opacity: 0;
+        z-index: -100;
+        transition: opacity .5s .5s linear, z-index 0s 1s linear, width .5s linear, height .5s linear;
+        /* height: 100%;
+        width: 100%; */
+    }
 }
 
 #game {
-  .board-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    z-index: 0;
-    pointer-events: auto;
-    touch-action: none;
-  }
+    .board-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        z-index: 0;
+        pointer-events: auto;
+        touch-action: none;
+    }
 }
 
 @media screen and (min-width: 994px) {
-  #game {
-    /* display: flex; */
-    /* justify-content: center; */
-  }
+    #game {
+        /* display: flex; */
+        /* justify-content: center; */
+    }
 }
 
 /* https: //www.catancollector.com/catan-links/how-to-identify-your-version-of-catan */

@@ -96,16 +96,23 @@ export default class PlayerUI {
       <div class="row-2">
         <button class="build-road disabled" title="Build Road (r)" data-count="${CONST.PIECES_COUNT.R}">
           <div class="cost-tooltip">${resToIcons(CONST.COST.R)}</div>
+          <div class="image"></div>
+          <div class="count">${CONST.PIECES_COUNT.R}</div>
         </button>
         <button class="build-settlement disabled" title="Build Settlement (s)" data-count="${CONST.PIECES_COUNT.S}">
           <div class="cost-tooltip">${resToIcons(CONST.COST.S)}</div>
+          <div class="image"></div>
+          <div class="count">${CONST.PIECES_COUNT.S}</div>
         </button>
         <button class="build-city disabled" title="Build City (c)" data-count="${CONST.PIECES_COUNT.C}">
           <div class="cost-tooltip">${resToIcons(CONST.COST.C)}</div>
+          <div class="image"></div>
+          <div class="count">${CONST.PIECES_COUNT.C}</div>
         </button>
         <button class="dev-card disabled" title="Buy Development Card (d)" data-count="-">
           <div class="cost-tooltip">${resToIcons(CONST.COST.DEV_C)}</div>
           <img src="/images/dc-back.png"/>
+          <div class="count">-</div>
         </button>
         <button class="roll-dice disabled" data-mode="roll" title="Roll Dice (Space)"><span class="label">🎲</span></button>
       </div>
@@ -316,14 +323,27 @@ export default class PlayerUI {
 
   updatePiecesCount() {
     if (this.player.spectator) return
-    this.$build_road.dataset.count = CONST.PIECES_COUNT.R - this.player.pieces.R.length
-    this.$build_settlement.dataset.count = CONST.PIECES_COUNT.S - this.player.pieces.S.length
-    this.$build_city.dataset.count = CONST.PIECES_COUNT.C - this.player.pieces.C.length
+    const road_count = CONST.PIECES_COUNT.R - this.player.pieces.R.length
+    const settlement_count = CONST.PIECES_COUNT.S - this.player.pieces.S.length
+    const city_count = CONST.PIECES_COUNT.C - this.player.pieces.C.length
+
+    const update = ($el, count) => {
+      $el.dataset.count = count
+      $el.querySelector('.count').textContent = count == 0 ? '✔' : count
+      $el.classList.toggle('depleted', count == 0)
+    }
+
+    update(this.$build_road, road_count)
+    update(this.$build_settlement, settlement_count)
+    update(this.$build_city, city_count)
   }
 
   setDevCardCount(n) {
     if (this.player.spectator) return
     this.$buy_dev_card.dataset.count = n
+    const $count = this.$buy_dev_card.querySelector('.count')
+    $count.textContent = n == 0 ? '✔' : n
+    this.$buy_dev_card.classList.toggle('depleted', n == 0)
   }
 
   // Unified button modes
