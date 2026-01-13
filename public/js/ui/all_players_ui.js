@@ -29,13 +29,13 @@ export default class AllPlayersUI {
     const spec_count = (window.game_obj && window.game_obj.spectators_count) || 0
     const header = `<div class="players-header">
       <span class="spectators-count ${spec_count ? '' : 'hide'}">Spec: <span>${spec_count}</span></span>
-      <span class="victory-target" title="Victory points needed to win the game">Win at: ${win_points}<span class="turn-indicator"> - Turn: <span class="dot">⬢</span></span></span>
-      <button class="toggle-players" title="Toggle players panel (Shift)">${isMobile ? '▼' : '▤'}</button>
+      <span class="victory-target" title="Victory points needed to win the game">🏆: ${win_points}<span class="turn-indicator"> - Turn: <span class="dot">⬢</span></span></span>
+      <button class="toggle-players" title="Toggle players panel (Shift)">▼</button>
     </div>`
     this.$el.innerHTML = header + all_players.map(player => `
       <div class="player p${player.id} ${player.color_id ? 'pc' + player.color_id : ''} ${player.removed ? 'deactivated' : ''}" data-id="${player.id}">
         <div class="name" data-name="${player.name}">${player.name}</div>
-        <div class="victory-points"><span>${player.public_vps + (player.private_vps || 0)}</span></div>
+        <div class="victory-points" title="Victory Points"><span>${player.public_vps + (player.private_vps || 0)}</span></div>
         <div class="cards-container">
           <div class="resources" data-count="${player.resource_count}" title="Resources in hand"
             data-robbable="${player.resource_count > window.game_obj.config.robber_hand_limit}"></div>
@@ -152,11 +152,7 @@ export default class AllPlayersUI {
     const btn = this.$el.querySelector('.toggle-players')
     const isMobile = window.innerWidth <= 768
     if (btn) {
-      if (isMobile) {
-        btn.textContent = this.#compact ? '▤' : '▲'
-      } else {
-        btn.textContent = this.#compact ? '▸' : '▤'
-      }
+        btn.textContent = this.#compact ? '▼' : '▲'
     }
     // Update names
     this.$el.querySelectorAll('.player').forEach($p => {
