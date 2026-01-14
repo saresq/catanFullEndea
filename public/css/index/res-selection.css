@@ -76,7 +76,7 @@
                 width: 5.5rem;
                 height: 8.5rem;
                 display: block;
-                background-image: url(/images/cards_sprite.png);
+                background-image: url(/images/cards-sprite.png);
                 background-repeat: no-repeat;
                 background-color: #ebd290;
                 border-radius: 0.9375rem;
@@ -100,28 +100,28 @@
             }
 
             &[data-type=S]::before {
-                background-size: 43.214rem;
-                background-position: -6.914rem -0.511rem;
+                background-size: 42.146rem;
+                background-position: -6.435rem -0.48rem;
             }
 
             &[data-type=L]::before {
-                background-size: 43.567rem;
-                background-position: -25.103rem -0.354rem;
+                background-size: 42.146rem;
+                background-position: -24.329rem -0.48rem;
             }
 
             &[data-type=B]::before {
-                background-size: 42.311rem;
-                background-position: -0.471rem -0.589rem;
+                background-size: 42.146rem;
+                background-position: -0.471rem -0.48rem;
             }
 
             &[data-type=O]::before {
-                background-size: 42.193rem;
-                background-position: -12.807rem -0.196rem;
+                background-size: 42.146rem;
+                background-position: -12.399rem -0.48rem;
             }
 
             &[data-type=W]::before {
-                background-size: 43.096rem;
-                background-position: -19.014rem -0.354rem;
+                background-size: 42.146rem;
+                background-position: -18.364rem -0.48rem;
             }
 
             &::after {
@@ -184,13 +184,13 @@
             }
 
             &[data-type="dM"] {
-                background-image: url(/images/cards_sprite.png);
+                background-image: url(/images/cards-sprite.png);
                 background-size: 34.25rem;
                 background-position: -5.625rem -7.625rem;
             }
 
             &[data-type="dY"] {
-                background-image: url(/images/cards_sprite.png);
+                background-image: url(/images/cards-sprite.png);
                 background-size: 34.5rem;
                 background-position: -10.625rem -7.75rem;
                 background-color: #dcbc64;

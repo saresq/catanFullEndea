@@ -173,7 +173,7 @@
                 width: 1.875rem;
                 height: 1.875rem;
                 border-radius: 1.875rem;
-                background: url(/images/cards_sprite.png) -19.625rem -28.75rem/65.4375rem no-repeat;
+                background: url(/images/cards-sprite.png) -19.625rem -28.75rem/65.4375rem no-repeat;
             }
 
             &.dK {
@@ -240,7 +240,7 @@
             width: 100%;
             height: 100%;
             position: absolute;
-            background-image: url(/images/cards_sprite.png);
+            background-image: url(/images/cards-sprite.png);
         }
 
         &.dK::before {
@@ -412,7 +412,7 @@
                 width: 100%;
                 height: 100%;
                 display: block;
-                background-image: url(/images/cards_sprite.png);
+                background-image: url(/images/cards-sprite.png);
             }
 
             &.first {

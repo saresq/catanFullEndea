@@ -116,7 +116,7 @@
                 border-radius: 0.625rem;
                 border: 0.0625rem solid #5a460e;
                 box-shadow: 0.1875rem 0 0.3125rem -0.1875rem #0006;
-                background-image: url(/images/cards_sprite.png);
+                background-image: url(/images/cards-sprite.png);
                 position: absolute;
                 bottom: 0;
                 left: 0;
@@ -126,28 +126,28 @@
                 }
 
                 &.S {
-                    background-size: calc(41.25rem * var(--card-scale));
-                    background-position: calc(-6.6rem * var(--card-scale)) calc(-0.4875rem * var(--card-scale));
+                    background-size: calc(40.23rem * var(--card-scale));
+                    background-position: calc(-6.142rem * var(--card-scale)) calc(-0.458rem * var(--card-scale));
                 }
 
                 &.L {
-                    background-size: calc(41.5875rem * var(--card-scale));
-                    background-position: calc(-23.9625rem * var(--card-scale)) calc(-0.3375rem * var(--card-scale));
+                    background-size: calc(40.23rem * var(--card-scale));
+                    background-position: calc(-23.226rem * var(--card-scale)) calc(-0.458rem * var(--card-scale));
                 }
 
                 &.B {
-                    background-size: calc(40.3875rem * var(--card-scale));
-                    background-position: calc(-0.45rem * var(--card-scale)) calc(-0.5625rem * var(--card-scale));
+                    background-size: calc(40.23rem * var(--card-scale));
+                    background-position: calc(-0.45rem * var(--card-scale)) calc(-0.458rem * var(--card-scale));
                 }
 
                 &.O {
-                    background-size: calc(40.275rem * var(--card-scale));
-                    background-position: calc(-12.225rem * var(--card-scale)) calc(-0.1875rem * var(--card-scale));
+                    background-size: calc(40.23rem * var(--card-scale));
+                    background-position: calc(-11.837rem * var(--card-scale)) calc(-0.458rem * var(--card-scale));
                 }
 
                 &.W {
-                    background-size: calc(41.1375rem * var(--card-scale));
-                    background-position: calc(-18.15rem * var(--card-scale)) calc(-0.3375rem * var(--card-scale));
+                    background-size: calc(40.23rem * var(--card-scale));
+                    background-position: calc(-17.531rem * var(--card-scale)) calc(-0.458rem * var(--card-scale));
                 }
 
                 &.dK {
@@ -1325,7 +1325,7 @@
             width: 100%;
             height: 100%;
             position: absolute;
-            background-image: url(/images/cards_sprite.png);
+            background-image: url(/images/cards-sprite.png);
         }
 
         &[data-type="S"] .card-front::before {
