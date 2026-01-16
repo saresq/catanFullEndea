@@ -45,7 +45,7 @@ body {
     background: url(/images/catan-bg.png) center/cover;
     backdrop-filter: blur(50px);
     transition: all linear .5s;
-    font-family: var(--font-main);
+    font-family: var(--font-main), sans-serif;
     font-size: 1rem;
 }
 
@@ -59,15 +59,15 @@ button {
     outline: inherit;
     appearance: unset;
     padding: 0;
-    padding-block: 0px;
-    padding-inline: 0px;
+    padding-block: 0;
+    padding-inline: 0;
 }
 
 #waiting-room {
     display: flex;
     flex-wrap: wrap;
     align-content: flex-start;
-    font-family: var(--font-main);
+    font-family: var(--font-main), sans-serif;
 
     &.hide {
         opacity: 0;
@@ -118,7 +118,7 @@ button {
                     left: calc(50% - 30px);
                     text-align: center;
                     font-size: 1rem;
-                    font-family: var(--font-ui);
+                    font-family: var(--font-ui), sans-serif;
                     background-color: #000c;
                     color: #fff;
                     padding: 3px 10px;
@@ -144,7 +144,7 @@ button {
 
     .wait-box {
         background: #fff3;
-        box-shadow: 0 0px 40px #0009;
+        box-shadow: 0 0 40px #0009;
         border-radius: 10px;
         backdrop-filter: blur(6px);
         padding: 20px;
@@ -157,7 +157,7 @@ button {
         flex-wrap: wrap;
         align-items: center;
         justify-content: center;
-        font-family: var(--font-ui);
+        font-family: var(--font-ui), sans-serif;
         color: #fff;
         filter: drop-shadow(0 0 5px #000);
         margin-bottom: 10px;
@@ -184,19 +184,22 @@ button {
         border: 1px solid #fff4;
         border-radius: 4px;
         padding: 2px 4px;
-        font-family: var(--font-ui);
+        font-family: var(--font-ui), sans-serif;
         font-weight: 700;
         font-size: 0.9em;
         outline: none;
         cursor: pointer;
     }
+
     .box-header .value-select option {
         background: #333;
     }
+
     .box-header .value-input {
         width: 45px;
         cursor: text;
     }
+
     .box-header .hide {
         display: none;
     }
@@ -213,7 +216,7 @@ button {
         border-radius: 6px;
         background: #0004;
         color: #fff;
-        font-family: var(--font-ui);
+        font-family: var(--font-ui), sans-serif;
         text-align: center;
         font-size: 0.9em;
 
@@ -390,7 +393,7 @@ button {
     border-radius: 8px;
     min-width: 280px;
     box-shadow: 0 10px 30px #000a;
-    font-family: var(--font-ui);
+    font-family: var(--font-ui), sans-serif;
 }
 
 .color-picker-overlay .picker .title {
@@ -536,7 +539,7 @@ button {
     color: #fff;
     padding: 6px 12px;
     border-radius: 6px;
-    font-family: var(--font-ui);
+    font-family: var(--font-ui), sans-serif;
     font-weight: 700;
     border: 2px solid #fff5;
     box-shadow: 0 2px 6px #0006;
@@ -551,7 +554,7 @@ button {
     color: #fff;
     padding: 6px 12px;
     border-radius: 6px;
-    font-family: var(--font-ui);
+    font-family: var(--font-ui), sans-serif;
     font-weight: 700;
     border: 2px solid #fff3;
     transition: all .15s ease;

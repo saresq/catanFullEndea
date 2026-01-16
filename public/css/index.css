@@ -30,7 +30,7 @@ html {
 body {
     margin: 0;
     background: var(--water-color);
-    font-family: var(--font-main);
+    font-family: var(--font-main), sans-serif;
     overflow: hidden;
     width: 100vw;
     height: 100vh;
@@ -49,8 +49,8 @@ button {
     outline: inherit;
     appearance: unset;
     padding: 0;
-    padding-block: 0px;
-    padding-inline: 0px;
+    padding-block: 0;
+    padding-inline: 0;
 }
 
 .splash {

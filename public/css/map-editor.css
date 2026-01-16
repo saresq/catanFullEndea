@@ -55,7 +55,7 @@ body {
     height: 100%;
     margin: 0;
     background: var(--water-color);
-    font-family: var(--font-ui);
+    font-family: var(--font-ui), sans-serif;
     letter-spacing: .2px;
     font-size: 1rem;
 }
@@ -72,15 +72,15 @@ body {
     outline: inherit;
     appearance: unset;
     padding: 0;
-    padding-block: 0px;
-    padding-inline: 0px;
+    padding-block: 0;
+    padding-inline: 0;
 }
 
 .button {
     padding: 7px 25px;
     width: fit-content;
     box-sizing: border-box;
-    font-family: var(--font-main);
+    font-family: var(--font-main), sans-serif;
     border: 2px solid;
     border-radius: 50px;
     text-align: center;
@@ -97,7 +97,7 @@ body {
     }
 
     &:hover, &:focus {
-        box-shadow: 0 0 10px 0px var(--sand-color), 0 0 20px 0px #333;
+        box-shadow: 0 0 10px 0 var(--sand-color), 0 0 20px 0 #333;
     }
 
     &.secondary {
@@ -133,7 +133,7 @@ body {
 */
 
 #game .accessibility-zone .info-zone .play-full-game {
-    font-family: var(--font-main);
+    font-family: var(--font-main), sans-serif;
     font-size: 2em;
     text-align: center;
     margin: 10px 0 30px;
@@ -168,7 +168,7 @@ body {
     cursor: pointer;
 
     .tile-replace {
-        font-family: var(--font-ui);
+        font-family: var(--font-ui), sans-serif;
         position: absolute;
         top: 0;
         left: 0;
@@ -184,7 +184,7 @@ body {
         font-size: 3.125rem;
         text-align: center;
         line-height: 45px;
-        box-shadow: 0 0 10px 0px var(--sand-color), 0 0 20px 0px #333;
+        box-shadow: 0 0 10px 0 var(--sand-color), 0 0 20px 0 #333;
 
         &::before {
             content: '↺';
@@ -328,9 +328,9 @@ body {
 */
 
 #tile-selector {
-    font-family: var(--font-main);
+    font-family: var(--font-main), sans-serif;
     position: fixed;
-    left: 0px;
+    left: 0;
     top: -230px;
     width: calc(100% - 280px);
     padding: 10px;
@@ -339,7 +339,7 @@ body {
     overflow: scroll;
     background: var(--sand-color);
     color: #333;
-    filter: drop-shadow(0px 0px 30px #000);
+    filter: drop-shadow(0px 0 30px #000);
     transition: all .125s ease-in;
 
     &.open {
@@ -362,7 +362,7 @@ body {
         }
 
         &:not(.S) .background {
-            filter: drop-shadow(0px 0px 1px #0009);
+            filter: drop-shadow(0px 0 1px #0009);
         }
 
         &.S .sea-hexagon {
@@ -594,7 +594,7 @@ body {
                 }
 
                 &:has(+ .number-slider-input:hover) {
-                    box-shadow: 0 0 6px 0px var(--sand-color-text-dark);
+                    box-shadow: 0 0 6px 0 var(--sand-color-text-dark);
                 }
             }
 
@@ -607,7 +607,7 @@ body {
             .probability-text {
                 margin-top: 20px;
                 text-align: center;
-                font-family: var(--font-mono);
+                font-family: var(--font-mono), sans-serif;
                 opacity: 0.3;
 
                 span {
@@ -647,7 +647,7 @@ body {
             &::before {
                 display: block;
                 content: attr(data-num) "\a " attr(data-dots);
-                font-family: var(--font-main);
+                font-family: var(--font-main), sans-serif;
                 font-weight: bold;
                 white-space: pre;
                 text-align: center;
@@ -967,7 +967,7 @@ body {
     background: var(--sand-color);
     color: #333;
     z-index: 1;
-    filter: drop-shadow(0px 0px 30px #000);
+    filter: drop-shadow(0px 0 30px #000);
 
     .title {
         font-size: 1.2em;
@@ -994,13 +994,13 @@ body {
         &.shuffle {
             margin: 20px 0 15px;
             display: block;
-            font-family: var(--font-main);
+            font-family: var(--font-main), sans-serif;
         }
 
         &.balance-numbers, &.balance-resources {
             margin: 10px 0;
             display: block;
-            font-family: var(--font-main);
+            font-family: var(--font-main), sans-serif;
         }
 
         &.reset {

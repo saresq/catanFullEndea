@@ -62,7 +62,7 @@
             &::before {
                 display: block;
                 content: attr(num) "\a " attr(dots);
-                font-family: var(--font-main);
+                font-family: var(--font-main), sans-serif;
                 font-weight: bold;
                 white-space: pre;
                 text-align: center;
@@ -130,7 +130,7 @@
             top: 25px;
             height: 76px;
             width: 38px; */
-            filter: drop-shadow(0px 0px 2px var(--sand-color)) drop-shadow(0px 0px 2px var(--sand-color)) drop-shadow(0px 0px 6px var(--sand-color));
+            filter: drop-shadow(0px 0 2px var(--sand-color)) drop-shadow(0px 0 2px var(--sand-color)) drop-shadow(0px 0 6px var(--sand-color));
             opacity: 1;
             background-size: cover;
             transition: opacity .25s ease-in, transform .25s ease-in, z-index 0s linear;
@@ -190,7 +190,7 @@
     }
 
     &:not(.S) .background {
-        /* filter: drop-shadow(0px 0px 1px #000); */
+        /* filter: drop-shadow(0px 0 1px #000); */
     }
 
     &.S[data-trade]::after {
@@ -341,11 +341,11 @@
 
             &.shown {
                 animation: piece-settlement-blink 1s infinite;
-                filter: drop-shadow(1px 0px 0px #fff) drop-shadow(-1px 0px 0px #fff) drop-shadow(0px 1px 0px #fff) drop-shadow(0px -1px 0px #fff);
+                filter: drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0px 1px 0 #fff) drop-shadow(0px -1px 0 #fff);
 
                 &:hover {
                     animation: none;
-                    filter: brightness(1.5) drop-shadow(1px 0px 0px #fff) drop-shadow(-1px 0px 0px #fff) drop-shadow(0px 1px 0px #fff) drop-shadow(0px -1px 0px #fff);
+                    filter: brightness(1.5) drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0px 1px 0 #fff) drop-shadow(0px -1px 0 #fff);
                 }
             }
         }
@@ -546,7 +546,7 @@
 
                 &:hover {
                     background: #fff;
-                    box-shadow: 1px 1px 0px 1px #000;
+                    box-shadow: 1px 1px 0 1px #000;
                 }
 
                 &:not(:hover) {
@@ -557,7 +557,7 @@
 
         &.taken {
             opacity: 1;
-            box-shadow: 2px 2px 4px 0px #000;
+            box-shadow: 2px 2px 4px 0 #000;
             background: #999;
             visibility: visible;
             cursor: default;
@@ -575,57 +575,57 @@
 
             &.p1 {
                 background: var(--player-1-color);
-                box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-1-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-1-color-dark) 50%, #000), 4px 4px 6px 0 #000;
             }
 
             &.p2 {
                 background: var(--player-2-color);
-                box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-2-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-2-color-dark) 50%, #000), 4px 4px 6px 0 #000;
             }
 
             &.p3 {
                 background: var(--player-3-color);
-                box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-3-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-3-color-dark) 50%, #000), 4px 4px 6px 0 #000;
             }
 
             &.p4 {
                 background: var(--player-4-color);
-                box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-4-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-4-color-dark) 50%, #000), 4px 4px 6px 0 #000;
             }
 
             &.p5 {
                 background: var(--player-5-color);
-                box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-5-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-5-color-dark) 50%, #000), 4px 4px 6px 0 #000;
             }
 
             &.p6 {
                 background: var(--player-6-color);
-                box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-6-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-6-color-dark) 50%, #000), 4px 4px 6px 0 #000;
             }
 
             &.p7 {
                 background: var(--player-7-color);
-                box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-7-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-7-color-dark) 50%, #000), 4px 4px 6px 0 #000;
             }
 
             &.p8 {
                 background: var(--player-8-color);
-                box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-8-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-8-color-dark) 50%, #000), 4px 4px 6px 0 #000;
             }
 
             &.p9 {
                 background: var(--player-9-color);
-                box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-9-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-9-color-dark) 50%, #000), 4px 4px 6px 0 #000;
             }
 
             &.p10 {
                 background: var(--player-10-color);
-                box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-10-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-10-color-dark) 50%, #000), 4px 4px 6px 0 #000;
             }
 
 
             &.longest {
-                box-shadow: 0px 0px 0 5px #fff, 0px -20px 0 5px #fff, 0px 20px 0 5px #fff;
+                box-shadow: 0 0 0 5px #fff, 0 -20px 0 5px #fff, 0 20px 0 5px #fff;
                 border-radius: 3px;
                 transition: all .25s ease-in;
             }
@@ -694,7 +694,7 @@
 
     .beach-left {
         top: 38px;
-        left: 0px;
+        left: 0;
     }
 
     .beach-top_left {
@@ -823,57 +823,57 @@
 /* Roads on edges */
 .board .tile .edge.taken.pc1 {
     background: var(--player-1-color);
-    box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-1-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-1-color-dark) 50%, #000), 4px 4px 6px 0 #000;
 }
 
 .board .tile .edge.taken.pc2 {
     background: var(--player-2-color);
-    box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-2-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-2-color-dark) 50%, #000), 4px 4px 6px 0 #000;
 }
 
 .board .tile .edge.taken.pc3 {
     background: var(--player-3-color);
-    box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-3-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-3-color-dark) 50%, #000), 4px 4px 6px 0 #000;
 }
 
 .board .tile .edge.taken.pc4 {
     background: var(--player-4-color);
-    box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-4-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-4-color-dark) 50%, #000), 4px 4px 6px 0 #000;
 }
 
 .board .tile .edge.taken.pc5 {
     background: var(--player-5-color);
-    box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-5-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-5-color-dark) 50%, #000), 4px 4px 6px 0 #000;
 }
 
 .board .tile .edge.taken.pc6 {
     background: var(--player-6-color);
-    box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-6-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-6-color-dark) 50%, #000), 4px 4px 6px 0 #000;
 }
 
 .board .tile .edge.taken.pc7 {
     background: var(--player-7-color);
-    box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-7-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-7-color-dark) 50%, #000), 4px 4px 6px 0 #000;
 }
 
 .board .tile .edge.taken.pc8 {
     background: var(--player-8-color);
-    box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-8-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-8-color-dark) 50%, #000), 4px 4px 6px 0 #000;
 }
 
 .board .tile .edge.taken.pc9 {
     background: var(--player-9-color);
-    box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-9-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-9-color-dark) 50%, #000), 4px 4px 6px 0 #000;
 }
 
 .board .tile .edge.taken.pc10 {
     background: var(--player-10-color);
-    box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-10-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-10-color-dark) 50%, #000), 4px 4px 6px 0 #000;
 }
 
 .board .tile .edge.taken.pc0 {
     background: var(--player-0-color);
-    box-shadow: 1px 1px 0px 1px color-mix(in srgb, var(--player-0-color-dark) 50%, #000), 4px 4px 6px 0px #000;
+    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-0-color-dark) 50%, #000), 4px 4px 6px 0 #000;
 }
 
 
@@ -902,6 +902,6 @@
 
 /* Ensure Longest Road visual overrides color-specific road styles */
 .board .tile .edge.taken.longest {
-    box-shadow: 0px 0px 0 5px #fff, 0px -20px 0 5px #fff, 0px 20px 0 5px #fff;
+    box-shadow: 0 0 0 5px #fff, 0 -20px 0 5px #fff, 0 20px 0 5px #fff;
     border-radius: 3px;
 }

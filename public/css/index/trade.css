@@ -1,12 +1,12 @@
 #game > .trade-zone {
     position: fixed;
     top: 0;
-    left: 0px;
+    left: 0;
     width: 100%;
     z-index: 60;
     /* border-bottom: 5px solid var(--sand-color-dark); */
-    box-shadow: 0 0px 15px 0px #000;
-    font-family: var(--font-ui);
+    box-shadow: 0 0 15px 0 #000;
+    font-family: var(--font-ui), sans-serif;
 
     .trade-requests {
         > div {
@@ -70,7 +70,7 @@
                     cursor: pointer;
                     padding-left: 3px;
                     font-size: .8em;
-                    font-family: var(--font-mono);
+                    font-family: var(--font-mono), sans-serif;
                     color: var(--trade-negative);
 
                     &:hover {
@@ -172,7 +172,7 @@
                 .giving, .asking {
                     color: #0006;
                     border-radius: 50px;
-                    font-family: var(--font-main);
+                    font-family: var(--font-main), sans-serif;
                     padding: 10px 5px 10px 13px;
                     margin: 0 0 0 5px;
 
@@ -258,7 +258,7 @@
                     color: #999;
                     cursor: not-allowed;
                     border-radius: 50px;
-                    font-family: var(--font-main);
+                    font-family: var(--font-main), sans-serif;
 
                     &.active {
                         cursor: pointer;
@@ -276,7 +276,7 @@
                         color: var(--sand-color);
 
                         &:hover, &:focus {
-                            box-shadow: 0 0 10px 0px var(--sand-color-dark), 0 0 20px 0px var(--sand-color-dark);
+                            box-shadow: 0 0 10px 0 var(--sand-color-dark), 0 0 20px 0 var(--sand-color-dark);
                         }
                     }
                 }
@@ -303,7 +303,7 @@
                     margin: -2px 10px;
                     padding: 3px 5px;
                     cursor: pointer;
-                    font-family: var(--font-main);
+                    font-family: var(--font-main), sans-serif;
 
                     &:hover, &:focus {
                         text-decoration: underline;
@@ -322,7 +322,6 @@
         }
         background: var(--sand-color);
         /* background: var(--water-color); */
-        border: 2px solid var(--sand-color-dark);
         border-width: 2px 0;
         padding: 0 5px;
 
@@ -342,7 +341,6 @@
             width: 50px;
             height: 60px;
             position: relative;
-            border: 0px solid transparent;
             border-width: 10px 7px;
 
             &._4 {
@@ -412,9 +410,8 @@
             color: #fff;
             padding: 5px 10px;
             height: 20px;
-            border: 0px solid var(--sand-color);
             border-width: 25px 10px;
-            font-family: var(--font-main);
+            font-family: var(--font-main), sans-serif;
 
             &.active {
                 border-color: var(--sand-color-dark);
@@ -436,9 +433,9 @@
         .cancel {
             position: fixed;
             right: 5px;
-            top: 0px;
+            top: 0;
             z-index: 1;
-            font-family: var(--font-heading);
+            font-family: var(--font-heading), sans-serif;
             font-size: 3em;
             margin: 2px 10px 0 0;
             color: #666;
@@ -501,7 +498,7 @@
 
                         &:not(.disabled):not([data-count="0"]) {
                             z-index: 1;
-                            box-shadow: 0rem 0rem 0.3125rem 0.3125rem var(--trade-negative);
+                            box-shadow: 0 0 0.3125rem 0.3125rem var(--trade-negative);
 
                             &::before {
                                 border-color: color-mix(in srgb, var(--trade-negative), #000);
@@ -519,7 +516,7 @@
 
                         &:not(.disabled):not([data-count="0"]) {
                             z-index: 1;
-                            box-shadow: 0rem 0rem 0.3125rem 0.3125rem var(--trade-positive);
+                            box-shadow: 0 0 0.3125rem 0.3125rem var(--trade-positive);
 
                             &::before {
                                 border-color: color-mix(in srgb, var(--trade-positive), #000);
@@ -736,7 +733,7 @@
                 color: #999;
                 border-radius: 5px;
                 font-weight: bold;
-                font-family: var(--font-main);
+                font-family: var(--font-main), sans-serif;
                 cursor: not-allowed;
 
                 &::before {
@@ -750,7 +747,7 @@
                     cursor: pointer;
 
                     &:hover, &:focus {
-                        box-shadow: 0 0 10px 0px var(--sand-color), 0 0 20px 0px var(--sand-color);
+                        box-shadow: 0 0 10px 0 var(--sand-color), 0 0 20px 0 var(--sand-color);
                     }
                 }
             }

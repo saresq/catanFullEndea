@@ -67,7 +67,7 @@
         height: 104px;
         background-color: #e7e7e7;
         border-radius: 10%;
-        box-shadow: inset 0 5px white, inset 0 -5px #bbb, inset 5px 0 #d7d7d7, inset -5px 0 #d7d7d7, 0px 10px 0px 0px #000;
+        box-shadow: inset 0 5px white, inset 0 -5px #bbb, inset 5px 0 #d7d7d7, inset -5px 0 #d7d7d7, 0 10px 0 0 #000;
         opacity: 0;
 
         &.d1 {
@@ -291,7 +291,7 @@
         transition: none;
 
         .card {
-            box-shadow: 0px 5px 0 -2px #5a460e, 0px 65px 20px -30px #000;
+            box-shadow: 0 5px 0 -2px #5a460e, 0 65px 20px -30px #000;
             transform: rotateX(50deg); /* translate3d(0px, -54px, -116px); */
             transform-origin: center;
             transition: all .25s linear;
@@ -319,7 +319,7 @@
         }
 
         &.start .card {
-            transform: rotateX(0deg) translate3d(0px, 50px, 0px);
+            transform: rotateX(0deg) translate3d(0px, 50px, 0);
         }
     }
 }
@@ -393,7 +393,7 @@
             border: 0.0625rem solid;
             border-radius: 0.625rem;
             background: #c8b66d url(/images/extra-vps-sprite.png) -1.4375rem -9.125rem/43.75rem no-repeat;
-            box-shadow: 0.3125rem 0.3125rem 0.9375rem 0rem #000;
+            box-shadow: 0.3125rem 0.3125rem 0.9375rem 0 #000;
             opacity: 0;
         }
 
@@ -404,7 +404,7 @@
             background-color: #dabd63;
             border-radius: 0.3125rem;
             overflow: hidden;
-            box-shadow: 0rem 0rem 0.3125rem 0.125rem #000;
+            box-shadow: 0 0 0.3125rem 0.125rem #000;
             opacity: 0;
 
             &::before {
@@ -566,7 +566,7 @@
             border: 0.0625rem solid;
             border-radius: 0.625rem;
             background: #c8b66d url(/images/extra-vps-sprite.png) -22.0625rem -9.5rem/43.75rem no-repeat;
-            box-shadow: 0.3125rem 0.3125rem 0.9375rem 0rem #000;
+            box-shadow: 0.3125rem 0.3125rem 0.9375rem 0 #000;
         }
     }
 

@@ -199,7 +199,7 @@
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                font-family: var(--font-ui);
+                font-family: var(--font-ui), sans-serif;
 
                 &.hide {
                     display: none;
@@ -268,7 +268,7 @@
             align-items: center;
             gap: 0.375rem;
             font-size: 0.8rem;
-            font-family: var(--font-ui);
+            font-family: var(--font-ui), sans-serif;
             text-transform: uppercase;
             font-weight: bold;
             transition: all 0.2s;
@@ -332,7 +332,7 @@
         /* TIMER */
 
         .timer {
-            font-family: var(--font-mono);
+            font-family: var(--font-mono), sans-serif;
             font-size: 2em;
             position: relative;
             top: 0;
@@ -501,7 +501,7 @@
                 height: 100%;
                 background-repeat: no-repeat;
                 background-position: center;
-                filter: drop-shadow(1px 1px 0px #fff) drop-shadow(-1px -1px 0px #fff) drop-shadow(1px -1px 0px #fff) drop-shadow(-1px 1px 0px #fff);
+                filter: drop-shadow(1px 1px 0 #fff) drop-shadow(-1px -1px 0 #fff) drop-shadow(1px -1px 0 #fff) drop-shadow(-1px 1px 0 #fff);
             }
 
             &:is(:hover, :focus) .image, &.active .image {

@@ -3,7 +3,7 @@
     right: 0;
     top: 0;
     width: 240px;
-    filter: drop-shadow(0px 0px 10px #000);
+    filter: drop-shadow(0px 0 10px #000);
     pointer-events: auto;
 
     &.blur:not(:hover) {
@@ -81,9 +81,9 @@
         &::before {
             position: absolute;
             left: -45px;
-            top: 0px;
+            top: 0;
             font-size: 2em;
-            filter: drop-shadow(0px 0px 3px #000);
+            filter: drop-shadow(0px 0 3px #000);
         }
 
         &.p1 {
@@ -147,7 +147,6 @@
             color: #fff;
             border-bottom: 3px solid;
             border-color: inherit;
-            width: 100%;
             box-sizing: border-box;
         }
 
@@ -194,7 +193,7 @@
         .victory-points {
             display: flex;
             justify-content: start;
-            font-family: var(--font-ui);
+            font-family: var(--font-ui), sans-serif;
             font-size: 2em;
             padding: 5px 10px;
             flex: 0;
@@ -212,7 +211,7 @@
                     left: -24px;
                     width: 20px;
                     height: 20px;
-                    box-shadow: 2px 2px 5px -1px #000, 0 0 5px 0px #000;
+                    box-shadow: 2px 2px 5px -1px #000, 0 0 5px 0 #000;
                     background: url(/images/catan-bg.png) -27px -12px / 74px;
                     border-radius: 50px;
                 }
@@ -235,7 +234,7 @@
             }
 
             &[data-robbable="true"] {
-                box-shadow: 0px 0px 5px 2px var(--trade-negative);
+                box-shadow: 0 0 5px 2px var(--trade-negative);
 
                 &::after {
                     content: '🥷' attr(data-count);
@@ -312,7 +311,7 @@
                 left: 0;
                 color: #000;
                 font-size: 1em;
-                font-family: var(--font-mono);
+                font-family: var(--font-mono), sans-serif;
                 background: #fff;
                 border-top: 1px solid #666;
                 border-right: 1px solid #666;
@@ -566,7 +565,7 @@
 
                     &::after {
                         font-size: 0.7em;
-                        padding: 0px 2px;
+                        padding: 0 2px;
                         border-radius: 2px;
                     }
 

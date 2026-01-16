@@ -6,7 +6,8 @@
     vertical-align: bottom;
     background-image: url(/images/res-icons.png);
     background-repeat: no-repeat;
-    filter: drop-shadow(0px 0px 0.5px #fff) drop-shadow(0px 0px 0.5px #fff) drop-shadow(0px 0px 0.5px #fff);
+    --glow-color: #fff;
+    filter: drop-shadow(0 0 1px var(--glow-color)) drop-shadow(0 0 1px var(--glow-color)) drop-shadow(0 0 1px var(--glow-color));
 
     &.S {
         background-position: -59px -3px;
@@ -32,7 +33,7 @@
     }
 
     &.W {
-        background-position: -60px 0px;
+        background-position: -60px 0;
         background-size: 96px;
         width: 15px;
     }
@@ -44,31 +45,31 @@
     background-color: #ebd290;
     border-radius: 15px;
     border: 1px solid #5a460e;
-    box-shadow: 3px 0px 5px -3px #0006;
+    box-shadow: 3px 0 5px -3px #0006;
     background-image: url(/images/cards-sprite.png);
 
     &[data-type=S] {
-        background-size: 1073.62px 730.66px;
+        background-size: 1074px 731px;
         background-position: -164.05px -12.21px;
     }
 
     &[data-type=L] {
-        background-size: 1073.62px 730.66px;
+        background-size: 1074px 731px;
         background-position: -620.12px -12.21px;
     }
 
     &[data-type=B] {
-        background-size: 1073.62px 730.66px;
+        background-size: 1074px 731px;
         background-position: -12.02px -12.21px;
     }
 
     &[data-type=O] {
-        background-size: 1073.62px 730.66px;
+        background-size: 1074px 731px;
         background-position: -316.07px -12.21px;
     }
 
     &[data-type=W] {
-        background-size: 1073.62px 730.66px;
+        background-size: 1074px 731px;
         background-position: -468.10px -12.21px;
     }
 }
