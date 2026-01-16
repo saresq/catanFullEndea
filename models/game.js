@@ -2,6 +2,7 @@ import * as CONST from "../public/js/const.js"
 import { shuffle } from "../public/js/utils.js"
 import Player from "./player.js"
 import Board from "../public/js/board/board.js"
+import BoardShuffler from "../public/js/board/board_shuffler.js"
 import IOManager from "./io_manager.js"
 import { createDice } from "./dice.js"
 
@@ -50,11 +51,8 @@ export default class Game {
   constructor({ id, host, config, io, onGameEnd }) {
     this.host_pid = host?.id
     this.id = id
-    this.config = config
-    this.player_count = config.player_count
+    this.#setupConfig(config)
     this.#io_manager = new IOManager({ game: this, io })
-    // Initialize dice engine based on configuration (random | balanced)
-    this._dice = createDice(this.config?.dice_mode || 'random')
     this.players[host.id - 1] = new Player(host.id, host.name, {
       onChange: (...params) => this.#onPlayerUpdate(...params),
       onVpChange: (pid, vp) => this.#onPlayerVpChange(pid, vp),
@@ -65,38 +63,29 @@ export default class Game {
     this.expected_actions.add = (...elems) => elems.forEach(obj => {
       this.expected_actions.push(Object.assign({ type: this.state, pid: this.active_pid }, obj))
     })
-    
+  }
+
+  #setupConfig(config) {
+    this.config = Object.assign({}, this.config, config)
+    this.player_count = this.config.player_count
+    this._dice = createDice(this.config.dice_mode || 'random')
     // Initialize development card deck and adjust game rules based on player count
     if (this.player_count >= 9) {
       this.dev_cards = shuffle(CONST.DEVELOPMENT_CARDS_DECK_9_10)
-      if (!config.hasOwnProperty('win_points')) {
-        this.config.win_points = 13
-      }
-      if (!config.hasOwnProperty('robber_hand_limit')) {
-        this.config.robber_hand_limit = 10
-      }
+      if (!config.hasOwnProperty('win_points')) { this.config.win_points = 13 }
+      if (!config.hasOwnProperty('robber_hand_limit')) { this.config.robber_hand_limit = 10 }
     } else if (this.player_count >= 7) {
       this.dev_cards = shuffle(CONST.DEVELOPMENT_CARDS_DECK_7_8)
-      // Adjust victory points for 7-8 players if not explicitly set in config
-      if (!config.hasOwnProperty('win_points')) {
-        this.config.win_points = 12
-      }
-      // Adjust robber hand limit for 7-8 players if not explicitly set in config
-      if (!config.hasOwnProperty('robber_hand_limit')) {
-        this.config.robber_hand_limit = 10
-      }
+      if (!config.hasOwnProperty('win_points')) { this.config.win_points = 12 }
+      if (!config.hasOwnProperty('robber_hand_limit')) { this.config.robber_hand_limit = 10 }
     } else if (this.player_count >= 5) {
       this.dev_cards = shuffle(CONST.DEVELOPMENT_CARDS_DECK_5_6)
-      // Adjust victory points for 5-6 players if not explicitly set in config
-      if (!config.hasOwnProperty('win_points')) {
-        this.config.win_points = 11
-      }
-      // Adjust robber hand limit for 5-6 players if not explicitly set in config
-      if (!config.hasOwnProperty('robber_hand_limit')) {
-        this.config.robber_hand_limit = 8
-      }
+      if (!config.hasOwnProperty('win_points')) { this.config.win_points = 11 }
+      if (!config.hasOwnProperty('robber_hand_limit')) { this.config.robber_hand_limit = 8 }
     } else {
       this.dev_cards = shuffle(CONST.DEVELOPMENT_CARDS_DECK_STANDARD)
+      if (!config.hasOwnProperty('win_points')) { this.config.win_points = 10 }
+      if (!config.hasOwnProperty('robber_hand_limit')) { this.config.robber_hand_limit = 7 }
     }
   }
 
@@ -105,7 +94,7 @@ export default class Game {
     if (joined_players.length >= this.player_count) { return }
     const remaining_ids = [...Array(this.player_count).keys()].map(_ => _+1)
       .filter(id => !this.players[id - 1])
-    const id = remaining_ids[Math.floor(Math.random() * remaining_ids.length)]
+    const id = remaining_ids[0]
     const player = new Player(id, name, {
       onChange: (...params) => this.#onPlayerUpdate(...params),
       onVpChange: (pid, vp) => this.#onPlayerVpChange(pid, vp),
@@ -127,6 +116,7 @@ export default class Game {
   }
 
   start() {
+    this.config.mapkey = (new BoardShuffler(this.config.mapkey)).shuffle('all')
     this.board = new Board(this.config.mapkey)
     this.state = ST.INITIAL_SETUP
     this.config.timer ? this.setTimer(this.config.strategize_time) : this.#next()
@@ -426,6 +416,27 @@ export default class Game {
     const joined = this.players.filter(p => p?.id).length
     if (joined < this.player_count) return // require full room
     this.start()
+  }
+
+  /** Waiting Room: Host changes the game config */
+  waitingRoomChangeConfigIO(pid, config) {
+    if (this.state) return
+    if (pid !== this.host_pid) return
+    if (config.player_count) {
+      config.player_count = Math.max(2, Math.min(10, +config.player_count))
+      const joined_count = this.players.filter(p => p?.id).length
+      if (config.player_count < joined_count) {
+        config.player_count = joined_count
+      }
+    }
+    if (config.win_points) {
+      config.win_points = Math.max(2, Math.min(100, +config.win_points))
+    }
+    if (config.dice_mode && !['random', 'balanced'].includes(config.dice_mode)) {
+      delete config.dice_mode
+    }
+    this.#setupConfig(config)
+    this.#io_manager.updateWaitingRoomConfig(this.config)
   }
 
   /** Robber movement location and stolen player */

@@ -3,7 +3,7 @@
     right: 0;
     top: 0;
     width: 240px;
-    filter: drop-shadow(0px 0px 30px #000);
+    filter: drop-shadow(0px 0px 10px #000);
     pointer-events: auto;
 
     &.blur:not(:hover) {

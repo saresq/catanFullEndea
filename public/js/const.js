@@ -212,6 +212,7 @@ export const SOCKET_EVENTS = {
   REMATCH_VOTE: 'rematch_vote',
   GODMODE_ACTIVATE: 'godmode_activate',
   GODMODE_FREE_RES_ACTIVATE: 'godmode_free_resources_activate',
+  CHANGE_CONFIG: 'change_game_config',
   // Both Sends…
   INITIAL_SETUP: 'ask/return_initial_setup',
   ROBBER_DROP: 'resources_dropped_to_robber/ack', // Private

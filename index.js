@@ -142,7 +142,7 @@ app.get('/game/new', function (req, res) {
   }
   
   config.mapkey = (new BoardShuffler(config.mapkey)).shuffle(shuffleType)
-  const pid = Math.floor(Math.random() * config.player_count + 1)
+  const pid = 1
   const game = new Game({
     id, io,
     host: { name, id: pid },
@@ -185,9 +185,11 @@ app.get('/game/:id', function(req, res) {
     res.render('waiting_room', {
       players: JSON.stringify(game.players),
       player_count: pc,
-      game_id,
+      game_id: game_id || null,
       win_points: game.config.win_points,
-      map_size,
+      map_size: map_size || null,
+      mapkey: JSON.stringify(game.config.mapkey || null),
+      dice_mode: game.config.dice_mode || 'random',
       my_pid: +req.cookies.player_id,
       host_pid: game.host_pid,
       spectators_count: game.spectators_count,

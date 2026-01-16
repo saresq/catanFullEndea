@@ -178,6 +178,29 @@ button {
         font-weight: 700;
     }
 
+    .box-header .value-select, .box-header .value-input {
+        background: #fff2;
+        color: #fff;
+        border: 1px solid #fff4;
+        border-radius: 4px;
+        padding: 2px 4px;
+        font-family: var(--font-ui);
+        font-weight: 700;
+        font-size: 0.9em;
+        outline: none;
+        cursor: pointer;
+    }
+    .box-header .value-select option {
+        background: #333;
+    }
+    .box-header .value-input {
+        width: 45px;
+        cursor: text;
+    }
+    .box-header .hide {
+        display: none;
+    }
+
     .slots {
         display: flex;
         flex-direction: column;
@@ -548,4 +571,11 @@ button {
 
 #waiting-room .box-header .start-game.hide {
     display: none;
+}
+
+@media screen and (max-width: 768px) {
+    #waiting-room .box-header .start-game,
+    #waiting-room .box-header .start-game.hide + .leave-lobby {
+        margin-left: 0;
+    }
 }

@@ -70,6 +70,9 @@ export default class IOManager {
     /** @event Waiting-Room Start Game */
     socket.on(SOC.START_GAME, () => game.waitingRoomStartGameIO(pid))
 
+    /** @event Waiting-Room Config Change */
+    socket.on(SOC.CHANGE_CONFIG, config => game.waitingRoomChangeConfigIO(pid, config))
+
     /** @event GodMode Activate */
     socket.on(SOC.GODMODE_ACTIVATE, () => game.godModeActivateIO(pid))
 
@@ -80,6 +83,11 @@ export default class IOManager {
   updateWaitingRoom(player) { this.emit(SOC.JOINED_WAITING_ROOM, player) }
 
   updateWaitingRoomColor(pid, color_id) { this.emit(SOC.PLAYER_COLOR_UPDATED, pid, color_id) }
+
+  updateWaitingRoomConfig(config) {
+    const { player_count, win_points, mapkey, map_size, dice_mode } = config
+    this.emit(SOC.CHANGE_CONFIG, { player_count, win_points, mapkey, map_size, dice_mode })
+  }
 
   updateState(state, active_pid, turn) { this.emit(SOC.STATE_CHANGE, state, active_pid, turn) }
 

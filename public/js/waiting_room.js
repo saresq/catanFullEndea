@@ -53,6 +53,7 @@ class WaitingRoomUI {
     window.players.forEach(p => p && this.addPlayer(p))
     this.renderSlots()
     this.updateStartBtnState()
+    this.initLobbySettings()
 
     // Initialize spectator count
     if (window.spectators_count) {
@@ -151,6 +152,115 @@ class WaitingRoomUI {
     }
   }
 
+  initLobbySettings() {
+    const $mapSelect = $('#map-size-select')
+    const $winPointsSelect = $('#win-points-select')
+    const $maxPlayersSelect = $('#max-players-select')
+    const $diceModeSelect = $('#dice-mode-select')
+
+    const maps = {
+      [CONST.DEFAULT_MAPKEY]: 'Standard',
+      [CONST.DEFAULT_MAPKEY_5_6]: 'Extended',
+      [CONST.DEFAULT_MAPKEY_7_8]: 'Large',
+      [CONST.DEFAULT_MAPKEY_9_10]: 'Extra Large',
+      [CONST.ARGENTUM_MAPKEY]: 'Argentum',
+    }
+
+    const mapKeysBySize = {}
+    Object.entries(maps).forEach(([key, name]) => {
+      mapKeysBySize[name] = key
+      const option = document.createElement('option')
+      option.value = key
+      option.textContent = name
+      $mapSelect.appendChild(option)
+    })
+
+    // Populate Win Points
+    for (let i = 5; i <= 20; i++) {
+      const opt = document.createElement('option')
+      opt.value = opt.textContent = i
+      $winPointsSelect.appendChild(opt)
+    }
+
+    this.updateMaxPlayersSelect = () => {
+      if (!this.is_host) return
+      const currentVal = +$maxPlayersSelect.value || window.player_count
+      $maxPlayersSelect.innerHTML = ''
+      for (let i = Math.max(2, this.joined_count); i <= 10; i++) {
+        const opt = document.createElement('option')
+        opt.value = opt.textContent = i
+        if (i === currentVal) opt.selected = true
+        $maxPlayersSelect.appendChild(opt)
+      }
+    }
+
+    if (this.is_host) {
+      $mapSelect.classList.remove('hide'); $mapSelect.disabled = false
+      $winPointsSelect.classList.remove('hide'); $winPointsSelect.disabled = false
+      $maxPlayersSelect.classList.remove('hide'); $maxPlayersSelect.disabled = false
+      $diceModeSelect.classList.remove('hide'); $diceModeSelect.disabled = false
+
+      $('#map-size').classList.add('hide')
+      $('#win-points').classList.add('hide')
+      $('#max-players-val').classList.add('hide')
+      $('#dice-mode-val').classList.add('hide')
+
+      $mapSelect.value = mapKeysBySize[window.map_size] || window.mapkey || CONST.DEFAULT_MAPKEY
+      $winPointsSelect.value = window.win_points
+      this.updateMaxPlayersSelect()
+      $maxPlayersSelect.value = window.player_count
+      $diceModeSelect.value = window.dice_mode || 'random'
+
+      const emitConfig = () => {
+        window.io().emit(CONST.SOCKET_EVENTS.CHANGE_CONFIG, {
+          mapkey: $mapSelect.value,
+          map_size: maps[$mapSelect.value],
+          win_points: +$winPointsSelect.value,
+          player_count: +$maxPlayersSelect.value,
+          dice_mode: $diceModeSelect.value,
+        })
+      }
+
+      $mapSelect.addEventListener('change', emitConfig)
+      $winPointsSelect.addEventListener('change', emitConfig)
+      $maxPlayersSelect.addEventListener('change', emitConfig)
+      $diceModeSelect.addEventListener('change', emitConfig)
+    }
+
+    // Set initial values
+    $("#map-size").textContent = window.map_size
+    $('#win-points').textContent = window.win_points
+    $('#max-players-val').textContent = window.player_count
+    $('#dice-mode-val').textContent = (window.dice_mode || 'random').charAt(0).toUpperCase() + (window.dice_mode || 'random').slice(1)
+
+    window.io().on(CONST.SOCKET_EVENTS.CHANGE_CONFIG, config => {
+      const { player_count, win_points, mapkey, map_size, dice_mode } = config
+      window.player_count = player_count
+      this.player_count = player_count
+      window.win_points = win_points
+      window.map_size = map_size
+
+      if (this.is_host) {
+        $mapSelect.value = mapKeysBySize[map_size] || mapkey
+        $winPointsSelect.value = win_points
+        this.updateMaxPlayersSelect()
+        $maxPlayersSelect.value = player_count
+        $diceModeSelect.value = dice_mode
+      }
+
+      $('#map-size').textContent = map_size
+      $('#win-points').textContent = win_points
+      $('#max-players-val').textContent = player_count
+      $('#dice-mode-val').textContent = dice_mode.charAt(0).toUpperCase() + dice_mode.slice(1)
+
+      this.joined_count = (window.players || []).filter(Boolean).length
+      if (this.$joined_count) this.$joined_count.textContent = (this.player_count - this.joined_count)
+
+      this.renderSlots()
+      this.updateStartBtnState()
+    })
+  }
+
   checkAndEnd() {
     if (this.joined_count === this.player_count) {
       // Brief transition before game loads
@@ -163,6 +273,7 @@ class WaitingRoomUI {
     // Update counters
     this.joined_count++
     if (this.$joined_count) this.$joined_count.textContent = (this.player_count - this.joined_count)
+    this.updateMaxPlayersSelect?.()
     // Keep global list updated for rendering
     window.players = window.players || []
     window.players[id - 1] = { id, name, color_id }
@@ -171,6 +282,7 @@ class WaitingRoomUI {
   removePlayer(pid) {
     this.joined_count = Math.max(0, this.joined_count - 1)
     if (this.$joined_count) this.$joined_count.textContent = (this.player_count - this.joined_count)
+    this.updateMaxPlayersSelect?.()
     if (Array.isArray(window.players)) {
       delete window.players[pid - 1]
     }

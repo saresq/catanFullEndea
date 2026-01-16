@@ -1,15 +1,17 @@
 // Dice strategies for the server-side game engine
 // Provides Random and Balanced dice implementations and a factory to create them
 
+import crypto from 'node:crypto';
+
 const clamp = (num, min, max) => Math.max(min, Math.min(max, num))
 
 class RandomDice {
   roll(avoidTotals = []) {
-    let d1 = Math.ceil(Math.random() * 6)
-    let d2 = Math.ceil(Math.random() * 6)
+    let d1 = crypto.randomInt(1, 7)
+    let d2 = crypto.randomInt(1, 7)
     while (avoidTotals?.includes(d1 + d2)) {
-      d1 = Math.ceil(Math.random() * 6)
-      d2 = Math.ceil(Math.random() * 6)
+      d1 = crypto.randomInt(1, 7)
+      d2 = crypto.randomInt(1, 7)
     }
     return { d1, d2 }
   }
@@ -17,131 +19,124 @@ class RandomDice {
 
 class BalancedDice {
   constructor(options = {}) {
-    const {
-      minimumCardsBeforeReshuffle = 12, // reshuffle threshold
-      recentMemory = 5,                 // how many recent totals to remember
-      recencyReduction = 0.30,          // ~30% reduction per recent hit
-    } = options
+    this.minimumCardsBeforeReshuffling = options.minimumCardsBeforeReshuffle || 13
+    this.probabilityReductionForRecentlyRolled = options.recencyReduction || 0.3
+    this.maximumRecentRollMemory = options.recentMemory || 5
 
-    this.minimumCardsBeforeReshuffle = minimumCardsBeforeReshuffle
-    this.recentMemory = recentMemory
-    this.recencyReduction = recencyReduction
+    this.weightedDiceDeck = []
+    this.cardsLeftInDeck = 0
+    this.recentRolls = []
 
-    this.recentRolls = [] // queue of recent totals
-
-    // Deck grouped by totals 2..12 with their (d1,d2) pairs
-    this.deckByTotal = []
-    for (let t = 2; t <= 12; t++) this.deckByTotal.push({ total: t, pairs: [], weight: 0, recentCount: 0 })
-
+    this._initWeightedDiceDeck()
     this._reshuffle()
-    this._updateBaseWeights()
   }
 
-  roll(avoidTotals = []) {
-    // Reshuffle if needed
-    if (this.cardsLeft < this.minimumCardsBeforeReshuffle) {
-      this._reshuffle()
-      this._updateBaseWeights()
+  _initWeightedDiceDeck() {
+    this.weightedDiceDeck = []
+    for (let t = 2; t <= 12; t++) {
+      this.weightedDiceDeck.push({
+        totalDice: t,
+        dicePairs: [],
+        probabilityWeighting: 0,
+        recentlyRolledCount: 0
+      })
     }
-
-    // Compute dynamic weights considering recency and avoids
-    const weights = []
-    let totalWeight = 0
-    for (const entry of this.deckByTotal) {
-      // If no cards of this total remain or it is avoided for this roll, weight is 0
-      if (!entry.pairs.length || (avoidTotals && avoidTotals.includes(entry.total))) {
-        weights.push(0)
-        continue
-      }
-      // Start from base weight
-      let w = entry.weight
-      // Apply recency reduction per recent hit (bounded)
-      const reduction = clamp(entry.recentCount * this.recencyReduction, 0, 0.95)
-      w = w * (1 - reduction)
-      if (w < 0) w = 0
-      weights.push(w)
-      totalWeight += w
-    }
-
-    // Fallback: if for some reason totalWeight is 0 (e.g., avoids too strict), ignore avoids
-    if (totalWeight <= 0) {
-      totalWeight = 0
-      for (let i = 0; i < this.deckByTotal.length; i++) {
-        const entry = this.deckByTotal[i]
-        const w = entry.pairs.length ? entry.weight : 0
-        weights[i] = w
-        totalWeight += w
-      }
-    }
-
-    // Select a total according to dynamic weights
-    let r = Math.random() * totalWeight
-    let chosenIndex = -1
-    for (let i = 0; i < this.deckByTotal.length; i++) {
-      if (r <= weights[i]) { chosenIndex = i; break }
-      r -= weights[i]
-    }
-
-    // Safety fallback
-    if (chosenIndex < 0) {
-      // pick first available
-      chosenIndex = this.deckByTotal.findIndex(e => e.pairs.length)
-      if (chosenIndex < 0) {
-        // This should never happen, but just in case
-        this._reshuffle(); this._updateBaseWeights()
-        chosenIndex = this.deckByTotal.findIndex(e => e.pairs.length)
-      }
-    }
-
-    const chosenEntry = this.deckByTotal[chosenIndex]
-    const pairIndex = Math.floor(Math.random() * chosenEntry.pairs.length)
-    const { d1, d2 } = chosenEntry.pairs.splice(pairIndex, 1)[0]
-
-    // Update state
-    this.cardsLeft -= 1
-    this._pushRecent(chosenEntry.total)
-    this._updateBaseWeights() // base weights depend only on counts remaining
-
-    return { d1, d2 }
-  }
-
-  _pushRecent(total) {
-    this.recentRolls.push(total)
-    // Increment recentCount for this total
-    this._byTotal(total).recentCount += 1
-    // Trim memory and decrement the outgoing total's recentCount
-    while (this.recentRolls.length > this.recentMemory) {
-      const old = this.recentRolls.shift()
-      this._byTotal(old).recentCount = Math.max(0, this._byTotal(old).recentCount - 1)
-    }
-  }
-
-  _byTotal(total) {
-    // totals are 2..12, index offset = 2
-    return this.deckByTotal[total - 2]
   }
 
   _reshuffle() {
-    // Build full standard 36-card deck grouped by total
-    for (let i = 0; i < this.deckByTotal.length; i++) {
-      this.deckByTotal[i].pairs = []
-      this.deckByTotal[i].recentCount = 0
+    const standardDeck = this._getStandardDiceDeck()
+    for (let i = 0; i < standardDeck.length; i++) {
+      this.weightedDiceDeck[i].dicePairs = [...standardDeck[i].dicePairs]
+    }
+    this.cardsLeftInDeck = 36
+  }
+
+  _getStandardDiceDeck() {
+    const deck = []
+    for (let t = 2; t <= 12; t++) {
+      deck.push({ totalDice: t, dicePairs: [] })
     }
     for (let d1 = 1; d1 <= 6; d1++) {
       for (let d2 = 1; d2 <= 6; d2++) {
         const total = d1 + d2
-        this._byTotal(total).pairs.push({ d1, d2 })
+        deck[total - 2].dicePairs.push({ d1, d2 })
       }
     }
-    this.cardsLeft = 36
-    this.recentRolls.length = 0
+    return deck
   }
 
-  _updateBaseWeights() {
-    // Base weights proportional to remaining pairs for each total, normalized over cardsLeft
-    const left = Math.max(1, this.cardsLeft)
-    for (const entry of this.deckByTotal) {
-      entry.weight = entry.pairs.length / left
+  roll(avoidTotals = []) {
+    if (this.cardsLeftInDeck < this.minimumCardsBeforeReshuffling) {
+      this._reshuffle()
+    }
+
+    this._updateProbabilities()
+    this._adjustForRecentRolls()
+    
+    // Support avoidTotals (required by game logic)
+    if (avoidTotals && avoidTotals.length > 0) {
+      for (const entry of this.weightedDiceDeck) {
+        if (avoidTotals.includes(entry.totalDice)) {
+          entry.probabilityWeighting = 0
+        }
+      }
+    }
+
+    let totalWeight = this._getTotalWeight()
+
+    // Fallback if all weights are 0 (e.g. too many avoidTotals)
+    if (totalWeight <= 0) {
+      this._updateProbabilities() // reset to base
+      totalWeight = this._getTotalWeight()
+    }
+
+    let r = (crypto.randomBytes(4).readUInt32BE(0) / 0x100000000) * totalWeight
+    for (const entry of this.weightedDiceDeck) {
+      if (r <= entry.probabilityWeighting) {
+        const pairIndex = entry.dicePairs.length > 0 ? crypto.randomInt(0, entry.dicePairs.length) : 0
+        const pair = entry.dicePairs.splice(pairIndex, 1)[0]
+        
+        this.cardsLeftInDeck--
+        this._pushRecent(entry.totalDice)
+        
+        return pair
+      }
+      r -= entry.probabilityWeighting
+    }
+
+    // Safety fallback
+    const available = this.weightedDiceDeck.find(e => e.dicePairs.length > 0)
+    const pair = available.dicePairs.splice(0, 1)[0]
+    this.cardsLeftInDeck--
+    this._pushRecent(available.totalDice)
+    return pair
+  }
+
+  _updateProbabilities() {
+    for (const entry of this.weightedDiceDeck) {
+      entry.probabilityWeighting = entry.dicePairs.length / this.cardsLeftInDeck
+    }
+  }
+
+  _adjustForRecentRolls() {
+    for (const entry of this.weightedDiceDeck) {
+      const reduction = entry.recentlyRolledCount * this.probabilityReductionForRecentlyRolled
+      entry.probabilityWeighting *= (1 - reduction)
+      if (entry.probabilityWeighting < 0) entry.probabilityWeighting = 0
+    }
+  }
+
+  _getTotalWeight() {
+    return this.weightedDiceDeck.reduce((sum, entry) => sum + entry.probabilityWeighting, 0)
+  }
+
+  _pushRecent(total) {
+    this.recentRolls.push(total)
+    this.weightedDiceDeck[total - 2].recentlyRolledCount++
+
+    if (this.recentRolls.length > this.maximumRecentRollMemory) {
+      const oldTotal = this.recentRolls.shift()
+      this.weightedDiceDeck[oldTotal - 2].recentlyRolledCount--
     }
   }
 }

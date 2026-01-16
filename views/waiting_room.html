@@ -26,9 +26,29 @@
   <div class="container">
     <div class="wait-box">
       <div class="box-header">
-        <div class="info-item"><span class="label">Map size:</span> <span class="value" id="map-size">-</span></div>
-        <div class="info-item"><span class="label">Victory points:</span> <span class="value" id="win-points">-</span></div>
-        <div class="info-item"><span class="label">Players remaining:</span> <span class="value p-count">0</span></div>
+        <div class="info-item" title="Map">
+          <span class="label">Map:</span>
+          <select id="map-size-select" class="value-select hide" disabled></select>
+          <span class="value" id="map-size">-</span>
+        </div>
+        <div class="info-item" title="Victory Points Goal">
+          <span class="label">🏆</span>
+          <select id="win-points-select" class="value-select hide" disabled></select>
+          <span class="value" id="win-points">-</span>
+        </div>
+        <div class="info-item" title="Maximum Players">
+          <span class="label">Players:</span>
+          <select id="max-players-select" class="value-select hide" disabled></select>
+          <span class="value" id="max-players-val">-</span>
+        </div>
+        <div class="info-item" title="Dice Mode">
+          <span class="label">Dice:</span>
+          <select id="dice-mode-select" class="value-select hide" disabled>
+            <option value="random">Random</option>
+            <option value="balanced">Balanced</option>
+          </select>
+          <span class="value" id="dice-mode-val">Random</span>
+        </div>
         <button id="start-game-btn" class="start-game" title="Start the game (host only)" disabled>Start Game</button>
         <button class="leave-lobby" title="Leave Lobby">Leave</button>
       </div>
@@ -44,6 +64,8 @@
   window.player_count = {{ player_count }};
   window.win_points = {{ win_points }};
   window.map_size = "{{ map_size }}";
+  window.mapkey = {{{ mapkey }}};
+  window.dice_mode = "{{ dice_mode }}";
   window.my_pid = "{{ my_pid }}";
   window.host_pid = "{{ host_pid }}";
   window.spectators_count = {{ spectators_count }};
