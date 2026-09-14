@@ -5,9 +5,16 @@ const $ = document.querySelector.bind(document)
 
 export default class MapBuilderBoardUI extends BoardUI {
   $tile_selector = $('#tile-selector')
+  viewStorageKey = 'map-editor-board-view'
 
   constructor(board, onClick, size) {
     super(board, onClick, size)
+  }
+
+  /** @override the shuffler panel covers the right side of the screen */
+  getViewport() {
+    const panel = $('#shuffler')?.offsetWidth || 0
+    return { x: 0, y: 0, width: Math.max(100, window.innerWidth - panel), height: window.innerHeight }
   }
 
   render() {

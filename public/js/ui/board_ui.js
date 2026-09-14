@@ -6,16 +6,21 @@ const oKeys = Object.keys
 export default class BoardUI {
   #board; #onClick; #getColorId;
   #size = { MIN: 0.1, MAX: 5 }
-  #boardWidth = 0
-  #boardHeight = 0
+  // Untransformed bounding box of the rendered rows, relative to the board element
+  #bounds = { x: 0, y: 0, width: 100, height: 100 }
+  // Untransformed screen position of the board element (the transform origin)
+  #origin = { x: 0, y: 0 }
   #renderedCorners = []
   #renderedEdges = []
   #scale = 1
   #pan = { x: 0, y: 0 }
+  #viewInitialized = false
+  #lastViewport = null
   #isDragging = false
   #lastMousePos = { x: 0, y: 0 }
   #eventsSetup = false
   $el = $('#game .board')
+  viewStorageKey = 'board-view'
 
   /** @param {Board} board  */
   constructor(board, onClick, size, getColorId) {
@@ -23,19 +28,12 @@ export default class BoardUI {
     this.#onClick = onClick
     this.#size = size || this.#size
     this.#getColorId = (typeof getColorId === 'function') ? getColorId : (pid => pid)
+  }
 
-    try {
-      const savedScale = parseFloat(localStorage.getItem('board-scale'))
-      if (!isNaN(savedScale) && isFinite(savedScale)) {
-        this.#scale = savedScale
-      }
-      const savedPan = JSON.parse(localStorage.getItem('board-pan'))
-      if (savedPan && !isNaN(savedPan.x) && !isNaN(savedPan.y) && isFinite(savedPan.x) && isFinite(savedPan.y)) {
-        this.#pan = savedPan
-      }
-    } catch (e) {
-      console.error('BoardUI: Error loading from localStorage', e)
-    }
+  /** Screen area the board can use (excludes fixed UI such as the bottom player bar) */
+  getViewport() {
+    const bottomBar = document.querySelector('#game > .current-player')?.offsetHeight || 0
+    return { x: 0, y: 0, width: window.innerWidth, height: Math.max(100, window.innerHeight - bottomBar) }
   }
 
   toggleBlur(bool) { this.$el.classList[bool ? 'add' : 'remove']('blur') }
@@ -66,33 +64,88 @@ export default class BoardUI {
     this.$el.style.paddingLeft = `calc(var(--tile-width) / 2 * ${maxLeft * -1})`
     this.$el.style.width = `calc(var(--tile-width) * ${maxLength})`
 
-    this.#boardWidth = Math.max(100, (maxLength + maxLeft / 2) * 160) // Approximate tile width
-    this.#boardHeight = Math.max(100, this.#board.tile_rows.length * 130) // Approximate row height
-
-    const savedPanStr = localStorage.getItem('board-pan')
-    let hasValidSavedPan = false
-    if (savedPanStr) {
-      try {
-        const savedPan = JSON.parse(savedPanStr)
-        hasValidSavedPan = savedPan && !isNaN(savedPan.x) && !isNaN(savedPan.y) && isFinite(savedPan.x) && isFinite(savedPan.y)
-      } catch (e) {}
-    }
-
-    if (!hasValidSavedPan) {
-      this.#pan.x = (window.innerWidth - this.#boardWidth * this.#scale) / 2
-      this.#pan.y = (window.innerHeight - this.#boardHeight * this.#scale) / 2
-    }
-
+    this.#measureBoard()
     this.#updateZoomLimits()
+    if (!this.#viewInitialized) {
+      if (!this.#restoreView()) { this.#fitToViewport() }
+      this.#viewInitialized = true
+    }
+    this.#lastViewport = this.getViewport()
     this.#updateTransform()
     this.#setupEvents()
   }
 
+  /**
+   * Measure the rows' bounding box in screen px with no transform applied, relative to the
+   * board's transform origin (its untransformed top-left, which the rows' negative margins shift)
+   */
+  #measureBoard() {
+    const transform = this.$el.style.transform
+    this.$el.style.transform = 'none'
+    const origin = this.$el.getBoundingClientRect()
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+    this.$el.querySelectorAll('.row').forEach($row => {
+      const r = $row.getBoundingClientRect()
+      minX = Math.min(minX, r.left)
+      minY = Math.min(minY, r.top)
+      maxX = Math.max(maxX, r.right)
+      maxY = Math.max(maxY, r.bottom)
+    })
+    this.$el.style.transform = transform
+    if (!isFinite(minX) || maxX - minX <= 0 || maxY - minY <= 0) {
+      this.#bounds = { x: 0, y: 0, width: 100, height: 100 }
+      this.#origin = { x: 0, y: 0 }
+      return
+    }
+    this.#origin = { x: origin.left, y: origin.top }
+    this.#bounds = { x: minX - origin.left, y: minY - origin.top, width: maxX - minX, height: maxY - minY }
+  }
+
+  #getFitScale() {
+    const vp = this.getViewport()
+    return Math.min(vp.width / this.#bounds.width, vp.height / this.#bounds.height)
+  }
+
   #updateZoomLimits() {
-    const fitScale = Math.min(window.innerWidth / this.#boardWidth, window.innerHeight / this.#boardHeight)
     // Zoom out limit: half of what's needed to fit the screen,
     // but not more restrictive than 0.5 and not less than 0.1
-    this.#size.MIN = Math.max(0.1, Math.min(0.5, fitScale * 0.5))
+    this.#size.MIN = Math.max(0.1, Math.min(0.5, this.#getFitScale() * 0.5))
+  }
+
+  /** Scale the board to fill the available viewport and center it */
+  #fitToViewport() {
+    const vp = this.getViewport()
+    const b = this.#bounds
+    this.#scale = Math.min(Math.max(this.#getFitScale() * 0.95, this.#size.MIN), this.#size.MAX)
+    this.#pan.x = vp.x + (vp.width - b.width * this.#scale) / 2 - b.x * this.#scale - this.#origin.x
+    this.#pan.y = vp.y + (vp.height - b.height * this.#scale) / 2 - b.y * this.#scale - this.#origin.y
+  }
+
+  /** Restore the saved pan/zoom, only if it was saved for the same window size */
+  #restoreView() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(this.viewStorageKey))
+      const valid = saved && [saved.scale, saved.x, saved.y].every(Number.isFinite)
+      if (!valid || saved.vw !== window.innerWidth || saved.vh !== window.innerHeight) return false
+      this.#scale = saved.scale
+      this.#pan = { x: saved.x, y: saved.y }
+      return true
+    } catch (e) {
+      return false
+    }
+  }
+
+  #onResize() {
+    // Keep whatever was at the center of the old viewport at the center of the new one
+    const prev = this.#lastViewport
+    const vp = this.getViewport()
+    if (prev) {
+      this.#pan.x += (vp.x + vp.width / 2) - (prev.x + prev.width / 2)
+      this.#pan.y += (vp.y + vp.height / 2) - (prev.y + prev.height / 2)
+    }
+    this.#lastViewport = vp
+    this.#updateZoomLimits()
+    this.#updateTransform()
   }
 
   renderRow(row) {
@@ -205,10 +258,7 @@ export default class BoardUI {
     if (this.#eventsSetup) return
     this.#eventsSetup = true
 
-    window.addEventListener('resize', () => {
-      this.#updateZoomLimits()
-      this.#updateTransform()
-    })
+    window.addEventListener('resize', () => this.#onResize())
 
     const $container = this.$el.parentElement
     $container.addEventListener('wheel', e => {
@@ -314,14 +364,15 @@ export default class BoardUI {
 
   #clampPan() {
     const margin = 100 // Minimum pixels of board to keep visible
-    const scaledWidth = this.#boardWidth * this.#scale
-    const scaledHeight = this.#boardHeight * this.#scale
+    const b = this.#bounds
+    const o = this.#origin
+    const s = this.#scale
 
-    // Calculate limits based on viewport size and scaled board size
-    const minX = margin - scaledWidth
-    const maxX = window.innerWidth - margin
-    const minY = margin - scaledHeight
-    const maxY = window.innerHeight - margin
+    // Keep at least `margin` px of the rows on screen (screen x = origin + pan + local x * scale)
+    const minX = margin - o.x - (b.x + b.width) * s
+    const maxX = window.innerWidth - margin - o.x - b.x * s
+    const minY = margin - o.y - (b.y + b.height) * s
+    const maxY = window.innerHeight - margin - o.y - b.y * s
 
     this.#pan.x = Math.min(Math.max(this.#pan.x, minX), maxX)
     this.#pan.y = Math.min(Math.max(this.#pan.y, minY), maxY)
@@ -333,15 +384,17 @@ export default class BoardUI {
     this.#clampPan()
     this.$el.style.transform = `translate(${this.#pan.x}px, ${this.#pan.y}px) scale(${this.#scale})`
     try {
-      localStorage.setItem('board-scale', this.#scale)
-      localStorage.setItem('board-pan', JSON.stringify(this.#pan))
+      localStorage.setItem(this.viewStorageKey, JSON.stringify({
+        scale: this.#scale, x: this.#pan.x, y: this.#pan.y, vw: window.innerWidth, vh: window.innerHeight,
+      }))
     } catch (e) {}
   }
 
   recenter() {
-    this.#scale = 1
-    this.#pan.x = (window.innerWidth - this.#boardWidth * this.#scale) / 2
-    this.#pan.y = (window.innerHeight - this.#boardHeight * this.#scale) / 2
+    this.#measureBoard()
+    this.#updateZoomLimits()
+    this.#fitToViewport()
+    this.#lastViewport = this.getViewport()
     this.#updateTransform()
   }
 

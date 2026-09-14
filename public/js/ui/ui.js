@@ -87,13 +87,14 @@ export default class UI {
 
   render() {
     this.#setUpEvents()
-    this.board_ui.render()
     this.accessibility_ui.render()
     this.player_ui.render()
     this.all_players_ui.render()
     this.alert_ui.render()
     this.trade_ui.render()
     this.res_selection_ui.render()
+    // Board last: its initial fit measures the space left by the player bar
+    this.board_ui.render()
     this.$splash.classList.add('hide')
   }
 

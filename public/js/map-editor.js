@@ -41,6 +41,8 @@ class Shuffler {
     this.accessibility_ui.render()
     this.render()
     this.updateInfoSection()
+    // Refit now that the shuffler panel has its real width
+    this.board_ui.recenter()
   }
 
   render() {
@@ -386,7 +388,8 @@ class Shuffler {
     $tile_num.dataset.num = $slider_thumb.dataset.num = num
     $slider_thumb.style.left = `${(value - 2) * 100 / 9}%`
     $tile_num.dataset.dots = '.'.repeat(6 - Math.abs(7 - num))
-    this.tile_selection_obj.number = num
+    // #resetBoardEdit fires this to reset the slider UI before any tile has been picked
+    if (this.tile_selection_obj) { this.tile_selection_obj.number = num }
   }
 
   onTradeSelection(type) {

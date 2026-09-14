@@ -148,11 +148,26 @@ body {
     }
 }
 
+#game .board-container {
+    /* Board is panned/zoomed by transform; keep its container pinned to the viewport so the page never scrolls */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    touch-action: none;
+}
+
 #game :is(.board-container, .accessibility-zone) {
     transition: all .125s ease-in;
 }
 
-#game.board--editing :is(.board-container, .accessibility-zone) {
+#game.board--editing .board-container {
+    top: calc(170px + 10px);
+}
+
+#game.board--editing .accessibility-zone {
     margin-top: calc(170px + 10px);
 }
 
