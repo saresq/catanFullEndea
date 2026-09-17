@@ -28,7 +28,10 @@ app.get('/map-editor', (req, res) => {
 })
 
 const SESSION_EXPIRE_HOURS = 5
-const API_SALT = process.env.API_SALT || 'cultivate'
+const API_SALT = process.env.API_SALT
+if (!API_SALT) { console.warn('API_SALT not set - /api/sessions routes are disabled') }
+/** Fails closed: no salt configured means no access. */
+function apiAuthorized(req) { return !!API_SALT && req.query.salt === API_SALT }
 /** @todo Move to a db for game state maintenance? */
 /** @type {Object.<string, Game>} */
 const GAME_SESSIONS = {}
@@ -272,19 +275,19 @@ app.get('/logout', function (req, res) {
 })
 
 app.get('/api/sessions', function (req, res) {
-  if (req.query.salt !== API_SALT) return res.json({})
+  if (!apiAuthorized(req)) return res.status(401).json({})
   const loggable_json = JSON.parse(JSON.stringify(GAME_SESSIONS))
   res.json(loggable_json)
 })
 
 app.get('/api/sessions/clear/:id?', function(req, res) {
-  if (req.query.salt !== API_SALT) res.json({})
+  if (!apiAuthorized(req)) return res.status(401).json({})
   if (req.params.id) {
     delete GAME_SESSIONS[req.params.id]
-    return res.redirect('/all-sessions')
+    return res.redirect('/api/sessions?salt=' + encodeURIComponent(req.query.salt))
   }
   Object.keys(GAME_SESSIONS).forEach(gid => delete GAME_SESSIONS[gid])
-  res.redirect('/api/sessions')
+  res.redirect('/api/sessions?salt=' + encodeURIComponent(req.query.salt))
 })
 
 const REMATCH_INFO = {}

@@ -190,7 +190,7 @@ For more advanced users, the game can be deployed on major cloud platforms:
 The game supports the following environment variables:
 
 - `PORT`: The port on which the server will run (default: 3000)
-- `API_SALT`: A salt for API access (default: 'cultivate')
+- `API_SALT`: A secret for the `/api/sessions` routes (no default: if unset, those routes return 401)
 - `NODE_ENV`: Set to 'production' for production environments
 
 You can set these variables in different ways depending on your hosting method:
@@ -219,7 +219,7 @@ If you're hosting the game on a server with a firewall, ensure that:
 
 ### Security Considerations
 
-- **API Access**: Change the default `API_SALT` value to prevent unauthorized access to the API endpoints
+- **API Access**: Set `API_SALT` to a secret value; without it the `/api/sessions` routes stay disabled
 - **HTTPS**: When hosting online, use HTTPS to encrypt communications (most platforms like Render and Heroku provide this automatically)
 - **Rate Limiting**: Consider implementing rate limiting if you expect high traffic
 
