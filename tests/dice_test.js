@@ -1,52 +1,51 @@
-import { createDice } from '../models/dice.js';
+// Invariants for both dice engines. Statistical bounds are deliberately loose
+// so a legitimately unlucky run never fails the suite.
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { createDice } from '../models/dice.js'
 
-const modeArg = process.argv[2];
-const mode = modeArg === '-r' ? 'random' : 'balanced';
-const modeLabel = mode === 'random' ? 'Random' : 'Balanced';
+const ROLLS = 5000
 
-function runTest(rollsCount) {
-    console.log(`--- Running test with ${rollsCount} rolls ---`);
-    const dice = createDice(mode);
-    const results = {};
-    for (let i = 2; i <= 12; i++) results[i] = 0;
-
-    let totalConsecutive = 0;
-    let maxStreak = 0;
-    let currentStreak = 0;
-    let lastTotal = null;
-
-    for (let i = 0; i < rollsCount; i++) {
-        const { d1, d2 } = dice.roll();
-        const total = d1 + d2;
-        results[total]++;
-
-        if (total === lastTotal) {
-            totalConsecutive++;
-            currentStreak++;
-        } else {
-            currentStreak = 1;
-        }
-
-        if (currentStreak > maxStreak) {
-            maxStreak = currentStreak;
-        }
-        lastTotal = total;
-    }
-
-    console.log('Roll counts for each total:');
-    const sortedTotals = Object.keys(results).sort((a, b) => a - b);
-    for (const total of sortedTotals) {
-        const count = results[total];
-        const percentage = ((count / rollsCount) * 100).toFixed(2);
-        console.log(`Total ${total.toString().padStart(2)}: ${count.toString().padStart(3)} rolls (${percentage.padStart(5)}%)`);
-    }
-
-    console.log(`Streak count: ${totalConsecutive}`);
-    console.log(`Longest streak: ${maxStreak}`);
-    console.log('\n');
+function rollMany(mode, count = ROLLS, avoidTotals = []) {
+  const dice = createDice(mode)
+  const counts = {}
+  for (let t = 2; t <= 12; t++) counts[t] = 0
+  for (let i = 0; i < count; i++) {
+    const { d1, d2 } = dice.roll(avoidTotals)
+    assert.ok(Number.isInteger(d1) && d1 >= 1 && d1 <= 6, `d1 out of range: ${d1}`)
+    assert.ok(Number.isInteger(d2) && d2 >= 1 && d2 <= 6, `d2 out of range: ${d2}`)
+    counts[d1 + d2]++
+  }
+  return counts
 }
 
-console.log(`Testing ${modeLabel} Dice Implementation\n`);
-runTest(30);
-runTest(60);
-runTest(150);
+for (const mode of ['random', 'balanced']) {
+  test(`${mode} dice`, async t => {
+    const counts = rollMany(mode)
+    const total = Object.values(counts).reduce((sum, c) => sum + c, 0)
+    const pct = n => (counts[n] / ROLLS) * 100
+
+    await t.test('every roll lands on a valid total', () => {
+      assert.equal(total, ROLLS)
+      assert.deepEqual(Object.keys(counts).map(Number).sort((a, b) => a - b),
+        [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    })
+
+    await t.test('the whole range shows up', () => {
+      for (let n = 2; n <= 12; n++) assert.ok(counts[n] > 0, `total ${n} never rolled`)
+    })
+
+    await t.test('roughly bell shaped', () => {
+      assert.ok(pct(7) > 8 && pct(7) < 25, `7 rolled ${pct(7).toFixed(2)}% of the time`)
+      assert.ok(pct(2) < 10, `2 rolled ${pct(2).toFixed(2)}% of the time`)
+      assert.ok(pct(12) < 10, `12 rolled ${pct(12).toFixed(2)}% of the time`)
+      assert.ok(counts[7] > counts[2], '7 should beat 2 over 5000 rolls')
+      assert.ok(counts[7] > counts[12], '7 should beat 12 over 5000 rolls')
+    })
+
+    await t.test('avoidTotals is honored', () => {
+      const avoided = rollMany(mode, 500, [7])
+      assert.equal(avoided[7], 0, 'rolled a 7 while avoiding it')
+    })
+  })
+}
