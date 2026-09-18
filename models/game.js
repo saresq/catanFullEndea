@@ -20,6 +20,8 @@ export default class Game {
   id; player_count
   #state; #timer; #io_manager; #onGameEnd
   #active_pid = 0
+  /** Turn the last connected socket was seen on; drives the abandoned-game reaper */
+  #idle_from_turn = 1
   #spectators = new Map() // spectator_id -> Set(sockets)
   config = CONST.GAME_CONFIG
   /** @type {Player[]} */ players = []
@@ -35,6 +37,8 @@ export default class Game {
   godmode = false
   free_resources_active = false
   end_context = null
+  /** Latched before the deferred end so two VP changes in one tick cannot both end the game */
+  #ending = false
 
   get state() { return this.#state }
   set state(s) {
@@ -128,6 +132,7 @@ export default class Game {
   #next() {
     this.clearTimer()
     this.#resolvePendingActions()
+    if (this.#isAbandoned()) { return this.#onGameEnd(this.id) }
 
     if (this.turn < 3) {
       this.expected_actions.add({ callback: this.#expectedInitialBuild.bind(this) })
@@ -349,6 +354,7 @@ export default class Game {
       }
     } else if (loc_type === CONST.LOCS.CORNER) {
       const corner = this.board.findCorner(id)
+      if (!corner) return // unknown id from the client - the edge branch is gated by includes()
       if (!corner.piece) {
         const valid_locs = this.board.getSettlementLocationsFromRoads(player.pieces.R)
         if (valid_locs.includes(id) && player.canBuy('S')) {
@@ -715,6 +721,8 @@ export default class Game {
 
   #onPlayerVpChange(pid, vps) {
     if (vps < this.config.win_points) return
+    if (this.#ending) return
+    this.#ending = true
     setTimeout(_ => {
       const player = this.getPlayer(pid)
       this.end_context = {
@@ -846,6 +854,20 @@ export default class Game {
       }
     }
     this.#io_manager.updateSpectatorCount(this.#spectators.size)
+  }
+
+  /**
+   * Nobody has been connected for three full rounds, so end the game and let the session go.
+   * Closing a tab only drops the socket (deliberately, so a refresh can come back), which used to
+   * leave the turn timer re-arming itself forever. Only the timer advances a game on its own, so
+   * without it this can never fire - and it is a human acting that called `#next()` anyway.
+   */
+  #isAbandoned() {
+    if (!this.config.timer) return false
+    const connected = this.#spectators.size
+      || this.players.some(p => !p.removed && this.getPlayerSoc(p.id))
+    if (connected) { this.#idle_from_turn = this.turn }
+    return this.turn - this.#idle_from_turn >= 3
   }
 
   #getRandom(list) { return list[Math.floor(Math.random() * list.length)] }
