@@ -5,14 +5,12 @@
     left: 0;
     width: 100%;
     z-index: var(--z-panel);
-    background: color-mix(in srgb, var(--sand-color-dark) 80%, #fff0);
+    /* Skin: ui/primitives.css (.panel--drawer) */
     padding: 20px 20px 0;
     @media screen and (max-width: 768px) {
         padding: 0;
     }
-    border-bottom: 5px solid var(--sand-color-dark);
     box-sizing: border-box;
-    box-shadow: 0 0 15px 0 #000;
     justify-content: center;
     font-family: var(--font-ui), sans-serif;
 
@@ -37,35 +35,12 @@
         }
     }
 
+    /* Face and size: ui/card.css (.card--md.card--under) */
     .drop-card {
-        position: relative;
         cursor: not-allowed;
-        width: 5.5rem;
-        height: 8.5rem;
-        flex-shrink: 0;
-        box-sizing: border-box;
-        /* border: 5px dashed var(--sand-color-dark); */
-        border: 0.25rem dashed var(--sand-color);
         margin-bottom: 0.5rem;
-        border-radius: 1rem;
-
-        &.valued {
-            border-color: transparent;
-        }
 
         &::before {
-            content: '';
-            position: absolute;
-            top: -0.25rem;
-            left: -0.25rem;
-            width: 5.5rem;
-            height: 8.5rem;
-            border-radius: 0.9375rem;
-            background-image: url(/images/cards-sprite.png);
-            background-repeat: no-repeat;
-            background-color: var(--card-face);
-            /* filter: blur(3px) sepia(0.2);
-            filter: blur(3px) sepia(0.5) brightness(0.7); */
             filter: brightness(0.4) sepia(0.5);
         }
 
@@ -147,8 +122,8 @@
             width: 100%;
             text-align: center;
             background: var(--sand-color-dark);
-            border-bottom-right-radius: 0.9375rem;
-            border-bottom-left-radius: 0.9375rem;
+            border-bottom-right-radius: inherit;
+            border-bottom-left-radius: inherit;
             color: #fff9;
             /* font-size: 2em;
             font-weight: 600; */
@@ -228,36 +203,10 @@
             }
         }
 
+        /* Skin: ui/primitives.css (.btn--primary.btn--gated) */
         .drop-give-button {
             margin: 10px;
-            padding: 7px 15px;
             width: 160px;
-            box-sizing: border-box;
-            text-align: center;
-            background: #ccc;
-            color: #999;
-            font-family: var(--font-main), sans-serif;
-            border-radius: 5px;
-            font-weight: bold;
-            border: 2px solid transparent;
-            cursor: not-allowed;
-
-            &.active {
-                /* background: var(--sand-color-dark);
-                background: var(--sand-color); */
-                background: #333;
-                /* color: var(--sand-color);
-                color: var(--sand-color-dark); */
-                color: var(--sand-color);
-                cursor: pointer;
-                border-color: var(--sand-color);
-
-                /* &:hover { box-shadow: 0 0 10px 0 var(--sand-color-dark); } */
-
-                &:hover {
-                    box-shadow: 0 0 10px 0 var(--sand-color), 0 0 20px 0 var(--sand-color);
-                }
-            }
 
             &.waiting {
                 background: #ddd;

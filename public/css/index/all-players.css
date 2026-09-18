@@ -137,9 +137,8 @@
             justify-content: flex-end;
         }
 
+        /* The two hand counters are card backs: ui/card.css (.card--xs) */
         .resources, .development-cards {
-            background-size: cover;
-
             &[data-count="0"] {
                 filter: grayscale(1) brightness(1.5) contrast(0.5);
             }
@@ -159,17 +158,6 @@
                     color: #fff;
                 }
             }
-        }
-
-        .resources {
-            background-image: url(/images/resources-back.png);
-            margin-right: 5px;
-        }
-
-        .development-cards {
-            background-image: url(/images/dc-back.png);
-            background-size: 31px;
-            background-position-y: -1px;
         }
 
         .largest-army, .longest-road {
@@ -204,9 +192,14 @@
             }
         }
 
+        /* Army / road tiles sit next to the card backs at the same size */
+        :is(.largest-army, .longest-road) {
+            width: 2rem;
+            aspect-ratio: 19 / 28;
+            box-sizing: border-box;
+        }
+
         :is(.largest-army, .longest-road, .resources, .development-cards) {
-            width: 30px;
-            height: 44px;
             position: relative;
             margin-right: 5px;
             /* box-shadow: 0 0 3px 1px #0003; */
@@ -222,7 +215,7 @@
                 left: 0;
                 color: #000;
                 font-size: 1em;
-                font-family: var(--font-mono), sans-serif;
+                font-family: var(--font-body), sans-serif;
                 background: #fff;
                 border-top: 1px solid #666;
                 border-right: 1px solid #666;
@@ -401,9 +394,10 @@
             .cards-container {
                 padding: 0;
 
+                /* Smaller than .card--xs on purpose: the phone scoreboard has no room for it */
                 :is(.largest-army, .longest-road, .resources, .development-cards) {
-                    width: 16px;
-                    height: 24px;
+                    --card-w: 18px;
+                    width: 18px;
                     margin-right: 2px;
 
                     &::after {

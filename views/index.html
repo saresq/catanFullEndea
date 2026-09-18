@@ -4,6 +4,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Catan Full Endea</title>
   {{> meta}}
+  <link rel="preload" as="font" type="font/woff2" href="/css/fonts/AlegreyaSans-Regular.woff2" crossorigin>
+  <link rel="preload" as="font" type="font/woff2" href="/css/fonts/AlegreyaSans-Bold.woff2" crossorigin>
+  <!-- Cards seen in the first minute. Add each resource face here as its .webp lands in /images/cards -->
+  <link rel="preload" as="image" href="/images/cards/sheep.webp">
+  <link rel="preload" as="image" href="/images/resources-back.png">
+  <link rel="preload" as="image" href="/images/dc-back.png">
   <link rel="stylesheet" href="/css/index.css">
   <link rel="shortcut icon" type="image/jpg" href="/images/favicon.png" />
 </head>
@@ -21,37 +27,37 @@
   <div class="trade-zone">
     <div class="trade-requests"></div>
     <div class="trade-type-selection hide"></div>
-    <div class="trade-card-selection hide"></div>
+    <div class="trade-card-selection panel panel--drawer hide"></div>
   </div>
-  <div class="robber-drop-zone">
+  <div class="robber-drop-zone panel panel--drawer">
     <div class="card-area"></div>
     <div class="drop-actions">
       <div class="drop-emoji">🥷</div>
       <div class="dropped-count" data-count="0"></div>
-      <div class="drop-give-button">Let Go!</div>
+      <div class="btn btn--primary btn--gated drop-give-button">Let Go!</div>
     </div>
   </div>
-  <div class="resource-selection-zone hide"></div>
-  <div class="status-history-zone">
+  <div class="resource-selection-zone panel panel--drawer hide"></div>
+  <div class="status-history-zone panel">
     <div class="title">History<button class="close" title="H">X</button></div>
     <div class="container"></div>
   </div>
   <div class="card-preview-zone hide">
     <button class="close" title="Esc">𝖷</button>
     <div class="card-container">
-      <div class="card">
+      <div class="card card--xl card--flip">
         <div class="card-front"></div>
         <div class="card-back"></div>
       </div>
     </div>
-    <button class="activate hide">Activate</button>
+    <button class="btn btn--primary activate hide">Activate</button>
     <div class="info hide">→ You can only activate one Development card per turn.
       <br>→ You can not play the card you just bought this turn.
     </div>
   </div>
   <div class="animation-zone"></div>
   <div class="alert">
-    <div class="text"></div>
+    <div class="text panel"></div>
     <button class="close">X</button>
   </div>
   <div class="hud-top">

@@ -99,80 +99,14 @@
                 }
             }
 
+            /* Face, size and ratio: ui/card.css (.card--md) */
             .card {
-                /* cursor: pointer; */
-                --card-scale: 1;
-                width: 5.25rem;
-                height: 8rem;
-                box-sizing: border-box;
-
-                @media screen and (max-width: 768px) {
-                    --card-scale: 0.8;
-                    width: 4.2rem;
-                    height: 6.4rem;
-                }
-                /* margin-bottom: -100px; */
-                background-color: var(--card-face);
-                border-radius: 0.625rem;
-                border: 0.0625rem solid var(--card-border);
-                box-shadow: 0.1875rem 0 0.3125rem -0.1875rem #0006;
-                background-image: url(/images/cards-sprite.png);
                 position: absolute;
                 bottom: 0;
                 left: 0;
 
                 &.hide {
                     visibility: hidden;
-                }
-
-                &.S {
-                    background-size: calc(40.23rem * var(--card-scale));
-                    background-position: calc(-6.142rem * var(--card-scale)) calc(-0.458rem * var(--card-scale));
-                }
-
-                &.L {
-                    background-size: calc(40.23rem * var(--card-scale));
-                    background-position: calc(-23.226rem * var(--card-scale)) calc(-0.458rem * var(--card-scale));
-                }
-
-                &.B {
-                    background-size: calc(40.23rem * var(--card-scale));
-                    background-position: calc(-0.45rem * var(--card-scale)) calc(-0.458rem * var(--card-scale));
-                }
-
-                &.O {
-                    background-size: calc(40.23rem * var(--card-scale));
-                    background-position: calc(-11.837rem * var(--card-scale)) calc(-0.458rem * var(--card-scale));
-                }
-
-                &.W {
-                    background-size: calc(40.23rem * var(--card-scale));
-                    background-position: calc(-17.531rem * var(--card-scale)) calc(-0.458rem * var(--card-scale));
-                }
-
-                &.dK {
-                    background-size: calc(43.7625rem * var(--card-scale));
-                    background-position: calc(-37.6125rem * var(--card-scale)) calc(-0.7875rem * var(--card-scale));
-                }
-
-                &.dR {
-                    background-size: calc(40.3875rem * var(--card-scale));
-                    background-position: calc(-0.6rem * var(--card-scale)) calc(-9.1875rem * var(--card-scale));
-                }
-
-                &.dY {
-                    background-size: calc(41.1375rem * var(--card-scale));
-                    background-position: calc(-12.675rem * var(--card-scale)) calc(-9.2625rem * var(--card-scale));
-                }
-
-                &.dM {
-                    background-size: calc(40.3875rem * var(--card-scale));
-                    background-position: calc(-6.6375rem * var(--card-scale)) calc(-8.9625rem * var(--card-scale));
-                }
-
-                &.dVp {
-                    background-size: calc(39.2625rem * var(--card-scale));
-                    background-position: calc(-11.775rem * var(--card-scale)) calc(-17.25rem * var(--card-scale));
                 }
             }
 
@@ -332,7 +266,7 @@
         /* TIMER */
 
         .timer {
-            font-family: var(--font-mono), sans-serif;
+            font-family: var(--font-body), sans-serif;
             font-size: 2em;
             position: relative;
             top: 0;
@@ -544,19 +478,14 @@
             cursor: pointer;
             padding: 0;
 
-            img {
-                width: 2.25rem;
-                border: none;
-            }
-
-            &:is(:hover, :focus) img {
+            &:is(:hover, :focus) .card {
                 filter: brightness(0.7);
             }
 
             &.disabled, &[data-count="0"] {
                 cursor: not-allowed;
 
-                img {
+                .card {
                     filter: grayscale(1);
                     opacity: .5;
                 }
@@ -578,7 +507,7 @@
                 min-width: 1.4em;
                 min-height: 1.4em;
                 padding: 0.2em;
-                font-family: var(--font-mono), sans-serif;
+                font-family: var(--font-body), sans-serif;
                 font-size: 1em;
                 font-weight: bold;
                 color: #999;
@@ -799,136 +728,25 @@
     }
 
     .card-container {
-        width: 12.25rem;
-        height: 18.875rem;
         margin-top: 15rem;
         perspective: 18.75rem;
     }
 
+    /* Face, size and flip structure: ui/card.css (.card--xl.card--flip) */
     .card {
-        width: 100%;
-        height: 100%;
-        box-sizing: border-box;
-        position: relative;
-        border-radius: 0.9375rem;
-        box-shadow: 0 0 0.9375rem 0 #000c;
+        box-shadow: var(--shadow-2);
         transition: all var(--t-fast) linear;
-        border: 0.0625rem solid var(--card-border);
-        transform-style: preserve-3d;
-
-        .card-front, .card-back {
-            position: absolute;
-            border-radius: 0.9375rem;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-        }
-
-        .card-front {
-            background-color: var(--card-face);
-            overflow: hidden;
-        }
-
-        .card-front::before {
-            content: '';
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            background-image: url(/images/cards-sprite.png);
-        }
-
-        &[data-type="S"] .card-front::before {
-            background-size: 98.125rem;
-            background-position: -15.8125rem -1.125rem;
-        }
-
-        &[data-type="L"] .card-front::before {
-            background-size: 98.125rem;
-            background-position: -56.6875rem -0.75rem;
-        }
-
-        &[data-type="O"] .card-front::before {
-            background-size: 96.875rem;
-            background-position: -29.625rem -0.625rem;
-        }
-
-        &[data-type="B"] .card-front::before {
-            background-size: 96.875rem;
-            background-position: -1.1875rem -1.3125rem;
-        }
-
-        &[data-type="W"] .card-front::before {
-            background-size: 98.125rem;
-            background-position: -43.4375rem -0.8125rem;
-        }
-
-        &[data-type="dK"] .card-front::before {
-            background-size: 102.5rem;
-            background-position: -88.0625rem -1.8125rem;
-            transform: rotateZ(-1deg);
-        }
-
-        &[data-type="dR"] .card-front::before {
-            background-size: 98.125rem;
-            transform: rotateX(-5deg) rotateY(-15deg) rotateZ(-1deg);
-            background-position: -1.8125rem -22.4375rem;
-        }
-
-        &[data-type="dY"] .card-front::before {
-            background-size: 96.875rem;
-            background-position: -29.875rem -21.625rem;
-            transform: rotateZ(-1deg);
-        }
-
-        &[data-type="dM"] .card-front::before {
-            background-size: 96.875rem;
-            background-position: -16.0625rem -21.5rem;
-            transform: rotateX(-5deg) rotateY(-10deg) rotateZ(0deg);
-        }
-
-        &[data-type="dVp"] .card-front::before {
-            background-size: 95rem;
-            background-position: -28.8125rem -41.75rem;
-            transform: rotateX(-12deg) rotateY(-4deg) rotateZ(1deg);
-        }
-
-        /* &[data-type="dY"], &[data-type="dK"] { background-color: #eecf85; } */
-
-        &[data-type="dR"] .card-front {
-            background-color: #dbbe6a;
-        }
-
-        &[data-type="dVp"] .card-front {
-            background-color: #cfaf5d;
-        }
-
-        .card-back {
-            background-color: #fff;
-            transform: rotateY(180deg);
-        }
-
-        &[data-type="S"], &[data-type="L"], &[data-type="O"], &[data-type="B"], &[data-type="W"] {
-            .card-back {
-                background-image: url(/images/resources-back.png);
-                background-size: 209px;
-                background-position: -6px -3px;
-            }
-        }
-
-        &[data-type="dK"], &[data-type="dR"], &[data-type="dY"], &[data-type="dM"], &[data-type="dVp"] {
-            .card-back {
-                background-image: url(/images/dc-back.png);
-                background-size: 206px;
-                background-position: -3px -1px;
-            }
-        }
     }
 
     .card-container:has(.card[data-type="lArmy"], .card[data-type="lRoad"]) {
         height: 25.125rem;
         width: 20.4375rem;
 
+        /* Largest Army / Longest Road are tiles, not cards: they fill their own box */
         .card {
+            width: 100%;
+            height: 100%;
+            aspect-ratio: auto;
             transition: none;
 
             .card-front::before {
@@ -947,23 +765,13 @@
         transition: opacity 0s linear, z-index 0s linear;
     }
 
+    /* Skin: ui/primitives.css (.btn--primary) */
     .activate {
         margin-top: 3.75rem;
-        padding: 0.8125rem 2.1875rem;
-        border: 0.125rem solid;
-        border-radius: 3.125rem;
-        color: var(--sand-color);
-        background: #333;
-        font-weight: bold;
-        letter-spacing: 0.0625rem;
         text-transform: uppercase;
-        cursor: pointer;
+        letter-spacing: 0.0625rem;
         z-index: 1;
         position: relative;
-
-        &:hover, &:focus {
-            box-shadow: 0 0 0.625rem 0 var(--sand-color), 0 0 1.875rem 0 var(--sand-color);
-        }
 
         &.hide {
             display: none;

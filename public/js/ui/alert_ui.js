@@ -199,7 +199,7 @@ export default class AlertUI {
         <small>
           ${S ? `<div class="pts S"><div class="pts-icon"></div><b>${S} VP</b> <span>${S} Settlement${S>1?'s':''}</span></div>` : ''}
           ${C ? `<div class="pts C"><div class="pts-icon"></div><b>${C * 2} VP</b> <span>${C} Cit${C>1?'ies':'y'}</span></div>` : ''}
-          ${dVp ? `<div class="pts dVp" data-type="dVp"><div class="pts-icon"></div><b>${dVp} VP</b> <span>${dVp} Card${dVp>1?'s':''}</span></div>` : ''}
+          ${dVp ? `<div class="pts dVp" data-type="dVp"><div class="card card--xs" data-card="dVp"></div><b>${dVp} VP</b> <span>${dVp} Card${dVp>1?'s':''}</span></div>` : ''}
           ${largest_army ? `<div class="pts army" data-type="lArmy"><div class="pts-icon"></div><b>2 VP</b> <span>Largest Army (${largest_army})</span></div>` : ''}
           ${longest_road ? `<div class="pts road" data-type="lRoad"><div class="pts-icon"></div><b>2 VP</b> <span>Longest Road (${longest_road})</span></div>` : ''}
         </small>
@@ -218,7 +218,7 @@ export default class AlertUI {
 
         <div class="rematch-section">
           <div class="rematch-vote-row">
-            <button class="vote-rematch">Vote Rematch</button>
+            <button class="btn btn--primary vote-rematch">Vote Rematch</button>
             <div class="rematch-timer">⏳ <span class="time-left">${REMATCH_SECONDS}</span>s</div>
           </div>
           <div class="rematch-status"></div>

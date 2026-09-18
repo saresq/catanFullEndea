@@ -28,14 +28,14 @@ class LoginUI {
       <div class="full-game-section">
         <div class="notice">The game you are trying to join is currently full</div>
         <div class="actions">
-          <button class="btn btn-secondary back">Go Back</button>
-          <button class="btn btn-primary spectate">Spectate</button>
+          <button class="btn btn--secondary back">Go Back</button>
+          <button class="btn btn--primary spectate">Spectate</button>
         </div>
       </div>
     ` : `
       <input type="text" class="name" name="name" placeholder="Your Name" value="${name}"/>
       <input type="text" class="game-key" name="game_id" placeholder="Game Key" value="${preGameId}"/>
-      <button class="btn btn-primary join">Join Game</button>
+      <button class="btn btn--primary join">Join Game</button>
     `
 
     this.accessibility_ui.render()
@@ -73,10 +73,10 @@ class LoginUI {
                 <option value="balanced">Balanced</option>
               </select>
             </div>
-            <button class="btn btn-primary host">Start Game</button>
+            <button class="btn btn--primary host">Start Game</button>
           </div>
           <div class="map-editor-link">
-            <button class="btn btn-secondary map-editor">Go to Map Editor</button>
+            <button class="btn btn--secondary map-editor">Go to Map Editor</button>
           </div>
         </div>
         <div class="section join-section">
@@ -102,7 +102,7 @@ class LoginUI {
     // Setup name input enter key handler
     this.$container.querySelector('.host-section input').addEventListener('keydown', e => {
       if (e.code === 'Enter') {
-        const btn = this.$container.querySelector('.host-section .btn-primary')
+        const btn = this.$container.querySelector('.host-section .host')
         btn && btn.click()
       }
     })
@@ -127,7 +127,7 @@ class LoginUI {
     enforceMapSizeOptions()
     
     // Setup host submit button
-    this.$container.querySelector('.host-section .btn-primary').addEventListener('click', e => {
+    this.$container.querySelector('.host-section .host').addEventListener('click', e => {
       const host_name = this.$container.querySelector('.host-section input.name').value
       const player_count = +(this.$container.querySelector('.host-section select.player-count')?.value || 3)
       const map_id = this.$container.querySelector('.host-section select.map-size')?.value || 'standard'
@@ -151,13 +151,13 @@ class LoginUI {
       // Setup join section input enter key handlers
       this.$container.querySelectorAll('.join-section input').forEach($_ => $_.addEventListener('keydown', e => {
         if (e.code === 'Enter') {
-          const btn = this.$container.querySelector('.join-section .btn-primary')
+          const btn = this.$container.querySelector('.join-section .join')
           btn && btn.click()
         }
       }))
       
       // Setup join submit button
-      this.$container.querySelector('.join-section .btn-primary').addEventListener('click', e => {
+      this.$container.querySelector('.join-section .join').addEventListener('click', e => {
         const name = (this.$container.querySelector('.join-section input.name').value || '').trim()
         const game_key = (this.$container.querySelector('.join-section input.game-key').value || '').trim().toLowerCase()
         if (!name) {

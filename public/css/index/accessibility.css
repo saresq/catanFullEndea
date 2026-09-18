@@ -145,9 +145,7 @@
         transform: translateX(-50%);
         max-height: 85vh;
         overflow: auto;
-        background: #fff;
-        border-radius: 1rem;
-        box-shadow: 0 0 1rem rgba(0, 0, 0, 0.5);
+        /* Skin: ui/primitives.css (.panel) */
         font-family: var(--font-ui), sans-serif;
 
         &.hide {
@@ -164,6 +162,7 @@
 
         &::before {
             content: 'Keyboard Shortcuts';
+            font-family: var(--font-heading), serif;
             font-size: 1.5rem;
             margin-bottom: 1.25rem;
             position: absolute;

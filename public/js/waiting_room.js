@@ -131,7 +131,7 @@ class WaitingRoomUI {
                  style="background-image:url('/images/pieces/city-${i}.png')" title="Color ${i}"></div>
           `).join('')}
         </div>
-        <button class="close">Cancel</button>
+        <button class="btn btn--secondary btn--sm close">Cancel</button>
       </div>`
     document.body.appendChild(overlay)
     overlay.addEventListener('click', (e) => {

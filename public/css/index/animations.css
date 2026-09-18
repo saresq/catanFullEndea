@@ -169,36 +169,11 @@
         .res-icon {
             margin: 0;
 
+            /* Dev-card icons: the art crop lives in ui/card-legacy.css */
             &.dK, &.dM, &.dY, &.dR, &.dVp {
                 width: 1.875rem;
                 height: 1.875rem;
                 border-radius: 1.875rem;
-                background: url(/images/cards-sprite.png) -19.625rem -28.75rem/65.4375rem no-repeat;
-            }
-
-            &.dK {
-                background-position: -17.5rem -0.875rem;
-                background-size: 20.0625rem;
-            }
-
-            &.dR {
-                background-position: -0.5625rem -4.875rem;
-                background-size: 18.8125rem;
-            }
-
-            &.dM {
-                background-position: -3.1875rem -4.4375rem;
-                background-size: 18.125rem;
-            }
-
-            &.dY {
-                background-position: -6.0625rem -4.6875rem;
-                background-size: 18.8125rem;
-            }
-
-            &.dVp {
-                background-position: -6rem -8.6875rem;
-                background-size: 18.8125rem;
             }
         }
     }
@@ -218,68 +193,14 @@
     perspective: 300px;
 
     .card-container {
-        width: 12.25rem;
-        height: 18.875rem;
         margin-top: 3.8125rem;
         margin-left: 0.125rem;
         perspective: 18.75rem;
     }
 
+    /* Face and size: ui/card.css (.card--xl.card--flip) */
     .card {
-        width: 100%;
-        height: 100%;
-        box-shadow: 0 0 0.9375rem 0 #000c;
-        background-color: var(--card-face);
-        overflow: hidden;
-        position: relative;
-        border-radius: 0.9375rem;
-        perspective: 625rem;
-
-        &::before {
-            content: '';
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            background-image: url(/images/cards-sprite.png);
-        }
-
-        &.dK::before {
-            background-size: 102.5rem;
-            background-position: -88.0625rem -1.8125rem;
-            transform: rotateZ(-1deg);
-        }
-
-        &.dR::before {
-            background-size: 98.125rem;
-            transform: rotateX(-5deg) rotateY(-15deg) rotateZ(-1deg);
-            background-position: -1.8125rem -22.4375rem;
-        }
-
-        &.dY::before {
-            background-size: 96.875rem;
-            background-position: -29.875rem -21.625rem;
-            transform: rotateZ(-1deg);
-        }
-
-        &.dM::before {
-            background-size: 96.875rem;
-            background-position: -16.0625rem -21.5rem;
-            transform: rotateX(-5deg) rotateY(-10deg) rotateZ(0deg);
-        }
-
-        &.dVp::before {
-            background-size: 95rem;
-            background-position: -28.8125rem -41.75rem;
-            transform: rotateX(-12deg) rotateY(-4deg) rotateZ(1deg);
-        }
-
-        &.dR {
-            background-color: #dbbe6a;
-        }
-
-        &.dVp {
-            background-color: #cfaf5d;
-        }
+        box-shadow: var(--shadow-2);
     }
 
     &.start {
@@ -359,34 +280,16 @@
             opacity: 0;
         }
 
+        /* Face and size: ui/card.css (.card--md) */
         .knight {
-            width: 5.75rem;
-            height: 8.6875rem;
             position: absolute;
-            background-color: #dabd63;
-            border-radius: 0.3125rem;
-            overflow: hidden;
             box-shadow: 0 0 0.3125rem 0.125rem #000;
             opacity: 0;
-
-            &::before {
-                content: '';
-                width: 100%;
-                height: 100%;
-                display: block;
-                background-image: url(/images/cards-sprite.png);
-            }
 
             &.first {
                 top: 3.375rem;
                 left: 4.5rem;
                 transform: rotate(-15deg) scale(1.1);
-            }
-
-            &.first::before {
-                background-size: 47.1875rem;
-                background-position: -34.125rem -11.0625rem;
-                transform: rotateZ(-2deg) rotateY(10deg) rotateX(-5deg);
             }
 
             &.second {
@@ -395,22 +298,10 @@
                 transform: scale(1.1);
             }
 
-            &.second::before {
-                background-size: 47rem;
-                background-position: -40.1875rem -11.3125rem;
-                transform: rotateZ(-2deg) rotateY(0deg) rotateX(1deg);
-            }
-
             &.third {
                 top: 3.75rem;
                 left: 14.125rem;
                 transform: rotate(15deg) scale(1.1);
-            }
-
-            &.third::before {
-                background-size: 47rem;
-                background-position: -21.125rem -10.625rem;
-                transform: rotateZ(-1deg) rotateY(0deg) rotateX(0deg);
             }
         }
     }

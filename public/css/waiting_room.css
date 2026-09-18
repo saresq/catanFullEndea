@@ -3,6 +3,7 @@
 @import "/css/constants.css";
 @import "/css/fonts.css";
 @import "/css/base.css";
+@import "/css/ui/primitives.css";
 
 :root {
     --title-padding: .8em 20px .2em;
@@ -75,6 +76,7 @@ body {
         }
 
         .name {
+            font-family: var(--font-body), sans-serif;
             font-size: 1em;
             color: #0006;
         }
@@ -334,51 +336,16 @@ body {
 
 .color-picker-overlay .picker .close {
     margin: 0 auto;
-    display: block;
-    padding: 6px 10px;
-    background: #222;
-    color: #fff;
-    border-radius: 6px;
+    display: flex;
 }
 
-/* Start Game button */
+/* Start Game / Leave: skins from ui/primitives.css */
 #waiting-room .box-header .start-game {
     margin-left: auto;
-    background: var(--player-2-color);
-    color: #fff;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-family: var(--font-ui), sans-serif;
-    font-weight: 700;
-    border: 2px solid #fff5;
-    box-shadow: 0 2px 6px #0006;
 }
 
 #waiting-room .box-header .start-game.hide + .leave-lobby {
     margin-left: auto;
-}
-
-#waiting-room .box-header .leave-lobby {
-    background: #0004;
-    color: #fff;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-family: var(--font-ui), sans-serif;
-    font-weight: 700;
-    border: 2px solid #fff3;
-    transition: all var(--t-fast) ease;
-    font-size: 0.9rem;
-
-    &:hover {
-        background: var(--trade-negative);
-        border-color: #fff5;
-    }
-}
-
-#waiting-room .box-header .start-game:disabled {
-    opacity: .6;
-    cursor: not-allowed;
-    filter: grayscale(0.2);
 }
 
 #waiting-room .box-header .start-game.hide {

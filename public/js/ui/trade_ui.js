@@ -37,15 +37,15 @@ export default class TradeUI {
     this.$card_selection.innerHTML = `
       <div class="card-section">${Object.keys(CONST.RESOURCES).map(res => `
         <div class="card-container">
-          <div class="card giving-card" data-count="0" data-type="${res}"></div>
-          <div class="card taking-card" data-count="0" data-type="${res}"></div>
+          <div class="card card--lg card--under card--top giving-card" data-count="0" data-type="${res}"></div>
+          <div class="card card--lg card--under card--bottom taking-card" data-count="0" data-type="${res}"></div>
         </div>`).join('')}
       </div>
       <div class="info-section">
         <div class="giving-text"></div>
         <div class="action-container">
           <button class="reset" title="Reset">↺</button>
-          <button class="submit"></button>
+          <button class="btn btn--primary btn--gated submit"></button>
         </div>
         <div class="taking-text"></div>
       </div>
@@ -219,9 +219,9 @@ export default class TradeUI {
           &<span class="asking disabled">asking ${resToText(asking)}</span>
         </div>
         <div class="actions">
-          <button class="confirm" data-id="${id}">Accept</button>
-          <button class="counter" data-id="${id}">Counter</button>
-          <button class="ignore" data-id="${id}">Ignore</button>
+          <button class="btn btn--primary btn--sm btn--gated confirm" data-id="${id}">Accept</button>
+          <button class="btn btn--secondary btn--sm btn--gated counter" data-id="${id}">Counter</button>
+          <button class="btn btn--quiet btn--sm ignore" data-id="${id}">Ignore</button>
         </div>
       </div>
     `)
@@ -251,7 +251,7 @@ export default class TradeUI {
         <span class="giving">→${resToText(giving)}</span>
         <span class="for">for</span>
         <span class="asking">←${resToText(asking)}</span>
-        <button class="cancel" type="button">Withdraw</button>
+        <button class="btn btn--quiet btn--sm cancel" type="button">Withdraw</button>
       </div>
     `
     if ($all_req) {

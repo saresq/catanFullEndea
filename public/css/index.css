@@ -1,5 +1,8 @@
 @import './constants.css';
 @import './resources.css';
+@import './ui/primitives.css';
+@import './ui/card-legacy.css';
+@import './ui/card.css';
 @import './index/all-players.css';
 @import './index/board.css';
 @import './index/current-player.css';

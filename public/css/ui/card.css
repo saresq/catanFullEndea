@@ -1,0 +1,109 @@
+/*
+ * One card, every size.
+ *   <div class="card card--md" data-card="S"></div>
+ * Type comes from data-card (or the data-type the older markup already carries):
+ *   S L B O W  dK dR dM dY dVp (+ data-vp="1..5")  res-back dev-back
+ * --card-w is the only size knob: height, radius, border and shadow derive from it.
+ * Never set height, background-size or background-position on a card outside ui/card*.css.
+ *
+ * Adding final art: drop the 608x896 PNG in /images/cards, run scripts/cards-to-webp.sh, add its
+ * --card-img line below and delete its entry in card-legacy.css.
+ */
+.card {
+    --card-w: 5.25rem;
+    --card-pos: center;
+    width: var(--card-w);
+    aspect-ratio: 19 / 28;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    border-radius: calc(var(--card-w) * .075);
+    border: calc(var(--card-w) * .012) solid var(--card-border);
+    box-shadow: 0 calc(var(--card-w) * .02) calc(var(--card-w) * .06) 0 #0006;
+}
+
+/*
+ * The face. Exports carry a ~2% transparent margin, 104% bleeds it off.
+ * --legacy-* only exist for sprite cards (card-legacy.css); unset, the fallbacks apply.
+ */
+.card:not(.card--under, .card--flip),
+.card--under::before,
+.card--flip .card-front::before {
+    background: var(--card-face) var(--card-img) var(--legacy-pos, var(--card-pos)) / var(--legacy-size, 104%) no-repeat;
+}
+
+/* Sizes */
+.card--xs { --card-w: 2rem; }
+.card--sm { --card-w: 3.5rem; }
+.card--md { --card-w: 5.25rem; }
+.card--lg { --card-w: 8.5rem; }
+.card--xl { --card-w: 12.5rem; }
+
+@media screen and (max-width: 768px) {
+    .card--md { --card-w: 4.2rem; }
+}
+
+/* Face painted on ::before, so a filter on the art leaves the card's children alone */
+.card--under {
+    position: relative;
+    border: 0;
+    box-shadow: none;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        box-sizing: border-box;
+        border: calc(var(--card-w) * .012) solid var(--card-border);
+        border-radius: inherit;
+    }
+}
+
+/* Half cards: the trade drawer splits one card into a giving (top) and a taking (bottom) half */
+.card--top, .card--bottom {
+    aspect-ratio: 19 / 14;
+}
+
+.card--top {
+    --card-pos: center 3.5%;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.card--bottom {
+    --card-pos: center 96.5%;
+    --card-half: calc(14 / 19);
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+/* Two-sided card for the 3D preview: <div class="card card--flip"><div class="card-front"/><div class="card-back"/></div> */
+.card--flip {
+    position: relative;
+    transform-style: preserve-3d;
+
+    .card-front, .card-back {
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        overflow: hidden;
+        backface-visibility: hidden;
+    }
+
+    .card-front {
+        background: var(--card-face);
+    }
+
+    .card-front::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+    }
+
+    .card-back {
+        transform: rotateY(180deg);
+        background: var(--card-face) var(--card-back-img) center / 106.6% no-repeat;
+    }
+}
+
+/* Faces with final art */
+.card:is([data-card="S"], [data-type="S"]) { --card-img: url(/images/cards/sheep.webp); }

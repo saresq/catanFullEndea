@@ -38,32 +38,3 @@
         width: 15px;
     }
 }
-
-/* Resource-card sprite offsets, shared by the robber-drop and resource-selection panels */
-#game > .robber-drop-zone .drop-card,
-#game > .resource-selection-zone .card-area .card {
-    &[data-type=S]::before {
-        background-size: 42.146rem;
-        background-position: -6.435rem -0.48rem;
-    }
-
-    &[data-type=L]::before {
-        background-size: 42.146rem;
-        background-position: -24.329rem -0.48rem;
-    }
-
-    &[data-type=B]::before {
-        background-size: 42.146rem;
-        background-position: -0.471rem -0.48rem;
-    }
-
-    &[data-type=O]::before {
-        background-size: 42.146rem;
-        background-position: -12.399rem -0.48rem;
-    }
-
-    &[data-type=W]::before {
-        background-size: 42.146rem;
-        background-position: -18.364rem -0.48rem;
-    }
-}

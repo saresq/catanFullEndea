@@ -1,0 +1,117 @@
+/*
+ * Shared button set and panel skin. Skin only: position and size stay with the screen that uses them.
+ *   <button class="btn btn--primary">   ink pill, the default call to action
+ *   btn--secondary                      sand pill, the alternative next to a primary
+ *   btn--quiet                          text only
+ *   btn--danger                         leave / quit
+ * btn--sm is a size, not a variant. Disabled is `:disabled`, `.disabled`, or - for the buttons the
+ * game enables by adding `.active` - `btn--gated` without `.active`.
+ */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: var(--space-2) var(--space-5);
+    border: 0.125rem solid transparent;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-display), serif;
+    font-size: var(--text-md);
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    transition: box-shadow var(--t-fast) linear, background-color var(--t-fast) linear;
+
+    /* White ring + ink halo: reads on the sand panel and on the dark drawer */
+    &:focus-visible {
+        outline: 0.125rem solid #fff;
+        outline-offset: 0.125rem;
+        box-shadow: 0 0 0 0.375rem var(--surface-ink);
+    }
+
+    &:disabled, &.disabled, &.btn--gated:not(.active) {
+        background: #ccc;
+        color: #999;
+        border-color: transparent;
+        box-shadow: none;
+        cursor: not-allowed;
+    }
+
+    @media screen and (max-width: 768px) {
+        min-width: 44px;
+        min-height: 44px;
+    }
+}
+
+.btn--sm {
+    padding: var(--space-1) var(--space-4);
+    font-size: var(--text-sm);
+}
+
+.btn--primary {
+    background: var(--surface-ink);
+    color: var(--surface-sand);
+    border-color: var(--surface-sand);
+
+    &:hover {
+        box-shadow: 0 0 0.625rem 0 var(--surface-sand), 0 0 1.25rem 0 var(--surface-ink);
+    }
+
+    &:active {
+        background: #000;
+    }
+}
+
+.btn--secondary {
+    background: var(--surface-sand);
+    color: var(--surface-ink);
+    border-color: var(--surface-ink);
+
+    &:hover {
+        box-shadow: 0 0 0.625rem 0 var(--surface-ink);
+    }
+}
+
+.btn--quiet {
+    background: none;
+    color: inherit;
+    padding-inline: var(--space-3);
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.btn--danger {
+    background: var(--trade-negative);
+    color: #fff;
+
+    &:hover {
+        box-shadow: 0 0 0.625rem 0 var(--trade-negative);
+    }
+}
+
+/* Disabled wins over any variant's hover */
+.btn:is(:disabled, .disabled, .btn--gated:not(.active)):hover {
+    box-shadow: none;
+    text-decoration: none;
+}
+
+/* Sand panel: modals and sheets (history, shortcuts, end game) */
+.panel {
+    background: var(--surface-sand);
+    color: var(--surface-sand-text);
+    border: 0.0625rem solid var(--sand-color-dark);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-2);
+    scrollbar-color: var(--sand-color-dark) transparent;
+}
+
+/* Translucent drawer docked to a screen edge (trade, discard, resource picker) */
+.panel--drawer {
+    background: var(--surface-drawer);
+    color: var(--surface-drawer-text);
+    border: 0;
+    border-bottom: 0.3125rem solid var(--sand-color-dark);
+    border-radius: 0;
+}

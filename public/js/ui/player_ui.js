@@ -102,7 +102,7 @@ export default class PlayerUI {
         </button>
         <button class="dev-card disabled" title="Buy Development Card (d)" data-count="-">
           <div class="cost-tooltip">${resToIcons(CONST.COST.DEV_C)}</div>
-          <img src="/images/dc-back.png"/>
+          <div class="card card--xs" data-card="dev-back"></div>
           <div class="count">-</div>
         </button>
         <button class="roll-dice disabled" data-mode="roll" title="Roll Dice (Space)"><span class="label">🎲</span></button>
@@ -407,7 +407,8 @@ export default class PlayerUI {
         >${count}</div>
         ${[...Array(visualCount)].map((_, j) => {
         return `
-            <div class="card ${type}" data-type="${type}"
+            <div class="card card--md ${type}" data-type="${type}"
+              ${type === 'dVp' ? `data-vp="${j + 1}"` : ''}
               style="left: ${j * 4}px; bottom: ${j * 2}px;"
             ></div>
           `
@@ -479,7 +480,11 @@ export default class PlayerUI {
   showCardPreview(type, show_info, show_activate) {
     this.#toggleBoardBlur(true); this.togglePlayerBlur(true)
     this.$card_preview.classList.remove('hide', 'activated')
-    this.$card_preview.querySelector('.card').dataset.type = type
+    const $card = this.$card_preview.querySelector('.card')
+    $card.dataset.type = type
+    // Display only: the nth VP card held shows the nth VP face (ui/card.css)
+    if (type === 'dVp') $card.dataset.vp = Math.min(this.hand?.dVp || 1, 5)
+    else delete $card.dataset.vp
     show_activate && this.$card_preview.querySelector('.activate').classList.remove('hide')
     show_info && this.$card_preview.querySelector('.info').classList.remove('hide')
   }

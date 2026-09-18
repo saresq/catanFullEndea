@@ -51,7 +51,7 @@ export default class RobberDropUI {
     this.$card_area.style.display = ''
     this.$drop_actions.style.display = ''
     this.$card_area.innerHTML = holding_res.map(k => `
-      <div class="drop-card" data-type="${k}" data-count="0">
+      <div class="card card--md card--under drop-card" data-type="${k}" data-count="0">
         <button class="ctrl minus" title="Remove one">−</button>
         <button class="ctrl plus" title="Add one">+</button>
       </div>

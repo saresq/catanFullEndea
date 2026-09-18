@@ -58,15 +58,11 @@
         }
     }
 
+    /* Skin: ui/primitives.css (.panel) */
     .text {
-        background: var(--sand-color);
-        color: var(--sand-color-text-dark);
         padding: 1.5rem;
-        border-radius: 0.75rem;
-        box-shadow: 0 0.25rem 1.25rem rgba(0, 0, 0, 0.4);
         max-height: calc(100vh - 2.5rem);
         overflow-y: auto;
-        border: 3px solid var(--sand-color-dark);
 
         b {
             color: #734101;
@@ -101,6 +97,7 @@
         }
 
         .pts {
+            font-family: var(--font-body), sans-serif;
             line-height: 1.2;
             text-align: center;
             display: flex;
@@ -145,10 +142,9 @@
         background-image: var(--p-city);
     }
 
-    .text .game-ended .dVp .pts-icon {
-        background: #daba6a url(/images/cards-sprite.png) -5.125rem -7.4375rem/16.8125rem no-repeat;
-        width: 2.0625rem;
-        height: 3.3125rem;
+    /* The VP tile is a card: ui/card.css (.card--xs) */
+    .text .game-ended .dVp .card {
+        margin-bottom: 0.2rem;
     }
 
     .text .game-ended .army .pts-icon, .text .game-ended .road .pts-icon {
@@ -164,13 +160,13 @@
     .text .game-ended :is(.dVp, .army, .road) {
         cursor: pointer;
 
-        .pts-icon {
+        .pts-icon, .card {
             box-shadow: 0 0 0 1px #733f05;
             border-radius: 0.2rem;
         }
 
         &:hover {
-            .pts-icon {
+            .pts-icon, .card {
                 box-shadow: 0 0 0 1px #733f05, 0 0 0.3rem 0 #000;
             }
         }
@@ -190,6 +186,8 @@
         }
 
         .end-tab {
+            font-family: var(--font-heading), serif;
+            font-size: var(--text-md);
             padding: 0.6rem 0.9rem;
             cursor: pointer;
             border-bottom: 3px solid transparent;
@@ -225,7 +223,7 @@
     .end-table {
         width: 100%;
         border-collapse: collapse;
-        font-family: var(--font-main), sans-serif;
+        font-family: var(--font-body), sans-serif;
         font-size: 0.9em;
 
         th, td {
@@ -265,34 +263,8 @@
             gap: 1rem;
         }
 
-        .vote-rematch {
-            background-color: #4a6741;
-            color: var(--sand-color);
-            border: 2px solid var(--sand-color-dark);
-            border-radius: 3.125rem;
-            font-size: 1.1em;
-            font-weight: bold;
-            padding: 0.6rem 1.9rem;
-            display: inline-block;
-            transition: transform 0.1s, background-color 0.2s;
-            box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2);
-
-            &:hover {
-                background-color: #5a7d4f;
-            }
-
-            &:active {
-                transform: translateY(2px);
-                box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.2);
-            }
-
-            &[disabled] {
-                opacity: 0.6;
-                cursor: not-allowed;
-            }
-        }
-
         .rematch-timer {
+            font-family: var(--font-body), sans-serif;
             font-size: 1.2rem;
             color: #555;
         }
@@ -346,11 +318,7 @@
     padding-top: 0;
     text-align: center;
     box-sizing: border-box;
-    box-shadow: 0 0 1.25rem 0 #000;
-    background: var(--sand-color);
-    color: var(--sand-color-text-dark);
-    border-bottom: 2px solid var(--sand-color-dark);
-    border-radius: 1rem;
+    /* Skin: ui/primitives.css (.panel) */
     opacity: 0;
     z-index: -10;
     visibility: hidden;
@@ -379,6 +347,7 @@
         position: sticky;
         top: 0;
         left: 0;
+        font-family: var(--font-heading), serif;
         font-size: 1.5rem;
         text-align: center;
         padding: 0.3rem;

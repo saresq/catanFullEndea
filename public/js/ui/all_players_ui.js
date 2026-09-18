@@ -37,9 +37,9 @@ export default class AllPlayersUI {
         <div class="name" data-name="${player.name}">${player.name}</div>
         <div class="victory-points" title="Victory Points"><span>${player.public_vps + (player.private_vps || 0)}</span></div>
         <div class="cards-container">
-          <div class="resources" data-count="${player.resource_count}" title="Resources in hand"
+          <div class="resources card card--xs" data-card="res-back" data-count="${player.resource_count}" title="Resources in hand"
             data-robbable="${player.resource_count > window.game_obj.config.robber_hand_limit}"></div>
-          <div class="development-cards" title="Development Cards in hand" data-count="${player.dev_card_count}"></div>
+          <div class="development-cards card card--xs" data-card="dev-back" title="Development Cards in hand" data-count="${player.dev_card_count}"></div>
           <div class="largest-army" title="Largest Army" data-id="${player.id}"
             data-count="${player.open_dev_cards.dK}"></div>
           <div class="longest-road" title="Longest Road" data-id="${player.id}"

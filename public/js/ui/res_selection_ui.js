@@ -15,18 +15,18 @@ export default class ResSelectionUI {
       <div class="title">Select Resource</div>
       <div class="content">
         <div class="card-area">${Object.entries(CONST.RESOURCES).map(([k, txt]) =>
-          `<div class="card" data-type="${k}" data-text="${txt}" data-count="0"></div>`).join('')}
+          `<div class="card card--md card--under" data-type="${k}" data-text="${txt}" data-count="0"></div>`).join('')}
         </div>
         <div class="actions">
-          <div class="dev-card"></div>
-          <div class="submit">Take</div>
+          <div class="card card--sm dev-card"></div>
+          <div class="btn btn--primary btn--gated submit">Take</div>
         </div>
       </div>
     `
     this.#setupEvents()
   }
   #setupEvents() {
-    this.$el.querySelectorAll('.card').forEach($el => $el.addEventListener('click', e => {
+    this.$el.querySelectorAll('.card-area .card').forEach($el => $el.addEventListener('click', e => {
       const count = +e.target.dataset.count
       const res = e.target.dataset.type
       const max_count = this.type === 'dM' ? 1 : 2
@@ -65,7 +65,7 @@ export default class ResSelectionUI {
     this.$el.querySelector('.submit').innerText = submit_text
     this.$el.querySelector('.submit').classList.remove('active')
     this.$el.querySelector('.card-area').classList.remove('inactive')
-    this.$el.querySelectorAll('.card').forEach($el => $el.dataset.count = 0)
+    this.$el.querySelectorAll('.card-area .card').forEach($el => $el.dataset.count = 0)
     this.$el.classList.remove('hide')
   }
 
