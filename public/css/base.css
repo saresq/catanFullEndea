@@ -12,3 +12,8 @@ button, .button {
     padding-block: 0;
     padding-inline: 0;
 }
+
+/* Counts and timers keep their width as digits change (body face has the features) */
+body {
+    font-variant-numeric: lining-nums tabular-nums;
+}

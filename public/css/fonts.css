@@ -1,33 +1,34 @@
-@font-face {
-    font-family: Macondo;
-    src: url(/css/fonts/Macondo-Regular.ttf);
-}
-
-/* @font-face { font-family: Medieval; src: url(/css/fonts/MedievalSharp-Regular.ttf); } */
+/* Display: player names, buttons, game key */
 @font-face {
     font-family: EagleLake;
     src: url(/css/fonts/EagleLake-Regular.ttf);
+    font-display: swap;
 }
 
-/* @font-face { font-family: Roboto; src: url(/css/fonts/Roboto-Thin.ttf); font-weight: 100; } */
-/* @font-face { font-family: Roboto; src: url(/css/fonts/Roboto-Light.ttf); font-weight: 200; } */
-/* @font-face { font-family: Roboto; src: url(/css/fonts/Roboto-Regular.ttf); } */
-/* @font-face { font-family: Roboto; src: url(/css/fonts/Roboto-Bold.ttf); font-weight: 600; } */
-
-/* @font-face { font-family: Raleway; src: url(/css/fonts/Raleway-ExtraLight.ttf); font-weight: 100; } */
+/* Heading: panel, modal and section titles */
 @font-face {
-    font-family: Raleway;
-    src: url(/css/fonts/Raleway-Light.ttf);
-    font-weight: 200;
+    font-family: Almendra;
+    src: url(/css/fonts/Almendra-Regular.woff2) format('woff2');
+    font-display: swap;
 }
 
 @font-face {
-    font-family: Raleway;
-    src: url(/css/fonts/Raleway-Regular.ttf);
+    font-family: Almendra;
+    src: url(/css/fonts/Almendra-Bold.woff2) format('woff2');
+    font-weight: 700;
+    font-display: swap;
+}
+
+/* Body: status, history, counts, labels */
+@font-face {
+    font-family: 'Alegreya Sans';
+    src: url(/css/fonts/AlegreyaSans-Regular.woff2) format('woff2');
+    font-display: swap;
 }
 
 @font-face {
-    font-family: Raleway;
-    src: url(/css/fonts/Raleway-Bold.ttf);
-    font-weight: 600;
+    font-family: 'Alegreya Sans';
+    src: url(/css/fonts/AlegreyaSans-Bold.woff2) format('woff2');
+    font-weight: 700;
+    font-display: swap;
 }
