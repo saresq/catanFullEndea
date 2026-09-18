@@ -435,10 +435,10 @@ export default class PlayerUI {
       const $card_group = e.target.closest('.card-group')
       const type = $card_group.dataset.type
       const is_active = $card_group.classList.contains('active')
-      const is_dc = CONST.DEVELOPMENT_CARDS[type] && type !== 'dVp'
-      // Development cards: keep preview/activation behavior
-      if (is_dc) {
-        this.showCardPreview(type, true, this.#canPlayDevCard(type))
+      // Development cards: preview. Victory points are never played, so no Activate and no play rules
+      if (CONST.DEVELOPMENT_CARDS[type]) {
+        const playable = type !== 'dVp'
+        this.showCardPreview(type, playable, playable && this.#canPlayDevCard(type))
         return
       }
       // Resource cards
