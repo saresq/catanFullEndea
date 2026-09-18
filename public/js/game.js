@@ -621,7 +621,11 @@ export default class Game {
       && this.active_pid === this.#player.id
       && (this.state === ST.PLAYER_ACTIONS || this.state === ST.PLAYER_ROLL)
       && !this.#player._is_playing_dc
-      && (type !== 'dR' || ((CONST.PIECES_COUNT.R - this.#player.pieces.R.length) >= 2))
+      && (type !== 'dR' || (
+        (CONST.PIECES_COUNT.R - this.#player.pieces.R.length) >= 2
+        // No legal edge left: the server would refuse it anyway.
+        && this.#board.getRoadLocationsFromRoads(this.#player.pieces.R).length
+      ))
   }
   playRobberAudio() { this.#audio_manager.playRobber() }
   #amIActing(pid = this.#player.id) {

@@ -539,13 +539,17 @@ export default class Game {
     const player = this.getPlayer(pid)
     if (!player.canPlayDevCard('dR')) { return }
     if (CONST.PIECES_COUNT.R - player.pieces.R.length < 2) return
-    player.playedDevCard('dR')
     let valid_edges = this.board.getRoadLocationsFromRoads(player.pieces.R)
+    // Nowhere legal to build: keep the card instead of spending it on nothing.
+    if (!valid_edges.length) return
+    player.playedDevCard('dR')
     if (!valid_edges.includes(r1)) { r1 = this.#getRandom(valid_edges) }
     this.build(pid, 'R', r1)
     valid_edges = this.board.getRoadLocationsFromRoads(player.pieces.R)
-    if (!valid_edges.includes(r2)) { r2 = this.#getRandom(valid_edges) }
-    this.build(pid, 'R', r2)
+    if (valid_edges.length) { // the first road can be the last legal spot
+      if (!valid_edges.includes(r2)) { r2 = this.#getRandom(valid_edges) }
+      this.build(pid, 'R', r2)
+    }
     this.#io_manager.updateRoadBuildingUsed(pid)
   }
 
