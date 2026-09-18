@@ -286,7 +286,8 @@ export default class Game {
     this.#io_manager.moveRobber(pid, tile_id)
 
     // `?.` guards findTile only - without the fallback the whole chain is undefined when the
-    // board has no robbable tile, and `.length` throws inside the turn timer (see §12.1).
+    // board has no robbable tile, and `.length` throws inside the turn timer, which takes the
+    // process down. Same crash a map too small for its players once caused in #expectedInitialBuild.
     const opp_c_pids = this.board.findTile(tile_id)?.getAllCorners()
       .filter(c => c.piece && (c.player_id !== pid)).map(_ => _.player_id) || []
     if (opp_c_pids.length) {

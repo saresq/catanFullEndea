@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import Game from '../models/game.js'
 import Board from '../public/js/board/board.js'
 import * as CONST from '../public/js/const.js'
+import { until } from './helpers.js'
 
 const fakeIo = { to: () => ({ emit: () => {} }) }
 
@@ -25,20 +26,18 @@ test('initial placement survives a map with no room left', async () => {
   // Ten players on a five-tile map: the board runs out of legal corners part way through.
   // It used to throw inside the turn timer, which takes the whole server process down with it.
   const game = autoPlacedGame(TINY_MAP, 10)
-  await new Promise(res => setTimeout(res, 100))
+  await until(() => game.state === CONST.GAME_STATES.PLAYER_ROLL, 'the first roll')
   game.clearTimer()
 
-  assert.equal(game.state, CONST.GAME_STATES.PLAYER_ROLL, 'reached the first roll')
   const placed = game.players.filter(p => p.pieces.S.length).length
   assert.ok(placed >= 1, 'at least one player got a settlement')
 })
 
 test('initial placement still works on the standard map', async () => {
   const game = autoPlacedGame(CONST.GAME_CONFIG.mapkey, 4)
-  await new Promise(res => setTimeout(res, 100))
+  await until(() => game.state === CONST.GAME_STATES.PLAYER_ROLL, 'the first roll')
   game.clearTimer()
 
-  assert.equal(game.state, CONST.GAME_STATES.PLAYER_ROLL)
   game.players.forEach(p => {
     assert.equal(p.pieces.S.length, 2, `player ${p.id} placed both settlements`)
     assert.equal(p.pieces.R.length, 2, `player ${p.id} placed both roads`)

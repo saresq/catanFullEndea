@@ -3,8 +3,8 @@
 `npm test` covers game logic and cannot see a pixel. This is the other half: a scripted way to put
 the UI into the states that CSS work can break, screenshot them, and diff the colours as text.
 
-Exercised end to end on 2026-09-17 against `HEAD` vs the working tree (todo.md §3-§9). Everything
-below is a recipe that ran, not a plan.
+Exercised end to end on 2026-09-17 against `HEAD` vs the working tree, over that day's CSS dedupe
+and `pN`/`pcN` colour-class work. Everything below is a recipe that ran, not a plan.
 
 ## 1. Two servers, so "before" and "after" are side by side
 
@@ -36,7 +36,7 @@ tab 1  http://127.0.0.1:3000/login?game_id=<id>&name=Bob
 board identical between runs, so a screenshot pair differs only where the CSS does.
 
 Then, in tab 1, give Bob a colour that is **not** his id colour - `pcN !== pN` is where every colour
-bug in §9 lived:
+bug the player theme table fixed lived:
 
 ```js
 browser_click('.slot.filled[data-pid="2"] .city-icon')   // opens the picker
@@ -57,9 +57,9 @@ returns the hook names and installs `window.VISUAL`; after that one hook per cal
 | Hook | What it puts on screen |
 |---|---|
 | `VISUAL.build()` | settlements, cities and roads for both players |
-| `VISUAL.trade()` | an incoming trade offer (§9.2) |
-| `VISUAL.army()` | the Largest Army animation, parked on screen (§9.3) |
-| `VISUAL.road()` | the Longest Road animation, parked on screen (§9.3) |
+| `VISUAL.trade()` | an incoming trade offer |
+| `VISUAL.army()` | the Largest Army animation, parked on screen |
+| `VISUAL.road()` | the Longest Road animation, parked on screen |
 | `VISUAL.end()` | the end-game modal |
 | `VISUAL.colours()` | the scoreboard and the board pieces swept through all 11 colours |
 | `VISUAL.report()` | every resolved colour as JSON, for `diff` |

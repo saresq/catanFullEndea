@@ -18,7 +18,6 @@ Free to play multiplayer Catan board game
   machine, end-to-end flows, and the invariants to respect before touching them.
 - [`balanced-dice.md`](balanced-dice.md) — the optional balanced-dice algorithm.
 - [`TBD.md`](TBD.md) — everything planned, deferred or half-built, and what was decided against.
-- [`todo.md`](todo.md) — done log of the 2026-09-17 cleanup, kept for its reasoning.
 
 ---
 

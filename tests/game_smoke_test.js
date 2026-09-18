@@ -3,10 +3,10 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import Game from '../models/game.js'
 import * as CONST from '../public/js/const.js'
+import { until, tick } from './helpers.js'
 
 const ST = CONST.GAME_STATES
 const fakeIo = { to: () => ({ emit: () => {} }) }
-const tick = ms => new Promise(r => setTimeout(r, ms))
 
 function newGame(config = {}) {
   return new Game({
@@ -135,8 +135,7 @@ test('full game flow', async t => {
     const winner = game.getPlayer(1)
     winner.changeVp(game.config.win_points - winner.public_vps)
 
-    await tick(250) // game end is deferred by 200ms
-    assert.equal(game.state, ST.END)
+    await until(() => game.state === ST.END, 'the game to end') // deferred by 200ms
     assert.equal(game.end_context.pid, winner.id)
     assert.equal(game.end_context.vps, game.config.win_points)
     clearTimeout(game.end_cleanup_timer) // otherwise it keeps the process alive for 240s

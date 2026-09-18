@@ -9,8 +9,8 @@
  *  - state hooks (build/trade/army/road/end) go through `window.game.*Soc()`, the exact
  *    methods `socket_manager.js` calls, so the UI reaches a real state, not a faked DOM;
  *  - paint hooks (colours) rewrite classes only, to sweep all 11 player colours without
- *    needing 11 players. They always set `pcN !== pN`, which is the case the colour bugs
- *    in todo.md §9 lived in.
+ *    needing 11 players. They always set `pcN !== pN`, which is the case the `pN`/`pcN`
+ *    colour bugs lived in (unified 2026-09-17).
  *
  * Nothing here is reachable from the app: it lives in tests/ and is never served.
  */
@@ -43,7 +43,7 @@
     },
 
     /**
-     * Incoming trade offer from another player (§9.2). Requests render with `hide` outside
+     * Incoming trade offer from another player. Requests render with `hide` outside
      * the `player_actions` state, so drop it - the offer is what we came to look at.
      */
     trade(pid = other, id = 'visual-1') {
@@ -54,7 +54,7 @@
     },
 
     /**
-     * Largest Army animation (§9.3). `game.js` defers it 2s, then `animations_ui` fades it out
+     * Largest Army animation. `game.js` defers it 2s, then `animations_ui` fades it out
      * again 950ms later by adding `finish`. Both hooks below wait past that and strip `finish`,
      * which parks the animation on screen so a screenshot can catch it - awaiting the returned
      * promise is what `browser_evaluate` does anyway.
@@ -64,7 +64,7 @@
       return VISUAL.hold(3400)
     },
 
-    /** Longest Road animation (§9.3). Its own timeline is longer: content at 4s, `start` at 6s. */
+    /** Longest Road animation. Its own timeline is longer: content at 4s, `start` at 6s. */
     road(pid = other, locs) {
       game.updateLongestRoadSoc(pid, locs || $$('.edge.taken').map($_ => ({ id: $_.dataset.id, type: 'e' })).slice(0, 5))
       return VISUAL.hold(7000)
@@ -80,7 +80,7 @@
       }, after))
     },
 
-    /** End-game modal (§9, alert.css .game-ended.pcN). `game.js` defers it 3s; await the promise. */
+    /** End-game modal (`alert.css .game-ended.pcN`). `game.js` defers it 3s; await the promise. */
     end(pid = other, color_id = 5) {
       game.updateGameEndSoc({ pid, color_id, vps: 10, S: 3, C: 2, dVp: 1, largest_army: 3, longest_road: 6 })
       return new Promise(res => setTimeout(() => res(document.querySelector('.game-ended')?.className || 'no modal'), 3400))
@@ -129,7 +129,7 @@
         out[`row.${pc}`] = of($p, '--p-color', 'background-color')
         out[`row.${pc}.name`] = of($p.querySelector('.name'), 'color', 'background-color')
         // The badge colour lives on `::after`, and only the row named by `data-army`/`data-road`
-        // lights up - that pair is the whole of §9.1.
+        // lights up - that pair is the whole of the badge colour fix.
         out[`row.${pc}.army`] = after($p.querySelector('.largest-army'))
         out[`row.${pc}.road`] = after($p.querySelector('.longest-road'))
       })

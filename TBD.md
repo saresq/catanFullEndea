@@ -1,8 +1,7 @@
 # TBD
 
 Every piece of work that is planned, deferred or half-built, in one place. Nothing here is in
-progress. The counterpart is [`todo.md`](todo.md), which is the *done* log of the 2026-09-17 cleanup
-and is kept for its reasoning, not for its checkboxes.
+progress.
 
 Ordered by value / risk, most worth doing first. Each entry says what is wrong, how it is known, and
 what a fix takes, so nobody has to re-derive it.
@@ -19,7 +18,7 @@ list it used to live in is in the git history.
 
 ### 1.1 Cookie identity is unauthenticated (`game_id` / `player_id`) — highest value
 
-**Found:** 2026-09-17, while fixing the `/api/sessions/clear` auth bypass (`todo.md` §1).
+**Found:** 2026-09-17, while fixing the `/api/sessions/clear` auth bypass (`fd2696c`).
 **Severity:** medium. One game per request, and the attacker needs the game id.
 
 `game_id` and `player_id` are plain client-set cookies with no signature and no server-side session.
@@ -49,7 +48,7 @@ list, but ids are shared openly in invite links — anyone who has seen a link c
 `/logout` and on socket connect instead of trusting the pid. Keep the pid for game logic; the token is
 only for "is this really that player". Touches join, the cookie writes, `/logout`, the socket connect
 block, and `hasPlayer` call sites — bigger than a one-line change, which is why it was left out of the
-§1 security commit.
+`fd2696c` security commit.
 
 ### 1.2 `SAVE_STATUS` stores client text verbatim
 
@@ -136,7 +135,7 @@ widening its use. A fix is either escaping on render or validating on receipt.
 
 ### 3.1 A board nobody can build on never ends the game
 
-**Found:** 2026-09-18, designing the fix for `todo.md` §12.4. **Severity:** low, and hand-made maps
+**Found:** 2026-09-18, designing the abandoned-game reaper (`5865429`). **Severity:** low, and hand-made maps
 only. Designed in full, deliberately not built — the numbers below say why.
 
 `models/game.js` `#onPlayerVpChange` is the only path to `END`, and it returns early unless someone
@@ -148,9 +147,9 @@ because a boxed board cannot reach the state; the map editor can.
 **Why it is not built.** A soak fired the predicate 0/25 times on the preset map and 6/25 on a tiny
 hand-made one. It also cannot fix the "server loops forever" symptom it was proposed for: the
 predicate needs an empty dev deck, and timer auto-advance never buys a card, so an abandoned game
-always has a full deck. That was `todo.md` §12.4 and is fixed. This is worth ~40 lines only because
-§12.1 established tiny hand-made maps as a real thing users make, and this is the second way they
-wedge.
+always has a full deck. That was the abandoned-game reaper, and it is fixed (`5865429`). It is worth
+~40 lines only because a five-tile hand-made map has already crashed the server once (`Board.maxPlayers`,
+2026-09-17), so tiny maps are a real thing users make and this is the second way they wedge.
 
 **Decided: one winner, not a draw.** The end screen hardcodes a single winner
 (`public/js/game.js:328`, `public/js/ui/alert_ui.js:193`) and a real multi-winner screen is 40-60
@@ -184,7 +183,7 @@ Note a `dVp` in hand is **not** a future VP source: `bought()` pays its point at
   it O(1) in every real game.
 - `models/game.js` — split the body of `#onPlayerVpChange`'s timeout into
   `#endGame(player, stalemate)` so both paths build the same `end_context`; add `stalemate: true`
-  and `tied_pids` (every pid sharing the winning total) to it. The `#ending` latch added in §12.5
+  and `tied_pids` (every pid sharing the winning total) to it. The `#ending` latch (`5865429`)
   already covers re-entrancy.
 - `models/game.js` `#next()`, `case ST.PLAYER_ROLL` — before `#expect`, if `#isStalemate()` pick the
   winner by the tie-break above and call `#endGame(winner, true)`. `turn < 3` returns above the
@@ -214,8 +213,8 @@ true multi-winner draw screen.
 
 ## 5. Comments still owed
 
-Three places where the decision was "leave the code, write down why" (`todo.md` §"Deliberately NOT
-doing") and the note was never written. Verified absent 2026-09-17.
+Three places where the decision was "leave the code, write down why" (§6 below) and the note was
+never written. Verified absent 2026-09-17.
 
 - `public/css/map-editor.css` — say that the duplicated `@font-face` and image paths are deliberate:
   `deploy-gh-pages.sh` ships `map-editor.html` standalone to GitHub Pages, where absolute
