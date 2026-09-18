@@ -148,6 +148,26 @@
       return out
     },
 
+    /**
+     * Every visible card: where it is, its box, its ratio (must be 19/28 = 0.679; the trade drawer's
+     * half cards are 19/14 = 1.357) and the image it resolves to. The face is on `::before` for
+     * `.card--under` and on `.card-front::before` for `.card--flip`.
+     */
+    cards() {
+      const img = ($el, pseudo) => getComputedStyle($el, pseudo).backgroundImage.replace(/^url\("?[^/]*\/\/[^/]+|"?\)$/g, '')
+      return $$('.card').filter($c => $c.offsetWidth && $c.checkVisibility?.({ visibilityProperty: true }) !== false).map($c => {
+        // Computed size, not offset*/rects: fractional, and blind to the knights' rotation
+        const cs = getComputedStyle($c), w = parseFloat(cs.width), h = +parseFloat(cs.height).toFixed(2)
+        const $front = $c.querySelector(':scope > .card-front')
+        return {
+          where: $c.closest('#game > *, .animation-zone')?.className.split(' ')[0] || '?',
+          card: $c.dataset.card || $c.dataset.type,
+          w, h, ratio: +(w / h).toFixed(3),
+          image: $front ? img($front, '::before') : img($c, $c.classList.contains('card--under') ? '::before' : null),
+        }
+      })
+    },
+
     /** Undo everything (server state stays, the page re-renders from it). */
     reset() { location.reload() },
   }

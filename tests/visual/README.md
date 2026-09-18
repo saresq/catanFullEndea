@@ -63,6 +63,7 @@ returns the hook names and installs `window.VISUAL`; after that one hook per cal
 | `VISUAL.end()` | the end-game modal |
 | `VISUAL.colours()` | the scoreboard and the board pieces swept through all 11 colours |
 | `VISUAL.report()` | every resolved colour as JSON, for `diff` |
+| `VISUAL.cards()` | every visible `.card`: location, box, ratio (19/28 = 0.679) and resolved image |
 | `VISUAL.reset()` | reload, back to server state |
 
 `army`, `road` and `end` return promises - `browser_evaluate` awaits them, so the call returns when
@@ -74,7 +75,8 @@ them, and a reload undoes everything.
 
 ## 4. What to capture, at both widths
 
-`browser_resize` to **1280x800** and **390x844** (the `768px` breakpoint is in both JS and CSS).
+`browser_resize` to **1280x650** and **390x844** (the `768px` breakpoint is in both JS and CSS). For
+type, button, panel or card work, the full set: **1280x650, 390x844, 360x640, 844x390, 640x360**.
 
 1. waiting room with the colour picker open
 2. board with pieces - after `build()`
