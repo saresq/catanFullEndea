@@ -49,11 +49,12 @@ test('a bad edge id is ignored too', () => {
 test('a legal corner still builds', () => {
   const game = playingGame()
   const player = game.getActivePlayer()
-  player.giveCards({ L: 5, B: 5, W: 5, S: 5 })
+  player.giveCards({ L: 12, B: 12, W: 5, S: 5 })
   // Straight after setup both road ends sit next to the player's own settlement, so the distance
-  // rule leaves no legal corner. Extend outward until one opens up.
+  // rule leaves no legal corner. Extend outward until one opens up. The setup is random, so how
+  // many roads that takes varies; corner id 0 is a valid find.
   let loc
-  for (let i = 0; i < 4 && !loc; i++) {
+  for (let i = 0; i < 10 && loc === undefined; i++) {
     loc = game.board.getSettlementLocationsFromRoads(player.pieces.R)[0]
     if (loc === undefined) {
       const edge = game.board.getRoadLocationsFromRoads(player.pieces.R)[0]
