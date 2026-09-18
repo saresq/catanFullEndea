@@ -116,8 +116,6 @@ export default class IOManager {
 
   updateRollDistribution(data) { this.emit(SOC.ROLL_DISTRIBUTION, data) }
 
-  updateRobbed_Private(player_socket_id) { if (!player_socket_id) { return } this.#io.to(player_socket_id).emit(SOC.ROBBER_DROP) }
-
   moveRobber(active_pid, id) { this.emit(SOC.ROBBER_MOVE, active_pid, id) }
 
   updateStolen_Private(player_socket_id, p1_id, p2_id, res) {

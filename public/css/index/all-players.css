@@ -2,7 +2,7 @@
     position: fixed;
     right: 0;
     top: 0;
-    width: 240px;
+    width: var(--scoreboard-width);
     filter: drop-shadow(0px 0 10px #000);
     pointer-events: auto;
 
@@ -62,8 +62,9 @@
     .player {
         width: 100%;
         position: relative;
-        background: var(--sand-color);
-        border: 3px solid var(--sand-color-dark);
+        /* Player colours. See the player theme table in constants.css. */
+        background: var(--p-color-light, var(--sand-color));
+        border: 3px solid var(--p-color-dark, var(--sand-color-dark));
         border-top: none;
         border-right: none;
         display: flex;
@@ -86,56 +87,6 @@
             filter: drop-shadow(0px 0 3px #000);
         }
 
-        &.p1 {
-            background: var(--player-1-color-light);
-            border-color: var(--player-1-color-dark);
-        }
-
-        &.p2 {
-            background: var(--player-2-color-light);
-            border-color: var(--player-2-color-dark);
-        }
-
-        &.p3 {
-            background: var(--player-3-color-light);
-            border-color: var(--player-3-color-dark);
-        }
-
-        &.p4 {
-            background: var(--player-4-color-light);
-            border-color: var(--player-4-color-dark);
-        }
-
-        &.p5 {
-            background: var(--player-5-color-light);
-            border-color: var(--player-5-color-dark);
-        }
-
-        &.p6 {
-            background: var(--player-6-color-light);
-            border-color: var(--player-6-color-dark);
-        }
-
-        &.p7 {
-            background: var(--player-7-color-light);
-            border-color: var(--player-7-color-dark);
-        }
-
-        &.p8 {
-            background: var(--player-8-color-light);
-            border-color: var(--player-8-color-dark);
-        }
-
-        &.p9 {
-            background: var(--player-9-color-light);
-            border-color: var(--player-9-color-dark);
-        }
-
-        &.p10 {
-            background: var(--player-10-color-light);
-            border-color: var(--player-10-color-dark);
-        }
-
         .name {
             width: 100%;
             overflow: hidden;
@@ -143,51 +94,11 @@
             text-overflow: ellipsis;
             font-size: 1em;
             padding: 5px 10px;
-            background: var(--sand-color-dark);
+            background: var(--p-color, var(--sand-color-dark));
             color: #fff;
             border-bottom: 3px solid;
             border-color: inherit;
             box-sizing: border-box;
-        }
-
-        &.p1 .name {
-            background: var(--player-1-color);
-        }
-
-        &.p2 .name {
-            background: var(--player-2-color);
-        }
-
-        &.p3 .name {
-            background: var(--player-3-color);
-        }
-
-        &.p4 .name {
-            background: var(--player-4-color);
-        }
-
-        &.p5 .name {
-            background: var(--player-5-color);
-        }
-
-        &.p6 .name {
-            background: var(--player-6-color);
-        }
-
-        &.p7 .name {
-            background: var(--player-7-color);
-        }
-
-        &.p8 .name {
-            background: var(--player-8-color);
-        }
-
-        &.p9 .name {
-            background: var(--player-9-color);
-        }
-
-        &.p10 .name {
-            background: var(--player-10-color);
         }
 
         .victory-points {
@@ -268,7 +179,7 @@
                 width: 100%;
                 height: 100%;
                 background-image: url(/images/extra-vps-sprite.png);
-                background-color: #c8b66d;
+                background-color: var(--vp-card-bg);
                 background-size: 155px;
                 background-repeat: no-repeat;
                 filter: grayscale(1) brightness(2) contrast(0.5);
@@ -321,12 +232,39 @@
         }
     }
 
-    &[data-active="1"] .player.p1::before, &[data-active="2"] .player.p2::before, &[data-active="3"] .player.p3::before, &[data-active="4"] .player.p4::before, &[data-active="5"] .player.p5::before, &[data-active="6"] .player.p6::before, &[data-active="7"] .player.p7::before, &[data-active="8"] .player.p8::before, &[data-active="9"] .player.p9::before, &[data-active="10"] .player.p10::before {
+    &[data-active="1"] .player.p1::before,
+    &[data-active="2"] .player.p2::before,
+    &[data-active="3"] .player.p3::before,
+    &[data-active="4"] .player.p4::before,
+    &[data-active="5"] .player.p5::before,
+    &[data-active="6"] .player.p6::before,
+    &[data-active="7"] .player.p7::before,
+    &[data-active="8"] .player.p8::before,
+    &[data-active="9"] .player.p9::before,
+    &[data-active="10"] .player.p10::before {
         content: '👉';
     }
 
-
-    &[data-army="1"] .player.p1 .largest-army, &[data-army="2"] .player.p2 .largest-army, &[data-army="3"] .player.p3 .largest-army, &[data-army="4"] .player.p4 .largest-army, &[data-army="5"] .player.p5 .largest-army, &[data-army="6"] .player.p6 .largest-army, &[data-army="7"] .player.p7 .largest-army, &[data-army="8"] .player.p8 .largest-army, &[data-army="9"] .player.p9 .largest-army, &[data-army="10"] .player.p10 .largest-army, &[data-road="1"] .player.p1 .longest-road, &[data-road="2"] .player.p2 .longest-road, &[data-road="3"] .player.p3 .longest-road, &[data-road="4"] .player.p4 .longest-road, &[data-road="5"] .player.p5 .longest-road, &[data-road="6"] .player.p6 .longest-road, &[data-road="7"] .player.p7 .longest-road, &[data-road="8"] .player.p8 .longest-road, &[data-road="9"] .player.p9 .longest-road, &[data-road="10"] .player.p10 .longest-road {
+    &[data-army="1"] .player.p1 .largest-army,
+    &[data-army="2"] .player.p2 .largest-army,
+    &[data-army="3"] .player.p3 .largest-army,
+    &[data-army="4"] .player.p4 .largest-army,
+    &[data-army="5"] .player.p5 .largest-army,
+    &[data-army="6"] .player.p6 .largest-army,
+    &[data-army="7"] .player.p7 .largest-army,
+    &[data-army="8"] .player.p8 .largest-army,
+    &[data-army="9"] .player.p9 .largest-army,
+    &[data-army="10"] .player.p10 .largest-army,
+    &[data-road="1"] .player.p1 .longest-road,
+    &[data-road="2"] .player.p2 .longest-road,
+    &[data-road="3"] .player.p3 .longest-road,
+    &[data-road="4"] .player.p4 .longest-road,
+    &[data-road="5"] .player.p5 .longest-road,
+    &[data-road="6"] .player.p6 .longest-road,
+    &[data-road="7"] .player.p7 .longest-road,
+    &[data-road="8"] .player.p8 .longest-road,
+    &[data-road="9"] .player.p9 .longest-road,
+    &[data-road="10"] .player.p10 .longest-road {
         width: 67px;
         cursor: pointer;
 
@@ -351,47 +289,8 @@
             font-size: 1.3em;
             color: #fff;
             padding: 2px 5px;
+            background: var(--p-color);
         }
-    }
-
-    &[data-army="1"] .player.p1 .largest-army::after, &[data-road="1"] .player.p1 .longest-road::after {
-        background: var(--player-1-color);
-    }
-
-    &[data-army="2"] .player.p2 .largest-army::after, &[data-road="2"] .player.p2 .longest-road::after {
-        background: var(--player-2-color);
-    }
-
-    &[data-army="3"] .player.p3 .largest-army::after, &[data-road="3"] .player.p3 .longest-road::after {
-        background: var(--player-3-color);
-    }
-
-    &[data-army="4"] .player.p4 .largest-army::after, &[data-road="4"] .player.p4 .longest-road::after {
-        background: var(--player-4-color);
-    }
-
-    &[data-army="5"] .player.p5 .largest-army::after, &[data-road="5"] .player.p5 .longest-road::after {
-        background: var(--player-5-color);
-    }
-
-    &[data-army="6"] .player.p6 .largest-army::after, &[data-road="6"] .player.p6 .longest-road::after {
-        background: var(--player-6-color);
-    }
-
-    &[data-army="7"] .player.p7 .largest-army::after, &[data-road="7"] .player.p7 .longest-road::after {
-        background: var(--player-7-color);
-    }
-
-    &[data-army="8"] .player.p8 .largest-army::after, &[data-road="8"] .player.p8 .longest-road::after {
-        background: var(--player-8-color);
-    }
-
-    &[data-army="9"] .player.p9 .largest-army::after, &[data-road="9"] .player.p9 .longest-road::after {
-        background: var(--player-9-color);
-    }
-
-    &[data-army="10"] .player.p10 .largest-army::after, &[data-road="10"] .player.p10 .longest-road::after {
-        background: var(--player-10-color);
     }
 
     .victory-target {
@@ -408,7 +307,7 @@
     }
 
     &.compact {
-        width: 240px; /* keep width; we only hide details */
+        width: var(--scoreboard-width); /* keep width; we only hide details */
 
         .player {
             display: none;
@@ -448,65 +347,9 @@
         }
 
         .player {
-            border: 1px solid;
-            border-color: inherit;
+            border: 1px solid var(--p-color, var(--sand-color-dark));
             border-radius: 4px;
-            background: color-mix(in srgb, var(--sand-color), transparent 50%);
-
-            &.p1, &.pc1 {
-                background: color-mix(in srgb, var(--player-1-color), transparent 50%) !important;
-                border-color: var(--player-1-color) !important;
-            }
-
-            &.p2, &.pc2 {
-                background: color-mix(in srgb, var(--player-2-color), transparent 50%) !important;
-                border-color: var(--player-2-color) !important;
-            }
-
-            &.p3, &.pc3 {
-                background: color-mix(in srgb, var(--player-3-color), transparent 50%) !important;
-                border-color: var(--player-3-color) !important;
-            }
-
-            &.p4, &.pc4 {
-                background: color-mix(in srgb, var(--player-4-color), transparent 50%) !important;
-                border-color: var(--player-4-color) !important;
-            }
-
-            &.p5, &.pc5 {
-                background: color-mix(in srgb, var(--player-5-color), transparent 50%) !important;
-                border-color: var(--player-5-color) !important;
-            }
-
-            &.p6, &.pc6 {
-                background: color-mix(in srgb, var(--player-6-color), transparent 50%) !important;
-                border-color: var(--player-6-color) !important;
-            }
-
-            &.p7, &.pc7 {
-                background: color-mix(in srgb, var(--player-7-color), transparent 50%) !important;
-                border-color: var(--player-7-color) !important;
-            }
-
-            &.p8, &.pc8 {
-                background: color-mix(in srgb, var(--player-8-color), transparent 50%) !important;
-                border-color: var(--player-8-color) !important;
-            }
-
-            &.p9, &.pc9 {
-                background: color-mix(in srgb, var(--player-9-color), transparent 50%) !important;
-                border-color: var(--player-9-color) !important;
-            }
-
-            &.p10, &.pc10 {
-                background: color-mix(in srgb, var(--player-10-color), transparent 50%) !important;
-                border-color: var(--player-10-color) !important;
-            }
-
-            &.pc0 {
-                background: color-mix(in srgb, var(--player-0-color), transparent 50%) !important;
-                border-color: var(--player-0-color) !important;
-            }
+            background: color-mix(in srgb, var(--p-color, var(--sand-color)), transparent 50%);
 
             display: flex;
             flex-direction: row;
@@ -526,7 +369,7 @@
             .name {
                 font-size: 0.85em;
                 padding: 2px;
-                background: none !important;
+                background: none;
                 border: none;
                 flex: 1;
                 width: auto;
@@ -591,110 +434,18 @@
         }
 
         /* Active player indicator on mobile */
-        &[data-active="1"] .player.p1::before, &[data-active="2"] .player.p2::before, &[data-active="3"] .player.p3::before, &[data-active="4"] .player.p4::before, &[data-active="5"] .player.p5::before, &[data-active="6"] .player.p6::before, &[data-active="7"] .player.p7::before, &[data-active="8"] .player.p8::before, &[data-active="9"] .player.p9::before, &[data-active="10"] .player.p10::before {
+        &[data-active="1"] .player.p1::before,
+        &[data-active="2"] .player.p2::before,
+        &[data-active="3"] .player.p3::before,
+        &[data-active="4"] .player.p4::before,
+        &[data-active="5"] .player.p5::before,
+        &[data-active="6"] .player.p6::before,
+        &[data-active="7"] .player.p7::before,
+        &[data-active="8"] .player.p8::before,
+        &[data-active="9"] .player.p9::before,
+        &[data-active="10"] .player.p10::before {
             content: '👉';
             margin-right: 2px;
         }
     }
-}
-
-
-/* Support color-based classes (pc1..pc8) to reflect selected colors in scoreboard */
-.all-players .player.pc1 {
-    background: var(--player-1-color-light);
-    border-color: var(--player-1-color-dark);
-}
-
-.all-players .player.pc2 {
-    background: var(--player-2-color-light);
-    border-color: var(--player-2-color-dark);
-}
-
-.all-players .player.pc3 {
-    background: var(--player-3-color-light);
-    border-color: var(--player-3-color-dark);
-}
-
-.all-players .player.pc4 {
-    background: var(--player-4-color-light);
-    border-color: var(--player-4-color-dark);
-}
-
-.all-players .player.pc5 {
-    background: var(--player-5-color-light);
-    border-color: var(--player-5-color-dark);
-}
-
-.all-players .player.pc6 {
-    background: var(--player-6-color-light);
-    border-color: var(--player-6-color-dark);
-}
-
-.all-players .player.pc7 {
-    background: var(--player-7-color-light);
-    border-color: var(--player-7-color-dark);
-}
-
-.all-players .player.pc8 {
-    background: var(--player-8-color-light);
-    border-color: var(--player-8-color-dark);
-}
-
-.all-players .player.pc9 {
-    background: var(--player-9-color-light);
-    border-color: var(--player-9-color-dark);
-}
-
-.all-players .player.pc10 {
-    background: var(--player-10-color-light);
-    border-color: var(--player-10-color-dark);
-}
-
-.all-players .player.pc0 {
-    background: var(--player-0-color-light);
-    border-color: var(--player-0-color-dark);
-}
-
-.all-players .player.pc1 .name {
-    background: var(--player-1-color);
-}
-
-.all-players .player.pc2 .name {
-    background: var(--player-2-color);
-}
-
-.all-players .player.pc3 .name {
-    background: var(--player-3-color);
-}
-
-.all-players .player.pc4 .name {
-    background: var(--player-4-color);
-}
-
-.all-players .player.pc5 .name {
-    background: var(--player-5-color);
-}
-
-.all-players .player.pc6 .name {
-    background: var(--player-6-color);
-}
-
-.all-players .player.pc7 .name {
-    background: var(--player-7-color);
-}
-
-.all-players .player.pc8 .name {
-    background: var(--player-8-color);
-}
-
-.all-players .player.pc9 .name {
-    background: var(--player-9-color);
-}
-
-.all-players .player.pc10 .name {
-    background: var(--player-10-color);
-}
-
-.all-players .player.pc0 .name {
-    background: var(--player-0-color);
 }

@@ -1,18 +1,16 @@
-import { AUDIO_FILES as AUDIO } from "./const.js"
+import { AUDIO_FILES as AUDIO, STORAGE_KEYS as KEYS } from "./const.js"
 
 export default class AudioManager {
   #bgm; #bgm_wait;
-  #muted = true
-  #notif_muted = (localStorage.getItem('mute-notifications') === null)
+  #notif_muted = (localStorage.getItem(KEYS.MUTE_NOTIFICATIONS) === null)
     ? true
-    : !!+localStorage.getItem('mute-notifications')
+    : !!+localStorage.getItem(KEYS.MUTE_NOTIFICATIONS)
   #au_card_delay = 0
 
   constructor() {
     this.#bgm = new Audio('/sounds/' + AUDIO.BGM)
     this.#bgm.volume = .7
     this.#bgm.loop = true
-    !this.#muted && this.#bgm.play()
   }
 
   play(file, volume = 1, keep_bg) {
@@ -21,10 +19,10 @@ export default class AudioManager {
       const audio = new Audio('/sounds/' + file)
       audio.volume = volume
       audio.play()
-      if (!keep_bg && this.#bgm && !this.#muted) {
+      if (!keep_bg && this.#bgm && !this.#bgm.paused) {
         this.#bgm.volume = .2
         audio.addEventListener('ended', _ => {
-          clearInterval(this.#bgm_wait)
+          clearTimeout(this.#bgm_wait)
           this.#bgm_wait = setTimeout(_ => this.#bgm.volume = .7, 1000)
         })
       }

@@ -108,3 +108,6 @@ dist
 
 # JetBrains IDE files
 .idea
+
+# Playwright MCP scratch (screenshots, console logs, evaluate dumps)
+.playwright-mcp/

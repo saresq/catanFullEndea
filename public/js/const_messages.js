@@ -1,6 +1,6 @@
 import * as CONST from "./const.js"
 
-export const getName = player => player ? `<span class="p-name ${player.color_id ? 'pc' + player.color_id : ''}">${player.name}</span>` : `<span class="p-name me">You</span>`
+export const getName = player => player ? `<span class="p-name pc${player.color_id || player.id}">${player.name}</span>` : `<span class="p-name me">You</span>`
 
 export const resToText = obj => Object.keys(obj).filter(k => obj[k])
   .map(k => `<span class="res-count" data-count="${obj[k]}">${obj[k]}</span><div class="res-icon ${k}"></div>`).join('')

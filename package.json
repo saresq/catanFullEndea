@@ -5,9 +5,10 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "predev": "[ -d node_modules ] || npm install",
+    "dev": "nodemon index.js -w index.js -w views -w models -e js,html",
     "start": "nodemon index.js -w index.js -w views -w models -e js,html",
     "deploy-shuffler": "sh ./deploy-gh-pages.sh",
-    "dev-static": "sh ./dev-static-pages.sh",
     "test": "node --test tests/"
   },
   "repository": {
@@ -21,15 +22,15 @@
   },
   "homepage": "https://github.com/bigomega/catan#readme",
   "dependencies": {
+    "cookie": "^0.6.0",
     "cookie-parser": "^1.4.6",
     "express": "^4.19.2",
     "mustache-express": "^1.3.2",
-    "nodemon": "^3.0.3",
-    "push-dir": "^0.4.1",
     "random-words": "^2.0.1",
     "socket.io": "^4.7.5"
   },
   "devDependencies": {
-    "light-server": "^2.9.1"
+    "nodemon": "^3.0.3",
+    "push-dir": "^0.4.1"
   }
 }

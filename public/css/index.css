@@ -10,6 +10,7 @@
 @import './index/accessibility.css';
 @import './index/alert.css';
 @import './fonts.css';
+@import './base.css';
 
 html {
     font-size: 16px;
@@ -39,20 +40,6 @@ body {
     -webkit-user-select: none;
 }
 
-button {
-    display: block;
-    background: none;
-    color: inherit;
-    border: none;
-    font: inherit;
-    cursor: pointer;
-    outline: inherit;
-    appearance: unset;
-    padding: 0;
-    padding-block: 0;
-    padding-inline: 0;
-}
-
 .splash {
     background: url(/images/catan-bg.png);
     background-size: cover;
@@ -61,12 +48,12 @@ button {
     top: 0;
     width: 100vw;
     height: 100vh;
-    z-index: 100;
+    z-index: var(--z-board-overlay);
 
     &.hide {
         opacity: 0;
         z-index: -100;
-        transition: opacity .5s .5s linear, z-index 0s 1s linear, width .5s linear, height .5s linear;
+        transition: opacity var(--t-slow) var(--t-slow) linear, z-index 0s 1s linear, width var(--t-slow) linear, height var(--t-slow) linear;
         /* height: 100%;
         width: 100%; */
     }

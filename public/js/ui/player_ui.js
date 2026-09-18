@@ -8,9 +8,11 @@ export default class PlayerUI {
   #onEndTurnClick; #onCardClick; #getPossibleLocations; #toggleBoardBlur; #onDevCardActivate
   #canPlayDevCard
   #is_dev_row_open = false
+  #is_end_cooldown = false
+  #end_cooldown_timer = null
   player; has_timer; timer; auto_roll; hand
 
-  get maxVisualCards() { return window.innerWidth <= 768 ? 3 : 5 }
+  get maxVisualCards() { return window.innerWidth <= CONST.MOBILE_MAX_WIDTH ? 3 : 5 }
 
   $timer; $dice; $build_road; $build_settlement; $build_city; $buy_dev_card; $trade_btn; $end_turn
   $el = $('#game > .current-player')
@@ -40,15 +42,6 @@ export default class PlayerUI {
 
   render() {
     this.renderActionBar()
-    // this.hand.S = 3
-    // this.hand.L = 7
-    // this.hand.B = 2
-    // this.hand.dK = 3
-    // this.hand.O = 3
-    // this.hand.dM = 1
-    // this.hand.dR = 1
-    // this.hand.dY = 1
-    // this.hand.dVp = 2
     this.renderHand()
     this.#setupCardPreviewEvents()
   }
@@ -58,8 +51,7 @@ export default class PlayerUI {
   togglePlayerBlur(bool) { this.$el.classList[bool ? 'add' : 'remove']('blur') }
 
   updateColor(cid) {
-    const pcs = Array.from({ length: 11 }, (_, i) => 'pc' + i)
-    pcs.forEach(c => this.$el.classList.remove(c))
+    this.$el.classList.remove(...CONST.PC_CLASSES)
     this.$el.classList.add('pc' + cid)
   }
 
@@ -70,8 +62,7 @@ export default class PlayerUI {
    */
   //#region
   renderActionBar() {
-    this.$el.classList.add('id-' + this.player.id)
-    // Apply selected color class to the player container so UI uses color_id theme
+    // Apply the chosen colour class - the whole action bar themes off it
     const cid = (this.player.color_id ?? this.player.id)
     this.$el.classList.add('pc' + cid)
     if (this.player.spectator) {
@@ -188,8 +179,8 @@ export default class PlayerUI {
     setupLongPress(this.$build_city, 'C')
     // Buy Development Card
     this.$buy_dev_card.addEventListener('click', e => {
-      if (e.target.classList.contains('disabled')) return
-      if (e.target.dataset.count === '0') return
+      if (this.$buy_dev_card.classList.contains('disabled')) return
+      if (this.$buy_dev_card.dataset.count === '0') return
       this.#onBuyDevCardClick()
     })
     setupLongPress(this.$buy_dev_card, 'DEV_C')
@@ -305,11 +296,7 @@ export default class PlayerUI {
     }, 1000)
   }
 
-  toggleDice(active) {
-    // When active, we are in roll mode; when not, we don't touch end-turn mode here
-    if (active) this.setUnifiedModeRoll(true)
-    else this.setUnifiedModeRoll(false)
-  }
+  toggleDice(active) { this.setUnifiedModeRoll(!!active) }
   toggleAction($el, toggle) {
     $el?.classList[toggle ? 'remove' : 'add']('disabled')
   }
@@ -364,22 +351,22 @@ export default class PlayerUI {
     this.$dice.title = '⏭️ (e/Space)'
     const label = this.$dice.querySelector('.label') || this.#ensureDiceLabel()
     label.textContent = '⏭️'
-    const effective = !!enabled && !this._isEndCooldown
+    const effective = !!enabled && !this.#is_end_cooldown
     this.toggleAction(this.$dice, effective)
   }
 
   startEndTurnCooldown(ms = 1000) {
     if (!this.$dice) return
     // Prevent enabling End Turn during cooldown
-    this._isEndCooldown = true
+    this.#is_end_cooldown = true
     // Clear previous timer if any
-    if (this._endCooldownTimer) { clearTimeout(this._endCooldownTimer); this._endCooldownTimer = null }
+    if (this.#end_cooldown_timer) { clearTimeout(this.#end_cooldown_timer); this.#end_cooldown_timer = null }
     // Switch to End mode but keep disabled
     this.setUnifiedModeEnd(false)
-    this._endCooldownTimer = setTimeout(() => {
-      this._isEndCooldown = false
+    this.#end_cooldown_timer = setTimeout(() => {
+      this.#is_end_cooldown = false
       this.setUnifiedModeEnd(true)
-      this._endCooldownTimer = null
+      this.#end_cooldown_timer = null
     }, ms)
   }
   //#endregion
@@ -397,7 +384,7 @@ export default class PlayerUI {
       return
     }
     const res_order = ['S', 'L', 'B', 'O', 'W']
-    const is_mobile = window.innerWidth <= 768
+    const is_mobile = window.innerWidth <= CONST.MOBILE_MAX_WIDTH
     const hand_groups = Object.entries(this.hand).sort((a, b) => {
       const a_res_idx = res_order.indexOf(a[0])
       const b_res_idx = res_order.indexOf(b[0])
@@ -416,7 +403,7 @@ export default class PlayerUI {
         >
         <div class="card-count ${count < 2 ? 'hide' : ''}"
           style="left: calc(1.875rem + ${Math.max(0, visualCount - 1) * 4}px);
-                 top: -0.75rem;"
+                 top: calc(-0.75rem - ${Math.max(0, visualCount - 1) * 2}px);"
         >${count}</div>
         ${[...Array(visualCount)].map((_, j) => {
         return `

@@ -1,3 +1,12 @@
+import {
+  DEFAULT_MAPKEY, DEFAULT_MAPKEY_5_6, DEFAULT_MAPKEY_7_8, DEFAULT_MAPKEY_9_10, ARGENTUM_MAPKEY,
+} from './const_maps.js'
+
+export * from './const_maps.js'
+
+/** Inclusive integer range. `range(2, 4)` -> [2, 3, 4] */
+const range = (min, max) => Array.from({ length: max - min + 1 }, (_, i) => min + i)
+
 export const TILES = {
   G: 'Grassland',
   J: 'Jungle',
@@ -10,7 +19,6 @@ export const TILES = {
 
 export const RESOURCES = {S: 'Sheep', L: 'Lumber', B: 'Brick', O: 'Ore', W: 'Wheat'}
 
-export const RESOURCE_EMOJIS = {S: '🐑', L: '🪵', B: '🧱', O: '🏔', W: '🌾'}
 export const TILE_EMOJIS = {G: '🐑', J: '🪵', C: '🧱', M: '🏔', F: '🌾', S: '🌊', D: '🌵'}
 
 export const SEA_REGEX = `S\\((?<dir>tl|tr|l|r|bl|br)_(?<res>${Object.keys(RESOURCES).join('|')}|\\*)(?<num>\\d*)\\)`
@@ -19,40 +27,45 @@ export const RESOURCE_REGEX = `(?<tile_type>[${Object.keys(TILES).join('|')}])(?
 
 export const TILE_RES = {G: 'S', J: 'L', C: 'B', M: 'O', F: 'W'}
 
+/** Dice total that moves the robber. */
+export const ROBBER_ROLL = 7
+
+/** The red numbers - treated as one value when spacing numbers out on the board. */
+export const RED_NUMBERS = [6, 8]
+
 export const DEVELOPMENT_CARDS = {
   dK: 'Knight', dVp: 'Victory Point',
   dR: 'Road building', dY: 'Year of plenty', dM: 'Monopoly',
 }
 
-// Standard deck for 2-4 players
-export const DEVELOPMENT_CARDS_DECK_STANDARD = []
-DEVELOPMENT_CARDS_DECK_STANDARD.push(...[...Array(14)].map(_ => 'dK')) // 14 Knights
-DEVELOPMENT_CARDS_DECK_STANDARD.push('dR', 'dR', 'dY', 'dY', 'dM', 'dM') // 2 of each power cards
-DEVELOPMENT_CARDS_DECK_STANDARD.push(...[...Array(5)].map(_ => 'dVp')) // 5 victory points
+/** @param {{knights:number, powers:number, vps:number}} counts */
+const buildDeck = ({ knights, powers, vps }) => [
+  ...Array(knights).fill('dK'),
+  ...['dR', 'dY', 'dM'].flatMap(card => Array(powers).fill(card)),
+  ...Array(vps).fill('dVp'),
+]
 
-// Extended deck for 5-6 players
-export const DEVELOPMENT_CARDS_DECK_5_6 = []
-DEVELOPMENT_CARDS_DECK_5_6.push(...[...Array(20)].map(_ => 'dK')) // 20 Knights
-DEVELOPMENT_CARDS_DECK_5_6.push('dR', 'dR', 'dR', 'dY', 'dY', 'dY', 'dM', 'dM', 'dM') // 3 of each power cards
-DEVELOPMENT_CARDS_DECK_5_6.push(...[...Array(6)].map(_ => 'dVp')) // 6 victory points
+/** Rules & dev card deck per player count. Ordered biggest tier first. */
+export const PLAYER_TIERS = [
+  { min: 9, win_points: 13, robber_hand_limit: 10, deck: buildDeck({ knights: 30, powers: 5, vps: 10 }) },
+  { min: 7, win_points: 12, robber_hand_limit: 10, deck: buildDeck({ knights: 24, powers: 4, vps: 8 }) },
+  { min: 5, win_points: 11, robber_hand_limit: 8, deck: buildDeck({ knights: 20, powers: 3, vps: 6 }) },
+  { min: 2, win_points: 10, robber_hand_limit: 7, deck: buildDeck({ knights: 14, powers: 2, vps: 5 }) },
+]
 
-// Extended deck for 7-8 players
-export const DEVELOPMENT_CARDS_DECK_7_8 = []
-DEVELOPMENT_CARDS_DECK_7_8.push(...[...Array(24)].map(_ => 'dK')) // 24 Knights
-DEVELOPMENT_CARDS_DECK_7_8.push('dR', 'dR', 'dR', 'dR', 'dY', 'dY', 'dY', 'dY', 'dM', 'dM', 'dM', 'dM') // 4 of each power cards
-DEVELOPMENT_CARDS_DECK_7_8.push(...[...Array(8)].map(_ => 'dVp')) // 8 victory points
+/** @param {number} player_count */
+export const playerTier = player_count =>
+  PLAYER_TIERS.find(t => player_count >= t.min) || PLAYER_TIERS[PLAYER_TIERS.length - 1]
 
-// Extended deck for 9-10 players
-export const DEVELOPMENT_CARDS_DECK_9_10 = []
-DEVELOPMENT_CARDS_DECK_9_10.push(...[...Array(30)].map(_ => 'dK')) // 30 Knights
-DEVELOPMENT_CARDS_DECK_9_10.push('dR', 'dR', 'dR', 'dR', 'dR', 'dY', 'dY', 'dY', 'dY', 'dY', 'dM', 'dM', 'dM', 'dM', 'dM') // 5 of each power cards
-DEVELOPMENT_CARDS_DECK_9_10.push(...[...Array(10)].map(_ => 'dVp')) // 10 victory points
+/** Seats a game may be configured for, and victory targets it may be played to. */
+export const PLAYER_COUNTS = range(2, 10)
+export const WIN_POINT_OPTIONS = range(5, 20)
 
-// Default to standard deck, will be updated based on player count
-export const DEVELOPMENT_CARDS_DECK = DEVELOPMENT_CARDS_DECK_STANDARD
+/** Colour ids a player may pick. `0` is reserved for god mode. */
+export const COLOR_IDS = range(1, 10)
 
-export const DC_VICTORY_POINT_CARD_VARIETIES = ['dL', 'dMr', 'dG', 'dC', 'dU']
-// dL: 'Library', dMr: 'Market', dG: 'Great Hall', dC: 'Chapel', dU: 'University',
+/** Every `pcN` class - remove all of them before adding a player's current one. */
+export const PC_CLASSES = [0, ...COLOR_IDS].map(id => 'pc' + id)
 
 export const LOCS = {CORNER: 'C', EDGE: 'E', TILE: 'T'}
 
@@ -77,7 +90,9 @@ export const TRADE_OFFERS = {
   Px: 'Player Trade',
 }
 
-/** @todo Use this in tile.js, board_shuffler.js (and any other places) */
+/** The 2:1 port offers - `['S2', 'L2', ...]`. */
+export const PORTS_2_1 = Object.keys(TRADE_OFFERS).filter(t => t.endsWith('2'))
+
 export const DIR_HELPER = {
   KEYS: {tl: 'top_left', tr: 'top_right', r: 'right', br: 'bottom_right', bl: 'bottom_left', l: 'left'},
   MAPKEYS: {top_left: 'tl', top_right: 'tr', right: 'r', bottom_right: 'br', bottom_left: 'bl', left: 'l'},
@@ -94,73 +109,35 @@ export const DIR_HELPER = {
   }
 }
 
-export const ROLL = _ => Math.ceil(Math.random() * 6)
+/**
+ * Map presets, ordered smallest first. `max_players` gates which presets a game
+ * of a given size may use; the first entry that fits is the default for that size.
+ */
+export const MAPS = {
+  standard: { name: 'Standard', mapkey: DEFAULT_MAPKEY, max_players: 4 },
+  extended: { name: 'Extended', mapkey: DEFAULT_MAPKEY_5_6, max_players: 6 },
+  large: { name: 'Large', mapkey: DEFAULT_MAPKEY_7_8, max_players: 8 },
+  xlarge: { name: 'Extra Large', mapkey: DEFAULT_MAPKEY_9_10, max_players: 10 },
+  argentum: { name: 'Argentum', mapkey: ARGENTUM_MAPKEY, max_players: 10 },
+}
 
-export const DEFAULT_MAPKEY =
-  `S(br_*3).S.S(bl_W2).S
-  -S.M10.G2.J9.S(bl_O2)
-  -S(r_L2).F12.C6.G4.C10.S
-  -S.F9.J11.D.J3.M8.S(l_*3)
-  +S(r_B2).J8.M3.F4.G5.S
-  +S.C5.F6.G11.S(tl_S2)
-  +S(tr_*3).S.S(tl_*3).S`
+export const MAP_LIST = Object.entries(MAPS).map(([id, map]) => ({ id, ...map }))
 
-// 5-6 player board layout based on the official Catan 5-6 player extension
-export const DEFAULT_MAPKEY_5_6 =
-  `S(br_*3).S.S.S(bl_W2).S
-  -S.M10.G2.J9.F6.S(bl_O2)
-  -S(r_L2).F12.C6.G4.C10.M3.S
-  -S.F9.J11.D.J3.M8.D.S(l_*3)
-  +S(r_B2).J8.M3.F4.G5.C11.S
-  +S.C5.F6.G11.J4.S(tl_S2)
-  +S(tr_*3).S.S.S(tl_*3).S`
+/** Preset matching a mapkey, or undefined for hand-made maps. */
+export const mapOf = mapkey => MAP_LIST.find(m => m.mapkey === mapkey)
 
-// 7-8 player board layout (custom larger board)
-export const DEFAULT_MAPKEY_7_8 =
-  `S(br_*3).S.S.S.S(bl_W2).S
-  -S.M10.G2.J9.F6.C5.S(bl_O2)
-  -S(r_L2).F12.C6.G4.C10.M3.D.S
-  -S.F9.J11.D.J3.M8.G5.F10.S(l_*3)
-  -S.G6.F3.M5.C8.J10.F11.D.S
-  +S(r_B2).J8.M3.F4.G5.C11.M12.S
-  +S.C5.F6.G11.J4.M2.S(tl_S2)
-  +S(tr_*3).S.S.S.S(tl_*3).S`
+/** Display label for any mapkey. */
+export const mapName = mapkey => mapOf(mapkey)?.name || 'Custom'
 
-// 9-10 player board layout (custom even larger board)
-export const DEFAULT_MAPKEY_9_10 =
-  `S.S.S(bl_*3).S.S(bl_*3).S.S.S
-  -S(br_S2).M12.J11.G9.C4.F9.G11.S(l_L2)
-  -S.M6.C2.G6.M11.C6.M3.S
-  -S.C11.F3.F10.D.F5.J4.J2.S(l_O2)
-  -S.S(r_B2).F6.F5.C8.G10.J5.G12.S
-  +S.G5.M9.J4.M3.J2.F8.M12.S(l_*3)
-  +S.M2.D.J10.F12.D.J3.S
-  +S(tr_W2).C8.G9.G8.C4.C10.S
-  +S.S(tr_*3).S.S.S(tl_*3).S.S.S`
+/** Smallest preset that seats `player_count`. */
+export const mapForPlayers = player_count =>
+  MAP_LIST.find(m => m.max_players >= player_count) || MAPS.xlarge
 
-export const ARGENTUM_MAPKEY =
-  `S.S.S.S.S.S.S.S.S.S.S.S
-  +S.S.G5.D.C6.S.S.S.S.S.S.S
-  +S(br_S2).F8.M4.F5.J9.S(bl_*3).C6.S.S.S.S.S.S
-  -S.J12.C3.G6.J9.M4.M11.S.S.S.S
-  -S.G8.G4.M10.C12.M6.M5.S.S.S.S
-  -S.S.F2.C6.F10.G4.M11.S.S.S
-  +S.D.G10.G10.J8.J3.S.S.S
-  +S(r_L2).C8.F11.F10.J4.C6.S(bl_*3).S.S
-  -S.J9.D.C6.M5.J2.J4.S.S
-  +S.J6.G2.C5.J3.M8.F9.S.S
-  -S.G11.M11.M12.F12.M11.C5.S.S
-  +S(r_B2).M4.F9.J4.F12.S.S.S.S
-  -S.M4.G5.C10.D.S(tl_*3).S.S.S
-  +S.F8.J12.C3.S.S.S.S.S
-  -S.S(r_O2).F10.F2.M9.S.S.S
-  +S.F9.G12.G2.S.S.S
-  -S.S.F2.J8.G3.S(l_*3).S
-  +S.G10.F3.C2.S.S.S.S
-  -S.S(r_W2).G9.G10.S.S.J9.C3.S
-  +S.S.C11.M8.S.S.S.S
-  -S.S.S.J5.C5.S.S.S
-  +S.S.S.S(tl_*3).S.S`
+/** Custom maps are always allowed - only presets are size-checked. */
+export const mapFitsPlayers = (mapkey, player_count) => {
+  const map = mapOf(mapkey)
+  return !map || map.max_players >= player_count
+}
 
 export const GAME_CONFIG = {
   // private_game: true,
@@ -189,9 +166,6 @@ export const GAME_CONFIG = {
 
 export const GAME_STATES = {
   INITIAL_SETUP: 'INITIAL_SETUP',
-  // STRATEGIZE: 'strategize',
-  // INITIAL_BUILD: 'initial_build',
-  // INITIAL_BUILD_2: 'initial_build_2',
   PLAYER_ROLL: 'player_roll',
   PLAYER_ACTIONS: 'player_actions',
   ROBBER_DROP: 'drop_resource_for_robber',
@@ -268,4 +242,19 @@ export const AUDIO_FILES = {
   BGM: 'clouds.mp3',
   END: 'start-end.mp3',
   PLAYER_QUIT: 'power-down.mp3',
+}
+
+/** Seconds players have to vote for a rematch. */
+export const REMATCH_SECONDS = 240
+
+/** Matches the `768px` breakpoint used across the stylesheets. */
+export const MOBILE_MAX_WIDTH = 768
+
+export const STORAGE_KEYS = {
+  PLAYER_NAME: 'player-name',
+  STATUS_HISTORY: 'status_history',
+  STATUS_HISTORY_GID: 'status_history_gid',
+  MUTE_NOTIFICATIONS: 'mute-notifications',
+  ALL_PLAYERS_COMPACT: 'all_players_compact',
+  BOARD_VIEW: 'board-view',
 }

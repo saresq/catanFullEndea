@@ -3,7 +3,7 @@
     z-index: -10;
     visibility: hidden;
     pointer-events: none;
-    transition: opacity .25s linear, visibility .25s linear;
+    transition: opacity var(--t-base) linear, visibility var(--t-base) linear;
     position: fixed;
     top: 1.25rem;
     left: 50%;
@@ -18,7 +18,7 @@
     text-align: center;
 
     &.show {
-        z-index: 70;
+        z-index: var(--z-alert);
         opacity: 1;
         visibility: visible;
         pointer-events: auto;
@@ -29,7 +29,7 @@
         top: 0.3rem;
         font-size: 1rem;
         &.show {
-            z-index: 10000;
+            z-index: var(--z-toast);
         }
 
         .text {
@@ -133,127 +133,16 @@
 
     .text .game-ended .player-name {
         color: #fff;
-        background-color: var(--sand-color-text-dark);
+        /* Player colours. See the player theme table in constants.css. */
+        background-color: var(--p-color, var(--sand-color-text-dark));
     }
 
-    .text .game-ended.pc1 .player-name {
-        background: var(--player-1-color);
+    .text .game-ended .S .pts-icon {
+        background-image: var(--p-settlement);
     }
 
-    .text .game-ended.pc2 .player-name {
-        background: var(--player-2-color);
-    }
-
-    .text .game-ended.pc3 .player-name {
-        background: var(--player-3-color);
-    }
-
-    .text .game-ended.pc4 .player-name {
-        background: var(--player-4-color);
-    }
-
-    .text .game-ended.pc5 .player-name {
-        background: var(--player-5-color);
-    }
-
-    .text .game-ended.pc6 .player-name {
-        background: var(--player-6-color);
-    }
-
-    .text .game-ended.pc7 .player-name {
-        background: var(--player-7-color);
-    }
-
-    .text .game-ended.pc8 .player-name {
-        background: var(--player-8-color);
-    }
-
-    .text .game-ended.pc9 .player-name {
-        background: var(--player-9-color);
-    }
-
-    .text .game-ended.pc10 .player-name {
-        background: var(--player-10-color);
-    }
-
-    .text .game-ended.pc1 .S .pts-icon {
-        background-image: url(/images/pieces/settlement-1.png);
-    }
-
-    .text .game-ended.pc2 .S .pts-icon {
-        background-image: url(/images/pieces/settlement-2.png);
-    }
-
-    .text .game-ended.pc3 .S .pts-icon {
-        background-image: url(/images/pieces/settlement-3.png);
-    }
-
-    .text .game-ended.pc4 .S .pts-icon {
-        background-image: url(/images/pieces/settlement-4.png);
-    }
-
-    .text .game-ended.pc5 .S .pts-icon {
-        background-image: url(/images/pieces/settlement-5.png);
-    }
-
-    .text .game-ended.pc6 .S .pts-icon {
-        background-image: url(/images/pieces/settlement-6.png);
-    }
-
-    .text .game-ended.pc7 .S .pts-icon {
-        background-image: url(/images/pieces/settlement-7.png);
-    }
-
-    .text .game-ended.pc8 .S .pts-icon {
-        background-image: url(/images/pieces/settlement-8.png);
-    }
-
-    .text .game-ended.pc9 .S .pts-icon {
-        background-image: url(/images/pieces/settlement-9.png);
-    }
-
-    .text .game-ended.pc10 .S .pts-icon {
-        background-image: url(/images/pieces/settlement-10.png);
-    }
-
-    .text .game-ended.pc1 .C .pts-icon {
-        background-image: url(/images/pieces/city-1.png);
-    }
-
-    .text .game-ended.pc2 .C .pts-icon {
-        background-image: url(/images/pieces/city-2.png);
-    }
-
-    .text .game-ended.pc3 .C .pts-icon {
-        background-image: url(/images/pieces/city-3.png);
-    }
-
-    .text .game-ended.pc4 .C .pts-icon {
-        background-image: url(/images/pieces/city-4.png);
-    }
-
-    .text .game-ended.pc5 .C .pts-icon {
-        background-image: url(/images/pieces/city-5.png);
-    }
-
-    .text .game-ended.pc6 .C .pts-icon {
-        background-image: url(/images/pieces/city-6.png);
-    }
-
-    .text .game-ended.pc7 .C .pts-icon {
-        background-image: url(/images/pieces/city-7.png);
-    }
-
-    .text .game-ended.pc8 .C .pts-icon {
-        background-image: url(/images/pieces/city-8.png);
-    }
-
-    .text .game-ended.pc9 .C .pts-icon {
-        background-image: url(/images/pieces/city-9.png);
-    }
-
-    .text .game-ended.pc10 .C .pts-icon {
-        background-image: url(/images/pieces/city-10.png);
+    .text .game-ended .C .pts-icon {
+        background-image: var(--p-city);
     }
 
     .text .game-ended .dVp .pts-icon {
@@ -466,10 +355,10 @@
     z-index: -10;
     visibility: hidden;
     pointer-events: none;
-    transition: opacity .25s linear, visibility .25s linear;
+    transition: opacity var(--t-base) linear, visibility var(--t-base) linear;
 
     &.show {
-        z-index: 60;
+        z-index: var(--z-panel);
         opacity: 1;
         visibility: visible;
         pointer-events: auto;
@@ -496,12 +385,6 @@
         box-shadow: 0 0 0.6rem 0;
         background: var(--sand-color);
         z-index: 1;
-    }
-
-    .subtitle {
-        color: #0003;
-        font-family: var(--font-ui), sans-serif;
-        padding: 0.6rem 0;
     }
 
     .close {
@@ -553,91 +436,11 @@
         content: '⬢';
         font-size: 1.5rem;
         margin-right: 0.125rem;
+        /* Player colour. See the player theme table in constants.css. */
+        color: var(--p-color);
     }
 
     &.me::before {
         content: none;
-    }
-
-    &.pc1::before {
-        color: var(--player-1-color);
-    }
-
-    &.pc2::before {
-        color: var(--player-2-color);
-    }
-
-    &.pc3::before {
-        color: var(--player-3-color);
-    }
-
-    &.pc4::before {
-        color: var(--player-4-color);
-    }
-
-    &.pc5::before {
-        color: var(--player-5-color);
-    }
-
-    &.pc6::before {
-        color: var(--player-6-color);
-    }
-
-    &.pc7::before {
-        color: var(--player-7-color);
-    }
-
-    &.pc8::before {
-        color: var(--player-8-color);
-    }
-
-    &.pc9::before {
-        color: var(--player-9-color);
-    }
-
-    &.pc10::before {
-        color: var(--player-10-color);
-    }
-
-    &.me::before {
-        .pc1 & {
-            color: var(--player-1-color);
-        }
-
-        .pc2 & {
-            color: var(--player-2-color);
-        }
-
-        .pc3 & {
-            color: var(--player-3-color);
-        }
-
-        .pc4 & {
-            color: var(--player-4-color);
-        }
-
-        .pc5 & {
-            color: var(--player-5-color);
-        }
-
-        .pc6 & {
-            color: var(--player-6-color);
-        }
-
-        .pc7 & {
-            color: var(--player-7-color);
-        }
-
-        .pc8 & {
-            color: var(--player-8-color);
-        }
-
-        .pc9 & {
-            color: var(--player-9-color);
-        }
-
-        .pc10 & {
-            color: var(--player-10-color);
-        }
     }
 }

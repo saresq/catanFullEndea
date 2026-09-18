@@ -11,7 +11,7 @@ export default class SocketManager {
     socket.emit(SOC.PLAYER_ONLINE)
 
     /** @event State-Change */
-    socket.on(SOC.STATE_CHANGE, (state, active_pid, turn) => game.updateStateChangeSoc(state, active_pid, turn))
+    socket.on(SOC.STATE_CHANGE, (state, active_pid) => game.updateStateChangeSoc(state, active_pid))
 
     /** @event Rematch-Progress */
     socket.on(SOC.REMATCH_PROGRESS, (nonVoterNames) => game.updateRematchProgressSoc(nonVoterNames))

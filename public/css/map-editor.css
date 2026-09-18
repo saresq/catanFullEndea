@@ -1,6 +1,7 @@
 @import "index/accessibility.css";
 @import "index/board.css";
 @import "constants.css";
+@import "base.css";
 
 
 @font-face {
@@ -63,20 +64,6 @@ body {
 /* hr { border-top-color: #fff; border-bottom-color: #fff; } */
 
 .button {
-    display: block;
-    background: none;
-    color: inherit;
-    border: none;
-    font: inherit;
-    cursor: pointer;
-    outline: inherit;
-    appearance: unset;
-    padding: 0;
-    padding-block: 0;
-    padding-inline: 0;
-}
-
-.button {
     padding: 7px 25px;
     width: fit-content;
     box-sizing: border-box;
@@ -89,7 +76,7 @@ body {
     font-size: 1.2em;
     font-weight: bold;
     word-spacing: 5px;
-    transition: all .25s ease;
+    transition: all var(--t-base) ease;
     display: inline-block;
 
     &:active {
@@ -131,22 +118,6 @@ body {
  * GAME & BOARD
  * -------------
 */
-
-#game .accessibility-zone .info-zone .play-full-game {
-    font-family: var(--font-main), sans-serif;
-    font-size: 2em;
-    text-align: center;
-    margin: 10px 0 30px;
-
-    a {
-        color: inherit;
-        text-shadow: 0 0 20px #8fc045, 0 0 10px #8fc045, 0 0 5px #8fc045, 0 0 3px #8fc045, 0 0 1px #8fc045, 0 0 1px #8fc045, 0 0 1px #8fc045, 0 0 1px #8fc045;
-
-        &:hover {
-            color: #fff;
-        }
-    }
-}
 
 #game .board-container {
     /* Board is panned/zoomed by transform; keep its container pinned to the viewport so the page never scrolls */
@@ -549,13 +520,6 @@ body {
                 opacity: 0.5;
             }
         }
-
-        .cancel-container {
-            margin: 0 0 30px 25px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
     }
 
     &[data-mode="tiles"] > .select-tiles {
@@ -656,7 +620,7 @@ body {
             box-shadow: 3px 3px 5px -1px #000,
             5px 5px 4px -1px #fffa inset,
             -8px -8px 8px -6px #000a inset;
-            background-color: #E9D49D;
+            background-color: var(--sand-color);
             transform: scale(0.9);
 
             &::before {
@@ -765,13 +729,6 @@ body {
                 width: 100%;
                 margin-top: 28px;
             }
-        }
-
-        .cancel-container {
-            margin-left: 35px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
         }
     }
 
@@ -884,7 +841,7 @@ body {
             &:hover .tile.S[data-trade-dir="bottom_right"] .beaches .beach-bottom_right, &:hover .tile.S[data-trade-dir="bottom_left"] .beaches .beach-bottom_left, &:hover .tile.S[data-trade-dir="top_right"] .beaches .beach-top_right, &:hover .tile.S[data-trade-dir="top_left"] .beaches .beach-top_left, &:hover .tile.S[data-trade-dir="right"] .beaches .beach-right, &:hover .tile.S[data-trade-dir="left"] .beaches .beach-left, &:hover .tile.S .trade-post {
                 filter: saturate(1) brightness(0.9) contrast(2);
                 /* transition: all .125s ease-in-out; */
-                /* animation: beach-blink .5s infinite alternate ease-in-out; */
+                /* animation: beach-blink var(--t-slow) infinite alternate ease-in-out; */
             }
 
             &:hover .tile {
@@ -898,13 +855,6 @@ body {
             margin-top: 10px;
             opacity: 0.5;
             text-transform: capitalize;
-        }
-
-        .cancel-container {
-            margin: 0 0 30px 25px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
         }
     }
 
@@ -959,10 +909,6 @@ body {
 
     &[data-trade-type="*3"] .tile.S::after {
         background-image: url(../images/trade/*3.png);
-    }
-
-    .cancel-container {
-        display: none !important;
     }
 }
 

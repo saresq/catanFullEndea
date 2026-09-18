@@ -5,11 +5,12 @@ const $ = document.querySelector.bind(document)
 
 class WaitingRoomUI {
   player_count = window.player_count
-  joined_count = 0
   $joined_count = document.querySelector('.box-header .p-count')
   $game_key = $('.title .text')
+  escCloser = e => { if (e.key === 'Escape') this.closeColorPicker() }
 
   constructor() {
+    this.socket = window.io()
     this.audio_manager = new AudioManager()
     this.accessibility_ui = new AccessibilityUI({
       toggleBgm: allow => this.audio_manager.toggleBgm(allow),
@@ -42,7 +43,7 @@ class WaitingRoomUI {
       if (!this.is_host) { this.$start_btn.classList.add('hide') }
       this.$start_btn.addEventListener('click', () => {
         if (this.is_host && !this.$start_btn.disabled) {
-          window.io().emit(CONST.SOCKET_EVENTS.START_GAME)
+          this.socket.emit(CONST.SOCKET_EVENTS.START_GAME)
           this.$start_btn.disabled = true
           this.$start_btn.textContent = 'Starting…'
         }
@@ -65,14 +66,14 @@ class WaitingRoomUI {
     }
 
     /** @event Player-Join */
-    window.io().on(CONST.SOCKET_EVENTS.JOINED_WAITING_ROOM, player => {
+    this.socket.on(CONST.SOCKET_EVENTS.JOINED_WAITING_ROOM, player => {
       this.addPlayer(player)
       this.renderSlots()
       this.updateStartBtnState()
     })
 
     /** @event Player-Quit */
-    window.io().on(CONST.SOCKET_EVENTS.PLAYER_QUIT, pid => {
+    this.socket.on(CONST.SOCKET_EVENTS.PLAYER_QUIT, pid => {
       this.removePlayer(pid)
       this.renderSlots()
       this.updateStartBtnState()
@@ -87,7 +88,7 @@ class WaitingRoomUI {
     $('.leave-lobby')?.addEventListener('click', e => window.location.href = '/logout')
 
     // Listen for color updates from server
-    window.io().on(CONST.SOCKET_EVENTS.PLAYER_COLOR_UPDATED, (pid, color_id) => {
+    this.socket.on(CONST.SOCKET_EVENTS.PLAYER_COLOR_UPDATED, (pid, color_id) => {
       window.players = window.players || []
       if (window.players[pid - 1]) {
         window.players[pid - 1].color_id = color_id
@@ -96,7 +97,7 @@ class WaitingRoomUI {
     })
 
     // Listen for game start (state change) to transition into game view
-    window.io().on(CONST.SOCKET_EVENTS.STATE_CHANGE, (state /*, active_pid */) => {
+    this.socket.on(CONST.SOCKET_EVENTS.STATE_CHANGE, (state /*, active_pid */) => {
       if (state) {
         $('#waiting-room')?.classList.add('hide')
         setTimeout(() => window.location.reload(), 300)
@@ -104,52 +105,57 @@ class WaitingRoomUI {
     })
 
     /** @event Spectator-Count */
-    window.io().on(CONST.SOCKET_EVENTS.SPECTATOR_COUNT, count => {
+    this.socket.on(CONST.SOCKET_EVENTS.SPECTATOR_COUNT, count => {
       const $spec = $('#spectator-list')
       if (!$spec) return
       $spec.classList[count ? 'remove' : 'add']('hide')
       $spec.querySelector('span').textContent = count
     })
 
-    // Helpers to open/close color picker
-    this.closeColorPicker = () => {
-      document.querySelector('.color-picker-overlay')?.remove()
-      document.removeEventListener('keydown', this._escCloser)
-    }
-    this._escCloser = (e) => { if (e.key === 'Escape') this.closeColorPicker() }
+  }
 
-    this.openColorPicker = (takenColors = new Set()) => {
-      const overlay = document.createElement('div')
-      overlay.className = 'color-picker-overlay'
-      overlay.innerHTML = `
-        <div class="picker">
-          <div class="title">Choose your color</div>
-          <div class="grid">
-            ${Array.from({length: 10}, (_,i)=>i+1).map(i=>`
-              <div class="color-option ${takenColors.has(i) ? 'taken' : ''}" data-id="${i}"
-                   style="background-image:url('/images/pieces/city-${i}.png')" title="Color ${i}"></div>
-            `).join('')}
-          </div>
-          <button class="close">Cancel</button>
-        </div>`
-      document.body.appendChild(overlay)
-      overlay.addEventListener('click', (e) => {
-        if (e.target.classList.contains('close') || e.target === overlay) this.closeColorPicker()
-      })
-      overlay.querySelectorAll('.color-option:not(.taken)')
-        .forEach(el => el.addEventListener('click', e => {
-          const cid = +e.currentTarget.dataset.id
-          window.io().emit(CONST.SOCKET_EVENTS.PLAYER_COLOR_CHANGE, cid)
-          this.closeColorPicker()
-        }))
-      document.addEventListener('keydown', this._escCloser)
-    }
+  closeColorPicker() {
+    document.querySelector('.color-picker-overlay')?.remove()
+    document.removeEventListener('keydown', this.escCloser)
+  }
 
-    this.getTakenColors = () => {
-      const set = new Set()
-      ;(window.players||[]).forEach(p => { if (p && p.id !== this.my_pid && p.color_id) set.add(p.color_id) })
-      return set
-    }
+  openColorPicker(takenColors = new Set()) {
+    const overlay = document.createElement('div')
+    overlay.className = 'color-picker-overlay'
+    overlay.innerHTML = `
+      <div class="picker">
+        <div class="title">Choose your color</div>
+        <div class="grid">
+          ${CONST.COLOR_IDS.map(i=>`
+            <div class="color-option ${takenColors.has(i) ? 'taken' : ''}" data-id="${i}"
+                 style="background-image:url('/images/pieces/city-${i}.png')" title="Color ${i}"></div>
+          `).join('')}
+        </div>
+        <button class="close">Cancel</button>
+      </div>`
+    document.body.appendChild(overlay)
+    overlay.addEventListener('click', (e) => {
+      if (e.target.classList.contains('close') || e.target === overlay) this.closeColorPicker()
+    })
+    overlay.querySelectorAll('.color-option:not(.taken)')
+      .forEach(el => el.addEventListener('click', e => {
+        const cid = +e.currentTarget.dataset.id
+        this.socket.emit(CONST.SOCKET_EVENTS.PLAYER_COLOR_CHANGE, cid)
+        this.closeColorPicker()
+      }))
+    document.addEventListener('keydown', this.escCloser)
+  }
+
+  getTakenColors() {
+    const set = new Set()
+    ;(window.players || []).forEach(p => { if (p && p.id !== this.my_pid && p.color_id) set.add(p.color_id) })
+    return set
+  }
+
+  joinedCount() { return (window.players || []).filter(Boolean).length }
+
+  updateJoinedCount() {
+    if (this.$joined_count) this.$joined_count.textContent = this.player_count - this.joinedCount()
   }
 
   initLobbySettings() {
@@ -158,40 +164,32 @@ class WaitingRoomUI {
     const $maxPlayersSelect = $('#max-players-select')
     const $diceModeSelect = $('#dice-mode-select')
 
-    const maps = {
-      [CONST.DEFAULT_MAPKEY]: 'Standard',
-      [CONST.DEFAULT_MAPKEY_5_6]: 'Extended',
-      [CONST.DEFAULT_MAPKEY_7_8]: 'Large',
-      [CONST.DEFAULT_MAPKEY_9_10]: 'Extra Large',
-      [CONST.ARGENTUM_MAPKEY]: 'Argentum',
-    }
-
-    const mapKeysBySize = {}
-    Object.entries(maps).forEach(([key, name]) => {
-      mapKeysBySize[name] = key
+    const mapKeyByName = {}
+    CONST.MAP_LIST.forEach(map => {
+      mapKeyByName[map.name] = map.mapkey
       const option = document.createElement('option')
-      option.value = key
-      option.textContent = name
+      option.value = map.mapkey
+      option.textContent = map.name
       $mapSelect.appendChild(option)
     })
 
     // Populate Win Points
-    for (let i = 5; i <= 20; i++) {
+    CONST.WIN_POINT_OPTIONS.forEach(i => {
       const opt = document.createElement('option')
       opt.value = opt.textContent = i
       $winPointsSelect.appendChild(opt)
-    }
+    })
 
     this.updateMaxPlayersSelect = () => {
       if (!this.is_host) return
       const currentVal = +$maxPlayersSelect.value || window.player_count
       $maxPlayersSelect.innerHTML = ''
-      for (let i = Math.max(2, this.joined_count); i <= 10; i++) {
+      CONST.PLAYER_COUNTS.filter(i => i >= this.joinedCount()).forEach(i => {
         const opt = document.createElement('option')
         opt.value = opt.textContent = i
         if (i === currentVal) opt.selected = true
         $maxPlayersSelect.appendChild(opt)
-      }
+      })
     }
 
     if (this.is_host) {
@@ -205,16 +203,16 @@ class WaitingRoomUI {
       $('#max-players-val').classList.add('hide')
       $('#dice-mode-val').classList.add('hide')
 
-      $mapSelect.value = mapKeysBySize[window.map_size] || window.mapkey || CONST.DEFAULT_MAPKEY
+      $mapSelect.value = mapKeyByName[window.map_size] || window.mapkey || CONST.DEFAULT_MAPKEY
       $winPointsSelect.value = window.win_points
       this.updateMaxPlayersSelect()
       $maxPlayersSelect.value = window.player_count
       $diceModeSelect.value = window.dice_mode || 'random'
 
       const emitConfig = () => {
-        window.io().emit(CONST.SOCKET_EVENTS.CHANGE_CONFIG, {
+        this.socket.emit(CONST.SOCKET_EVENTS.CHANGE_CONFIG, {
           mapkey: $mapSelect.value,
-          map_size: maps[$mapSelect.value],
+          map_size: CONST.mapName($mapSelect.value),
           win_points: +$winPointsSelect.value,
           player_count: +$maxPlayersSelect.value,
           dice_mode: $diceModeSelect.value,
@@ -233,7 +231,7 @@ class WaitingRoomUI {
     $('#max-players-val').textContent = window.player_count
     $('#dice-mode-val').textContent = (window.dice_mode || 'random').charAt(0).toUpperCase() + (window.dice_mode || 'random').slice(1)
 
-    window.io().on(CONST.SOCKET_EVENTS.CHANGE_CONFIG, config => {
+    this.socket.on(CONST.SOCKET_EVENTS.CHANGE_CONFIG, config => {
       const { player_count, win_points, mapkey, map_size, dice_mode } = config
       window.player_count = player_count
       this.player_count = player_count
@@ -241,7 +239,7 @@ class WaitingRoomUI {
       window.map_size = map_size
 
       if (this.is_host) {
-        $mapSelect.value = mapKeysBySize[map_size] || mapkey
+        $mapSelect.value = mapKeyByName[map_size] || mapkey
         $winPointsSelect.value = win_points
         this.updateMaxPlayersSelect()
         $maxPlayersSelect.value = player_count
@@ -253,44 +251,32 @@ class WaitingRoomUI {
       $('#max-players-val').textContent = player_count
       $('#dice-mode-val').textContent = dice_mode.charAt(0).toUpperCase() + dice_mode.slice(1)
 
-      this.joined_count = (window.players || []).filter(Boolean).length
-      if (this.$joined_count) this.$joined_count.textContent = (this.player_count - this.joined_count)
+      this.updateJoinedCount()
 
       this.renderSlots()
       this.updateStartBtnState()
     })
   }
 
-  checkAndEnd() {
-    if (this.joined_count === this.player_count) {
-      // Brief transition before game loads
-      $('#waiting-room').classList.add('hide')
-      setTimeout(_ => window.location.reload(), 500)
-    }
-  }
-
   addPlayer({ id, name, color_id }) {
-    // Update counters
-    this.joined_count++
-    if (this.$joined_count) this.$joined_count.textContent = (this.player_count - this.joined_count)
-    this.updateMaxPlayersSelect?.()
     // Keep global list updated for rendering
     window.players = window.players || []
     window.players[id - 1] = { id, name, color_id }
+    this.updateJoinedCount()
+    this.updateMaxPlayersSelect?.()
   }
 
   removePlayer(pid) {
-    this.joined_count = Math.max(0, this.joined_count - 1)
-    if (this.$joined_count) this.$joined_count.textContent = (this.player_count - this.joined_count)
-    this.updateMaxPlayersSelect?.()
     if (Array.isArray(window.players)) {
       delete window.players[pid - 1]
     }
+    this.updateJoinedCount()
+    this.updateMaxPlayersSelect?.()
   }
 
   updateStartBtnState() {
     if (!this.$start_btn) return
-    const joined = (window.players || []).filter(Boolean).length
+    const joined = this.joinedCount()
     const full = joined === this.player_count
     if (!this.is_host) {
       this.$start_btn.classList.add('hide')
@@ -309,7 +295,7 @@ class WaitingRoomUI {
       if (p && p.name) {
         const cid = p.color_id || p.id
         const clickable = (this.my_pid && this.my_pid === p.id)
-        return `<div class="slot filled p${p.id} ${p.color_id ? 'pc' + p.color_id : ''}" data-pid="${p.id}">
+        return `<div class="slot filled p${p.id} pc${p.color_id || p.id}" data-pid="${p.id}">
           <div class="city-icon ${clickable ? 'clickable' : ''}" data-pid="${p.id}"
                style="background-image:url('/images/pieces/city-${cid}.png')" title="${clickable ? 'Choose color' : 'Player color'}"></div>
           <div class="name">${p.name}</div>
@@ -328,7 +314,7 @@ class WaitingRoomUI {
     })
 
     // Update remaining count after rerender (in case of initial render)
-    if (this.$joined_count) this.$joined_count.textContent = (this.player_count - (window.players || []).filter(Boolean).length)
+    this.updateJoinedCount()
   }
 }
 

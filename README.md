@@ -2,20 +2,23 @@
 Free to play multiplayer Catan board game
 
 ## Links
-**Play Game:** [catan-full-endea.onrender.com](https://catan-full-endea.onrender.com/login)
-> The onrender server goes to sleep on inactivity, if you open the link it might take a few minutes to get the server up
+**Play Game:** [catan.endea.ar](https://catan.endea.ar/login)
 
 > Open the Browser Console to have control over all the game configs, including mapkey
 
 **Map Editor (built-in):**
+- Live: https://catan.endea.ar/map-editor
 - Local dev: http://localhost:3000/map-editor
-- Render: https://catan-full-endea.onrender.com/map-editor
 
 **Shuffler & Board builder (legacy site):** [bharathraja.in/catan](https://bharathraja.in/catan)
 
-**Static Shuffler (this repo deployment):**
-- Local dev: http://localhost:3000/map-editor
-- Render: https://catan-full-endea.onrender.com/map-editor
+## Documentation
+- [`DEPLOY.md`](DEPLOY.md) — run it locally, environment variables, Docker, the VPS.
+- [`WEBSOCKET_ARCHITECTURE.md`](WEBSOCKET_ARCHITECTURE.md) — every socket event, the server state
+  machine, end-to-end flows, and the invariants to respect before touching them.
+- [`balanced-dice.md`](balanced-dice.md) — the optional balanced-dice algorithm.
+- [`TBD.md`](TBD.md) — everything planned, deferred or half-built, and what was decided against.
+- [`todo.md`](todo.md) — done log of the 2026-09-17 cleanup, kept for its reasoning.
 
 ---
 
@@ -35,10 +38,44 @@ Tips:
 ## Local Installation & Running
 ```bash
 npm i
-npm start
+npm start     # http://localhost:3000
+npm test      # node --test tests/
 ```
-The server will be reachable at [localhost:3000](http://localhost:3000/). You're now ready to play the game…
-> I have an `.nvmrc` pointing to node version `v20.10`. Please use at least `v18` and above…
+> `.nvmrc` points at node `v20.10`. Use at least `v18`.
+
+Hosting it for other people is in [`DEPLOY.md`](DEPLOY.md).
+
+## Repository map
+
+| Path | What lives there |
+|---|---|
+| `index.js` | Express routes, Socket.IO server, `GAME_SESSIONS` registry, rematch voting. |
+| `models/game.js` | Authoritative game state machine. Every `*IO` method is a socket handler. |
+| `models/player.js` | Hand, dev cards, pieces, victory points. |
+| `models/io_manager.js` | Binds socket events to `Game` methods; broadcast + private emit helpers. |
+| `models/dice.js` | `createDice(mode)` — random or balanced. |
+| `public/js/const.js` | `GAME_CONFIG` defaults and the canonical `SOCKET_EVENTS` table. |
+| `public/js/game.js` | Client controller. Renders from broadcasts; never mutates state on its own. |
+| `public/js/socket_manager.js` | Client socket listeners and emitters. |
+| `public/js/board/` | Board, tile, corner, edge, shuffler. |
+| `public/js/ui/` | One module per UI region. |
+| `public/css/` | `constants.css` (variables), `base.css`, `index/` per-component files. |
+| `public/sounds/`, `public/images/` | Assets. |
+| `views/` | Mustache templates: `login`, `waiting_room`, `index`, `map-editor`. |
+| `tests/` | `node --test` suites. |
+
+The server is authoritative for everything. Clients send intent, the server validates it, mutates
+state and broadcasts the result — see `WEBSOCKET_ARCHITECTURE.md` before adding an event.
+
+## Game states
+
+`PLAYER_ROLL` → active player rolls. A 7 goes to `ROBBER_DROP` (everyone over the hand limit
+discards half) then `ROBBER_MOVE` (active player relocates the robber and steals); anything else
+distributes resources and goes to `PLAYER_ACTIONS` (build, buy/play dev cards, trade, end turn).
+`INITIAL_SETUP` runs first, two snake-order rounds, with the second settlement paying out.
+
+The game ends when a player reaches `config.win_points` — settlements 1, cities 2, victory-point
+cards 1 each, largest army 2, longest road 2.
 
 ## Game Features
 - [x] Design your own map
@@ -53,6 +90,9 @@ The server will be reachable at [localhost:3000](http://localhost:3000/). You're
 - [x] Clear Notification History
 - [x] Smart Map Shuffler
 - [x] Optional Timer
+- [x] Optional Balanced Dice (`config.dice_mode = 'balanced'`)
+- [x] Spectators
+- [x] Rematch voting at game end
 
 ## 5-10 Player Support
 The game now supports up to 10 players with the following adjustments:
@@ -74,28 +114,6 @@ The game now supports up to 10 players with the following adjustments:
 - Maximum development card deck (30 Knights, 15 Progress cards, 10 Victory Points)
 - Victory point requirement increased to 13 (configurable)
 - Robber hand limit set to 10 (configurable)
-
-## Future Ideas
-- Browser Notifications
-- Join random games
-  - Private & public games
-- Watch games
-- Custom map builder
-- Rethink ports
-  - multiple in single Sea tile
-  - disallow connected edges of land being added as ports
-- Social login (w pic and/or just a name/id)
-- Discord help (for talking)
-- Seafarers expansion (fairly easy one)
-- Trade negotiations
-
-## Tech Debt
-- Move to React (or any partial rendering libs)
-- Write Tests
-- Button and other reused components
-- Optimization (memory[^1], speed, colors)
-- Further modularisation (as of Dec 2024 `model/game.js` is :700 and `public/js/game.js` is :470)
-- Render beaches on the resource tile than Sea
 
 ## Frameworks
 ### Major
@@ -185,65 +203,3 @@ config.mapkey = `S.S(bl_O2).S(br_O2).S-S.M8.D.M8.S-S.G9.S.S.G9.S-S.F10.S.S.S.F10
 ```
 Renders the map…
 <img width="900" alt="Screenshot 2024-02-04 at 11 46 20 copy" src="https://github.com/bigomega/catan/assets/2320747/7449040b-2f77-4ba1-beeb-a648af4dea05">
-
-## Status
-### In Progress
-  ##### Jan '25
-  - [ ] Numberless Tiles MapKey (to be filled by game)
-  - [ ] Generic Resource Tiles in MapKey (to be filled by game)
-  - [ ] Map Builder
-  ##### Feb '24
-  - [x] ~~Alert history~~
-  - [x] ~~Quit game~~
-  - [x] ~~Login & waiting room UI rework~~
-  - [x] ~~End Game~~
-  ##### Jan '24
-  - [x] ~~Accessibility (Zoom, Fullscreen, Sound, Shortcuts~~)
-  - [x] ~~Opponents UI~~
-  - [x] ~~Shuffler~~
-  - [x] ~~Longest Road & Largest Army~~
-  - [x] ~~Animations (DC, Cost, Build, Dice, Hand)~~
-  - [x] ~~Dev Card Actions~~
-  - [x] ~~Trade~~
-  - [x] ~~Keyboard Shortcuts~~
-  - [x] ~~Client Refactor~~
-  - [x] ~~Robber~~
-  - [x] ~~Basic Turn Actions~~
-  - [x] ~~Refactor server-side Game.js~~
-  - [x] ~~Page refresh state persistance~~
-  - [x] ~~Render Hand~~
-  - [x] ~~Distribute resource~~
-  - [x] ~~Place second house & road~~
-  - [x]  ~~Place first house & road~~
-  ##### Dec '23
-  - [x] ~~Alert & Notification Messaging~~
-  - [x] ~~Timer System~~
-  ##### Nov '23
-  - [x] ~~Sound Collection~~
-  - [x] ~~Waiting Room~~
-  ##### Jun '23
-  - [x] ~~Socket IO setup~~
-  - [x] ~~Render Corners and Edges~~
-  - [x] ~~Render Board~~
-  - [x] ~~Image and Sprite Collection & Edit~~
-  - [x] ~~Login Page~~
-  - [x] ~~Simple Server~~
-  - [x] ~~Decoding the map from key~~
-
-### Bugs
-  - [x] ~~Road into the Sea~~
-  - [ ] Development card styling issue in Safari
-
-### Feedback
-  - [ ] Initial build - show the built house
-  - [ ] ~~Resource animation after dice animation~~
-  - [x] Music reminder
-  - [x] Can play DevCard after dice, update text
-  - [ ] Trade denied/accepted message
-  - [x] Remember player name
-  - [ ] Timer focus when few seconds left
-  - [ ] Game end, new game link
-  - [ ] Login splash image quick load
-  - [ ] larger screen number fix
-
-[^1]: https://www.ditdot.hr/en/causes-of-memory-leaks-in-javascript-and-how-to-avoid-them

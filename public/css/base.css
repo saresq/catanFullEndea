@@ -1,0 +1,14 @@
+/* Base button reset, shared by every page (also covers the div.button used in the map editor) */
+button, .button {
+    display: block;
+    background: none;
+    color: inherit;
+    border: none;
+    font: inherit;
+    cursor: pointer;
+    outline: inherit;
+    appearance: unset;
+    padding: 0;
+    padding-block: 0;
+    padding-inline: 0;
+}

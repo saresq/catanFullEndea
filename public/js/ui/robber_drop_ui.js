@@ -23,6 +23,15 @@ export default class RobberDropUI {
     this.$waiting_text.style.display = 'none'
     this.$el.appendChild(this.$waiting_text)
     this.$robber_emoji.addEventListener('click', e => playRobberAudio())
+    // Bound once: $drop_submit lives for the whole game, unlike the per-render .ctrl buttons
+    this.$drop_submit.addEventListener('click', e => {
+      if (!this.$drop_submit.classList.contains('active')) return
+      // Enter waiting state immediately to give visual feedback
+      this.setWaiting(true)
+      const clean_obj = Object.fromEntries(Object.entries(this.#res)
+        .filter(([k]) => CONST.RESOURCES[k]))
+      this.#onDropSubmit(clean_obj)
+    })
   }
 
   hide() { this.$el.classList.remove('show') }
@@ -57,14 +66,6 @@ export default class RobberDropUI {
   }
 
   #addEventListeners() {
-    this.$drop_submit.addEventListener('click', e => {
-      if (!e.target.classList.contains('active')) return
-      // Enter waiting state immediately to give visual feedback
-      this.setWaiting(true)
-      const clean_obj = Object.fromEntries(Object.entries(this.#res)
-        .filter(([k]) => CONST.RESOURCES[k]))
-      this.#onDropSubmit(clean_obj)
-    })
     // Minus: take back one from this slot
     this.$card_area.querySelectorAll('.drop-card .ctrl.minus').forEach($btn => {
       $btn.addEventListener('click', e => {
@@ -143,15 +144,9 @@ export default class RobberDropUI {
   setWaiting(flag) {
     this.#waiting = !!flag
     // Hide controls and cards when waiting; show only waiting text
-    if (flag) {
-      this.$card_area.style.display = 'none'
-      this.$drop_actions.style.display = 'none'
-      if (this.$waiting_text) this.$waiting_text.style.display = 'block'
-    } else {
-      if (this.$waiting_text) this.$waiting_text.style.display = 'none'
-      this.$card_area.style.display = ''
-      this.$drop_actions.style.display = ''
-    }
+    this.$card_area.style.display = flag ? 'none' : ''
+    this.$drop_actions.style.display = flag ? 'none' : ''
+    if (this.$waiting_text) this.$waiting_text.style.display = flag ? 'block' : 'none'
     // Ensure submit button is not interactive while waiting
     this.$drop_submit.classList.remove('active')
     this.$drop_submit.classList[flag ? 'add' : 'remove']('waiting')

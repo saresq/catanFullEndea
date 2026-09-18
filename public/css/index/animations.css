@@ -1,13 +1,13 @@
 .animation-zone, .resource-animation-zone {
     z-index: -1;
     opacity: 0;
-    transition: opacity .15s linear, z-index 0s linear;
+    transition: opacity var(--t-fast) linear, z-index 0s linear;
 
     &.ready {
         position: fixed;
         top: 0;
         left: 0;
-        z-index: 25;
+        z-index: var(--z-animation);
         opacity: 1;
         width: 100%;
         height: 100%;
@@ -16,7 +16,7 @@
     &.end {
         opacity: 0 !important;
         z-index: -1 !important;
-        transition: opacity .15s linear, z-index 0s .15s linear !important;
+        transition: opacity var(--t-fast) linear, z-index 0s var(--t-fast) linear !important;
     }
 }
 
@@ -26,7 +26,7 @@
 
 /* Dice Roll */
 .animation-zone.dice-roll-animation {
-    background: color-mix(in srgb, #3a3527 80%, transparent);
+    background: var(--overlay-bg);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -34,7 +34,7 @@
     &.start {
         opacity: 0;
         z-index: -1;
-        transition: opacity .15s 1.5s linear, z-index 0s 1.65s linear;
+        transition: opacity var(--t-fast) 1.5s linear, z-index 0s 1.65s linear;
     }
 
     .dice-animation {
@@ -50,7 +50,7 @@
     &.start .dice-animation {
         visibility: visible;
         opacity: 0;
-        transition: opacity .25s .75s linear;
+        transition: opacity var(--t-base) .75s linear;
     }
 
     /* https: //dev.to/ekeijl/creating-dice-using-css-grid-j4 */
@@ -81,7 +81,7 @@
 
     &.start .dice {
         opacity: 1;
-        transition: opacity .5s .5s linear;
+        transition: opacity var(--t-slow) var(--t-slow) linear;
     }
 
     .pip {
@@ -134,11 +134,11 @@
     &.start {
         opacity: 0;
         z-index: -1;
-        transition: opacity .15s .5s linear, z-index 0s .65s linear;
+        transition: opacity var(--t-fast) var(--t-slow) linear, z-index 0s .65s linear;
     }
 
     .container {
-        transition: margin .5s cubic-bezier(1, 0.02, 1, 0.07), width .5s cubic-bezier(0.83, 0.16, 0.99, 0.41), opacity .15s ease;
+        transition: margin var(--t-slow) cubic-bezier(1, 0.02, 1, 0.07), width var(--t-slow) cubic-bezier(0.83, 0.16, 0.99, 0.41), opacity var(--t-fast) ease;
         width: 100px;
         margin-top: -20%;
         display: flex;
@@ -159,12 +159,12 @@
         box-sizing: border-box;
         border: 1px solid var(--sand-color-dark);
         border-radius: 100px;
-        background: #e8d49c;
+        background: var(--sand-color);
         display: flex;
         justify-content: center;
         align-items: center;
         transform: scale(.5);
-        transition: all .5s ease-in;
+        transition: all var(--t-slow) ease-in;
 
         .res-icon {
             margin: 0;
@@ -210,7 +210,7 @@
 
 /* Development Card - Intro & Outro */
 .animation-zone.dev-c-animation {
-    background: color-mix(in srgb, #3a3527 80%, transparent);
+    background: var(--overlay-bg);
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -229,7 +229,7 @@
         width: 100%;
         height: 100%;
         box-shadow: 0 0 0.9375rem 0 #000c;
-        background-color: #ebd290;
+        background-color: var(--card-face);
         overflow: hidden;
         position: relative;
         border-radius: 0.9375rem;
@@ -291,14 +291,14 @@
         transition: none;
 
         .card {
-            box-shadow: 0 5px 0 -2px #5a460e, 0 65px 20px -30px #000;
+            box-shadow: 0 5px 0 -2px var(--card-border), 0 65px 20px -30px #000;
             transform: rotateX(50deg); /* translate3d(0px, -54px, -116px); */
             transform-origin: center;
-            transition: all .25s linear;
+            transition: all var(--t-base) linear;
         }
 
         &.start {
-            transition: opacity .15s .25s linear, z-index 0s .4s linear;
+            transition: opacity var(--t-fast) var(--t-base) linear, z-index 0s .4s linear;
         }
 
         &.start .card {
@@ -311,11 +311,11 @@
         .card {
             transform: rotateX(65deg) translate3d(0px, -500px, 300px);
             transform-origin: bottom center;
-            transition: all .25s linear;
+            transition: all var(--t-base) linear;
         }
 
         &.start {
-            transition: opacity .15s 1.75s linear, z-index 0s 1.9s linear;
+            transition: opacity var(--t-fast) 1.75s linear, z-index 0s 1.9s linear;
         }
 
         &.start .card {
@@ -324,63 +324,25 @@
     }
 }
 
+/* Title bar shared by the largest-army and longest-road overlays */
+.animation-zone:is(.largest-army-animation, .longest-road-animation) .title {
+    color: #fff;
+    /* Player colour. See the player theme table in constants.css. */
+    background: var(--p-color, var(--sand-color-dark));
+    font-size: 1.2em;
+    width: 100%;
+    padding: 10px;
+    text-align: center;
+    border-bottom: 2px solid;
+}
+
 /* Largest Army */
 .animation-zone.largest-army-animation {
-    background: color-mix(in srgb, #3a3527 80%, transparent);
+    background: var(--overlay-bg);
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-
-    .title {
-        color: #fff;
-        background: var(--sand-color-dark);
-        font-size: 1.2em;
-        width: 100%;
-        padding: 10px;
-        text-align: center;
-        border-bottom: 2px solid;
-
-        &.p1 {
-            background-color: var(--player-1-color);
-        }
-
-        &.p2 {
-            background-color: var(--player-2-color);
-        }
-
-        &.p3 {
-            background-color: var(--player-3-color);
-        }
-
-        &.p4 {
-            background-color: var(--player-4-color);
-        }
-
-        &.p5 {
-            background-color: var(--player-5-color);
-        }
-
-        &.p6 {
-            background-color: var(--player-6-color);
-        }
-
-        &.p7 {
-            background-color: var(--player-7-color);
-        }
-
-        &.p8 {
-            background-color: var(--player-8-color);
-        }
-
-        &.p9 {
-            background-color: var(--player-9-color);
-        }
-
-        &.p10 {
-            background-color: var(--player-10-color);
-        }
-    }
 
     .container {
         margin-top: 3.125rem;
@@ -392,7 +354,7 @@
             position: relative;
             border: 0.0625rem solid;
             border-radius: 0.625rem;
-            background: #c8b66d url(/images/extra-vps-sprite.png) -1.4375rem -9.125rem/43.75rem no-repeat;
+            background: var(--vp-card-bg) url(/images/extra-vps-sprite.png) -1.4375rem -9.125rem/43.75rem no-repeat;
             box-shadow: 0.3125rem 0.3125rem 0.9375rem 0 #000;
             opacity: 0;
         }
@@ -455,105 +417,55 @@
 
     &.start .knight.third {
         opacity: 1;
-        transition: opacity .25s linear;
+        transition: opacity var(--t-base) linear;
     }
 
     &.start .knight.second {
         opacity: 1;
-        transition: opacity .25s .25s linear;
+        transition: opacity var(--t-base) var(--t-base) linear;
     }
 
     &.start .knight.first {
         opacity: 1;
-        transition: opacity .25s .5s linear;
+        transition: opacity var(--t-base) var(--t-slow) linear;
     }
 
     &.finish .largest-army-card {
         opacity: 1;
         height: 25.1875rem;
-        transition: opacity .25s ease-in, height .25s 1s ease-in;
+        transition: opacity var(--t-base) ease-in, height var(--t-base) 1s ease-in;
     }
 
     &.finish .knight.third {
         opacity: 0;
-        transition: opacity .25s .25s linear;
+        transition: opacity var(--t-base) var(--t-base) linear;
     }
 
     &.finish .knight.second {
         opacity: 0;
-        transition: opacity .25s .25s linear;
+        transition: opacity var(--t-base) var(--t-base) linear;
     }
 
     &.finish .knight.first {
         opacity: 0;
-        transition: opacity .25s .25s linear;
+        transition: opacity var(--t-base) var(--t-base) linear;
     }
 
     &.finish {
         opacity: 0;
         z-index: -1;
-        transition: opacity .15s linear 5s, z-index 0s 5.15s linear;
+        transition: opacity var(--t-fast) linear 5s, z-index 0s 5.15s linear;
     }
 }
 
 /* Longest Road */
 .animation-zone.longest-road-animation {
-    background: color-mix(in srgb, #3a3527 80%, transparent);
+    background: var(--overlay-bg);
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-    transition: opacity .5s ease-out, z-index 0s linear;
-
-    .title {
-        color: #fff;
-        background: var(--sand-color-dark);
-        font-size: 1.2em;
-        width: 100%;
-        padding: 10px;
-        text-align: center;
-        border-bottom: 2px solid;
-
-        &.p1 {
-            background-color: var(--player-1-color);
-        }
-
-        &.p2 {
-            background-color: var(--player-2-color);
-        }
-
-        &.p3 {
-            background-color: var(--player-3-color);
-        }
-
-        &.p4 {
-            background-color: var(--player-4-color);
-        }
-
-        &.p5 {
-            background-color: var(--player-5-color);
-        }
-
-        &.p6 {
-            background-color: var(--player-6-color);
-        }
-
-        &.p7 {
-            background-color: var(--player-7-color);
-        }
-
-        &.p8 {
-            background-color: var(--player-8-color);
-        }
-
-        &.p9 {
-            background-color: var(--player-9-color);
-        }
-
-        &.p10 {
-            background-color: var(--player-10-color);
-        }
-    }
+    transition: opacity var(--t-slow) ease-out, z-index 0s linear;
 
     .container {
         margin-top: 3.125rem;
@@ -565,7 +477,7 @@
             position: relative;
             border: 0.0625rem solid;
             border-radius: 0.625rem;
-            background: #c8b66d url(/images/extra-vps-sprite.png) -22.0625rem -9.5rem/43.75rem no-repeat;
+            background: var(--vp-card-bg) url(/images/extra-vps-sprite.png) -22.0625rem -9.5rem/43.75rem no-repeat;
             box-shadow: 0.3125rem 0.3125rem 0.9375rem 0 #000;
         }
     }
@@ -573,6 +485,6 @@
     &.start {
         opacity: 0;
         z-index: -1;
-        transition: opacity .15s linear 0s, z-index 0s 0.15s linear;
+        transition: opacity var(--t-fast) linear 0s, z-index 0s var(--t-fast) linear;
     }
 }

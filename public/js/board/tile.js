@@ -1,6 +1,14 @@
 import * as CONST from "../const.js"
 
 const OPPOSITES = { top: 'bottom', left: 'right', right: 'left', bottom: 'top' }
+const ALL_CONNECTIONS = { // only within the current Tile
+  top: { left: 'top_left', right: 'top_right' },
+  top_left: { right: 'top', bottom: 'bottom_left' },
+  top_right: { left: 'top', bottom: 'bottom_right' },
+  bottom_left: { top: 'top_left', right: 'bottom' },
+  bottom_right: { top: 'top_right', left: 'bottom' },
+  bottom: { left: 'bottom_left', right: 'bottom_right' },
+}
 
 export default class Tile {
   id; type; num; adjacent_tiles;
@@ -43,14 +51,6 @@ export default class Tile {
       } else {
         const newCorner = createCorner(this)
         this.corners[dir] = newCorner
-        const ALL_CONNECTIONS = { // only within the current Tile
-          top: { left: 'top_left', right: 'top_right' },
-          top_left: { right: 'top', bottom: 'bottom_left' },
-          top_right: { left: 'top', bottom: 'bottom_right' },
-          bottom_left: { top: 'top_left', right: 'bottom' },
-          bottom_right: { top: 'top_right', left: 'bottom' },
-          bottom: { left: 'bottom_left', right: 'bottom_right' },
-        }
         const c_connections = ALL_CONNECTIONS[dir]
         Object.keys(c_connections).forEach(c_dir => {
           const c_loc = c_connections[c_dir]
@@ -69,15 +69,7 @@ export default class Tile {
       this.trade_type = trade_type
       this.trade_ratio = trade_ratio
       if (!no_edge_corner) {
-        const EDGE_2_CORNERS = {
-          top_left: ['top', 'top_left'],
-          top_right: ['top', 'top_right'],
-          left: ['top_left', 'bottom_left'],
-          right: ['top_right', 'bottom_right'],
-          bottom_left: ['bottom', 'bottom_left'],
-          bottom_right: ['bottom', 'bottom_right'],
-        }
-        EDGE_2_CORNERS[trade_edge]?.forEach(dir => {
+        CONST.DIR_HELPER.EDGE_TO_CORNERS[trade_edge]?.forEach(dir => {
           this.corners[dir]?.setTrade(trade_type, trade_ratio)
         })
       }

@@ -1,10 +1,12 @@
 import { shuffle as arrayShuffle } from "../utils.js"
+import * as CONST from "../const.js"
 import Board from "./board.js"
 
-const edge_shortcut = {
-  top_left: 'tl', top_right: 'tr', left: 'l',
-  right: 'r', bottom_left: 'bl', bottom_right: 'br',
-}
+const isRedNumber = num => CONST.RED_NUMBERS.includes(+num)
+/** `num` clashes with `nums` if it is already there, or if both are red numbers. */
+const numConflicts = (nums, num) =>
+  nums.has(+num) || (isRedNumber(num) && CONST.RED_NUMBERS.some(red => nums.has(red)))
+
 
 export default class BoardShuffler {
   #board;
@@ -26,6 +28,19 @@ export default class BoardShuffler {
     })
   }
 
+  /** Numbers of the tiles adjacent to `tile`, with 6 and 8 counted as equivalent (red numbers) */
+  #adjacentNums(tile) {
+    const nums = new Set()
+    Object.values(tile.adjacent_tiles)
+      .filter(Boolean)
+      .filter(t => t.type !== 'S' && t.type !== 'D' && t.num)
+      .forEach(t => {
+        nums.add(+t.num)
+        if (isRedNumber(t.num)) CONST.RED_NUMBERS.forEach(red => nums.add(red))
+      })
+    return nums
+  }
+
   /** @param {false|'none'|'all'|'number'|'port'|'tile'|'(combo of number-port-tile)'} type  */
   shuffle(type) {
     if (!type || type === 'none') { return this.toMapKey() }
@@ -36,8 +51,6 @@ export default class BoardShuffler {
     let tile_index = 0, number_index = 0
     const new_tiles = shuff_tiles ? arrayShuffle(this.#tiles) : this.#tiles
     const new_numbers = shuff_nums ? arrayShuffle(this.#numbers) : this.#numbers
-    // Track which numbers are adjacent to each tile
-    const adjacent_numbers = {}
 
     this.#board.tile_rows.forEach(row => {
       row.forEach(tile => {
@@ -64,17 +77,7 @@ export default class BoardShuffler {
          * c. If no valid swap is found, leave it as is (rare edge case)
          */
         
-        // Get all adjacent numbers for this tile
-        const adjacent_nums = new Set()
-        Object.values(tile.adjacent_tiles)
-          .filter(Boolean)
-          .filter(t => t.type !== 'S' && t.type !== 'D' && t.num)
-          .forEach(t => {
-            adjacent_nums.add(+t.num)
-            // Treat 6 and 8 as equivalent (red numbers)
-            if (+t.num === 6) adjacent_nums.add(8)
-            if (+t.num === 8) adjacent_nums.add(6)
-          })
+        const adjacent_nums = this.#adjacentNums(tile)
         
         // If the current number is already adjacent or (6 adjacent to 8 or vice versa), try to swap
         if (adjacent_nums.has(+tile.num)) {
@@ -94,27 +97,10 @@ export default class BoardShuffler {
           for (const clear_tile_i of clear_tile_indices) {
             const clear_tile = this.#board.findTile(clear_tile_i)
             
-            // Get adjacent numbers for the potential swap tile
-            const clear_adjacent_nums = new Set()
-            Object.values(clear_tile.adjacent_tiles)
-              .filter(Boolean)
-              .filter(t => t.type !== 'S' && t.type !== 'D' && t.num)
-              .forEach(t => {
-                clear_adjacent_nums.add(+t.num)
-                // Treat 6 and 8 as equivalent (red numbers)
-                if (+t.num === 6) clear_adjacent_nums.add(8)
-                if (+t.num === 8) clear_adjacent_nums.add(6)
-              })
+            const clear_adjacent_nums = this.#adjacentNums(clear_tile)
             
             // Check if swapping would create no conflicts
-            // For 6 and 8, we need to check both numbers
-            const tileNumConflict = clear_adjacent_nums.has(+tile.num) || 
-              ((+tile.num === 6 || +tile.num === 8) && (clear_adjacent_nums.has(6) || clear_adjacent_nums.has(8)))
-            
-            const clearTileNumConflict = adjacent_nums.has(+clear_tile.num) || 
-              ((+clear_tile.num === 6 || +clear_tile.num === 8) && (adjacent_nums.has(6) || adjacent_nums.has(8)))
-            
-            if (!tileNumConflict && !clearTileNumConflict) {
+            if (!numConflicts(clear_adjacent_nums, tile.num) && !numConflicts(adjacent_nums, clear_tile.num)) {
               // Swap the numbers
               const tmp = clear_tile.num
               clear_tile.num = tile.num
@@ -128,11 +114,7 @@ export default class BoardShuffler {
           if (!swapped) {
             for (let i = number_index; i < new_numbers.length; i++) {
               // Check if the number from the pool would conflict with adjacent tiles
-              // For 6 and 8, we need to check both numbers
-              const poolNumConflict = adjacent_nums.has(+new_numbers[i]) || 
-                ((+new_numbers[i] === 6 || +new_numbers[i] === 8) && (adjacent_nums.has(6) || adjacent_nums.has(8)))
-              
-              if (!poolNumConflict) {
+              if (!numConflicts(adjacent_nums, new_numbers[i])) {
                 const tmp = new_numbers[i]
                 new_numbers[i] = tile.num
                 tile.num = tmp
@@ -171,7 +153,7 @@ export default class BoardShuffler {
       return diff + row.map(tile => {
         if (tile.type === 'D') return 'D'
         if (tile.type === 'S') {
-          return 'S' + (tile.trade_edge ? `(${edge_shortcut[tile.trade_edge]}_${tile.trade_type}${tile.trade_ratio})` : '')
+          return 'S' + (tile.trade_edge ? `(${CONST.DIR_HELPER.MAPKEYS[tile.trade_edge]}_${tile.trade_type}${tile.trade_ratio})` : '')
         }
         return tile.type + tile.num
       }).join('.')

@@ -2,6 +2,7 @@
 @import "/css/index/alert.css";
 @import "/css/constants.css";
 @import "/css/fonts.css";
+@import "/css/base.css";
 
 :root {
     --title-padding: .8em 20px .2em;
@@ -44,23 +45,9 @@ body {
     margin: 0;
     background: url(/images/catan-bg.png) center/cover;
     backdrop-filter: blur(50px);
-    transition: all linear .5s;
+    transition: all linear var(--t-slow);
     font-family: var(--font-main), sans-serif;
     font-size: 1rem;
-}
-
-button {
-    display: block;
-    background: none;
-    color: inherit;
-    border: none;
-    font: inherit;
-    cursor: pointer;
-    outline: inherit;
-    appearance: unset;
-    padding: 0;
-    padding-block: 0;
-    padding-inline: 0;
 }
 
 #waiting-room {
@@ -71,7 +58,7 @@ button {
 
     &.hide {
         opacity: 0;
-        transition: opacity .5s 1.5s linear;
+        transition: opacity var(--t-slow) 1.5s linear;
     }
 
     .title {
@@ -100,7 +87,7 @@ button {
             position: relative;
             color: var(--sand-color-text-dark);
             cursor: copy;
-            transition: all .15s ease;
+            transition: all var(--t-fast) ease;
 
             svg {
                 transform: scale(1.3);
@@ -178,7 +165,7 @@ button {
         font-weight: 700;
     }
 
-    .box-header .value-select, .box-header .value-input {
+    .box-header .value-select {
         background: #fff2;
         color: #fff;
         border: 1px solid #fff4;
@@ -193,11 +180,6 @@ button {
 
     .box-header .value-select option {
         background: #333;
-    }
-
-    .box-header .value-input {
-        width: 45px;
-        cursor: text;
     }
 
     .box-header .hide {
@@ -257,96 +239,15 @@ button {
         filter: grayscale(1) contrast(0.7) brightness(0.9);
     }
 
-    /* Apply player colors to filled slots */
+    /* Player colours. See the player theme table in constants.css. */
 
-    .slot.filled.p1 {
-        background: var(--player-1-color-light);
-        border-color: var(--player-1-color-dark);
-    }
+    .slot.filled {
+        background: var(--p-color-light, var(--sand-color));
+        border-color: var(--p-color-dark, var(--sand-color-dark));
 
-    .slot.filled.p2 {
-        background: var(--player-2-color-light);
-        border-color: var(--player-2-color-dark);
-    }
-
-    .slot.filled.p3 {
-        background: var(--player-3-color-light);
-        border-color: var(--player-3-color-dark);
-    }
-
-    .slot.filled.p4 {
-        background: var(--player-4-color-light);
-        border-color: var(--player-4-color-dark);
-    }
-
-    .slot.filled.p5 {
-        background: var(--player-5-color-light);
-        border-color: var(--player-5-color-dark);
-    }
-
-    .slot.filled.p6 {
-        background: var(--player-6-color-light);
-        border-color: var(--player-6-color-dark);
-    }
-
-    .slot.filled.p7 {
-        background: var(--player-7-color-light);
-        border-color: var(--player-7-color-dark);
-    }
-
-    .slot.filled.p8 {
-        background: var(--player-8-color-light);
-        border-color: var(--player-8-color-dark);
-    }
-
-    .slot.filled.p9 {
-        background: var(--player-9-color-light);
-        border-color: var(--player-9-color-dark);
-    }
-
-    .slot.filled.p10 {
-        background: var(--player-10-color-light);
-        border-color: var(--player-10-color-dark);
-    }
-
-    .slot.filled.p1 .name {
-        background: var(--player-1-color);
-    }
-
-    .slot.filled.p2 .name {
-        background: var(--player-2-color);
-    }
-
-    .slot.filled.p3 .name {
-        background: var(--player-3-color);
-    }
-
-    .slot.filled.p4 .name {
-        background: var(--player-4-color);
-    }
-
-    .slot.filled.p5 .name {
-        background: var(--player-5-color);
-    }
-
-    .slot.filled.p6 .name {
-        background: var(--player-6-color);
-    }
-
-    .slot.filled.p7 .name {
-        background: var(--player-7-color);
-    }
-
-    .slot.filled.p8 .name {
-        background: var(--player-8-color);
-    }
-
-    .slot.filled.p9 .name {
-        background: var(--player-9-color);
-    }
-
-    .slot.filled.p10 .name {
-        background: var(--player-10-color);
+        .name {
+            background: var(--p-color, var(--sand-color-dark));
+        }
     }
 }
 
@@ -383,7 +284,7 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: var(--z-modal);
 }
 
 .color-picker-overlay .picker {
@@ -440,102 +341,10 @@ button {
     border-radius: 6px;
 }
 
-
-/* Support color-based classes (pc1..pc8) to reflect selected color */
-#waiting-room .slot.filled.pc1 {
-    background: var(--player-1-color-light);
-    border-color: var(--player-1-color-dark);
-}
-
-#waiting-room .slot.filled.pc2 {
-    background: var(--player-2-color-light);
-    border-color: var(--player-2-color-dark);
-}
-
-#waiting-room .slot.filled.pc3 {
-    background: var(--player-3-color-light);
-    border-color: var(--player-3-color-dark);
-}
-
-#waiting-room .slot.filled.pc4 {
-    background: var(--player-4-color-light);
-    border-color: var(--player-4-color-dark);
-}
-
-#waiting-room .slot.filled.pc5 {
-    background: var(--player-5-color-light);
-    border-color: var(--player-5-color-dark);
-}
-
-#waiting-room .slot.filled.pc6 {
-    background: var(--player-6-color-light);
-    border-color: var(--player-6-color-dark);
-}
-
-#waiting-room .slot.filled.pc7 {
-    background: var(--player-7-color-light);
-    border-color: var(--player-7-color-dark);
-}
-
-#waiting-room .slot.filled.pc8 {
-    background: var(--player-8-color-light);
-    border-color: var(--player-8-color-dark);
-}
-
-#waiting-room .slot.filled.pc9 {
-    background: var(--player-9-color-light);
-    border-color: var(--player-9-color-dark);
-}
-
-#waiting-room .slot.filled.pc10 {
-    background: var(--player-10-color-light);
-    border-color: var(--player-10-color-dark);
-}
-
-#waiting-room .slot.filled.pc1 .name {
-    background: var(--player-1-color);
-}
-
-#waiting-room .slot.filled.pc2 .name {
-    background: var(--player-2-color);
-}
-
-#waiting-room .slot.filled.pc3 .name {
-    background: var(--player-3-color);
-}
-
-#waiting-room .slot.filled.pc4 .name {
-    background: var(--player-4-color);
-}
-
-#waiting-room .slot.filled.pc5 .name {
-    background: var(--player-5-color);
-}
-
-#waiting-room .slot.filled.pc6 .name {
-    background: var(--player-6-color);
-}
-
-#waiting-room .slot.filled.pc7 .name {
-    background: var(--player-7-color);
-}
-
-#waiting-room .slot.filled.pc8 .name {
-    background: var(--player-8-color);
-}
-
-#waiting-room .slot.filled.pc9 .name {
-    background: var(--player-9-color);
-}
-
-#waiting-room .slot.filled.pc10 .name {
-    background: var(--player-10-color);
-}
-
 /* Start Game button */
 #waiting-room .box-header .start-game {
     margin-left: auto;
-    background: #2b70ff;
+    background: var(--player-2-color);
     color: #fff;
     padding: 6px 12px;
     border-radius: 6px;
@@ -557,7 +366,7 @@ button {
     font-family: var(--font-ui), sans-serif;
     font-weight: 700;
     border: 2px solid #fff3;
-    transition: all .15s ease;
+    transition: all var(--t-fast) ease;
     font-size: 0.9rem;
 
     &:hover {

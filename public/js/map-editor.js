@@ -6,7 +6,6 @@ import AccessibilityUI from "./ui/accessibility_ui.js"
 const $ = document.querySelector.bind(document)
 
 const dummyFn = _ => _
-const PROD_URL = 'https://catan-full-endea.onrender.com/'
 
 class Shuffler {
   board; board_ui; accessibility_ui
@@ -149,7 +148,6 @@ class Shuffler {
               <div class="tile-text">${t_name}</div>
             </div>
           `).join('')}
-          <div class="cancel-container"><div class="button text">Close</div></div>
         </div>
         <div class="select-number">
           <div class="number-slider-container">
@@ -197,7 +195,6 @@ class Shuffler {
               <div class="no-trade-text">No<br/>Trade</div>
             </div>
           </div>
-          <div class="cancel-container"><div class="button text">Close</div></div>
         </div>
         <div class="select-trade-direction">
           ${Object.values(CONST.DIR_HELPER.KEYS).map(trade_dir => `
@@ -217,7 +214,6 @@ class Shuffler {
               <div class="trade-dir-text">${trade_dir.replace('_', ' ')}</div>
             </div>
           `).join('')}
-          <div class="cancel-container"><div class="button text">Close</div></div>
         </div>
       </div>
     `
@@ -231,6 +227,7 @@ class Shuffler {
     this.$no_shuffle_numbers = this.$el.querySelector('#no-shuffle-numbers')
     this.#setupEvents()
     this.#setupBoardClickEvent()
+    this.#capPlayerOptions()
   }
 
   #setupEvents() {
@@ -278,7 +275,7 @@ class Shuffler {
     const $playersSelect = this.$el.querySelector('#players-select')
     const $winPointsSelect = this.$el.querySelector('#winpoints-select')
     this.$el.querySelector('.button.play')?.addEventListener('click', e => {
-      const hostName = (localStorage.getItem('player-name') || 'Editor Host').trim() || 'Editor Host'
+      const hostName = (localStorage.getItem(CONST.STORAGE_KEYS.PLAYER_NAME) || 'Editor Host').trim() || 'Editor Host'
       const players = +($playersSelect?.value || 3)
       const win_points = +($winPointsSelect?.value || CONST.GAME_CONFIG.win_points)
       const mapkey = (this.$mapkey_textarea?.value || this.board?.mapkey || CONST.GAME_CONFIG.mapkey)
@@ -328,16 +325,6 @@ class Shuffler {
         this.onTradeDirSelection(e.currentTarget.dataset.tradeDir)
       })
     })
-
-    this.$tile_selector.querySelectorAll('.cancel-container .button').forEach($cancel => {
-      $cancel.addEventListener('click', e => {
-        // $('#game').classList.remove('board--editing')
-        // this.$tile_selector.classList.remove('open')
-        // this.$el.querySelector('#toggle-edit-input').checked = false
-        // simulate the checkbox change instead
-        this.#resetBoardEdit()
-      })
-    })
   }
 
   #setupBoardClickEvent() {
@@ -352,9 +339,8 @@ class Shuffler {
   #resetBoardEdit() {
     this.board_ui.$el.querySelector('.tile.picked')?.classList.remove('picked')
     this.$tile_selector.dataset.mode = "start"
-    const $slider = this.$tile_selector.querySelector('.select-number .number-slider-input')
-    $slider.value = 6
-    $slider.dispatchEvent(new Event('input'))
+    this.$tile_selector.querySelector('.select-number .number-slider-input').value = 6
+    this.onNumberSlider(6)
   }
 
   onBoardClick(id) {
@@ -388,7 +374,7 @@ class Shuffler {
     $tile_num.dataset.num = $slider_thumb.dataset.num = num
     $slider_thumb.style.left = `${(value - 2) * 100 / 9}%`
     $tile_num.dataset.dots = '.'.repeat(6 - Math.abs(7 - num))
-    // #resetBoardEdit fires this to reset the slider UI before any tile has been picked
+    // #resetBoardEdit calls this to reset the slider UI before any tile has been picked
     if (this.tile_selection_obj) { this.tile_selection_obj.number = num }
   }
 
@@ -546,7 +532,7 @@ class Shuffler {
     // Use BoardShuffler which handles preventing same numbers from being adjacent
     // and treats 6 and 8 (red numbers) as equivalent
     const shuffled_mapkey = (new BoardShuffler(mapkey)).shuffle(shuffle_options.join('-'))
-    this.updateBoard(shuffled_mapkey.replace(/([+|-])/g, '\n$1'))
+    this.updateBoard(shuffled_mapkey.replace(/([+-])/g, '\n$1'))
   }
 
   updateBoard(mapkey, no_url) {
@@ -556,10 +542,22 @@ class Shuffler {
     this.board_ui = new MapBuilderBoardUI(this.board, dummyFn)
     this.board_ui.render()
     this.#setupBoardClickEvent()
-    // Keep the Play link in sync with the current map
-    this.updatePlayLinkHref && this.updatePlayLinkHref()
     // Update the info section
     this.updateInfoSection()
+    this.#capPlayerOptions()
+  }
+
+  /** Grey out player counts this map cannot seat, so "Play this Map" can only start a real game. */
+  #capPlayerOptions() {
+    const $select = this.$el.querySelector('#players-select')
+    if (!$select) { return }
+    const seats = Board.maxPlayers(this.board.mapkey)
+    $select.querySelectorAll('option').forEach($option => {
+      $option.disabled = +$option.value > seats
+      $option.textContent = $option.disabled ? `${$option.value} (map too small)` : $option.value
+    })
+    // A map that seats nobody leaves every option off; keep the select on a legal number anyway.
+    if (+$select.value > seats) { $select.value = String(Math.max(2, seats)) }
   }
   
   updateInfoSection() {
@@ -626,16 +624,25 @@ class Shuffler {
     $numberInfo.innerHTML = numberHtml;
   }
   
-  balanceNumbers() {
-    // Get all resource tiles (not sea or desert)
-    const resourceTiles = [];
+  /** All land tiles that carry a resource (not sea, not desert) */
+  #resourceTiles() {
+    const tiles = [];
     this.board.tile_rows.forEach(row => {
       row.forEach(tile => {
-        if (tile.type !== 'S' && tile.type !== 'D') {
-          resourceTiles.push(tile);
-        }
+        if (tile.type !== 'S' && tile.type !== 'D') { tiles.push(tile); }
       });
     });
+    return tiles;
+  }
+  
+  /** Re-read the edited board as a mapkey, shuffle it and render the result */
+  #applyShuffle(kind) {
+    const shuffledMapkey = (new BoardShuffler(this.board.generateMapKey())).shuffle(kind);
+    this.updateBoard(shuffledMapkey.replace(/([+-])/g, '\n$1'));
+  }
+  
+  balanceNumbers() {
+    const resourceTiles = this.#resourceTiles();
     
     // Remove all numbers from resource tiles
     resourceTiles.forEach(tile => {
@@ -645,7 +652,7 @@ class Shuffler {
     // Calculate how many of each number we need based on the rules
     const totalTiles = resourceTiles.length;
     
-    // 10% should be 6 or 8
+    // 20% should be 6 or 8
     const highValueCount = Math.round(totalTiles * 0.2);
     // 40% should be 2, 3, 11, 12
     const lowValueCount = Math.round(totalTiles * 0.4);
@@ -681,15 +688,8 @@ class Shuffler {
       }
     });
     
-    // Generate a new mapkey with our balanced numbers
-    const newMapkey = this.board.generateMapKey();
-    
-    // Use the BoardShuffler to properly distribute the numbers
-    // This will ensure numbers are properly distributed (no adjacent same numbers, etc.)
-    const shuffledMapkey = (new BoardShuffler(newMapkey)).shuffle('number');
-    
-    // Update the board with the shuffled mapkey
-    this.updateBoard(shuffledMapkey.replace(/([+|-])/g, '\n$1'));
+    // Let BoardShuffler place the numbers properly (no adjacent same numbers, etc.)
+    this.#applyShuffle('number');
   }
   
   #shuffleArray(array) {
@@ -706,15 +706,7 @@ class Shuffler {
   }
   
   balanceResources() {
-    // Get all resource tiles (not sea or desert)
-    const resourceTiles = [];
-    this.board.tile_rows.forEach(row => {
-      row.forEach(tile => {
-        if (tile.type !== 'S' && tile.type !== 'D') {
-          resourceTiles.push(tile);
-        }
-      });
-    });
+    const resourceTiles = this.#resourceTiles();
     
     // Count current resources
     const currentResourceCounts = {};
@@ -763,69 +755,14 @@ class Shuffler {
       }
     });
     
-    // Generate a new mapkey with our balanced resources
-    const newMapkey = this.board.generateMapKey();
-    
-    // Use the BoardShuffler to properly distribute the resources
-    // This will ensure resources are properly distributed across the board
-    const shuffledMapkey = (new BoardShuffler(newMapkey)).shuffle('tile');
-    
-    // Update the board with the shuffled mapkey
-    this.updateBoard(shuffledMapkey.replace(/([+|-])/g, '\n$1'));
+    // Let BoardShuffler spread the resources across the board
+    this.#applyShuffle('tile');
   }
 
   updateURL(mapkey) {
     const url = new URL(window.location.href)
     url.searchParams.set('mapkey', mapkey)
     window.history.pushState({}, null, url.href)
-  }
-
-  injectGameLinkInInfo() {
-    const div = document.createElement('div')
-    div.className = 'play-full-game'
-
-    // Create a dynamic link that will start a game with the current editor map
-    const a = document.createElement('a')
-    a.target = '_blank'
-    a.textContent = 'Play this Map'
-    a.id = 'play-this-map-link'
-
-    // Small helper to build href from current mapkey
-    const buildHref = () => {
-      const hostName = (localStorage.getItem('player-name') || 'Editor Host').trim() || 'Editor Host'
-      const players = 3 // default to 3 players to avoid auto-upsize overrides
-      const mapkey = (this.$mapkey_textarea?.value || this.board?.mapkey || CONST.GAME_CONFIG.mapkey)
-      
-      // Include do-not-shuffle settings
-      const config = { 
-        mapkey, 
-        map_shuffle: 'none',
-        do_not_shuffle_resources: this.$no_shuffle_resources?.checked || false,
-        do_not_shuffle_numbers: this.$no_shuffle_numbers?.checked || false
-      }
-      
-      const configParam = encodeURIComponent(JSON.stringify(config))
-      return `/game/new?name=${encodeURIComponent(hostName)}&players=${encodeURIComponent(players)}&config=${configParam}`
-    }
-
-    // Store for later updates
-    this.$play_link = a
-    a.href = buildHref()
-
-    // Optional: also keep the original link to the homepage
-    const home = document.createElement('a')
-    home.href = '/login'
-    home.textContent = 'Open Game Home'
-    home.style.marginLeft = '12px'
-
-    div.appendChild(a)
-    div.appendChild(home)
-    this.accessibility_ui.$el.querySelector('.info-zone').prepend(div)
-
-    // Expose an updater
-    this.updatePlayLinkHref = () => {
-      if (this.$play_link) this.$play_link.href = buildHref()
-    }
   }
 }
 

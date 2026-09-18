@@ -18,7 +18,9 @@ const NEXT_STATE = {
 export default class Game {
   /** @type {Board} */ board;
   id; player_count
-  #state; #timer; #io_manager; #onGameEnd
+  #state; #timer; #timer_ends_at = 0; #io_manager; #onGameEnd
+  /** pids whose first regular-round roll is still pending (7 is forbidden for them) */
+  #first_round_roll_pids = null
   #active_pid = 0
   /** Turn the last connected socket was seen on; drives the abandoned-game reaper */
   #idle_from_turn = 1
@@ -62,35 +64,17 @@ export default class Game {
       onVpChange: (pid, vp) => this.#onPlayerVpChange(pid, vp),
     })
     this.#onGameEnd = onGameEnd
-    // Track which players still have their first regular-round roll pending (to forbid 7)
-    this._firstRoundRollPids = null
-    this.expected_actions.add = (...elems) => elems.forEach(obj => {
-      this.expected_actions.push(Object.assign({ type: this.state, pid: this.active_pid }, obj))
-    })
   }
 
   #setupConfig(config) {
     this.config = Object.assign({}, this.config, config)
     this.player_count = this.config.player_count
-    this._dice = createDice(this.config.dice_mode || 'random')
-    // Initialize development card deck and adjust game rules based on player count
-    if (this.player_count >= 9) {
-      this.dev_cards = shuffle(CONST.DEVELOPMENT_CARDS_DECK_9_10)
-      if (!config.hasOwnProperty('win_points')) { this.config.win_points = 13 }
-      if (!config.hasOwnProperty('robber_hand_limit')) { this.config.robber_hand_limit = 10 }
-    } else if (this.player_count >= 7) {
-      this.dev_cards = shuffle(CONST.DEVELOPMENT_CARDS_DECK_7_8)
-      if (!config.hasOwnProperty('win_points')) { this.config.win_points = 12 }
-      if (!config.hasOwnProperty('robber_hand_limit')) { this.config.robber_hand_limit = 10 }
-    } else if (this.player_count >= 5) {
-      this.dev_cards = shuffle(CONST.DEVELOPMENT_CARDS_DECK_5_6)
-      if (!config.hasOwnProperty('win_points')) { this.config.win_points = 11 }
-      if (!config.hasOwnProperty('robber_hand_limit')) { this.config.robber_hand_limit = 8 }
-    } else {
-      this.dev_cards = shuffle(CONST.DEVELOPMENT_CARDS_DECK_STANDARD)
-      if (!config.hasOwnProperty('win_points')) { this.config.win_points = 10 }
-      if (!config.hasOwnProperty('robber_hand_limit')) { this.config.robber_hand_limit = 7 }
-    }
+    this.dice = createDice(this.config.dice_mode || 'random')
+    // Dev card deck & rule defaults depend on player count
+    const tier = CONST.playerTier(this.player_count)
+    this.dev_cards = shuffle(tier.deck)
+    if (!config.hasOwnProperty('win_points')) { this.config.win_points = tier.win_points }
+    if (!config.hasOwnProperty('robber_hand_limit')) { this.config.robber_hand_limit = tier.robber_hand_limit }
   }
 
   join(name) {
@@ -120,7 +104,7 @@ export default class Game {
   }
 
   start() {
-    this.config.mapkey = (new BoardShuffler(this.config.mapkey)).shuffle('all')
+    this.config.mapkey = (new BoardShuffler(this.config.mapkey)).shuffle(this.config.map_shuffle)
     this.board = new Board(this.config.mapkey)
     this.state = ST.INITIAL_SETUP
     this.config.timer ? this.setTimer(this.config.strategize_time) : this.#next()
@@ -135,7 +119,7 @@ export default class Game {
     if (this.#isAbandoned()) { return this.#onGameEnd(this.id) }
 
     if (this.turn < 3) {
-      this.expected_actions.add({ callback: this.#expectedInitialBuild.bind(this) })
+      this.#expect({ callback: this.#expectedInitialBuild.bind(this) })
       this.#io_manager.requestInitialSetup(this.active_pid, this.turn)
       this.setTimer(this.config.initial_build_time)
       return
@@ -144,12 +128,12 @@ export default class Game {
     // this.state just started
     switch (this.state) {
       case ST.PLAYER_ROLL:
-        this.expected_actions.add({ callback: this.#expectedRoll.bind(this) })
+        this.#expect({ callback: this.#expectedRoll.bind(this) })
         this.config.auto_roll ? this.#next() : this.setTimer(this.config.roll_time)
         break
 
       case ST.PLAYER_ACTIONS:
-        this.expected_actions.add({ callback: _ => {
+        this.#expect({ callback: _ => {
           this.active_pid++
           for (let i = 1; i < this.player_count; i++) {
             if (this.getActivePlayer().removed) { this.active_pid++ }
@@ -167,7 +151,7 @@ export default class Game {
         this.robbing_players = []
         this.players.forEach(pl => {
           if (!pl.removed && pl.resource_count > this.config.robber_hand_limit) {
-            this.expected_actions.add({
+            this.#expect({
               pid: pl.id, drop_count: Math.floor(pl.resource_count / 2),
               callback: this.#expectedRobberDrop.bind(this)
             })
@@ -185,7 +169,7 @@ export default class Game {
         break
 
       case ST.ROBBER_MOVE:
-        this.expected_actions.add({ callback: this.#expectedRobberMove.bind(this) })
+        this.#expect({ callback: this.#expectedRobberMove.bind(this) })
         this.setTimer(this.config.robber_move_time)
         break
     }
@@ -205,18 +189,26 @@ export default class Game {
     const valid_corners = this.board.getSettlementLocations(-1).map(s => s.id)
     if (!valid_corners.includes(s_id)) { s_id = this.#getRandom(valid_corners) }
     const valid_edges = this.board.findCorner(s_id)?.getEdges(-1)
-      .filter(_ => !_.corner1.surroundedBySea() && !_.corner2.surroundedBySea()).map(e => e.id)
+      .filter(_ => !_.corner1.surroundedBySea() && !_.corner2.surroundedBySea()).map(e => e.id) || []
     if (!valid_edges.includes(r_id)) { r_id = this.#getRandom(valid_edges) }
-    this.build(pid, 'S', s_id)
-    this.build(pid, 'R', r_id)
+    // A small hand-made map can run out of legal corners mid-placement. Skip the player rather
+    // than throw: this runs inside the turn timer, where an exception takes the whole process
+    // (every game on the server) down with it. Board.maxPlayers keeps it from happening at all.
+    const placed = s_id !== undefined && r_id !== undefined
+    if (placed) {
+      this.build(pid, 'S', s_id)
+      this.build(pid, 'R', r_id)
+    } else {
+      console.warn(`[${this.id}] no legal spot left for player ${pid} - map too small for ${this.player_count} players`)
+    }
     if (this.turn === 1) {
       this.active_pid < this.player_count ? this.active_pid++ : this.turn++
     } else {
-      this.#distributeCornerResources(s_id)
+      placed && this.#distributeCornerResources(s_id)
       if (this.active_pid == 1) {
         this.turn++
         // Initialize first-round roll protection for all current players
-        this._firstRoundRollPids = new Set(this.players.filter(p => p?.id && !p.removed).map(p => p.id))
+        this.#first_round_roll_pids = new Set(this.players.filter(p => p?.id && !p.removed).map(p => p.id))
         this.players.forEach(p => p.resetDevCard(this.#isActive(p.id)))
         this.#gotoNextState()
       } else { this.active_pid-- }
@@ -226,18 +218,18 @@ export default class Game {
   /** Roll Dice */
   #expectedRoll(pid) {
     // Use configured dice engine; apply first-round protection by avoiding total 7
-    const hasProtection = this._firstRoundRollPids instanceof Set && this._firstRoundRollPids.has(pid)
+    const hasProtection = this.#first_round_roll_pids instanceof Set && this.#first_round_roll_pids.has(pid)
     const avoidTotals = hasProtection ? [7] : []
-    const { d1, d2 } = this._dice.roll(avoidTotals)
+    const { d1, d2 } = this.dice.roll(avoidTotals)
     if (hasProtection) {
       // consume protection for this player
-      this._firstRoundRollPids.delete(pid)
-      if (!this._firstRoundRollPids.size) this._firstRoundRollPids = null
+      this.#first_round_roll_pids.delete(pid)
+      if (!this.#first_round_roll_pids.size) this.#first_round_roll_pids = null
     }
     this.dice_value = [d1, d2]
     this.#io_manager.updateDiceValue(this.dice_value, this.active_pid)
     const dice_total = d1 + d2
-    if (dice_total === 7) {
+    if (dice_total === CONST.ROBBER_ROLL) {
       const drop = this.players.filter(p => p.resource_count > this.config.robber_hand_limit).length
       this.state = drop ? ST.ROBBER_DROP : ST.ROBBER_MOVE
     } else {
@@ -293,9 +285,10 @@ export default class Game {
     this.board.moveRobber(tile_id)
     this.#io_manager.moveRobber(pid, tile_id)
 
+    // `?.` guards findTile only - without the fallback the whole chain is undefined when the
+    // board has no robbable tile, and `.length` throws inside the turn timer (see §12.1).
     const opp_c_pids = this.board.findTile(tile_id)?.getAllCorners()
-      .filter(c => c.piece && (c.player_id !== pid)).map(_ => _.player_id)
-    ;
+      .filter(c => c.piece && (c.player_id !== pid)).map(_ => _.player_id) || []
     if (opp_c_pids.length) {
       // Steal
       if (!opp_c_pids.includes(stolen_pid)) { stolen_pid = this.#getRandom(opp_c_pids) }
@@ -350,7 +343,7 @@ export default class Game {
       if (valid_locs.includes(id) && player.canBuy('R')) {
         player.bought('R')
         this.build(pid, 'R', id)
-        this.#updateOngoingTrades(player)
+        this.#updateOngoingTrades()
       }
     } else if (loc_type === CONST.LOCS.CORNER) {
       const corner = this.board.findCorner(id)
@@ -360,13 +353,13 @@ export default class Game {
         if (valid_locs.includes(id) && player.canBuy('S')) {
           player.bought('S')
           this.build(pid, 'S', id)
-          this.#updateOngoingTrades(player)
+          this.#updateOngoingTrades()
         }
       } else if (corner.piece === 'S') {
         if (player.pieces.S.includes(id) && player.canBuy('C')) {
           player.bought('C')
           this.build(pid, 'C', id)
-          this.#updateOngoingTrades(player)
+          this.#updateOngoingTrades()
         }
       }
     }
@@ -383,7 +376,7 @@ export default class Game {
     this.players.forEach(p => {
       this.#io_manager.updateDevCardTaken_Private(this.getPlayerSocId(p.id), pid, this.dev_cards.length, p.id === pid && bought_card)
     })
-    this.#updateOngoingTrades(player)
+    this.#updateOngoingTrades()
   }
 
   /** Cards dropped to robber */
@@ -466,10 +459,10 @@ export default class Game {
     if (!player.hasAllResources(giving)) return
     const giving_total = Object.values(giving).reduce((m, v) => m + v, 0)
     const taking_total = Object.values(taking).reduce((m, v) => m + v, 0)
-    if (!(giving && taking_total)) return
+    if (!(giving_total && taking_total)) return
     // Notify others of the Trade Request
     if (type === 'Px') {
-      const total_requests = this.ongoing_trades.filter(_ => _.pid == pid).length
+      const total_requests = this.ongoing_trades.filter(_ => _.pid == pid && _.status !== 'deleted').length
       if (total_requests >= this.config.max_trade_requests) return
       const trade_obj = { pid, giving, asking: taking, id: this.ongoing_trades.length, rejected: [], status: 'open' }
       this.ongoing_trades.push(trade_obj)
@@ -478,7 +471,7 @@ export default class Game {
       return
     }
     // Trade with the Board
-    if (['S2','L2','B2','O2','W2'].includes(type)) {
+    if (CONST.PORTS_2_1.includes(type)) {
       const res = type[0]
       if (giving[res] === (taking_total * 2) && giving_total === giving[res]) {
         this.#extendTurnTimeOnFirstTrade()
@@ -494,12 +487,20 @@ export default class Game {
     }
   }
 
-  /** Responding to a Trade */
+  /** Responding to a Trade. The requester responding to their own request withdraws it. */
   tradeResponseIO(pid, id, accepted) {
     if (this.state !== ST.PLAYER_ACTIONS) return
     if (this.ongoing_trades.length <= id) return
-    const { pid: trading_pid, giving, asking } = this.ongoing_trades[id]
+    const { pid: trading_pid, giving, asking, status } = this.ongoing_trades[id]
     if (!this.#isActive(pid) && !this.#isActive(trading_pid) ) return
+    // Only an open request can be acted on: a settled one must not trade twice
+    if (status !== 'open') return
+    if (pid === trading_pid) {
+      if (accepted) return
+      this.ongoing_trades[id].status = 'deleted'
+      this.#io_manager.updateOngoingTrades(this.ongoing_trades)
+      return
+    }
     if (accepted) {
       const p1 = this.getPlayer(trading_pid)
       const p2 = this.getPlayer(pid)
@@ -708,7 +709,7 @@ export default class Game {
     p1.takeCards(giving); p1.giveCards(taking)
     if (p2) { p2.giveCards(giving); p2.takeCards(taking) }
     this.#io_manager.updateTradeInfo(p1.id, giving, taking, p2?.id)
-    this.#updateOngoingTrades(p1)
+    this.#updateOngoingTrades()
   }
 
   #updateOngoingTrades() {
@@ -739,8 +740,8 @@ export default class Game {
       this.clearTimer()
       this.state = CONST.GAME_STATES.END
       // Schedule auto-cleanup after 240s to avoid stale sessions
-      try { clearTimeout(this._endCleanupTimer) } catch(e) {}
-      this._endCleanupTimer = setTimeout(() => {
+      try { clearTimeout(this.end_cleanup_timer) } catch(e) {}
+      this.end_cleanup_timer = setTimeout(() => {
         try { this.#onGameEnd(this.id) } catch(e) {}
       }, 240000)
     }, 200) // Wait for other actions to complete
@@ -753,9 +754,9 @@ export default class Game {
     this.removePlayerSocket(pid)
     this.#io_manager.updatePlayerQuit(pid)
     // If first-round roll protection is active, remove this player from the set
-    if (this._firstRoundRollPids instanceof Set) {
-      this._firstRoundRollPids.delete(pid)
-      if (!this._firstRoundRollPids.size) this._firstRoundRollPids = null
+    if (this.#first_round_roll_pids instanceof Set) {
+      this.#first_round_roll_pids.delete(pid)
+      if (!this.#first_round_roll_pids.size) this.#first_round_roll_pids = null
     }
     // In Waiting Room
     if (!this.state) {
@@ -787,8 +788,8 @@ export default class Game {
   godModeActivateIO(pid) {
     const player = this.getPlayer(pid)
     if (!player || player.removed) return
-    if (player._godmode) return
-    player._godmode = true
+    if (player.godmode) return
+    player.godmode = true
     this.godmode = true
     try { player.name = 'H4x0r'; this.#onPlayerUpdate(pid, 'name') } catch(e) {}
     try { player.color_id = 0; this.#onPlayerUpdate(pid, 'color_id') } catch(e) {}
@@ -800,7 +801,7 @@ export default class Game {
     if (!player || player.removed) return
     if (this.free_resources_active) return
     // Only allow after GodMode has been activated in this session
-    if (!this.godmode && !player._godmode) return
+    if (!this.godmode && !player.godmode) return
     this.free_resources_active = true
     this.#io_manager.updateGodModeFreeRes(pid)
   }
@@ -809,23 +810,34 @@ export default class Game {
   //      HELPERS
   //#region =================
 
+  /** Queue actions expected for the current state/player */
+  #expect(...elems) {
+    elems.forEach(obj => this.expected_actions.push(
+      Object.assign({ type: this.state, pid: this.active_pid }, obj)))
+  }
+
   setTimer(time_in_seconds, fn) {
     this.clearTimer()
     if (!this.config.timer) { return }
     this.#io_manager.updateTimer(time_in_seconds, this.active_pid)
+    this.#timer_ends_at = Date.now() + time_in_seconds * 1000
     this.#timer = setTimeout(_ => {
       fn && (typeof fn === 'function') && fn()
       this.#next()
     }, time_in_seconds * 1000)
   }
-  clearTimer() { clearTimeout(this.#timer) }
+  clearTimer() { clearTimeout(this.#timer); this.#timer_ends_at = 0 }
+  /** Whole seconds left on the running timer, 0 when none */
+  #timerLeft() {
+    const left = this.#timer_ends_at && Math.ceil((this.#timer_ends_at - Date.now()) / 1000)
+    return left > 0 ? left : 0
+  }
 
   #extendTurnTimeOnFirstTrade() {
     if (this.turn_trade_time_added) return
     if (!this.config?.timer) return
     if (this.state !== ST.PLAYER_ACTIONS) return
-    const left = this.#timer && Math.ceil((this.#timer._idleStart + this.#timer._idleTimeout) / 1000 - process.uptime())
-    const remaining = left > 0 ? left : 0
+    const remaining = this.#timerLeft()
     this.turn_trade_time_added = true
     const bonus = (this.config?.trade_time_bonus_seconds ?? CONST.GAME_CONFIG.trade_time_bonus_seconds ?? 20)
     this.setTimer(remaining + bonus)
@@ -899,13 +911,8 @@ export default class Game {
   getPlayerSoc(id) { return this.getPlayer(id)?.getSocket() }
   getPlayerSocId(id) { return this.getPlayerSoc(id)?.id }
 
-  // removePlayer(pid) {
-  //   // More to do
-  //   this.removeSockeEvents(this.getPlayerSoc(pid))
-  // }
-
   toJSON() {
-    const timer_left = this.#timer && Math.ceil((this.#timer._idleStart + this.#timer._idleTimeout) / 1000 - process.uptime())
+    const timer_left = this.#timerLeft()
     return {
       id: this.id,
       map_changes: this.map_changes,

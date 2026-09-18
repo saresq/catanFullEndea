@@ -14,7 +14,7 @@ class LoginUI {
       toggleBgm: allow => this.audio_manager.toggleBgm(allow),
       icons: { zoom: false, notifcation_sounds: false, shorcuts: false, quit: false },
     })
-    localStorage.setItem('status_history', '[]')
+    localStorage.setItem(CONST.STORAGE_KEYS.STATUS_HISTORY, '[]')
   }
 
   render() {
@@ -23,7 +23,7 @@ class LoginUI {
     const preGameId = (params.get('game_id') || '').toLowerCase()
     const preName = params.get('name') || ''
 
-    const name = preName || localStorage.getItem('player-name') || ''
+    const name = preName || localStorage.getItem(CONST.STORAGE_KEYS.PLAYER_NAME) || ''
     const joinSectionContent = isFull ? `
       <div class="full-game-section">
         <div class="notice">The game you are trying to join is currently full</div>
@@ -51,23 +51,19 @@ class LoginUI {
             <div class="section-group">
               <label class="section-label" for="player-count">Players:</label>
               <select id="player-count" class="select player-count">
-                ${[...Array(9).keys()].map(i => `<option value="${i + 2}" ${i + 2 === 2 ? 'selected' : ''}>${i + 2}</option>`).join('')}
+                ${CONST.PLAYER_COUNTS.map(n => `<option value="${n}" ${n === CONST.PLAYER_COUNTS[0] ? 'selected' : ''}>${n}</option>`).join('')}
               </select>
             </div>
             <div class="section-group">
               <label class="section-label" for="map-size">Map Size:</label>
               <select id="map-size" class="select map-size">
-                <option value="small" selected>Standard</option>
-                <option value="medium">Extended</option>
-                <option value="large">Large</option>
-                <option value="extra-large">Extra Large</option>
-                <option value="argentum">Argentum</option>
+                ${CONST.MAP_LIST.map((m, i) => `<option value="${m.id}" ${i === 0 ? 'selected' : ''}>${m.name}</option>`).join('')}
               </select>
             </div>
             <div class="section-group">
               <label class="section-label" for="win-points">Victory Points:</label>
               <select id="win-points" class="select win-points">
-                ${Array.from({ length: 16 }, (_, i) => i + 5).map(v => `<option value="${v}" ${v === 10 ? 'selected' : ''}>${v}</option>`).join('')}
+                ${CONST.WIN_POINT_OPTIONS.map(v => `<option value="${v}" ${v === CONST.GAME_CONFIG.win_points ? 'selected' : ''}>${v}</option>`).join('')}
               </select>
             </div>
             <div class="section-group">
@@ -99,17 +95,7 @@ class LoginUI {
     }
     this.#setupEvents(isFull, preGameId)
     setTimeout(_ => $('.notice')?.classList.add('hide'), 5000)
-    // console.log('%c🛠 Advanced Game Configurations 🪚', 'border-radius: 100px; padding: 10px 25px; font: 2em EagleLake, fantasy, cursive; background: #e8d49c; color: #9c5e15;')
-    // console.log('%c→ Edit %cwindow.config', 'font-size: 1.2em', 'font-size: 1.2em; background: #eee; color: #333; padding: 2px 5px')
-    // console.log(CONST.GAME_CONFIG)
     window.config = CONST.GAME_CONFIG
-    // console.log('%c→ Send it as a query param to "/game/new" (everything is optional including name)', 'font-size: 1.2em')
-    // console.log(`%cExample: %cwindow.location.href = '/game/new?name=Mr.Robot&config=' +
-    //   encodeURIComponent(JSON.stringify(Object.assign(window.config, {
-    //     player_count: 2, win_points: 5, map_shuffle: false,
-    //     mapkey: \`S.S(bl_O2).S(br_O2).S-S.M8.D.M8.S-S.G9.S.S.G9.S-S.F10.S.S.S.F10.S-S.S.C11.S.S.C12.S.S-S.S.S.C2.S.C3.S.S.S-S(r_L2).J6.J5.J4.S.S.J4.J5.J6.S(l_L2)+S.S.S.S.S.S.S.S.S\`,
-    //   })))`, 'font-size: 1em', 'font-size: 1em; background: #eee; color: #333; padding: 2px 5px')
-    // console.log('%c→ Have Fun Playing Around. Come say Hi here https://github.com/bigomega/catan when you break things badly!\nThe README.md has the rules for writing your own mapkeys.\n%cCheers%c🍻', 'font-size: 1.2em', 'font-size: 3em', 'font-size: 6em')
   }
 
   #setupEvents(isFull, preGameId) {
@@ -127,14 +113,14 @@ class LoginUI {
     const enforceMapSizeOptions = () => {
       const pc = +(pcSelect?.value || 3)
       if (!msSelect) return
-      const options = Array.from(msSelect.options)
-      // minIdx: 0:Standard, 1:Extended, 2:Large, 3:ExtraLarge, 4:Argentum
-      const minIdx = pc >= 9 ? 3 : (pc >= 7 ? 2 : (pc >= 5 ? 1 : 0))
-      options.forEach((opt, idx) => {
-        const isSmaller = idx < minIdx
-        opt.disabled = isSmaller; opt.hidden = isSmaller
+      // Hide presets that cannot seat the chosen player count
+      let first_allowed = 0
+      Array.from(msSelect.options).forEach((opt, idx) => {
+        const fits = CONST.mapFitsPlayers(CONST.MAPS[opt.value]?.mapkey, pc)
+        opt.disabled = opt.hidden = !fits
+        if (fits && !first_allowed) { first_allowed = idx }
       })
-      if (msSelect.selectedIndex < minIdx) { msSelect.selectedIndex = minIdx }
+      if (msSelect.options[msSelect.selectedIndex]?.disabled) { msSelect.selectedIndex = first_allowed }
     }
     pcSelect?.addEventListener('change', enforceMapSizeOptions)
     // Initialize constraints on first render
@@ -144,15 +130,9 @@ class LoginUI {
     this.$container.querySelector('.host-section .btn-primary').addEventListener('click', e => {
       const host_name = this.$container.querySelector('.host-section input.name').value
       const player_count = +(this.$container.querySelector('.host-section select.player-count')?.value || 3)
-      const map_size = this.$container.querySelector('.host-section select.map-size')?.value || 'small'
+      const map_id = this.$container.querySelector('.host-section select.map-size')?.value || 'standard'
       const win_points = +(this.$container.querySelector('.host-section select.win-points')?.value || 10)
-
-      // Map size to mapkey
-      let mapkey = CONST.DEFAULT_MAPKEY
-      if (map_size === 'medium') mapkey = CONST.DEFAULT_MAPKEY_5_6
-      else if (map_size === 'large') mapkey = CONST.DEFAULT_MAPKEY_7_8
-      else if (map_size === 'extra-large') mapkey = CONST.DEFAULT_MAPKEY_9_10
-      else if (map_size === 'argentum') mapkey = CONST.ARGENTUM_MAPKEY
+      const mapkey = (CONST.MAPS[map_id] || CONST.MAPS.standard).mapkey
 
       const dice_mode = this.$container.querySelector('.host-section select.dice-mode')?.value || 'random'
       const config = { win_points, mapkey, dice_mode }
@@ -199,7 +179,7 @@ class LoginUI {
 
     // Setup name storage
     this.$container.querySelectorAll('.name').forEach($_ => $_.addEventListener('input', e => {
-      try { localStorage.setItem('player-name', e.target.value) } catch (e) {}
+      try { localStorage.setItem(CONST.STORAGE_KEYS.PLAYER_NAME, e.target.value) } catch (e) {}
     }))
     
     // Setup map editor button

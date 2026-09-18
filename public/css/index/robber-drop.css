@@ -4,7 +4,7 @@
     top: 0;
     left: 0;
     width: 100%;
-    z-index: 60;
+    z-index: var(--z-panel);
     background: color-mix(in srgb, var(--sand-color-dark) 80%, #fff0);
     padding: 20px 20px 0;
     @media screen and (max-width: 768px) {
@@ -63,7 +63,7 @@
             border-radius: 0.9375rem;
             background-image: url(/images/cards-sprite.png);
             background-repeat: no-repeat;
-            background-color: #ebd290;
+            background-color: var(--card-face);
             /* filter: blur(3px) sepia(0.2);
             filter: blur(3px) sepia(0.5) brightness(0.7); */
             filter: brightness(0.4) sepia(0.5);
@@ -136,31 +136,6 @@
             .ctrl.minus {
                 top: 75%;
             }
-        }
-
-        &[data-type=S]::before {
-            background-size: 42.146rem;
-            background-position: -6.435rem -0.48rem;
-        }
-
-        &[data-type=L]::before {
-            background-size: 42.146rem;
-            background-position: -24.329rem -0.48rem;
-        }
-
-        &[data-type=B]::before {
-            background-size: 42.146rem;
-            background-position: -0.471rem -0.48rem;
-        }
-
-        &[data-type=O]::before {
-            background-size: 42.146rem;
-            background-position: -12.399rem -0.48rem;
-        }
-
-        &[data-type=W]::before {
-            background-size: 42.146rem;
-            background-position: -18.364rem -0.48rem;
         }
 
         &::after {

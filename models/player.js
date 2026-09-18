@@ -22,6 +22,7 @@ export default class Player {
   trade_offers = newObject(CONST.TRADE_OFFERS, false)
   can_play_dc = false
   turn_bought_dc = {}
+  godmode = false
   largest_army = false
   longest_road = false
   longest_road_list = []

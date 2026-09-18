@@ -20,7 +20,7 @@ export default class BoardUI {
   #lastMousePos = { x: 0, y: 0 }
   #eventsSetup = false
   $el = $('#game .board')
-  viewStorageKey = 'board-view'
+  viewStorageKey = CONST.STORAGE_KEYS.BOARD_VIEW
 
   /** @param {Board} board  */
   constructor(board, onClick, size, getColorId) {
@@ -170,9 +170,13 @@ export default class BoardUI {
             </div>`
         : ''
         }
+        ${this.tileExtraHtml(tile)}
       </div>`
     ).join('')
   }
+
+  /** hook for subclasses to append markup inside a tile */
+  tileExtraHtml(tile) { return '' }
 
   renderCorners(tile) {
     return oKeys(tile.corners).map(dir => {
@@ -292,7 +296,8 @@ export default class BoardUI {
     let lastTouchDistance = 0
     let lastTouchPos = null
 
-    $container.addEventListener('touchstart', e => {
+    // start / end / cancel all just re-read whatever fingers are left on the screen
+    const syncTouches = e => {
       if (e.touches.length === 1) {
         lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY }
       } else if (e.touches.length === 2) {
@@ -304,8 +309,12 @@ export default class BoardUI {
           x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
           y: (e.touches[0].clientY + e.touches[1].clientY) / 2
         }
+      } else {
+        lastTouchPos = null
       }
-    }, { passive: false })
+    }
+
+    $container.addEventListener('touchstart', syncTouches, { passive: false })
 
     $container.addEventListener('touchmove', e => {
       if (e.touches.length === 1 && lastTouchPos) {
@@ -333,24 +342,8 @@ export default class BoardUI {
       }
     }, { passive: false })
 
-    const resetTouch = e => {
-      if (e.touches.length === 1) {
-        lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY }
-      } else if (e.touches.length === 2) {
-        lastTouchDistance = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        )
-        lastTouchPos = {
-          x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
-          y: (e.touches[0].clientY + e.touches[1].clientY) / 2
-        }
-      } else {
-        lastTouchPos = null
-      }
-    }
-    $container.addEventListener('touchend', resetTouch)
-    $container.addEventListener('touchcancel', resetTouch)
+    $container.addEventListener('touchend', syncTouches)
+    $container.addEventListener('touchcancel', syncTouches)
   }
 
   #zoom(factor, mouseX, mouseY) {
@@ -454,10 +447,9 @@ export default class BoardUI {
   }
 
   updatePlayerColor(pid, cid) {
-    const pcs = Array.from({ length: 11 }, (_, i) => 'pc' + i)
     // Update corners and edges belonging to this pid
     this.$el.querySelectorAll(`.corner.taken.p${pid}, .edge.taken.p${pid}`).forEach($el => {
-      pcs.forEach(c => $el.classList.remove(c))
+      $el.classList.remove(...CONST.PC_CLASSES)
       $el.classList.add('pc' + cid)
     })
   }

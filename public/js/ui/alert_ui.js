@@ -1,4 +1,5 @@
 import { default as MSG, getName } from "../const_messages.js"
+import { STORAGE_KEYS as KEYS, REMATCH_SECONDS } from "../const.js"
 const $ = document.querySelector.bind(document)
 const TURN_SEP = '<<<TURN_SEPARATOR>>>'
 
@@ -20,15 +21,15 @@ export default class AlertUI {
     try {
       const gid = (window && window.game_obj && window.game_obj.id) ? ('' + window.game_obj.id) : null
       if (gid) {
-        const prevGid = localStorage.getItem('status_history_gid')
+        const prevGid = localStorage.getItem(KEYS.STATUS_HISTORY_GID)
         if (prevGid && prevGid !== gid) {
-          localStorage.setItem('status_history', '[]')
+          localStorage.setItem(KEYS.STATUS_HISTORY, '[]')
         }
-        localStorage.setItem('status_history_gid', gid)
+        localStorage.setItem(KEYS.STATUS_HISTORY_GID, gid)
       }
     } catch (e) {}
     try {
-      this.#status_history = JSON.parse(localStorage.getItem('status_history'))
+      this.#status_history = JSON.parse(localStorage.getItem(KEYS.STATUS_HISTORY))
       if (!(this.#status_history instanceof Array)) { this.#status_history = [] }
     } catch (e) {}
   }
@@ -51,18 +52,13 @@ export default class AlertUI {
     })
 
     // Close History when clicking outside of it (same behavior as About/Shortcuts)
-    if (!this._historyOutsideClickHandlerAdded) {
-      this._historyOutsideClickHandlerAdded = true
-      this._historyOutsideClickHandler = (e) => {
-        const toggleBtn = $('#game .status-bar-history')
-        if (this.$status_history && this.$status_history.classList.contains('show')) {
-          if (!this.$status_history.contains(e.target) && e.target !== toggleBtn) {
-            this.toggleStatusHistory(false)
-          }
-        }
+    document.addEventListener('click', e => {
+      if (!this.$status_history?.classList.contains('show')) return
+      const toggleBtn = $('#game .status-bar-history')
+      if (!this.$status_history.contains(e.target) && e.target !== toggleBtn) {
+        this.toggleStatusHistory(false)
       }
-      document.addEventListener('click', this._historyOutsideClickHandler)
-    }
+    })
   }
 
   toggleStatusHistory(show = !this.$status_history.classList.contains('show')) {
@@ -86,7 +82,7 @@ export default class AlertUI {
     // Persist separator in history if not already at head
     if (this.#status_history[0] !== TURN_SEP) {
       this.#status_history.unshift(TURN_SEP)
-      try { localStorage.setItem('status_history', JSON.stringify(this.#status_history)) } catch (e) {}
+      try { localStorage.setItem(KEYS.STATUS_HISTORY, JSON.stringify(this.#status_history)) } catch (e) {}
     }
     if (needDomInsert) {
       const hr = document.createElement('hr')
@@ -113,7 +109,7 @@ export default class AlertUI {
     const msg = message.replace(/<br\/?>/g, '. ')
     this.$status_bar.innerHTML = msg
     this.#status_history.unshift(msg)
-    localStorage.setItem('status_history', JSON.stringify(this.#status_history))
+    localStorage.setItem(KEYS.STATUS_HISTORY, JSON.stringify(this.#status_history))
     this.$status_history_container.innerHTML = `<div class="status">${msg}</div>` + this.$status_history_container.innerHTML
     this.#onStatusUpdate(msg)
   }
@@ -125,14 +121,14 @@ export default class AlertUI {
   }
 
   appendStatus(message = '...') {
-    const add = message.replace(/<br\/>?/g, '. ')
+    const add = message.replace(/<br\/?>/g, '. ')
     this.$status_bar.innerHTML += add
     // Determine index of the latest status (skip leading separator if present)
     let idx = 0
     if (this.#status_history[0] === TURN_SEP) idx = 1
     if (typeof this.#status_history[idx] === 'string' && this.#status_history[idx] !== TURN_SEP) {
       this.#status_history[idx] = this.$status_bar.innerHTML
-      try { localStorage.setItem('status_history', JSON.stringify(this.#status_history)) } catch (e) {}
+      try { localStorage.setItem(KEYS.STATUS_HISTORY, JSON.stringify(this.#status_history)) } catch (e) {}
       const firstStatusEl = this.$status_history_container.querySelector('.status')
       if (firstStatusEl) {
         firstStatusEl.innerHTML = this.$status_bar.innerHTML
@@ -142,7 +138,7 @@ export default class AlertUI {
     } else {
       // No existing status to append to; create a new one at head
       this.#status_history.unshift(this.$status_bar.innerHTML)
-      try { localStorage.setItem('status_history', JSON.stringify(this.#status_history)) } catch (e) {}
+      try { localStorage.setItem(KEYS.STATUS_HISTORY, JSON.stringify(this.#status_history)) } catch (e) {}
       this.$status_history_container.innerHTML = `<div class="status">${this.$status_bar.innerHTML}</div>` + this.$status_history_container.innerHTML
     }
     this.#onStatusUpdate(this.$status_bar.innerHTML)
@@ -156,11 +152,7 @@ export default class AlertUI {
     else this.setStatusBarOnly(msg.other(p))
   }
   alertRollTurn(p) {
-    if (this.#isMe(p)) {
-      if (this._has_shown_roll_alert) { this.setStatusBarOnly(MSG.ROLL_TURN.self()) }
-      else { this._has_shown_roll_alert = true; this.setStatusBarOnly(MSG.ROLL_TURN.self()) }
-    }
-    else { this.setStatusBarOnly(MSG.ROLL_TURN.other(p)) }
+    this.setStatusBarOnly(this.#isMe(p) ? MSG.ROLL_TURN.self() : MSG.ROLL_TURN.other(p))
   }
   alertDiceValue(p, d1, d2, rob_res) {
     this.addTurnSeparator()
@@ -227,7 +219,7 @@ export default class AlertUI {
         <div class="rematch-section">
           <div class="rematch-vote-row">
             <button class="vote-rematch">Vote Rematch</button>
-            <div class="rematch-timer">⏳ <span class="time-left">240</span>s</div>
+            <div class="rematch-timer">⏳ <span class="time-left">${REMATCH_SECONDS}</span>s</div>
           </div>
           <div class="rematch-status"></div>
         </div>

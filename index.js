@@ -10,6 +10,7 @@ import { generate as generateRandomWords } from "random-words"
 import Game from "./models/game.js"
 import * as CONST from "./public/js/const.js"
 import BoardShuffler from "./public/js/board/board_shuffler.js"
+import Board from "./public/js/board/board.js"
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -57,67 +58,20 @@ app.get('/game/new', function (req, res) {
   let config = Object.assign({}, CONST.GAME_CONFIG, { player_count: +players || 2 })
   try { config = Object.assign(config, JSON.parse(decodeURIComponent(query_config))) } catch(e){}
   
-  // Determine mapkey and map_size, and enforce constraints (never smaller than required)
-  const providedConfig = (() => { try { return JSON.parse(decodeURIComponent(query_config)) } catch(e) { return {} } })()
+  // Honour a provided mapkey when it seats everyone, otherwise size the map to the player count.
+  const provided_config = (() => { try { return JSON.parse(decodeURIComponent(query_config)) } catch(e) { return {} } })()
+  config.mapkey = provided_config.mapkey && CONST.mapFitsPlayers(provided_config.mapkey, config.player_count)
+    ? provided_config.mapkey
+    : CONST.mapForPlayers(config.player_count).mapkey
+  config.map_size = CONST.mapName(config.mapkey)
 
-  // If no mapkey provided, choose based on player count
-  if (!providedConfig.mapkey) {
-    if (config.player_count >= 9) {
-      config.mapkey = CONST.DEFAULT_MAPKEY_9_10
-      config.map_size = 'Extra Large'
-    } else if (config.player_count >= 7) {
-      config.mapkey = CONST.DEFAULT_MAPKEY_7_8
-      config.map_size = 'Large'
-    } else if (config.player_count >= 5) {
-      config.mapkey = CONST.DEFAULT_MAPKEY_5_6
-      config.map_size = 'Extended'
-    } else {
-      config.mapkey = CONST.DEFAULT_MAPKEY
-      config.map_size = 'Standard'
-    }
-  } else {
-    // Map provided mapkey to a size label if it matches known presets
-    if (providedConfig.mapkey === CONST.DEFAULT_MAPKEY_9_10) {
-      config.map_size = 'Extra Large'
-    } else if (providedConfig.mapkey === CONST.DEFAULT_MAPKEY_7_8) {
-      config.map_size = 'Large'
-    } else if (providedConfig.mapkey === CONST.DEFAULT_MAPKEY_5_6) {
-      config.map_size = 'Extended'
-    } else if (providedConfig.mapkey === CONST.DEFAULT_MAPKEY) {
-      config.map_size = 'Standard'
-    } else if (providedConfig.mapkey === CONST.ARGENTUM_MAPKEY) {
-      config.map_size = 'Argentum'
-    } else {
-      config.map_size = 'Custom'
-    }
-    config.mapkey = providedConfig.mapkey
+  // A hand-made map can be too small to seat everyone. Say so here instead of letting the
+  // initial placement run out of corners mid-game.
+  const seats = Board.maxPlayers(config.mapkey)
+  if (config.player_count > seats) {
+    return res.redirect(`/login?notice=${encodeURIComponent(`That map only fits ${seats} player${seats === 1 ? '' : 's'}.`)}`)
   }
 
-  // Enforce minimal map size based on player count (auto-upsize if needed)
-  if (config.player_count >= 9) {
-    const allowed = [CONST.DEFAULT_MAPKEY_9_10, CONST.ARGENTUM_MAPKEY]
-    if (!allowed.includes(config.mapkey)) {
-      config.mapkey = CONST.DEFAULT_MAPKEY_9_10
-      config.map_size = 'Extra Large'
-    }
-  } else if (config.player_count >= 7) {
-    const allowed = [CONST.DEFAULT_MAPKEY_7_8, CONST.DEFAULT_MAPKEY_9_10, CONST.ARGENTUM_MAPKEY]
-    if (!allowed.includes(config.mapkey)) {
-      config.mapkey = CONST.DEFAULT_MAPKEY_7_8
-      config.map_size = 'Large'
-    }
-  } else if (config.player_count >= 5) {
-    const disallowed = [CONST.DEFAULT_MAPKEY]
-    if (disallowed.includes(config.mapkey)) {
-      // Small not allowed for 5-6 players; bump to Extended
-      config.mapkey = CONST.DEFAULT_MAPKEY_5_6
-      config.map_size = 'Extended'
-    }
-  } else {
-    // 2-4 players: keep selection; larger maps are allowed
-    if (!config.map_size) config.map_size = 'Standard'
-  }
-  
   // Shuffle after determining the base map and storing the label
   let shuffleType = config.map_shuffle;
   
@@ -144,6 +98,7 @@ app.get('/game/new', function (req, res) {
     shuffleType = shuffleOptions.length > 0 ? shuffleOptions.join('-') : 'none';
   }
   
+  config.map_shuffle = shuffleType
   config.mapkey = (new BoardShuffler(config.mapkey)).shuffle(shuffleType)
   const pid = 1
   const game = new Game({
@@ -173,17 +128,8 @@ app.get('/game/:id', function(req, res) {
   }
   if (!game.state) {
     const pc = game.player_count
-    // Prefer precomputed label; fallback heuristic for customs
-    let map_size = game.config.map_size
-    if (!map_size || map_size === 'Custom') {
-      const mk = game.config.mapkey
-      if (mk === CONST.DEFAULT_MAPKEY) map_size = 'Standard'
-      else if (mk === CONST.DEFAULT_MAPKEY_5_6) map_size = 'Extended'
-      else if (mk === CONST.DEFAULT_MAPKEY_7_8) map_size = 'Large'
-      else if (mk === CONST.DEFAULT_MAPKEY_9_10) map_size = 'Extra Large'
-      else if (mk === CONST.ARGENTUM_MAPKEY) map_size = 'Argentum'
-      else if (!map_size) map_size = 'Custom'
-    }
+    // Label is computed before shuffling; shuffled keys no longer match a preset
+    const map_size = game.config.map_size || CONST.mapName(game.config.mapkey)
 
     res.render('waiting_room', {
       players: JSON.stringify(game.players),

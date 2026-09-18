@@ -1,5 +1,25 @@
 # Balanced Dice Algorithm — Expert Summary for Developers
 
+> **In this repo.** Everything below is the external write-up this implementation was based on.
+> The code is `models/dice.js`, reached through `createDice(mode, options)` — `'random'` (default)
+> or `'balanced'`, chosen per game by `config.dice_mode` from the waiting room. `BalancedDice`'s
+> defaults match §5 exactly: reshuffle under **13** cards (`minimumCardsBeforeReshuffle`), penalty
+> **0.3** (`recencyReduction`), memory window **5** (`recentMemory`).
+>
+> Two deliberate deviations from the write-up:
+>
+> 1. **`avoidTotals` 7-protection.** Both dice classes take `roll(avoidTotals = [])` and re-draw
+>    (random) or zero out those weights (balanced) — `models/dice.js:9-18, 76-92`. The game passes
+>    `[7]` for each player's *first* roll of the game (`models/game.js:216-222`), so nobody gets
+>    robbered before they own anything. If every weight ends up zeroed the balanced deck falls back
+>    to an unweighted pick rather than failing.
+> 2. **Crypto RNG.** `crypto.randomInt` / `crypto.randomBytes`, not `Math.random`, everywhere.
+>
+> The server also broadcasts the running histogram as `ROLL_DISTRIBUTION`
+> (`models/io_manager.js:117`) so the client can show the deck's actual shape.
+
+---
+
 ## 1. Context and Motivation
 
 Colonist.io, an online implementation of *Settlers of Catan*, uses virtual dice. Despite using statistically fair random number generation, many players perceived outcomes as unfair due to frequent streaks (e.g., repeated 6s or 8s) and uneven distributions over the course of a game.

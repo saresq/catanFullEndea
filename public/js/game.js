@@ -8,6 +8,16 @@ import AudioManager from "./audio_manager.js"
 import { getName, resToText } from "./const_messages.js"
 const ST = CONST.GAME_STATES
 
+/** Milliseconds each of these waits for another animation or sound to finish. */
+const DELAYS = {
+  END_TURN_COOLDOWN: 1000,
+  ROBBER_AFTER_DICE: 1500,
+  LARGEST_ARMY: 2000, // Wait for the Knight DC animation & sound
+  LONGEST_ROAD: 500, // Wait for the road animation
+  GAME_END: 3000, // Wait for the other animations to end
+  REMATCH_TICK: 1000,
+}
+
 export default class Game {
   id; config; active_pid; state; opponents
   /** @type {UI} */ #ui;
@@ -98,12 +108,8 @@ export default class Game {
     this.#ui.trade_ui.clearRequests()
     if (this.#isMyPid(this.active_pid)) {
       this.#audio_manager.playTurnNotification()
-      if (this.config.auto_roll) {
-        // Auto-roll: keep unified button disabled until actions phase
-        this.#ui.player_ui.setUnifiedModeRoll(false)
-      } else {
-        this.#ui.player_ui.setUnifiedModeRoll(true)
-      }
+      // Auto-roll: keep unified button disabled until actions phase
+      this.#ui.player_ui.setUnifiedModeRoll(!this.config.auto_roll)
       this.#ui.player_ui.toggleShow(1)
     } else {
       this.#ui.player_ui.toggleShow()
@@ -187,9 +193,6 @@ export default class Game {
       this.#ui.board_ui.updatePlayerColor(update_player.id, cid)
       if (isMe) this.#ui.player_ui.updateColor(cid)
     }
-    if (key.includes('name')) {
-      // AllPlayers UI will refresh name; nothing else needed here
-    }
     this.#ui.all_players_ui.updatePlayer(update_player, key)
     this.#amIActing(update_player.id) && this.#ui.toggleActions(1)
   }
@@ -197,16 +200,16 @@ export default class Game {
   // SOC - Dice Value Update
   updateDiceValueSoc([d1, d2], pid) {
     this.#ui.player_ui.toggleDice(false)
-    // After rolling, keep End Turn disabled for 5 seconds, then enable
-    if (this.#isMyPid(pid)) { this.#ui.player_ui.startEndTurnCooldown(1000) }
+    // After rolling, keep End Turn disabled for a second, then enable
+    if (this.#isMyPid(pid)) { this.#ui.player_ui.startEndTurnCooldown(DELAYS.END_TURN_COOLDOWN) }
     this.#audio_manager.playDice(this.#isMyPid(pid))
     const total = d1 + d2
-    total === 7 && setTimeout(_ => {
+    total === CONST.ROBBER_ROLL && setTimeout(_ => {
       this.#audio_manager.playRobber()
       this.#ui.board_ui.animateRobber()
-    }, 1500)
+    }, DELAYS.ROBBER_AFTER_DICE)
     const robbed_tile = this.#board.getRobbedTile()
-    const rob_tile_type = robbed_tile?.num === total && robbed_tile.type
+    const rob_tile_type = +robbed_tile?.num === total && robbed_tile.type
     this.#ui.alert_ui.alertDiceValue(this.getPlayer(pid), d1, d2, CONST.TILE_RES[rob_tile_type])
   }
 
@@ -246,9 +249,8 @@ export default class Game {
   updateRobberMovementSoc(pid, id) {
     this.#board.moveRobber(id)
     this.#ui.moveRobber(id)
-    const tile = this.#board.findTile(id).type
-    const num = this.#board.findTile(id).num || ''
-    this.#ui.alert_ui.alertRobberMoveDone(this.getPlayer(pid), tile, num)
+    const tile = this.#board.findTile(id)
+    this.#ui.alert_ui.alertRobberMoveDone(this.getPlayer(pid), tile.type, tile.num || '')
   }
 
   // SOC_P - Stolen info Notification
@@ -261,7 +263,7 @@ export default class Game {
 
   // SOC - Update Ongoing Trades
   updateOngoingTradesSoc(ongoing_trades = []) {
-    ongoing_trades.filter(_ => _.status !== 'deleted').forEach(obj => {
+    ongoing_trades.forEach(obj => {
       this.#ui.trade_ui.updateOngoing(obj)
     })
   }
@@ -307,7 +309,7 @@ export default class Game {
       const player = this.getPlayer(pid)
       this.#ui.alert_ui.alertLargestArmy(player, count)
       this.#ui.animation_ui.animateLargestArmy(pid, this.getPlayer(pid), count)
-    }, 2000) // Wait for the Knight DC animation & sound
+    }, DELAYS.LARGEST_ARMY)
   }
 
   // SOC - Longest Road
@@ -318,7 +320,7 @@ export default class Game {
       this.#ui.alert_ui.alertLongestRoad(player, locs.length)
       const new_locs = this.#board.addTakenCornersAlongEdgePath(locs)
       this.#ui.animation_ui.animateLongestRoad(pid, !this.#isMyPid(pid) && this.getPlayer(pid), new_locs)
-    }, 500) // Wait for the road animation
+    }, DELAYS.LONGEST_ROAD)
   }
 
   #onGameEnd(context = this.end_context) {
@@ -343,9 +345,9 @@ export default class Game {
         this.#socket_manager.sendRematchVote()
       }, { once: true })
     }
-    // Start 240s countdown display
+    // Start the rematch countdown display
     clearInterval(this._rematchInterval)
-    let left = 240
+    let left = CONST.REMATCH_SECONDS
     if ($time) { $time.textContent = '' + left }
     this._rematchInterval = setInterval(() => {
       left -= 1
@@ -361,13 +363,13 @@ export default class Game {
           $btn.textContent = 'Time\'s Up'
         }
       }
-    }, 1000)
+    }, DELAYS.REMATCH_TICK)
   }
 
   // SOC - Game Ended
   updateGameEndSoc(context) {
     this.end_context = context
-    setTimeout(_ => this.#onGameEnd(context), 3000) // Waiting for other animations to end
+    setTimeout(_ => this.#onGameEnd(context), DELAYS.GAME_END)
   }
 
   updateRematchProgressSoc(nonVoterNames = []) {
@@ -387,8 +389,8 @@ export default class Game {
     const url = redirectMap[myPid] || redirectMap['*']
     if (url) {
       try {
-        localStorage.setItem('status_history', '[]')
-        localStorage.removeItem('status_history_gid')
+        localStorage.setItem(CONST.STORAGE_KEYS.STATUS_HISTORY, '[]')
+        localStorage.removeItem(CONST.STORAGE_KEYS.STATUS_HISTORY_GID)
       } catch (e) {}
       window.location.href = url
     }
@@ -423,8 +425,7 @@ export default class Game {
       try {
         const $p = document.querySelector(`#game .all-players .player.p${pid}`)
         if ($p) {
-          const pcs = Array.from({ length: 11 }, (_, i) => 'pc' + i)
-          pcs.forEach(c => $p.classList.remove(c))
+          $p.classList.remove(...CONST.PC_CLASSES)
           $p.classList.add('pc0')
           const $name = $p.querySelector('.name')
           if ($name) { $name.textContent = 'H4x0r'; $name.setAttribute('data-name', 'H4x0r') }
@@ -506,27 +507,25 @@ export default class Game {
     const is_robber_move = this.state === ST.ROBBER_MOVE
     const is_knight = this.#player._is_playing_dc === 'dK'
     if (is_robber_move || is_knight) {
+      const sendMove = (tile_id, stolen_pid) => {
+        if (is_robber_move) { this.#socket_manager.sendRobberMove(tile_id, stolen_pid) }
+        else {
+          this.#socket_manager.sendKnightMove(tile_id, stolen_pid)
+          this.#player._is_playing_dc = false
+        }
+      }
       if (location_type === 'T') {
-        const opp_taken_corners = this.#board.findTile(id)?.getAllCorners()
+        const opp_taken_corners = (this.#board.findTile(id)?.getAllCorners() ?? [])
           .filter(c => c.piece && !this.#isMyPid(c.player_id))
         const taken_oppponents_count = [...new Set(opp_taken_corners.map(_ => _.player_id))].length
         if (taken_oppponents_count > 1) {
           this.#temp = { _robber_tile: id }
           this.#ui.showCorners(opp_taken_corners.map(_ => _.id))
         } else {
-          if (is_robber_move) { this.#socket_manager.sendRobberMove(id) }
-          else if (is_knight) {
-            this.#socket_manager.sendKnightMove(id)
-            this.#player._is_playing_dc = false
-          }
+          sendMove(id)
         }
       } else if (location_type === 'C') {
-        const stolen_pid = this.#board.findCorner(id).player_id
-        if (is_robber_move) { this.#socket_manager.sendRobberMove(this.#temp._robber_tile, stolen_pid) }
-        else if (is_knight) {
-          this.#socket_manager.sendKnightMove(this.#temp._robber_tile, stolen_pid)
-          this.#player._is_playing_dc = false
-        }
+        sendMove(this.#temp._robber_tile, this.#board.findCorner(id).player_id)
       }
       return
     }

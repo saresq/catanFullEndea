@@ -35,7 +35,6 @@ export default class Board {
       const prev_row = i > 0 ? this.tile_rows[i - 1] : null
       const row_data = []
       // ONLY ONE +/- can be used for Row Difference
-      mapkey_list.slice(0, i).reduce((mem, _) => mem + _.length, 0)
       const plus_minus = mapkey[mapkey_list.slice(0, i).reduce((mem, _) => mem + _.length, 0) + i - 1]
       if (plus_minus === '+' || plus_minus === '-') {
         row_data.diff = +(plus_minus + '1')
@@ -59,10 +58,7 @@ export default class Board {
         if (tile_map[0] == 'S') {
           const { dir, res, num } =
             tile_map.match(new RegExp(CONST.SEA_REGEX))?.groups || {}
-          tile_params.trade_edge = ({
-            tl: 'top_left', tr: 'top_right', l: 'left',
-            r: 'right', bl: 'bottom_left', br: 'bottom_right',
-          })[dir]
+          tile_params.trade_edge = CONST.DIR_HELPER.KEYS[dir]
           tile_params.trade_type = res
           tile_params.trade_ratio = num
           tile_params.type = 'S'
@@ -118,6 +114,18 @@ export default class Board {
       !corner.piece && no_neighbours && road_count && locations.push(corner)
     })
     return locations
+  }
+
+  /**
+   * @description How many players a map can seat, worst case. Each initial settlement takes its
+   *   own corner and blocks its (at most three) neighbours, so `n` legal corners always leave
+   *   room for `n / 4` settlements however badly they are placed, and every player needs two.
+   *   Presets land far above their own `max_players`; only hand-made maps ever trip this.
+   * @param {string} mapkey
+   * @returns {number}
+   */
+  static maxPlayers(mapkey) {
+    return Math.floor(new Board(mapkey).getSettlementLocations(-1).length / 8)
   }
 
   getSettlementLocationsFromRoads(existing_roads = []) {

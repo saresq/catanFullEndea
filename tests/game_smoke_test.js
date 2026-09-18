@@ -111,7 +111,7 @@ test('full game flow', async t => {
     const victim = game.getOpponents(roller.id)[0]
     // Push one player over the hand limit so the drop phase triggers
     victim.giveCards({ L: 10 })
-    game._dice = { roll: () => ({ d1: 3, d2: 4 }) }
+    game.dice = { roll: () => ({ d1: 3, d2: 4 }) }
 
     game.playerRollIO()
     assert.equal(game.state, ST.ROBBER_DROP)
@@ -139,6 +139,6 @@ test('full game flow', async t => {
     assert.equal(game.state, ST.END)
     assert.equal(game.end_context.pid, winner.id)
     assert.equal(game.end_context.vps, game.config.win_points)
-    clearTimeout(game._endCleanupTimer) // otherwise it keeps the process alive for 240s
+    clearTimeout(game.end_cleanup_timer) // otherwise it keeps the process alive for 240s
   })
 })

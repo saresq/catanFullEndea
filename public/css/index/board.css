@@ -17,7 +17,7 @@
     margin: 0;
     box-sizing: border-box;
     filter: drop-shadow(2px 2px 3px #000a);
-    transition: filter .25s cubic-bezier(0.55, 0.06, 0.68, 0.19);
+    transition: filter var(--t-base) cubic-bezier(0.55, 0.06, 0.68, 0.19);
     user-select: none;
     touch-action: none;
     transform-origin: 0 0;
@@ -56,7 +56,7 @@
             border-radius: 50%;
             margin-left: 48px;
             margin-top: 60px;
-            background-color: #E9D49D;
+            background-color: var(--sand-color);
             position: relative;
 
             &::before {
@@ -133,14 +133,14 @@
             filter: drop-shadow(0px 0 2px var(--sand-color)) drop-shadow(0px 0 2px var(--sand-color)) drop-shadow(0px 0 6px var(--sand-color));
             opacity: 1;
             background-size: cover;
-            transition: opacity .25s ease-in, transform .25s ease-in, z-index 0s linear;
+            transition: opacity var(--t-base) ease-in, transform var(--t-base) ease-in, z-index 0s linear;
         }
 
         &.robbed.robber-animate::before {
             opacity: 0;
             transform: scale(20);
             z-index: -1;
-            transition: opacity .5s ease-in, transform .5s ease-in, z-index 0s .5s linear;
+            transition: opacity var(--t-slow) ease-in, transform var(--t-slow) ease-in, z-index 0s var(--t-slow) linear;
         }
 
         &.robbed:not(.robber-animate):hover::before {
@@ -254,7 +254,7 @@
     /* , .board.darken .tile .corner.taken */
 {
     filter: brightness(.5);
-    transition: filter .25s ease;
+    transition: filter var(--t-base) ease;
 }
 
 /* --------------------------------------
@@ -323,15 +323,15 @@
             filter: drop-shadow(-3px 3px 2px #000);
             transform: scale(4);
             z-index: 4;
-            transition: all .25s ease-in;
+            transition: all var(--t-base) ease-in;
 
             &[data-taken=S] {
-                transition: transform .5s cubic-bezier(0.38, -0.68, 0.67, -0.34);
+                transition: transform var(--t-slow) cubic-bezier(0.38, -0.68, 0.67, -0.34);
                 transform: scale(1);
             }
 
             &[data-taken=C] {
-                animation: city-show .5s cubic-bezier(0.38, -0.68, 0.67, -0.34);
+                animation: city-show var(--t-slow) cubic-bezier(0.38, -0.68, 0.67, -0.34);
                 transform: scale(1);
             }
 
@@ -350,44 +350,8 @@
             }
         }
 
-        &.p1[data-taken=S] {
-            background-image: url(/images/pieces/settlement-1.png);
-        }
-
-        &.p2[data-taken=S] {
-            background-image: url(/images/pieces/settlement-2.png);
-        }
-
-        &.p3[data-taken=S] {
-            background-image: url(/images/pieces/settlement-3.png);
-        }
-
-        &.p4[data-taken=S] {
-            background-image: url(/images/pieces/settlement-4.png);
-        }
-
-        &.p5[data-taken=S] {
-            background-image: url(/images/pieces/settlement-5.png);
-        }
-
-        &.p6[data-taken=S] {
-            background-image: url(/images/pieces/settlement-6.png);
-        }
-
-        &.p7[data-taken=S] {
-            background-image: url(/images/pieces/settlement-7.png);
-        }
-
-        &.p8[data-taken=S] {
-            background-image: url(/images/pieces/settlement-8.png);
-        }
-
-        &.p9[data-taken=S] {
-            background-image: url(/images/pieces/settlement-9.png);
-        }
-
-        &.p10[data-taken=S] {
-            background-image: url(/images/pieces/settlement-10.png);
+        &[data-taken=S] {
+            background-image: var(--p-settlement);
         }
 
         &[data-taken=C] {
@@ -395,46 +359,7 @@
             height: 40px;
             margin-top: -5px;
             margin-left: -5px;
-
-            &.p1 {
-                background-image: url(/images/pieces/city-1.png);
-            }
-
-            &.p2 {
-                background-image: url(/images/pieces/city-2.png);
-            }
-
-            &.p3 {
-                background-image: url(/images/pieces/city-3.png);
-            }
-
-            &.p4 {
-                background-image: url(/images/pieces/city-4.png);
-            }
-
-            &.p5 {
-                background-image: url(/images/pieces/city-5.png);
-            }
-
-            &.p6 {
-                background-image: url(/images/pieces/city-6.png);
-            }
-
-            &.p7 {
-                background-image: url(/images/pieces/city-7.png);
-            }
-
-            &.p8 {
-                background-image: url(/images/pieces/city-8.png);
-            }
-
-            &.p9 {
-                background-image: url(/images/pieces/city-9.png);
-            }
-
-            &.p10 {
-                background-image: url(/images/pieces/city-10.png);
-            }
+            background-image: var(--p-city);
         }
 
         &[data-dir="top"] {
@@ -567,67 +492,19 @@
             z-index: 5;
 
             &.p1, &.p2, &.p3, &.p4, &.p5, &.p6, &.p7, &.p8, &.p9, &.p10 {
-                transition: z-index 0s .25s linear, width 0.25s ease-in, height 0.25s ease-in;
+                transition: z-index 0s var(--t-base) linear, width var(--t-base) ease-in, height var(--t-base) ease-in;
                 width: 7px;
                 height: 50px;
                 z-index: 2;
-            }
-
-            &.p1 {
-                background: var(--player-1-color);
-                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-1-color-dark) 50%, #000), 4px 4px 6px 0 #000;
-            }
-
-            &.p2 {
-                background: var(--player-2-color);
-                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-2-color-dark) 50%, #000), 4px 4px 6px 0 #000;
-            }
-
-            &.p3 {
-                background: var(--player-3-color);
-                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-3-color-dark) 50%, #000), 4px 4px 6px 0 #000;
-            }
-
-            &.p4 {
-                background: var(--player-4-color);
-                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-4-color-dark) 50%, #000), 4px 4px 6px 0 #000;
-            }
-
-            &.p5 {
-                background: var(--player-5-color);
-                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-5-color-dark) 50%, #000), 4px 4px 6px 0 #000;
-            }
-
-            &.p6 {
-                background: var(--player-6-color);
-                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-6-color-dark) 50%, #000), 4px 4px 6px 0 #000;
-            }
-
-            &.p7 {
-                background: var(--player-7-color);
-                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-7-color-dark) 50%, #000), 4px 4px 6px 0 #000;
-            }
-
-            &.p8 {
-                background: var(--player-8-color);
-                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-8-color-dark) 50%, #000), 4px 4px 6px 0 #000;
-            }
-
-            &.p9 {
-                background: var(--player-9-color);
-                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-9-color-dark) 50%, #000), 4px 4px 6px 0 #000;
-            }
-
-            &.p10 {
-                background: var(--player-10-color);
-                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-10-color-dark) 50%, #000), 4px 4px 6px 0 #000;
+                background: var(--p-color);
+                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--p-color-dark) 50%, #000), 4px 4px 6px 0 #000;
             }
 
 
             &.longest {
                 box-shadow: 0 0 0 5px #fff, 0 -20px 0 5px #fff, 0 20px 0 5px #fff;
                 border-radius: 3px;
-                transition: all .25s ease-in;
+                transition: all var(--t-base) ease-in;
             }
         }
 
@@ -726,154 +603,6 @@
         left: 32px;
         transform: rotate(-60deg);
     }
-}
-
-
-/* Support color-based classes (pc1..pc8) for board pieces to reflect selected colors */
-/* Settlements on corners */
-.board .tile .corner.taken.pc1[data-taken=S] {
-    background-image: url(/images/pieces/settlement-1.png);
-}
-
-.board .tile .corner.taken.pc2[data-taken=S] {
-    background-image: url(/images/pieces/settlement-2.png);
-}
-
-.board .tile .corner.taken.pc3[data-taken=S] {
-    background-image: url(/images/pieces/settlement-3.png);
-}
-
-.board .tile .corner.taken.pc4[data-taken=S] {
-    background-image: url(/images/pieces/settlement-4.png);
-}
-
-.board .tile .corner.taken.pc5[data-taken=S] {
-    background-image: url(/images/pieces/settlement-5.png);
-}
-
-.board .tile .corner.taken.pc6[data-taken=S] {
-    background-image: url(/images/pieces/settlement-6.png);
-}
-
-.board .tile .corner.taken.pc7[data-taken=S] {
-    background-image: url(/images/pieces/settlement-7.png);
-}
-
-.board .tile .corner.taken.pc8[data-taken=S] {
-    background-image: url(/images/pieces/settlement-8.png);
-}
-
-.board .tile .corner.taken.pc9[data-taken=S] {
-    background-image: url(/images/pieces/settlement-9.png);
-}
-
-.board .tile .corner.taken.pc10[data-taken=S] {
-    background-image: url(/images/pieces/settlement-10.png);
-}
-
-.board .tile .corner.taken.pc0[data-taken=S] {
-    background-image: url(/images/pieces/settlement-0.png);
-}
-
-/* Cities on corners */
-.board .tile .corner[data-taken=C].pc1 {
-    background-image: url(/images/pieces/city-1.png);
-}
-
-.board .tile .corner[data-taken=C].pc2 {
-    background-image: url(/images/pieces/city-2.png);
-}
-
-.board .tile .corner[data-taken=C].pc3 {
-    background-image: url(/images/pieces/city-3.png);
-}
-
-.board .tile .corner[data-taken=C].pc4 {
-    background-image: url(/images/pieces/city-4.png);
-}
-
-.board .tile .corner[data-taken=C].pc5 {
-    background-image: url(/images/pieces/city-5.png);
-}
-
-.board .tile .corner[data-taken=C].pc6 {
-    background-image: url(/images/pieces/city-6.png);
-}
-
-.board .tile .corner[data-taken=C].pc7 {
-    background-image: url(/images/pieces/city-7.png);
-}
-
-.board .tile .corner[data-taken=C].pc8 {
-    background-image: url(/images/pieces/city-8.png);
-}
-
-.board .tile .corner[data-taken=C].pc9 {
-    background-image: url(/images/pieces/city-9.png);
-}
-
-.board .tile .corner[data-taken=C].pc10 {
-    background-image: url(/images/pieces/city-10.png);
-}
-
-.board .tile .corner[data-taken=C].pc0 {
-    background-image: url(/images/pieces/city-0.png);
-}
-
-/* Roads on edges */
-.board .tile .edge.taken.pc1 {
-    background: var(--player-1-color);
-    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-1-color-dark) 50%, #000), 4px 4px 6px 0 #000;
-}
-
-.board .tile .edge.taken.pc2 {
-    background: var(--player-2-color);
-    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-2-color-dark) 50%, #000), 4px 4px 6px 0 #000;
-}
-
-.board .tile .edge.taken.pc3 {
-    background: var(--player-3-color);
-    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-3-color-dark) 50%, #000), 4px 4px 6px 0 #000;
-}
-
-.board .tile .edge.taken.pc4 {
-    background: var(--player-4-color);
-    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-4-color-dark) 50%, #000), 4px 4px 6px 0 #000;
-}
-
-.board .tile .edge.taken.pc5 {
-    background: var(--player-5-color);
-    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-5-color-dark) 50%, #000), 4px 4px 6px 0 #000;
-}
-
-.board .tile .edge.taken.pc6 {
-    background: var(--player-6-color);
-    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-6-color-dark) 50%, #000), 4px 4px 6px 0 #000;
-}
-
-.board .tile .edge.taken.pc7 {
-    background: var(--player-7-color);
-    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-7-color-dark) 50%, #000), 4px 4px 6px 0 #000;
-}
-
-.board .tile .edge.taken.pc8 {
-    background: var(--player-8-color);
-    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-8-color-dark) 50%, #000), 4px 4px 6px 0 #000;
-}
-
-.board .tile .edge.taken.pc9 {
-    background: var(--player-9-color);
-    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-9-color-dark) 50%, #000), 4px 4px 6px 0 #000;
-}
-
-.board .tile .edge.taken.pc10 {
-    background: var(--player-10-color);
-    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-10-color-dark) 50%, #000), 4px 4px 6px 0 #000;
-}
-
-.board .tile .edge.taken.pc0 {
-    background: var(--player-0-color);
-    box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--player-0-color-dark) 50%, #000), 4px 4px 6px 0 #000;
 }
 
 

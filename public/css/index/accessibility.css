@@ -56,7 +56,7 @@
     display: flex;
     flex-direction: column;
     margin: 10px 0 0 10px;
-    z-index: 50;
+    z-index: var(--z-accessibility);
     pointer-events: auto;
 
     .settings-gear {
@@ -89,10 +89,6 @@
         &.on::before {
             content: '⇲';
         }
-    }
-
-    .zoom-in {
-        padding-top: -1px;
     }
 
     .zoom-out {
@@ -139,13 +135,13 @@
         }
     }
 
-    .keyboard-shortcuts {
+    /* Shared modal shell: keyboard-shortcuts and info-zone panels */
+    :is(.keyboard-shortcuts, .info-zone) {
         position: fixed;
         left: 50%;
         top: 5vh;
         width: clamp(300px, 40vw, 800px);
         margin: 0 auto;
-        padding: 4rem 2rem 2rem;
         transform: translateX(-50%);
         max-height: 85vh;
         overflow: auto;
@@ -153,6 +149,14 @@
         border-radius: 1rem;
         box-shadow: 0 0 1rem rgba(0, 0, 0, 0.5);
         font-family: var(--font-ui), sans-serif;
+
+        &.hide {
+            display: none;
+        }
+    }
+
+    .keyboard-shortcuts {
+        padding: 4rem 2rem 2rem;
         font-weight: 200;
         display: flex;
         justify-content: flex-start;
@@ -196,10 +200,6 @@
             font-weight: 600;
         }
 
-        &.hide {
-            display: none;
-        }
-
         .close {
             position: absolute;
             top: 1.25rem;
@@ -223,23 +223,7 @@
     }
 
     .info-zone {
-        position: fixed;
-        left: 50%;
-        top: 5vh;
-        width: clamp(300px, 40vw, 800px);
-        margin: 0 auto;
         padding: 2rem;
-        transform: translateX(-50%);
-        max-height: 85vh;
-        overflow: auto;
-        background: #fff;
-        border-radius: 1rem;
-        box-shadow: 0 0 1rem rgba(0, 0, 0, 0.5);
-        font-family: var(--font-ui), sans-serif;
-
-        &.hide {
-            display: none;
-        }
 
         .container {
             display: flex;
@@ -344,11 +328,11 @@
 .status-history-icon-zone {
     position: fixed;
     top: 0;
-    right: 240px;
+    right: var(--scoreboard-width);
     display: flex;
     flex-direction: column;
     margin: 10px 10px 0 0;
-    z-index: 50;
+    z-index: var(--z-accessibility);
     pointer-events: auto;
 
     .status-bar-history::before {
@@ -375,7 +359,7 @@
     justify-content: space-between;
     align-items: flex-start;
     pointer-events: none;
-    z-index: 50;
+    z-index: var(--z-accessibility);
 }
 
 /* Media query for smaller screens */

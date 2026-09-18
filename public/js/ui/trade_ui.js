@@ -22,6 +22,13 @@ export default class TradeUI {
     this.#toggleBoardBlur = toggleBoardBlur
   }
 
+  /** Cards to give per card taken: 2 for a 2:1 port, 3/4 for *3/*4, 1 for a player trade */
+  #tradeRatio(type) {
+    if (type === '*3' || type === '*4') { return +type[1] }
+    if (CONST.TRADE_OFFERS[type] && type.endsWith('2')) { return 2 }
+    return 1
+  }
+
   render() {
     this.$type_selection.innerHTML = Object.entries(CONST.TRADE_OFFERS).map(([type, txt]) =>
       `<button class="trade-type ${type.replace(/\*/, '_')}" data-type="${type}">${type == 'Px' ? txt : ''}</button>`
@@ -77,12 +84,7 @@ export default class TradeUI {
         const res = e.target.dataset.type
         const is_giving = e.target.classList.contains('giving-card')
         const res_obj = is_giving ? this.#giving_res : this.#taking_res
-        let res_change_count = 1
-        if (is_giving) {
-          if (['S2','L2','B2','O2','W2'].includes(this.#trade_type)) { res_change_count = 2 }
-          else if (this.#trade_type === '*3') { res_change_count = 3 }
-          else if (this.#trade_type === '*4') { res_change_count = 4 }
-        }
+        const res_change_count = is_giving ? this.#tradeRatio(this.#trade_type) : 1
         res_obj[res] += res_change_count
         e.target.dataset.count = res_obj[res]
         this.$card_selection
@@ -116,22 +118,14 @@ export default class TradeUI {
       $el.classList.remove('disabled')
       const player_res = Object.entries(this.#player.closed_cards).filter(([k]) => !!CONST.RESOURCES[k])
       const player_res_obj = Object.fromEntries(player_res)
-      switch (type) {
-        case 'S2': player_res_obj.S < 2 && $el.classList.add('disabled'); break
-        case 'L2': player_res_obj.L < 2 && $el.classList.add('disabled'); break
-        case 'B2': player_res_obj.B < 2 && $el.classList.add('disabled'); break
-        case 'O2': player_res_obj.O < 2 && $el.classList.add('disabled'); break
-        case 'W2': player_res_obj.W < 2 && $el.classList.add('disabled'); break
-        case '*3':
-          !player_res.filter(([k, v]) => v > 2).length && $el.classList.add('disabled')
-          break
-        case '*4':
-          // if (this.#player.trade_offers['*3']) { $el.classList.add('hide'); break }
-          !player_res.filter(([k, v]) => v > 3).length && $el.classList.add('disabled')
-          break
-        case 'Px':
-          (Px_limit_crossed || !player_res.filter(([k, v]) => v > 0).length) && $el.classList.add('disabled')
-          break
+      const ratio = this.#tradeRatio(type)
+      if (type === 'Px') {
+        (Px_limit_crossed || !player_res.filter(([k, v]) => v > 0).length) && $el.classList.add('disabled')
+      } else if (ratio === 2) {
+        // 2:1 port — only the port's own resource counts
+        player_res_obj[type[0]] < 2 && $el.classList.add('disabled')
+      } else {
+        !player_res.filter(([k, v]) => v >= ratio).length && $el.classList.add('disabled')
       }
       $el.classList.remove('active')
     })
@@ -182,11 +176,11 @@ export default class TradeUI {
       this.$submit.classList[(giving_total === taking_total * count) ? 'add' : 'remove']('active')
     }
 
-    if (['S2','L2','B2','O2','W2'].includes(this.#trade_type)) {
-      const res = this.#trade_type[0]
-      _calculateAndUpdate(2, res)
+    const ratio = this.#tradeRatio(this.#trade_type)
+    if (ratio === 2) {
+      _calculateAndUpdate(2, this.#trade_type[0])
     } else if (this.#trade_type === '*3' || this.#trade_type === '*4') {
-      _calculateAndUpdate(+this.#trade_type[1], ...Object.keys(CONST.RESOURCES))
+      _calculateAndUpdate(ratio, ...Object.keys(CONST.RESOURCES))
     } else if (this.#trade_type === 'Px') {
       this.$card_selection.querySelectorAll('.card').forEach($el => {
         const res = $el.dataset.type
@@ -218,7 +212,7 @@ export default class TradeUI {
       return
     }
     this.$requests.insertAdjacentHTML('beforeend', `
-      <div class="request p${player.id}" data-id="${id}">
+      <div class="request p${player.id} pc${player.color_id || player.id}" data-id="${id}">
         <span class="info">Trade Offer:</span>
         <div class="text">
           ${player.name} is<span class="giving">giving ${resToText(giving)}</span>
@@ -243,6 +237,7 @@ export default class TradeUI {
     })
     $el.querySelector('.counter').addEventListener('click', e => {
       if (!e.target.classList.contains('active')) return
+      /** @todo Counter Trade Request - the server already takes a counter_id */
     })
     $el.querySelector('.ignore').addEventListener('click', e => {
       this.#onTradeResponse(e.target.dataset.id)
@@ -256,7 +251,7 @@ export default class TradeUI {
         <span class="giving">→${resToText(giving)}</span>
         <span class="for">for</span>
         <span class="asking">←${resToText(asking)}</span>
-        <span class="cancel">Withdraw</span>
+        <button class="cancel" type="button">Withdraw</button>
       </div>
     `
     if ($all_req) {
@@ -269,7 +264,9 @@ export default class TradeUI {
       `)
     }
     this.$requests.querySelector(`.ongoing[data-id="-1"] .og-request[data-id="${id}"] .cancel`).addEventListener('click', e => {
-      /** @todo Cancel Trade Request */
+      // Withdraw: responding to your own request deletes it (models/game.js tradeResponseIO)
+      if (!e.target.closest('.og-request').classList.contains('open')) return
+      this.#onTradeResponse(id)
     })
   }
 

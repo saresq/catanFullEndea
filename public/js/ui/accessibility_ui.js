@@ -1,11 +1,12 @@
+import { STORAGE_KEYS as KEYS } from "../const.js"
 const _dummyFn = _ => _
 export default class AccessibilityUI {
   #shown_icons
   muted = true
   // muted = !!+localStorage.getItem('mute')
-  muted_notif = (localStorage.getItem('mute-notifications') === null)
+  muted_notif = (localStorage.getItem(KEYS.MUTE_NOTIFICATIONS) === null)
     ? true
-    : !!+localStorage.getItem('mute-notifications')
+    : !!+localStorage.getItem(KEYS.MUTE_NOTIFICATIONS)
   #toggleBoardZoom; #recenterMap; #toggleBgm; #toggleNotificationsAudio
   $el = document.querySelector('#game .accessibility-zone')
 
@@ -189,7 +190,7 @@ export default class AccessibilityUI {
   toggleMuteNotications() {
     if (!this.#shown_icons.notifcation_sounds) return
     this.muted_notif = !this.muted_notif
-    try { localStorage.setItem('mute-notifications', +this.muted_notif) } catch (e) {}
+    try { localStorage.setItem(KEYS.MUTE_NOTIFICATIONS, +this.muted_notif) } catch (e) {}
     this.#toggleNotificationsAudio(!this.muted_notif)
     this.$el.querySelector('.notifications').classList[this.muted_notif ? 'add' : 'remove']('off')
     this.$el.querySelector('.notifications').setAttribute('title', (this.muted_notif ? 'Unm' : 'M') + 'ute Notifications (n)')

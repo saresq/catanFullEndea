@@ -46,6 +46,33 @@
     --player-10-color-dark: color-mix(in srgb, var(--player-10-color) 100%, #000 40%);
     --player-0-color-dark: color-mix(in srgb, var(--player-0-color) 100%, #000 40%);
 
+    /* Card faces (resource & development cards) */
+    --card-face: #ebd290;
+    --card-border: #5a460e;
+    --vp-card-bg: #c8b66d;
+
+    /* Scrim behind full-screen animations & overlays */
+    --overlay-bg: color-mix(in srgb, #3a3527 80%, transparent);
+
+    /* Transition/animation durations */
+    --t-fast: .15s;
+    --t-base: .25s;
+    --t-slow: .5s;
+
+    /* Scoreboard width - accessibility icons dock against it */
+    --scoreboard-width: 240px;
+
+    /* Stacking layers. Values unchanged from before they were named. */
+    --z-hud: 20;
+    --z-hud-overlay: 21;
+    --z-animation: 25;
+    --z-accessibility: 50;
+    --z-panel: 60;
+    --z-alert: 70;
+    --z-board-overlay: 100;
+    --z-modal: 1000;
+    --z-toast: 10000;
+
     /* Font Stacks */
     --font-main: 'EagleLake', Georgia, "Times New Roman", serif;
     --font-ui: 'Raleway', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
@@ -55,4 +82,218 @@
 
 :root.godmode {
     --water-color: #000000;
+}
+
+
+/*
+ * Player theme
+ * ------------
+ * Every rule that needs "this player's colour" reads var(--p-color) & friends instead of naming a
+ * --player-N-color, so a single class on the element (or on an ancestor) themes everything inside.
+ *
+ * `.pN` is keyed on the player's seat id and is only a fallback; `.pcN` is keyed on the colour the
+ * player picked and is declared afterwards, so it wins whenever an element carries both.
+ *
+ * --p-color-on-dark is --p-color, except for the black player where it is the light variant, so
+ * text and thin shapes stay visible on a dark background.
+ */
+
+.p0 {
+    --p-color: var(--player-0-color);
+    --p-color-light: var(--player-0-color-light);
+    --p-color-dark: var(--player-0-color-dark);
+    --p-color-on-dark: var(--player-0-color);
+    --p-settlement: url(/images/pieces/settlement-0.png);
+    --p-city: url(/images/pieces/city-0.png);
+}
+
+.p1 {
+    --p-color: var(--player-1-color);
+    --p-color-light: var(--player-1-color-light);
+    --p-color-dark: var(--player-1-color-dark);
+    --p-color-on-dark: var(--player-1-color);
+    --p-settlement: url(/images/pieces/settlement-1.png);
+    --p-city: url(/images/pieces/city-1.png);
+}
+
+.p2 {
+    --p-color: var(--player-2-color);
+    --p-color-light: var(--player-2-color-light);
+    --p-color-dark: var(--player-2-color-dark);
+    --p-color-on-dark: var(--player-2-color);
+    --p-settlement: url(/images/pieces/settlement-2.png);
+    --p-city: url(/images/pieces/city-2.png);
+}
+
+.p3 {
+    --p-color: var(--player-3-color);
+    --p-color-light: var(--player-3-color-light);
+    --p-color-dark: var(--player-3-color-dark);
+    --p-color-on-dark: var(--player-3-color);
+    --p-settlement: url(/images/pieces/settlement-3.png);
+    --p-city: url(/images/pieces/city-3.png);
+}
+
+.p4 {
+    --p-color: var(--player-4-color);
+    --p-color-light: var(--player-4-color-light);
+    --p-color-dark: var(--player-4-color-dark);
+    --p-color-on-dark: var(--player-4-color);
+    --p-settlement: url(/images/pieces/settlement-4.png);
+    --p-city: url(/images/pieces/city-4.png);
+}
+
+.p5 {
+    --p-color: var(--player-5-color);
+    --p-color-light: var(--player-5-color-light);
+    --p-color-dark: var(--player-5-color-dark);
+    --p-color-on-dark: var(--player-5-color);
+    --p-settlement: url(/images/pieces/settlement-5.png);
+    --p-city: url(/images/pieces/city-5.png);
+}
+
+.p6 {
+    --p-color: var(--player-6-color);
+    --p-color-light: var(--player-6-color-light);
+    --p-color-dark: var(--player-6-color-dark);
+    --p-color-on-dark: var(--player-6-color);
+    --p-settlement: url(/images/pieces/settlement-6.png);
+    --p-city: url(/images/pieces/city-6.png);
+}
+
+.p7 {
+    --p-color: var(--player-7-color);
+    --p-color-light: var(--player-7-color-light);
+    --p-color-dark: var(--player-7-color-dark);
+    --p-color-on-dark: var(--player-7-color-light);
+    --p-settlement: url(/images/pieces/settlement-7.png);
+    --p-city: url(/images/pieces/city-7.png);
+}
+
+.p8 {
+    --p-color: var(--player-8-color);
+    --p-color-light: var(--player-8-color-light);
+    --p-color-dark: var(--player-8-color-dark);
+    --p-color-on-dark: var(--player-8-color);
+    --p-settlement: url(/images/pieces/settlement-8.png);
+    --p-city: url(/images/pieces/city-8.png);
+}
+
+.p9 {
+    --p-color: var(--player-9-color);
+    --p-color-light: var(--player-9-color-light);
+    --p-color-dark: var(--player-9-color-dark);
+    --p-color-on-dark: var(--player-9-color);
+    --p-settlement: url(/images/pieces/settlement-9.png);
+    --p-city: url(/images/pieces/city-9.png);
+}
+
+.p10 {
+    --p-color: var(--player-10-color);
+    --p-color-light: var(--player-10-color-light);
+    --p-color-dark: var(--player-10-color-dark);
+    --p-color-on-dark: var(--player-10-color);
+    --p-settlement: url(/images/pieces/settlement-10.png);
+    --p-city: url(/images/pieces/city-10.png);
+}
+
+
+
+.pc0 {
+    --p-color: var(--player-0-color);
+    --p-color-light: var(--player-0-color-light);
+    --p-color-dark: var(--player-0-color-dark);
+    --p-color-on-dark: var(--player-0-color);
+    --p-settlement: url(/images/pieces/settlement-0.png);
+    --p-city: url(/images/pieces/city-0.png);
+}
+
+.pc1 {
+    --p-color: var(--player-1-color);
+    --p-color-light: var(--player-1-color-light);
+    --p-color-dark: var(--player-1-color-dark);
+    --p-color-on-dark: var(--player-1-color);
+    --p-settlement: url(/images/pieces/settlement-1.png);
+    --p-city: url(/images/pieces/city-1.png);
+}
+
+.pc2 {
+    --p-color: var(--player-2-color);
+    --p-color-light: var(--player-2-color-light);
+    --p-color-dark: var(--player-2-color-dark);
+    --p-color-on-dark: var(--player-2-color);
+    --p-settlement: url(/images/pieces/settlement-2.png);
+    --p-city: url(/images/pieces/city-2.png);
+}
+
+.pc3 {
+    --p-color: var(--player-3-color);
+    --p-color-light: var(--player-3-color-light);
+    --p-color-dark: var(--player-3-color-dark);
+    --p-color-on-dark: var(--player-3-color);
+    --p-settlement: url(/images/pieces/settlement-3.png);
+    --p-city: url(/images/pieces/city-3.png);
+}
+
+.pc4 {
+    --p-color: var(--player-4-color);
+    --p-color-light: var(--player-4-color-light);
+    --p-color-dark: var(--player-4-color-dark);
+    --p-color-on-dark: var(--player-4-color);
+    --p-settlement: url(/images/pieces/settlement-4.png);
+    --p-city: url(/images/pieces/city-4.png);
+}
+
+.pc5 {
+    --p-color: var(--player-5-color);
+    --p-color-light: var(--player-5-color-light);
+    --p-color-dark: var(--player-5-color-dark);
+    --p-color-on-dark: var(--player-5-color);
+    --p-settlement: url(/images/pieces/settlement-5.png);
+    --p-city: url(/images/pieces/city-5.png);
+}
+
+.pc6 {
+    --p-color: var(--player-6-color);
+    --p-color-light: var(--player-6-color-light);
+    --p-color-dark: var(--player-6-color-dark);
+    --p-color-on-dark: var(--player-6-color);
+    --p-settlement: url(/images/pieces/settlement-6.png);
+    --p-city: url(/images/pieces/city-6.png);
+}
+
+.pc7 {
+    --p-color: var(--player-7-color);
+    --p-color-light: var(--player-7-color-light);
+    --p-color-dark: var(--player-7-color-dark);
+    --p-color-on-dark: var(--player-7-color-light);
+    --p-settlement: url(/images/pieces/settlement-7.png);
+    --p-city: url(/images/pieces/city-7.png);
+}
+
+.pc8 {
+    --p-color: var(--player-8-color);
+    --p-color-light: var(--player-8-color-light);
+    --p-color-dark: var(--player-8-color-dark);
+    --p-color-on-dark: var(--player-8-color);
+    --p-settlement: url(/images/pieces/settlement-8.png);
+    --p-city: url(/images/pieces/city-8.png);
+}
+
+.pc9 {
+    --p-color: var(--player-9-color);
+    --p-color-light: var(--player-9-color-light);
+    --p-color-dark: var(--player-9-color-dark);
+    --p-color-on-dark: var(--player-9-color);
+    --p-settlement: url(/images/pieces/settlement-9.png);
+    --p-city: url(/images/pieces/city-9.png);
+}
+
+.pc10 {
+    --p-color: var(--player-10-color);
+    --p-color-light: var(--player-10-color-light);
+    --p-color-dark: var(--player-10-color-dark);
+    --p-color-on-dark: var(--player-10-color);
+    --p-settlement: url(/images/pieces/settlement-10.png);
+    --p-city: url(/images/pieces/city-10.png);
 }
