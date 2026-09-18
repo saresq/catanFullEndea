@@ -63,7 +63,7 @@ returns the hook names and installs `window.VISUAL`; after that one hook per cal
 | `VISUAL.end()` | the end-game modal |
 | `VISUAL.colours()` | the scoreboard and the board pieces swept through all 11 colours |
 | `VISUAL.report()` | every resolved colour as JSON, for `diff` |
-| `VISUAL.cards()` | every visible `.card`: location, box, ratio (19/28 = 0.679) and resolved image |
+| `VISUAL.cards()` | every visible `.card`: location, box, ratio (586/873 = 0.671) and resolved image |
 | `VISUAL.reset()` | reload, back to server state |
 
 `army`, `road` and `end` return promises - `browser_evaluate` awaits them, so the call returns when

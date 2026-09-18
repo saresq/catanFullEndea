@@ -169,7 +169,7 @@
         .res-icon {
             margin: 0;
 
-            /* Dev-card icons: the art crop lives in ui/card-legacy.css */
+            /* Dev-card icons: the art crop lives in resources.css */
             &.dK, &.dM, &.dY, &.dR, &.dVp {
                 width: 1.875rem;
                 height: 1.875rem;

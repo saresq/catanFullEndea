@@ -149,8 +149,8 @@
     },
 
     /**
-     * Every visible card: where it is, its box, its ratio (must be 19/28 = 0.679; the trade drawer's
-     * half cards are 19/14 = 1.357) and the image it resolves to. The face is on `::before` for
+     * Every visible card: where it is, its box, its ratio (must be 586/873 = 0.671; the trade drawer's
+     * half cards are 1172/873 = 1.343) and the image it resolves to. The face is on `::before` for
      * `.card--under` and on `.card-front::before` for `.card--flip`.
      */
     cards() {

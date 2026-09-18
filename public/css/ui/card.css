@@ -6,14 +6,14 @@
  * --card-w is the only size knob: height, radius, border and shadow derive from it.
  * Never set height, background-size or background-position on a card outside ui/card*.css.
  *
- * Adding final art: drop the 608x896 PNG in /images/cards, run scripts/cards-to-webp.sh, add its
- * --card-img line below and delete its entry in card-legacy.css.
+ * Changing art: replace the 586x873 PNG in /images/cards and run scripts/cards-to-webp.sh.
  */
 .card {
     --card-w: 5.25rem;
     --card-pos: center;
+    --card-back-img: url(/images/cards/res-back.webp);
     width: var(--card-w);
-    aspect-ratio: 19 / 28;
+    aspect-ratio: 586 / 873;
     flex-shrink: 0;
     box-sizing: border-box;
     border-radius: calc(var(--card-w) * .075);
@@ -22,13 +22,12 @@
 }
 
 /*
- * The face. Exports carry a ~2% transparent margin, 104% bleeds it off.
- * --legacy-* only exist for sprite cards (card-legacy.css); unset, the fallbacks apply.
+ * The face. Exports are cropped to the art (586x873, same ratio as the box), so 100% fits exactly.
  */
 .card:not(.card--under, .card--flip),
 .card--under::before,
 .card--flip .card-front::before {
-    background: var(--card-face) var(--card-img) var(--legacy-pos, var(--card-pos)) / var(--legacy-size, 104%) no-repeat;
+    background: var(--card-face) var(--card-img) var(--card-pos) / 100% no-repeat;
 }
 
 /* Sizes */
@@ -60,18 +59,17 @@
 
 /* Half cards: the trade drawer splits one card into a giving (top) and a taking (bottom) half */
 .card--top, .card--bottom {
-    aspect-ratio: 19 / 14;
+    aspect-ratio: 1172 / 873;
 }
 
 .card--top {
-    --card-pos: center 3.5%;
+    --card-pos: center top;
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
 }
 
 .card--bottom {
-    --card-pos: center 96.5%;
-    --card-half: calc(14 / 19);
+    --card-pos: center bottom;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
 }
@@ -101,9 +99,28 @@
 
     .card-back {
         transform: rotateY(180deg);
-        background: var(--card-face) var(--card-back-img) center / 106.6% no-repeat;
+        background: var(--card-face) var(--card-back-img) center / 100% no-repeat;
     }
 }
 
-/* Faces with final art */
+/* Faces */
 .card:is([data-card="S"], [data-type="S"]) { --card-img: url(/images/cards/sheep.webp); }
+.card:is([data-card="L"], [data-type="L"]) { --card-img: url(/images/cards/lumber.webp); }
+.card:is([data-card="B"], [data-type="B"]) { --card-img: url(/images/cards/brick.webp); }
+.card:is([data-card="O"], [data-type="O"]) { --card-img: url(/images/cards/ore.webp); }
+.card:is([data-card="W"], [data-type="W"]) { --card-img: url(/images/cards/wheat.webp); }
+.card:is([data-card="dK"], [data-type="dK"]) { --card-img: url(/images/cards/knight.webp); }
+.card:is([data-card="dR"], [data-type="dR"]) { --card-img: url(/images/cards/road-building.webp); }
+.card:is([data-card="dM"], [data-type="dM"]) { --card-img: url(/images/cards/monopoly.webp); }
+.card:is([data-card="dY"], [data-type="dY"]) { --card-img: url(/images/cards/year-of-plenty.webp); }
+/* Five victory-point faces, picked by data-vp; library when unset */
+.card:is([data-card="dVp"], [data-type="dVp"]) { --card-img: url(/images/cards/vp-library.webp); }
+.card:is([data-card="dVp"], [data-type="dVp"])[data-vp="2"] { --card-img: url(/images/cards/vp-market.webp); }
+.card:is([data-card="dVp"], [data-type="dVp"])[data-vp="3"] { --card-img: url(/images/cards/vp-great-hall.webp); }
+.card:is([data-card="dVp"], [data-type="dVp"])[data-vp="4"] { --card-img: url(/images/cards/vp-chapel.webp); }
+.card:is([data-card="dVp"], [data-type="dVp"])[data-vp="5"] { --card-img: url(/images/cards/vp-university.webp); }
+
+/* Backs */
+.card[data-card="res-back"] { --card-img: url(/images/cards/res-back.webp); }
+.card[data-card="dev-back"] { --card-img: url(/images/cards/dev-back.webp); }
+.card:is([data-card^="d"], [data-type^="d"]) { --card-back-img: url(/images/cards/dev-back.webp); }

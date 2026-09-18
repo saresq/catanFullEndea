@@ -195,7 +195,7 @@
         /* Army / road tiles sit next to the card backs at the same size */
         :is(.largest-army, .longest-road) {
             width: 2rem;
-            aspect-ratio: 19 / 28;
+            aspect-ratio: 586 / 873;
             box-sizing: border-box;
         }
 

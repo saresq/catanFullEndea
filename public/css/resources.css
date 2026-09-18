@@ -38,3 +38,14 @@
         width: 15px;
     }
 }
+
+/* Dev-card icons: the middle of the card's illustration, not a card */
+.res-icon:is(.dK, .dM, .dY, .dR, .dVp) {
+    background-size: 250%;
+    background-position: center 34%;
+}
+.res-icon.dK { background-image: url(/images/cards/knight.webp); }
+.res-icon.dR { background-image: url(/images/cards/road-building.webp); }
+.res-icon.dM { background-image: url(/images/cards/monopoly.webp); }
+.res-icon.dY { background-image: url(/images/cards/year-of-plenty.webp); }
+.res-icon.dVp { background-image: url(/images/cards/vp-library.webp); }

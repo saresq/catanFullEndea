@@ -111,3 +111,12 @@ dist
 
 # Playwright MCP scratch (screenshots, console logs, evaluate dumps)
 .playwright-mcp/
+
+# OpenSpec (specs, changes, and generated agent skills/commands)
+openspec/
+.claude/skills/openspec-*/
+.claude/commands/opsx/
+.junie/skills/openspec-*/
+.junie/commands/opsx-*
+.opencode/skills/openspec-*/
+.opencode/commands/opsx-*
