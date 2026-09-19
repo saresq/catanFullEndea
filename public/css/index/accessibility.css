@@ -361,8 +361,8 @@
     z-index: var(--z-accessibility);
 }
 
-/* Media query for smaller screens */
-@media screen and (max-width: 768px) {
+/* Phones, portrait and landscape (same query as the scoreboard's phone layout) */
+@media screen and (max-width: 768px), screen and (orientation: landscape) and (max-height: 500px) {
     .hud-top {
         flex-direction: row;
         flex-wrap: wrap;

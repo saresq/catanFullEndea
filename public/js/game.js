@@ -428,7 +428,7 @@ export default class Game {
           $p.classList.remove(...CONST.PC_CLASSES)
           $p.classList.add('pc0')
           const $name = $p.querySelector('.name')
-          if ($name) { $name.textContent = 'H4x0r'; $name.setAttribute('data-name', 'H4x0r') }
+          if ($name) { $name.textContent = 'H4x0r'; $name.title = 'H4x0r' }
         }
       } catch (e) {}
       // If I am the activator, recolor my action bar immediately

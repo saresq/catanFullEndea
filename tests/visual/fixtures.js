@@ -168,6 +168,46 @@
       })
     },
 
+    /**
+     * Scoreboard geometry, for the gates in the scoreboard change: one entry per row (height,
+     * name width, tile count, horizontal overflow), where the panel ends against the dock, how
+     * much of the viewport height it takes, and the smallest stat count font. Run after
+     * `colours()` for 11 rows.
+     */
+    scoreboard() {
+      const $panel = document.querySelector('.all-players')
+      const px = n => +n.toFixed(1)
+      const box = $panel.getBoundingClientRect()
+      // The dock is only in the way where it sits under the panel's column. `.hand` is a
+      // full-width transparent strip above the bar, so it does not count.
+      const dock = $$('#game .current-player > :not(.hand)').map($_ => $_.getBoundingClientRect())
+        .filter(r => r.height && r.right > box.left && r.left < box.right).map(r => r.top)
+      const rows = $$('.all-players .player').map($p => ({
+        top: px($p.getBoundingClientRect().top),
+        height: px($p.getBoundingClientRect().height),
+        nameWidth: px($p.querySelector('.name').getBoundingClientRect().width),
+        vp: $p.querySelector('.victory-points span').textContent,
+        tiles: [...$p.querySelectorAll('.cards-container > *')].filter($_ => $_.offsetWidth).length,
+        overflowX: $p.scrollWidth > $p.clientWidth,
+      }))
+      const counts = $$('.all-players .cards-container > *').filter($_ => $_.offsetWidth)
+        .map($_ => parseFloat(getComputedStyle($_, '::after').fontSize))
+      return {
+        viewport: `${innerWidth}x${innerHeight}`,
+        compact: $panel.classList.contains('compact'),
+        rows: rows.length,
+        lines: new Set(rows.map(r => r.top)).size,
+        panelBottom: px(box.bottom),
+        dockTop: dock.length ? px(Math.min(...dock)) : null,
+        panelShare: +(box.height / innerHeight).toFixed(3),
+        minCountFont: counts.length ? Math.min(...counts) : null,
+        maxRowHeight: Math.max(...rows.map(r => r.height)),
+        minTiles: Math.min(...rows.map(r => r.tiles)),
+        anyOverflowX: rows.some(r => r.overflowX),
+        rowList: rows,
+      }
+    },
+
     /** Undo everything (server state stays, the page re-renders from it). */
     reset() { location.reload() },
   }

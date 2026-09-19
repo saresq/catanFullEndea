@@ -64,6 +64,7 @@ returns the hook names and installs `window.VISUAL`; after that one hook per cal
 | `VISUAL.colours()` | the scoreboard and the board pieces swept through all 11 colours |
 | `VISUAL.report()` | every resolved colour as JSON, for `diff` |
 | `VISUAL.cards()` | every visible `.card`: location, box, ratio (586/873 = 0.671) and resolved image |
+| `VISUAL.scoreboard()` | scoreboard geometry: per row height, name width, tile count, overflow; panel bottom vs dock top, height share, smallest count font |
 | `VISUAL.reset()` | reload, back to server state |
 
 `army`, `road` and `end` return promises - `browser_evaluate` awaits them, so the call returns when

@@ -25,16 +25,15 @@ export default class AllPlayersUI {
       .filter(p => p.id > 0)
       .sort((a, b) => a.id - b.id)
     const win_points = (window.game_obj && window.game_obj.config && window.game_obj.config.win_points) || CONST.GAME_CONFIG.win_points
-   const isMobile = window.innerWidth <= CONST.MOBILE_MAX_WIDTH
     const spec_count = (window.game_obj && window.game_obj.spectators_count) || 0
     const header = `<div class="players-header">
       <span class="spectators-count ${spec_count ? '' : 'hide'}">Spec: <span>${spec_count}</span></span>
-      <span class="victory-target" title="Victory points needed to win the game">🏆: ${win_points}<span class="turn-indicator"> - Turn: <span class="dot">⬢</span></span></span>
+      <span class="victory-target" title="Victory points needed to win the game">🏆: ${win_points} · Turn: <span class="dot">⬢</span></span>
       <button class="toggle-players" title="Toggle players panel (Shift)">▼</button>
     </div>`
     this.$el.innerHTML = header + all_players.map(player => `
       <div class="player p${player.id} pc${player.color_id || player.id} ${player.removed ? 'deactivated' : ''}" data-id="${player.id}">
-        <div class="name" data-name="${player.name}">${player.name}</div>
+        <div class="name" title="${player.name}">${player.name}</div>
         <div class="victory-points" title="Victory Points"><span>${player.public_vps + (player.private_vps || 0)}</span></div>
         <div class="cards-container">
           <div class="resources card card--xs" data-card="res-back" data-count="${player.resource_count}" title="Resources in hand"
@@ -65,9 +64,11 @@ export default class AllPlayersUI {
       $_.addEventListener('mouseout', e => this.#hidePlayerLongestRoad())
     })
 
-    // Initialize compact state from storage
+    // Initialize compact state from storage; landscape phones start collapsed
     const saved = localStorage.getItem(CONST.STORAGE_KEYS.ALL_PLAYERS_COMPACT)
-    if (saved === '1') { this.toggleCompact(true) }
+    if (saved === '1' || (saved === null && matchMedia('(orientation: landscape) and (max-height: 500px)').matches)) {
+      this.toggleCompact(true)
+    }
   }
 
   #setRefs() {
@@ -88,15 +89,11 @@ export default class AllPlayersUI {
     this.#updateTurnIndicator()
   }
 
+  /** The header's ⬢ takes the active player's colour; it is the only turn marker. */
   #updateTurnIndicator() {
-    const pid = this.$el.dataset.active
-    const $dot = this.$el.querySelector('.turn-indicator .dot')
-    if (!$dot || !pid || pid === '-') return
-    const all_players = [this.player, ...this.opponents]
-    const p = all_players.find(_ => _.id == pid)
-    if (p) {
-      $dot.style.color = `var(--player-${p.color_id || p.id}-color)`
-    }
+    const $dot = this.$el.querySelector('.victory-target .dot')
+    const $p = this.player_refs[this.$el.dataset.active]?.$p
+    if ($dot) $dot.className = 'dot ' + ($p?.className.match(/pc\d+/)?.[0] || '')
   }
 
   updatePlayer(player, key) {
@@ -117,22 +114,12 @@ export default class AllPlayersUI {
     if (key?.includes && key.includes('color_id')) {
       $p.classList.remove(...CONST.PC_CLASSES)
       $p.classList.add('pc' + (player.color_id || player.id))
-      if (this.$el.dataset.active == player.id) this.#updateTurnIndicator()
+      this.#updateTurnIndicator()
     }
     // Reflect name change
     if (key?.includes && key.includes('name')) {
       const $name = $p.querySelector('.name')
-      if ($name) { $name.textContent = player.name; $name.setAttribute('data-name', player.name) }
-    }
-
-    // Update compact text if needed
-    if (this.#compact) {
-      const $name = $p.querySelector('.name')
-      if ($name) {
-        const base = $name.getAttribute('data-name') || $name.textContent
-        const isMobile = window.innerWidth <= CONST.MOBILE_MAX_WIDTH
-        $name.textContent = isMobile ? base : `${base} - ${total_vps}`
-      }
+      if ($name) { $name.textContent = player.name; $name.title = player.name }
     }
   }
 
@@ -151,24 +138,9 @@ export default class AllPlayersUI {
     this.#compact = typeof force === 'boolean' ? force : !this.#compact
     this.$el.classList[this.#compact ? 'add' : 'remove']('compact')
     const btn = this.$el.querySelector('.toggle-players')
-    const isMobile = window.innerWidth <= CONST.MOBILE_MAX_WIDTH
     if (btn) {
         btn.textContent = this.#compact ? '▼' : '▲'
     }
-    // Update names
-    this.$el.querySelectorAll('.player').forEach($p => {
-      const $name = $p.querySelector('.name')
-      const $vps = $p.querySelector('.victory-points span')
-      if (!$name || !$vps) return
-      const base = $name.getAttribute('data-name') || $name.textContent
-      if (this.#compact) {
-        $name.setAttribute('data-name', base)
-        $name.textContent = isMobile ? base : `${base} - ${$vps.textContent}`
-      } else {
-        const original = $name.getAttribute('data-name') || base
-        $name.textContent = original
-      }
-    })
     // Persist
     try { localStorage.setItem(CONST.STORAGE_KEYS.ALL_PLAYERS_COMPACT, this.#compact ? '1' : '0') } catch (e) {}
   }

@@ -60,7 +60,7 @@
     --t-slow: .5s;
 
     /* Scoreboard width - accessibility icons dock against it */
-    --scoreboard-width: 240px;
+    --scoreboard-width: 17.5rem;
 
     /* Stacking layers. Values unchanged from before they were named. */
     --z-hud: 20;

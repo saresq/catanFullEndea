@@ -318,5 +318,5 @@ io.on('connection', (socket) => {
 })
 
 server.listen(PORT, function() {
-  console.log(`Server running on port ${PORT}`)
+  console.log(`Server running at http://localhost:${PORT}`)
 })
