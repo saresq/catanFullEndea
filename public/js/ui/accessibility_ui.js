@@ -2,6 +2,7 @@ import { STORAGE_KEYS as KEYS } from "../const.js"
 const _dummyFn = _ => _
 export default class AccessibilityUI {
   #shown_icons
+  #spectator_link; #quit_label; #quit_armed = false
   muted = true
   // muted = !!+localStorage.getItem('mute')
   muted_notif = (localStorage.getItem(KEYS.MUTE_NOTIFICATIONS) === null)
@@ -34,10 +35,17 @@ export default class AccessibilityUI {
     ]
   ]
 
-  constructor({ toggleBoardZoom = _dummyFn, recenterMap = _dummyFn, toggleBgm = _dummyFn, toggleNotificationsAudio = _dummyFn,
+  constructor({ toggleBoardZoom = _dummyFn, recenterMap = null, toggleBgm = _dummyFn, toggleNotificationsAudio = _dummyFn,
+    spectator_link = false, quit_label = 'Quit game',
     icons: { fullscreen = true, zoom = true, bgm = true, notifcation_sounds = true,
       shorcuts = true, info = true, quit = true } = {}} = {}) {
-    this.#shown_icons = { fullscreen, zoom, bgm, notifcation_sounds, shorcuts, info, quit }
+    this.#shown_icons = {
+      // iPhone Safari has no Element#requestFullscreen: no item, and `f` does nothing.
+      fullscreen: fullscreen && !!document.documentElement.requestFullscreen,
+      zoom, bgm, notifcation_sounds, shorcuts, info, quit,
+    }
+    this.#spectator_link = spectator_link
+    this.#quit_label = quit_label
     this.#toggleBoardZoom = toggleBoardZoom
     this.#recenterMap = recenterMap
     this.#toggleBgm = toggleBgm
@@ -45,30 +53,30 @@ export default class AccessibilityUI {
   }
 
   render() {
+    const shown = this.#shown_icons
+    /** One menu row. `toggle` adds the on/off text and `aria-pressed`, both filled by #syncStates. */
+    const item = (cls, ico, label, key = '', toggle = false) => `
+      <button class="item ${cls}"${toggle ? ' aria-pressed="false"' : ''}>
+        <span class="ico">${ico}</span><span class="label">${label}</span>
+        ${toggle ? '<span class="state"></span>' : ''}<span class="key">${key}</span>
+      </button>`
+
     this.$el.innerHTML = `
-      <button class="icon settings-gear" title="Options"></button>
-      <div class="icons-container hide">
-        ${this.#shown_icons.fullscreen ? `<button class="icon full-screen" title="Full screen (f)"></button>` : ''}
-        ${this.#shown_icons.zoom ? `<div class="grouped">
-          <button class="icon zoom-in" title="Zoom In (=)">✚</button>
-          <button class="icon zoom-out" title="Zoom Out (-)">-</button>
-          <button class="icon recenter" title="Recenter Map (Home)">🏠</button>
-        </div>` : ''}
-        <div class="grouped">
-          ${this.#shown_icons.notifcation_sounds
-            ? `<button class="icon notifications ${this.muted_notif ? 'off' : ''}"
-                title="${this.muted_notif ? 'Unmute' : 'Mute'} Notifications (n)">
-              </button>` : ''}
-          ${this.#shown_icons.bgm
-            ? `<button class="icon bgm ${this.muted ? 'off' : ''}"
-                title="${this.muted ? 'Unmute' : 'Mute'} Background Music (m)">♫
-              </button>` : ''}
-        </div>
-        ${this.#shown_icons.shorcuts ? `<button class="icon question-mark" title="Keyboard Shortcuts (?)">?</button>` : ''}
-        ${this.#shown_icons.info ? `<button class="icon info" title="About">ℹ</button>` : ''}
-        ${this.#shown_icons.quit ? `<button class="icon quit" title="Quit Game">⏻</button>` : ''}
+      <button class="icon settings-gear" title="Options" aria-label="Options"
+        aria-expanded="false" aria-controls="options-menu"></button>
+      ${this.#recenterMap ? `<button class="icon recenter" title="Recenter Map (Home)" aria-label="Recenter map">🏠</button>` : ''}
+      <div class="menu-backdrop hide"></div>
+      <div class="options-menu hide" id="options-menu">
+        ${shown.fullscreen ? item('full-screen', '⇱', 'Full screen', 'f', true) : ''}
+        ${shown.zoom ? item('zoom-in', '✚', 'Zoom in', '=') + item('zoom-out', '−', 'Zoom out', '-') : ''}
+        ${shown.notifcation_sounds ? item('notifications', '🔊', 'Notification sounds', 'n', true) : ''}
+        ${shown.bgm ? item('bgm', '♫', 'Music', 'm', true) : ''}
+        ${shown.shorcuts ? item('question-mark', '?', 'Keyboard shortcuts', '?') : ''}
+        ${this.#spectator_link ? item('spectator-link', '🔗', 'Copy spectator link') : ''}
+        ${shown.info ? item('info', 'ℹ︎', 'About') : ''}
+        ${shown.quit ? `<div class="sep"></div>` + item('quit danger', '⏻', this.#quit_label) : ''}
       </div>
-      ${this.#shown_icons.shorcuts ? `
+      ${shown.shorcuts ? `
         <div class="keyboard-shortcuts panel hide">${this.keyboard_shortcuts.map(group =>
           `<div class="shortcuts-container">${group.map(([title, shortcut]) =>
             `<div class="shortcut">
@@ -79,7 +87,7 @@ export default class AccessibilityUI {
           <button class="close">X</button>
         </div>
       `: ''}
-      ${this.#shown_icons.info ? `
+      ${shown.info ? `
         <div class="info-zone panel hide">
           <div class="container">
             <div class="text-container">
@@ -103,58 +111,135 @@ export default class AccessibilityUI {
       ` : ''}
     `
     this.#setupEvents()
+    this.#syncStates()
+  }
+
+  /** Open or close the menu. `refocus` sends focus back to the gear, for the keyboard paths. */
+  #showMenu(show, refocus) {
+    const $gear = this.$el.querySelector('.settings-gear')
+    const $menu = this.$el.querySelector('.options-menu')
+    $menu.classList.toggle('hide', !show)
+    this.$el.querySelector('.menu-backdrop').classList.toggle('hide', !show)
+    $gear.setAttribute('aria-expanded', show)
+    this.#disarmQuit()
+    if (show) $menu.querySelector('.item')?.focus()
+    else if (refocus) $gear.focus()
+  }
+
+  #menuOpen() { return !this.$el.querySelector('.options-menu')?.classList.contains('hide') }
+
+  /** On/off text and `aria-pressed` for every toggle row, from the state the class already holds. */
+  #syncStates() {
+    const set = (sel, on, ico) => {
+      const $item = this.$el.querySelector(sel)
+      if (!$item) return
+      $item.setAttribute('aria-pressed', on)
+      $item.querySelector('.state').textContent = on ? 'on' : 'off'
+      if (ico) $item.querySelector('.ico').textContent = ico
+    }
+    const full = !!document.fullscreenElement
+    set('.item.full-screen', full, full ? '⇲' : '⇱')
+    set('.item.notifications', !this.muted_notif, this.muted_notif ? '🔇' : '🔊')
+    set('.item.bgm', !this.muted)
+  }
+
+  #disarmQuit() {
+    if (!this.#quit_armed) return
+    this.#quit_armed = false
+    const $quit = this.$el.querySelector('.item.quit')
+    $quit.classList.remove('armed')
+    $quit.querySelector('.label').textContent = this.#quit_label
+  }
+
+  /** First activation arms the row, second one leaves. Anything else disarms it. */
+  #onQuit() {
+    if (this.#quit_armed) { window.location.href = '/logout'; return }
+    this.#quit_armed = true
+    const $quit = this.$el.querySelector('.item.quit')
+    $quit.classList.add('armed')
+    $quit.querySelector('.label').textContent = `${this.#quit_label}? Tap again`
+  }
+
+  #copySpectatorLink($item) {
+    const url = `${location.origin}/login?game_id=${window.game_obj?.id}&spectate=1`
+    // No clipboard on plain HTTP: show the URL, selected, so it can be copied by hand.
+    const fallback = () => {
+      const $input = document.createElement('input')
+      $input.className = 'item link'
+      $input.readOnly = true
+      $input.value = url
+      $item.replaceWith($input)
+      $input.select()
+    }
+    const copying = navigator.clipboard?.writeText(url)
+    if (!copying) return fallback()
+    copying.then(() => {
+      const $label = $item.querySelector('.label')
+      $label.textContent = 'Link copied'
+      setTimeout(() => {
+        $label.textContent = 'Copy spectator link'
+        this.#showMenu(false)
+      }, 1500)
+    }).catch(fallback)
   }
 
   #setupEvents() {
-    this.$el.querySelector('.settings-gear')?.addEventListener('click', e => {
-      this.$el.querySelector('.icons-container').classList.toggle('hide')
-    })
-    this.$el.querySelector('.full-screen')?.addEventListener('click', e => this.toggleFullScreen())
-    this.$el.querySelector('.zoom-in')?.addEventListener('click', e => this.toggleZoom())
-    this.$el.querySelector('.zoom-out')?.addEventListener('click', e => this.toggleZoom(true))
+    const $menu = this.$el.querySelector('.options-menu')
+    this.$el.querySelector('.settings-gear')?.addEventListener('click', e => this.#showMenu(!this.#menuOpen()))
+    this.$el.querySelector('.menu-backdrop')?.addEventListener('click', e => this.#showMenu(false))
     this.$el.querySelector('.recenter')?.addEventListener('click', e => this.#recenterMap())
-    this.$el.querySelector('.notifications')?.addEventListener('click', e => this.toggleMuteNotications())
-    this.$el.querySelector('.bgm')?.addEventListener('click', e => this.toggleMuteBgm())
-    this.$el.querySelector('.question-mark')?.addEventListener('click', e => this.showHideKeyboardShortcuts(true))
-    this.$el.querySelector('.quit')?.addEventListener('click', e => window.location.href = '/logout')
-    this.$el.querySelector('.info')?.addEventListener('click', e => this.showHideInfo(true))
+    // Any row but Quit takes the arming away.
+    $menu.addEventListener('click', e => { e.target.closest('.item.quit') || this.#disarmQuit() })
+
+    // Toggles keep the menu open and update in place; everything else closes it.
+    this.$el.querySelector('.item.full-screen')?.addEventListener('click', e => this.toggleFullScreen())
+    this.$el.querySelector('.item.notifications')?.addEventListener('click', e => this.toggleMuteNotications())
+    this.$el.querySelector('.item.bgm')?.addEventListener('click', e => this.toggleMuteBgm())
+    this.$el.querySelector('.item.zoom-in')?.addEventListener('click', e => this.toggleZoom())
+    this.$el.querySelector('.item.zoom-out')?.addEventListener('click', e => this.toggleZoom(true))
+    this.$el.querySelector('.item.question-mark')?.addEventListener('click', e => {
+      this.#showMenu(false, true)
+      this.showHideKeyboardShortcuts(true)
+    })
+    this.$el.querySelector('.item.info')?.addEventListener('click', e => {
+      this.#showMenu(false, true)
+      this.showHideInfo(true)
+    })
+    this.$el.querySelector('.item.spectator-link')?.addEventListener('click', e => this.#copySpectatorLink(e.currentTarget))
+    this.$el.querySelector('.item.quit')?.addEventListener('click', e => this.#onQuit())
     this.$el.querySelector('.keyboard-shortcuts .close')?.addEventListener('click', e => this.showHideKeyboardShortcuts(false))
     this.$el.querySelector('.info-zone .close')?.addEventListener('click', e => this.showHideInfo(false))
-    
-    // Close info displays when clicked outside
+
+    document.addEventListener('fullscreenchange', e => this.#syncStates())
+
+    // Close info displays when clicked outside. The menu has the backdrop for that.
     document.addEventListener('click', e => {
       const keyboardShortcuts = this.$el.querySelector('.keyboard-shortcuts')
       const infoZone = this.$el.querySelector('.info-zone')
-      const iconsContainer = this.$el.querySelector('.icons-container')
-      
+
       if (keyboardShortcuts && !keyboardShortcuts.classList.contains('hide')) {
-        if (!keyboardShortcuts.contains(e.target) && e.target !== this.$el.querySelector('.question-mark')) {
+        if (!keyboardShortcuts.contains(e.target) && !this.$el.querySelector('.item.question-mark')?.contains(e.target)) {
           this.showHideKeyboardShortcuts(false)
         }
       }
-      
+
       if (infoZone && !infoZone.classList.contains('hide')) {
-        if (!infoZone.contains(e.target) && e.target !== this.$el.querySelector('.info')) {
+        if (!infoZone.contains(e.target) && !this.$el.querySelector('.item.info')?.contains(e.target)) {
           this.showHideInfo(false)
         }
       }
-
-      if (iconsContainer && !iconsContainer.classList.contains('hide')) {
-        if (!iconsContainer.contains(e.target) && !this.$el.querySelector('.settings-gear').contains(e.target)) {
-          iconsContainer.classList.add('hide')
-        }
-      }
     })
-    
+
     document.addEventListener('keydown', e => {
       switch (e.code) {
         case 'KeyF': this.toggleFullScreen(); break
         case 'Equal': this.toggleZoom(); break
         case 'Minus': this.toggleZoom(true); break
-        case 'Home': this.#recenterMap(); break
+        case 'Home': this.#recenterMap?.(); break
         case 'KeyN': this.toggleMuteNotications(); break
         case 'KeyM': this.toggleMuteBgm(); break
         case 'Escape':
+          this.#menuOpen() && this.#showMenu(false, true)
           this.showHideKeyboardShortcuts(false)
           this.showHideInfo(false)
           break
@@ -166,15 +251,8 @@ export default class AccessibilityUI {
   toggleFullScreen() {
     if (!this.#shown_icons.fullscreen) return
     if (document.querySelector('input[type="text"]:focus')) return
-    if (document.fullscreenElement) {
-      document.exitFullscreen?.()
-      this.$el.querySelector('.full-screen').classList.remove('on')
-      this.$el.querySelector('.full-screen').setAttribute('title', 'Full screen (f)')
-    } else {
-      document.documentElement.requestFullscreen?.()
-      this.$el.querySelector('.full-screen').classList.add('on')
-      this.$el.querySelector('.full-screen').setAttribute('title', 'Exit full screen (f)')
-    }
+    // `fullscreenchange` drives the row, so the browser's own Esc exit stays truthful too.
+    document.fullscreenElement ? document.exitFullscreen?.() : document.documentElement.requestFullscreen?.()
   }
 
   toggleMuteBgm() {
@@ -183,8 +261,7 @@ export default class AccessibilityUI {
     this.muted = !this.muted
     // localStorage.setItem('mute', +this.muted)
     this.#toggleBgm(!this.muted)
-    this.$el.querySelector('.bgm').classList[this.muted ? 'add' : 'remove']('off')
-    this.$el.querySelector('.bgm').setAttribute('title', (this.muted ? 'Unm' : 'M')+'ute Background Music (m)')
+    this.#syncStates()
   }
 
   toggleMuteNotications() {
@@ -192,13 +269,13 @@ export default class AccessibilityUI {
     this.muted_notif = !this.muted_notif
     try { localStorage.setItem(KEYS.MUTE_NOTIFICATIONS, +this.muted_notif) } catch (e) {}
     this.#toggleNotificationsAudio(!this.muted_notif)
-    this.$el.querySelector('.notifications').classList[this.muted_notif ? 'add' : 'remove']('off')
-    this.$el.querySelector('.notifications').setAttribute('title', (this.muted_notif ? 'Unm' : 'M') + 'ute Notifications (n)')
+    this.#syncStates()
   }
 
+  /** `zoom` only decides whether the rows render: `=` and `-` keep working without them. */
   toggleZoom(out) {
     if (document.querySelector('textarea:focus')) return
-    this.#shown_icons.zoom && this.#toggleBoardZoom(out)
+    this.#toggleBoardZoom(out)
   }
 
   showHideKeyboardShortcuts(show) {

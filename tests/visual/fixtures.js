@@ -275,6 +275,49 @@
       }
     },
 
+    /**
+     * Options menu, for the gates in the options-menu change: one entry per item (label, state
+     * text, key hint, tap size), how many items carry no label, and whether recenter is reachable
+     * with the menu closed. Works on any page that renders the zone (game, login, waiting room,
+     * map editor). Leaves the menu open for the screenshot that follows.
+     */
+    menu() {
+      const $zone = document.querySelector('#game .accessibility-zone')
+      if (!$zone) return 'no .accessibility-zone'
+      const px = n => +n.toFixed(1)
+      const shown = $_ => $_.offsetWidth && getComputedStyle($_).visibility !== 'hidden'
+      const $gear = $zone.querySelector('.settings-gear')
+      const $recenter = $zone.querySelector('.recenter')
+      // Read before opening: recenter has to be reachable without going through the menu.
+      const recenterClosed = !!($recenter && shown($recenter) && !$recenter.closest('.options-menu'))
+      $gear.click()
+      const $menu = $zone.querySelector('.options-menu, .icons-container')
+      const text = ($i, sel) => $i.querySelector(sel)?.textContent.trim() || null
+      const items = [...$menu.querySelectorAll('button')].filter(shown).map($i => {
+        const r = $i.getBoundingClientRect()
+        return {
+          item: $i.className.replace(/\b(icon|item)\b/g, '').trim(),
+          label: text($i, '.label'),
+          state: text($i, '.state'),
+          key: text($i, '.key'),
+          w: px(r.width), h: px(r.height), top: Math.round(r.top),
+          pressed: $i.getAttribute('aria-pressed'),
+        }
+      })
+      return {
+        viewport: `${innerWidth}x${innerHeight}`,
+        expanded: $gear.getAttribute('aria-expanded'),
+        recenterClosed,
+        separator: !!$menu.querySelector('.sep'),
+        count: items.length,
+        // One item per line is the whole point: the column has to look the same at every width.
+        lines: new Set(items.map(i => i.top)).size,
+        unlabelled: items.filter(i => !i.label).length,
+        minHit: items.length ? Math.min(...items.map(i => Math.min(i.w, i.h))) : null,
+        items,
+      }
+    },
+
     /** Undo everything (server state stays, the page re-renders from it). */
     reset() { location.reload() },
   }

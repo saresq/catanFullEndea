@@ -14,6 +14,7 @@ class WaitingRoomUI {
     this.audio_manager = new AudioManager()
     this.accessibility_ui = new AccessibilityUI({
       toggleBgm: allow => this.audio_manager.toggleBgm(allow),
+      quit_label: 'Leave',
       icons: { zoom: false, notifcation_sounds: false, shorcuts: false }
     })
     this.accessibility_ui.render()

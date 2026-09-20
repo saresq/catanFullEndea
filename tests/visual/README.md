@@ -66,6 +66,7 @@ returns the hook names and installs `window.VISUAL`; after that one hook per cal
 | `VISUAL.cards()` | every visible `.card`: location, box, ratio (586/873 = 0.671) and resolved image |
 | `VISUAL.scoreboard()` | scoreboard geometry: per row height, name width, tile count, overflow; panel bottom vs dock top, height share, smallest count font |
 | `VISUAL.hand(cards?)` | the viewer's hand filled (default: five resources, several dev cards); `hand({})` empties it |
+| `VISUAL.menu()` | opens the options menu and reports it: label / state / key hint / tap size per item, items without a label, lines the list takes, whether recenter is reachable with the menu closed |
 | `VISUAL.dock()` | dock geometry: height and viewport share, hand cards above the dock top, tap size (grown `::after` included) / label / accessible name per action, dock height with an empty vs a full hand |
 | `VISUAL.reset()` | reload, back to server state |
 

@@ -38,6 +38,8 @@ export default class UI {
       recenterMap: () => this.board_ui.recenter(),
       toggleBgm: allow => game.toggleBgm(allow),
       toggleNotificationsAudio: allow => game.toggleNotificationsAudio(allow),
+      spectator_link: true,
+      icons: { zoom: false },
     })
 
     this.all_players_ui = new AllPlayersUI(player, opponents, {

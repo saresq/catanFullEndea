@@ -2,6 +2,8 @@
     touch-action: manipulation;
 }
 
+/* Round icon button. Only the gear, the recenter control and the status-history icons are
+   icon-only now, and the ::after label is what names them on hover/focus. */
 .icon {
     width: 30px;
     height: 30px;
@@ -68,74 +70,121 @@
         }
     }
 
-    .icons-container {
-        display: flex;
-        flex-direction: column;
+    .recenter {
+        font-size: 0.9375rem;
+    }
+
+    /* Dims the board and eats the click that closes the menu, like every other game overlay. */
+    .menu-backdrop {
+        position: fixed;
+        inset: 0;
+        background: var(--overlay-bg);
 
         &.hide {
             display: none;
         }
     }
 
-    .grouped {
+    /* Labelled options menu, centred over the dimmed board. Same box at every width.
+       Tokens from constants.css only - the map editor loads this file without primitives.css. */
+    .options-menu {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1;
+        min-width: 17rem;
+        max-width: calc(100vw - 2rem);
+        /* A 0.5rem gutter: the whole list still fits on a 360px-tall landscape phone. */
+        max-height: calc(100vh - 1rem);
+        overflow-y: auto;
+        padding: var(--space-2);
         display: flex;
-    }
+        flex-direction: column;
+        background: var(--surface-sand);
+        color: var(--surface-sand-text);
+        border: 0.0625rem solid var(--sand-color-dark);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-2);
+        font-family: var(--font-body), sans-serif;
+        font-size: var(--text-sm);
 
-    .full-screen {
-        &::before {
-            content: '⇱';
+        &.hide {
+            display: none;
         }
 
-        &.on::before {
-            content: '⇲';
+        .item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            min-height: 36px;
+            padding: 0 var(--space-2);
+            background: none;
+            border: 0;
+            border-radius: var(--radius-sm);
+            color: inherit;
+            font: inherit;
+            text-align: left;
+            cursor: pointer;
+
+            &:hover, &:focus {
+                background: var(--sand-color-dark);
+                color: #fff;
+            }
+
+            .ico {
+                width: 1.25rem;
+                text-align: center;
+            }
+
+            .label {
+                flex-grow: 1;
+                white-space: nowrap;
+            }
+
+            .state {
+                text-transform: uppercase;
+                font-size: var(--text-xs);
+                opacity: 0.7;
+            }
+
+            .key {
+                font-family: var(--font-mono), monospace;
+                font-size: var(--text-xs);
+                opacity: 0.6;
+            }
         }
-    }
 
-    .zoom-out {
-        padding-top: 1px;
-        font-weight: bold;
-    }
-
-    .notifications {
-        font-size: 1.125rem;
-        padding-left: 3px;
-        padding-top: 1px;
-
-        &::before {
-            content: '🔊';
+        .item.danger {
+            color: var(--trade-negative);
         }
 
-        &.off::before {
-            content: '🔇';
-        }
-    }
-
-    .bgm {
-        position: relative;
-        padding-top: 1px;
-
-        &.off::before {
-            content: '\\';
-            position: absolute;
-            left: 8px;
-        }
-    }
-
-    .question-mark {
-        padding-top: 2px;
-        font-weight: bold;
-    }
-
-    .quit {
-        &:hover, &:focus {
-            opacity: 1;
-            box-shadow: 0 0 10px 0 #0009;
+        .item.danger:hover, .item.danger:focus, .item.armed {
+            background: var(--trade-negative);
             color: #fff;
-            background-color: red;
+        }
+
+        /* Clipboard-less fallback: the spectator URL in its place, ready to copy by hand. */
+        .item.link {
+            width: 100%;
+            background: none;
+            border: 0;
+            color: inherit;
+            font: inherit;
+            padding: 0 var(--space-2);
+            min-height: 36px;
+        }
+
+        .sep {
+            height: 0.0625rem;
+            margin: var(--space-1) var(--space-2);
+            background: var(--sand-color-dark);
+            opacity: 0.4;
         }
     }
 
-    /* Shared modal shell: keyboard-shortcuts and info-zone panels */
+    /* Shared modal shell: keyboard-shortcuts and info-zone panels.
+       Skin: ui/primitives.css (.panel) */
     :is(.keyboard-shortcuts, .info-zone) {
         position: fixed;
         left: 50%;
@@ -145,8 +194,7 @@
         transform: translateX(-50%);
         max-height: 85vh;
         overflow: auto;
-        /* Skin: ui/primitives.css (.panel) */
-        font-family: var(--font-ui), sans-serif;
+        font-family: var(--font-body), sans-serif;
 
         &.hide {
             display: none;
@@ -155,7 +203,6 @@
 
     .keyboard-shortcuts {
         padding: 4rem 2rem 2rem;
-        font-weight: 200;
         display: flex;
         justify-content: flex-start;
         flex-wrap: wrap;
@@ -163,8 +210,7 @@
         &::before {
             content: 'Keyboard Shortcuts';
             font-family: var(--font-heading), serif;
-            font-size: 1.5rem;
-            margin-bottom: 1.25rem;
+            font-size: var(--text-xl);
             position: absolute;
             top: 1.25rem;
             left: 2rem;
@@ -172,15 +218,15 @@
 
         .shortcuts-container {
             display: inline-block;
-            margin-right: 2rem;
+            margin-right: var(--space-6);
             flex: 1 1 15rem;
         }
 
         .shortcut {
             display: flex;
-            padding: 0.6rem;
-            border-bottom: 1px solid #ccc;
-            color: #666;
+            padding: var(--space-2);
+            font-size: var(--text-sm);
+            border-bottom: 0.0625rem solid var(--sand-color-dark);
         }
 
         .shortcut:last-child {
@@ -189,40 +235,17 @@
 
         .title {
             flex-grow: 1;
-            margin-right: 2rem;
-            font-size: 0.9rem;
+            margin-right: var(--space-6);
         }
 
         .key {
             font-family: var(--font-mono), sans-serif;
-            color: #000;
             font-weight: 600;
-        }
-
-        .close {
-            position: absolute;
-            top: 1.25rem;
-            right: 1.25rem;
-            font-size: 1.5rem;
-            color: #ccc;
-            font-family: var(--font-mono), sans-serif;
-            font-weight: 600;
-            height: 2rem;
-            width: 2rem;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transform: scaleX(1.3);
-
-            &:hover, &:focus {
-                color: var(--trade-negative);
-            }
         }
     }
 
     .info-zone {
-        padding: 2rem;
+        padding: var(--space-6);
 
         .container {
             display: flex;
@@ -232,94 +255,48 @@
 
             .text-container {
                 flex: 1 1 20rem;
-                color: #333;
 
                 .title {
                     font-size: 2.5rem;
                     font-weight: 600;
-                    font-family: var(--font-heading), sans-serif;
+                    font-family: var(--font-heading), serif;
                     line-height: 1.1;
                 }
 
-                .game-title {
-                    margin-top: 1rem;
-                }
-
-                .subtitle {
-                    font-size: 1.1rem;
-
-                    a {
-                        font-size: 1.2rem;
-                        background-color: inherit;
-                        color: #8fc045;
-
-                        &:hover {
-                            background-color: inherit;
-                            filter: brightness(.75);
-                        }
-                    }
-                }
-
                 .rules {
-                    font-size: 1.2rem;
-                    font-family: var(--font-main), sans-serif;
-                }
-
-                b {
-                    background-color: #cfeaa5;
-                    padding: 0.1rem 0.3rem;
-                    font-family: var(--font-main), sans-serif;
-                    font-size: 0.9rem;
-                    word-spacing: 0.1rem;
+                    font-size: var(--text-lg);
+                    font-family: var(--font-display), serif;
                 }
 
                 a {
                     color: inherit;
-
-                    &:hover {
-                        background-color: #8fc045;
-                    }
                 }
 
                 p {
                     line-height: 1.6;
-                    margin: 1rem 0;
-                }
-
-                .cheers {
-                    font-size: 1.8rem;
-                    line-height: 1.2;
-                    color: #3339;
-                    font-family: var(--font-heading), sans-serif;
-
-                    span {
-                        color: #000;
-                        font-size: 1.4rem;
-                    }
+                    margin: var(--space-4) 0;
                 }
             }
         }
+    }
 
-        .close {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            font-size: 1.5rem;
-            color: #ccc;
-            font-family: var(--font-heading), sans-serif;
-            font-weight: 600;
-            height: 2rem;
-            width: 2rem;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transform: scaleX(1.3);
+    :is(.keyboard-shortcuts, .info-zone) .close {
+        position: absolute;
+        top: 1.25rem;
+        right: 1.25rem;
+        font-size: var(--text-xl);
+        font-family: var(--font-mono), sans-serif;
+        font-weight: 600;
+        height: 2rem;
+        width: 2rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform: scaleX(1.3);
 
-            &:hover, &:focus {
-                color: var(--trade-negative);
-                text-shadow: 0 0 5px #0003;
-            }
+        &:hover, &:focus {
+            color: var(--trade-negative);
         }
     }
 }
@@ -378,12 +355,6 @@
         margin: 5px 10px 0;
     }
 
-    .accessibility-zone .icons-container {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-    }
-
     .icon {
         margin-bottom: 5px;
         margin-right: 5px;
@@ -393,9 +364,8 @@
         display: none;
     }
 
-    /* Hide tooltips on mobile */
-    .accessibility-zone .zoom-in, .accessibility-zone .zoom-out {
-        display: none;
+    .accessibility-zone .options-menu :is(.item, .item.link) {
+        min-height: 44px;
     }
 
     .accessibility-zone .keyboard-shortcuts {
