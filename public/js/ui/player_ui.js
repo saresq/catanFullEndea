@@ -47,7 +47,6 @@ export default class PlayerUI {
   }
 
   toggleShow(bool) { this.$el.classList[bool ? 'add' : 'remove']('show') }
-  toggleHandBlur(bool) { this.$hand.classList[bool ? 'add' : 'remove']('blur') }
   togglePlayerBlur(bool) { this.$el.classList[bool ? 'add' : 'remove']('blur') }
 
   updateColor(cid) {
@@ -75,37 +74,53 @@ export default class PlayerUI {
       this.$timer = this.$action_bar.querySelector('.timer')
       return
     }
+    const cost = type => `<div class="res-list">${resToIcons(CONST.COST[type])}</div>`
     this.$action_bar.innerHTML = `
       <div class="row-1">
         <div class="timer disabled ${this.has_timer ? '' : 'hide'}">0:00</div>
-        <button class="trade disabled" title="Trade (t)">Trade</button>
-        <button class="dev-toggle hide">
+        <button class="trade btn btn--secondary btn--sm disabled" title="Trade (t)" aria-label="Trade">Trade</button>
+        <button class="dev-toggle hide" title="Development cards" aria-label="Development cards">
           <span class="text">dev cards</span>
+          <span class="dev-count"></span>
           <span class="caret"></span>
         </button>
+        <button class="roll-dice disabled" data-mode="roll" title="Roll Dice (Space)" aria-label="Roll Dice"><span class="label">🎲</span></button>
       </div>
       <div class="row-2">
-        <button class="build-road disabled" title="Build Road (r)" data-count="${CONST.PIECES_COUNT.R}">
+        <button class="build-road disabled" title="Build Road (r)" aria-label="Build Road" data-count="${CONST.PIECES_COUNT.R}">
           <div class="cost-tooltip">${resToIcons(CONST.COST.R)}</div>
           <div class="image"></div>
+          <span class="label">Road</span>
           <div class="count">${CONST.PIECES_COUNT.R}</div>
         </button>
-        <button class="build-settlement disabled" title="Build Settlement (s)" data-count="${CONST.PIECES_COUNT.S}">
+        <button class="build-settlement disabled" title="Build Settlement (s)" aria-label="Build Settlement" data-count="${CONST.PIECES_COUNT.S}">
           <div class="cost-tooltip">${resToIcons(CONST.COST.S)}</div>
           <div class="image"></div>
+          <span class="label">Settlement</span>
           <div class="count">${CONST.PIECES_COUNT.S}</div>
         </button>
-        <button class="build-city disabled" title="Build City (c)" data-count="${CONST.PIECES_COUNT.C}">
+        <button class="build-city disabled" title="Build City (c)" aria-label="Build City" data-count="${CONST.PIECES_COUNT.C}">
           <div class="cost-tooltip">${resToIcons(CONST.COST.C)}</div>
           <div class="image"></div>
+          <span class="label">City</span>
           <div class="count">${CONST.PIECES_COUNT.C}</div>
         </button>
-        <button class="dev-card disabled" title="Buy Development Card (d)" data-count="-">
+        <button class="dev-card disabled" title="Buy Development Card (d)" aria-label="Buy Development Card" data-count="-">
           <div class="cost-tooltip">${resToIcons(CONST.COST.DEV_C)}</div>
           <div class="card card--xs" data-card="dev-back"></div>
+          <span class="label">Dev card</span>
           <div class="count">-</div>
         </button>
-        <button class="roll-dice disabled" data-mode="roll" title="Roll Dice (Space)"><span class="label">🎲</span></button>
+        <button class="costs" title="Building costs" aria-label="Building costs" aria-expanded="false">
+          <span class="icon" aria-hidden="true">i</span>
+          <span class="label">Costs</span>
+        </button>
+      </div>
+      <div class="costs-panel panel hide">
+        <span>Road</span>${cost('R')}
+        <span>Settlement</span>${cost('S')}
+        <span>City</span>${cost('C')}
+        <span>Development card</span>${cost('DEV_C')}
       </div>
     `
     this.#setRefs()
@@ -121,6 +136,8 @@ export default class PlayerUI {
     this.$buy_dev_card = this.$action_bar.querySelector('.dev-card')
     this.$trade_btn = this.$action_bar.querySelector('.trade')
     this.$dev_toggle = this.$action_bar.querySelector('.dev-toggle')
+    this.$costs = this.$action_bar.querySelector('.costs')
+    this.$costs_panel = this.$action_bar.querySelector('.costs-panel')
   }
 
   #$keyToEl(key) {
@@ -151,39 +168,15 @@ export default class PlayerUI {
       this.#onPieceClick(piece, classList.contains('active'))
       classList.toggle('active')
     }
-    const setupLongPress = ($el, piece) => {
-      let timer
-      let isLongPress = false
-      $el.addEventListener('touchstart', e => {
-        isLongPress = false
-        timer = setTimeout(() => {
-          $el.classList.add('show-cost')
-          isLongPress = true
-        }, 500)
-      }, { passive: true })
-      $el.addEventListener('touchend', e => {
-        clearTimeout(timer)
-        $el.classList.remove('show-cost')
-        if (isLongPress) e.preventDefault()
-      })
-      $el.addEventListener('touchcancel', e => {
-        clearTimeout(timer)
-        $el.classList.remove('show-cost')
-      })
-    }
     this.$build_road.addEventListener('click', getEventCb('R'))
-    setupLongPress(this.$build_road, 'R')
     this.$build_settlement.addEventListener('click', getEventCb('S'))
-    setupLongPress(this.$build_settlement, 'S')
     this.$build_city.addEventListener('click', getEventCb('C'))
-    setupLongPress(this.$build_city, 'C')
     // Buy Development Card
     this.$buy_dev_card.addEventListener('click', e => {
       if (this.$buy_dev_card.classList.contains('disabled')) return
       if (this.$buy_dev_card.dataset.count === '0') return
       this.#onBuyDevCardClick()
     })
-    setupLongPress(this.$buy_dev_card, 'DEV_C')
     // Trade
     this.$trade_btn.addEventListener('click', e => {
       if (this.$trade_btn.classList.contains('disabled')) return
@@ -197,7 +190,11 @@ export default class PlayerUI {
       this.#is_dev_row_open = $dev_row.classList.toggle('hide') === false
       this.$dev_toggle.classList.toggle('open', this.#is_dev_row_open)
     })
-    // End Turn (hidden in unified mode)
+    // Building costs: never disabled, works off-turn
+    this.$costs.addEventListener('click', _ => this.toggleCosts())
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.costs, .costs-panel')) this.toggleCosts(false)
+    })
     // Keyboard shortcuts
     document.addEventListener('keydown', e => {
       switch (e.code) {
@@ -228,6 +225,7 @@ export default class PlayerUI {
           }
           break
         case 'Escape':
+          this.toggleCosts(false)
           if (this.isAnyActionActive()) {
             this.removeActiveActions()
             this.#onPieceClick('', true)
@@ -247,6 +245,12 @@ export default class PlayerUI {
     }, true)
   }
 
+  toggleCosts(open = this.$costs_panel?.classList.contains('hide')) {
+    if (!this.$costs) return
+    this.$costs_panel.classList.toggle('hide', !open)
+    this.$costs.setAttribute('aria-expanded', open)
+  }
+
   checkAndToggleActions(toggle) {
     if (this.player.spectator) return
     this.removeActiveActions()
@@ -261,7 +265,7 @@ export default class PlayerUI {
         this.toggleAction(this.#$keyToEl(key), can_act)
       })
     } else {
-      for (const $el of this.$action_bar.querySelectorAll('.timer, button:not(.dev-toggle)')) {
+      for (const $el of this.$action_bar.querySelectorAll('.timer, button:not(.dev-toggle, .costs)')) {
         this.toggleAction($el)
       }
       // When actions turn off, also disable unified end-turn state
@@ -339,6 +343,7 @@ export default class PlayerUI {
     this.$dice.dataset.mode = 'roll'
     this.$dice.classList.remove('end-turn')
     this.$dice.title = 'Roll Dice (Space)'
+    this.$dice.setAttribute('aria-label', 'Roll Dice')
     const label = this.$dice.querySelector('.label') || this.#ensureDiceLabel()
     label.textContent = '🎲'
     this.toggleAction(this.$dice, enabled)
@@ -348,7 +353,8 @@ export default class PlayerUI {
     if (!this.$dice) return
     this.$dice.dataset.mode = 'end'
     this.$dice.classList.add('end-turn')
-    this.$dice.title = '⏭️ (e/Space)'
+    this.$dice.title = 'End Turn (e / Space)'
+    this.$dice.setAttribute('aria-label', 'End Turn')
     const label = this.$dice.querySelector('.label') || this.#ensureDiceLabel()
     label.textContent = '⏭️'
     const effective = !!enabled && !this.#is_end_cooldown
@@ -402,7 +408,7 @@ export default class PlayerUI {
           ${type === 'dK' ? ' title="Knight (k)" ' : ''}
         >
         <div class="card-count ${count < 2 ? 'hide' : ''}"
-          style="left: calc(1.875rem + ${Math.max(0, visualCount - 1) * 4}px);
+          style="left: calc(var(--hand-card-w) / 2 - 0.78125rem + ${Math.max(0, visualCount - 1) * 4}px);
                  top: calc(-0.75rem - ${Math.max(0, visualCount - 1) * 2}px);"
         >${count}</div>
         ${[...Array(visualCount)].map((_, j) => {
@@ -426,6 +432,9 @@ export default class PlayerUI {
     `
     if (this.$dev_toggle) {
       this.$dev_toggle.classList[dev_card_groups.length ? 'remove' : 'add']('hide')
+      const dev_count = dev_card_groups.reduce((sum, [, count]) => sum + count, 0)
+      this.$dev_toggle.querySelector('.dev-count').textContent = dev_count
+      this.$dev_toggle.setAttribute('aria-label', `Development cards: ${dev_count}`)
       this.$dev_toggle.classList[this.#is_dev_row_open ? 'add' : 'remove']('open')
     }
     this.#setupHandEvents()
@@ -539,7 +548,7 @@ export default class PlayerUI {
     $count.innerHTML = count
     $count.classList.toggle('hide', count < 2)
     const visualCount = Math.min(count, this.maxVisualCards)
-    $count.style.left = `calc(1.875rem + ${Math.max(0, visualCount - 1) * 4}px)`
+    $count.style.left = `calc(var(--hand-card-w) / 2 - 0.78125rem + ${Math.max(0, visualCount - 1) * 4}px)`
     $count.style.top = `calc(-0.75rem - ${Math.max(0, visualCount - 1) * 2}px)`
     return 1
   }

@@ -162,11 +162,11 @@ export default class UI {
   }
 
   setTimer(t, pid) { this.player_ui.resetRenderTimer(t, pid) }
-  showCorners(ids) { this.player_ui.toggleHandBlur(1); this.board_ui.showCorners(ids) }
-  showEdges(ids) { this.player_ui.toggleHandBlur(1); this.board_ui.showEdges(ids) }
-  showTiles(ids) { this.player_ui.toggleHandBlur(1); this.board_ui.showTiles(ids) }
+  showCorners(ids) { this.board_ui.showCorners(ids) }
+  showEdges(ids) { this.board_ui.showEdges(ids) }
+  showTiles(ids) { this.board_ui.showTiles(ids) }
   hideAllShown() {
-    this.player_ui.toggleHandBlur()
+    this.player_ui.toggleCosts(false)
     this.board_ui.hideAllShown()
     this.trade_ui.clearSelections()
     this.player_ui.closeCardPreview()

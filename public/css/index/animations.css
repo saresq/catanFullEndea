@@ -151,6 +151,12 @@
         margin-top: 100%;
         width: 100%;
         justify-content: space-around;
+
+        /* Desktop: the hand is the left part of the dock */
+        @media screen and (min-width: 769px) {
+            width: 40%;
+            margin-right: auto;
+        }
     }
 
     .res-circle {

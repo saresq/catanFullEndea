@@ -22,6 +22,8 @@
   const free = sel => $$(sel).filter($_ => !$_.classList.contains('taken')).map($_ => $_.dataset.id)
   /** Someone other than the viewer - an offer from yourself renders as an ongoing trade instead. */
   const other = game.opponents?.[0]?.id || 2
+  /** The viewer's own player object (absent for spectators). */
+  const self = () => [...Array(12).keys()].map(i => game.getPlayer(i + 1)).find(p => p && !game.opponents.includes(p))
 
   const VISUAL = {
     /**
@@ -205,6 +207,71 @@
         minTiles: Math.min(...rows.map(r => r.tiles)),
         anyOverflowX: rows.some(r => r.overflowX),
         rowList: rows,
+      }
+    },
+
+    /**
+     * Put `cards` in the viewer's hand through the same update the server sends. Default: all
+     * five resources and several development cards. `hand({})` empties it. Client-side only.
+     */
+    hand(cards = { S: 3, L: 2, B: 4, O: 1, W: 5, dK: 2, dR: 1, dM: 1, dY: 1, dVp: 2 }) {
+      const me = self()
+      if (!me) return 'no player - spectating?'
+      game.updatePlayerSoc({ ...me, closed_cards: { ...cards } }, 'closed_cards_visual', cards)
+      return me.closed_cards
+    },
+
+    /**
+     * Dock geometry, for the gates in the action-bar-dock change: dock + status height and its
+     * share of the viewport, hand cards that rise above the dock top (onto the board), hit size
+     * and label of every action, and the dock height with an empty vs a full hand.
+     */
+    dock() {
+      const $dock = document.querySelector('#game > .current-player')
+      const px = n => +n.toFixed(1)
+      const measure = () => $dock.getBoundingClientRect().height
+      const top = $dock.getBoundingClientRect().top
+      const shown = $_ => $_.offsetWidth && getComputedStyle($_).visibility !== 'hidden'
+      const cardsAbove = $$('.hand .card').filter(shown)
+        .filter($c => $c.getBoundingClientRect().top < top - 0.5).length
+      // A slim button may grow its tap area with an absolutely positioned `::after`; count that.
+      const hit = $b => {
+        const r = $b.getBoundingClientRect()
+        const a = getComputedStyle($b, '::after')
+        if (a.content === 'none' || a.position !== 'absolute') return { w: r.width, h: r.height }
+        const out = side => Math.max(0, -(parseFloat(a[side]) || 0))
+        return { w: r.width + out('left') + out('right'), h: r.height + out('top') + out('bottom') }
+      }
+      const actions = $$('.current-player .actions button').filter(shown).map($b => {
+        const r = $b.getBoundingClientRect()
+        const t = hit($b)
+        const $label = $b.querySelector('.label')
+        return {
+          action: $b.className.split(' ')[0],
+          w: px(t.w), h: px(t.h), top: Math.round(r.top),
+          label: $label && shown($label) ? $label.textContent.trim() : null,
+          name: $b.getAttribute('aria-label'), title: $b.title,
+        }
+      })
+      const height = measure()
+      const me = self()
+      let emptyHeight = null, fullHeight = null
+      if (me) {
+        const saved = { ...me.closed_cards }
+        VISUAL.hand({}); emptyHeight = px(measure())
+        VISUAL.hand(); fullHeight = px(measure())
+        VISUAL.hand(saved)
+      }
+      return {
+        viewport: `${innerWidth}x${innerHeight}`,
+        height: px(height),
+        share: +(height / innerHeight).toFixed(3),
+        cardsAbove,
+        minHit: actions.length ? Math.min(...actions.map(a => Math.min(a.w, a.h))) : null,
+        labels: actions.filter(a => a.label).length,
+        emptyHeight, fullHeight,
+        actionRows: new Set(actions.map(a => a.top)).size,
+        actions,
       }
     },
 

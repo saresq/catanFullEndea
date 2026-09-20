@@ -30,10 +30,17 @@ export default class BoardUI {
     this.#getColorId = (typeof getColorId === 'function') ? getColorId : (pid => pid)
   }
 
-  /** Screen area the board can use (excludes fixed UI such as the bottom player bar) */
+  /**
+   * Screen area the board can use: above the dock, beside the scoreboard on desktop (unless
+   * collapsed), below it on phones, where it is in the page flow instead of fixed
+   */
   getViewport() {
     const bottomBar = document.querySelector('#game > .current-player')?.offsetHeight || 0
-    return { x: 0, y: 0, width: window.innerWidth, height: Math.max(100, window.innerHeight - bottomBar) }
+    const $sb = document.querySelector('.all-players')
+    const is_fixed = $sb && getComputedStyle($sb).position === 'fixed'
+    const side = is_fixed && !$sb.classList.contains('compact') ? $sb.offsetWidth : 0
+    const y = $sb && !is_fixed ? $sb.getBoundingClientRect().bottom : 0
+    return { x: 0, y, width: window.innerWidth - side, height: Math.max(100, window.innerHeight - bottomBar - y) }
   }
 
   toggleBlur(bool) { this.$el.classList[bool ? 'add' : 'remove']('blur') }
@@ -121,12 +128,13 @@ export default class BoardUI {
     this.#pan.y = vp.y + (vp.height - b.height * this.#scale) / 2 - b.y * this.#scale - this.#origin.y
   }
 
-  /** Restore the saved pan/zoom, only if it was saved for the same window size */
+  /** Restore the saved pan/zoom, only if it was saved for a free area of the same size */
   #restoreView() {
     try {
       const saved = JSON.parse(localStorage.getItem(this.viewStorageKey))
       const valid = saved && [saved.scale, saved.x, saved.y].every(Number.isFinite)
-      if (!valid || saved.vw !== window.innerWidth || saved.vh !== window.innerHeight) return false
+      const vp = this.getViewport()
+      if (!valid || saved.fw !== vp.width || saved.fh !== vp.height) return false
       this.#scale = saved.scale
       this.#pan = { x: saved.x, y: saved.y }
       return true
@@ -377,8 +385,9 @@ export default class BoardUI {
     this.#clampPan()
     this.$el.style.transform = `translate(${this.#pan.x}px, ${this.#pan.y}px) scale(${this.#scale})`
     try {
+      const vp = this.#lastViewport || this.getViewport()
       localStorage.setItem(this.viewStorageKey, JSON.stringify({
-        scale: this.#scale, x: this.#pan.x, y: this.#pan.y, vw: window.innerWidth, vh: window.innerHeight,
+        scale: this.#scale, x: this.#pan.x, y: this.#pan.y, fw: vp.width, fh: vp.height,
       }))
     } catch (e) {}
   }
