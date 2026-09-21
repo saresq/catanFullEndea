@@ -68,6 +68,7 @@ returns the hook names and installs `window.VISUAL`; after that one hook per cal
 | `VISUAL.hand(cards?)` | the viewer's hand filled (default: five resources, several dev cards); `hand({})` empties it |
 | `VISUAL.menu()` | opens the options menu and reports it: label / state / key hint / tap size per item, items without a label, lines the list takes, whether recenter is reachable with the menu closed |
 | `VISUAL.dock()` | dock geometry: height and viewport share, hand cards above the dock top, tap size (grown `::after` included) / label / accessible name per action, dock height with an empty vs a full hand |
+| `VISUAL.editor()` | the map editor (`/map-editor`, no game): dock and rail boxes, whether they overlap or scroll the page, the board's share of the viewport, smallest tap size, the brushes and numbers on the dock, the four rim phantoms, the coastline (per tile, land-owned against sea-owned, double-drawn edges, variants in use), the port popover opened on a real port tile, the Map info sheet (terrain bars and the dice-number bars) and the game-setup modal. Takes an optional mapkey to render first |
 | `VISUAL.reset()` | reload, back to server state |
 
 `army`, `road` and `end` return promises - `browser_evaluate` awaits them, so the call returns when
@@ -88,10 +89,60 @@ type, button, panel or card work, the full set: **1280x650, 390x844, 360x640, 84
 4. Largest Army / Longest Road animation - after `army()` / `road()`
 5. all 11 colours on scoreboard + board - after `colours()`
 6. end-game modal - after `end()`
-7. `/map-editor` (its own page, no game needed)
+7. `/map-editor` - its own page, no game needed; see the runbook below
 
 Also worth a look while the browser is open: `browser_console_messages` (a clean run only reports
 font loading), and building a map in the editor, then playing it, to confirm the board matches.
+
+### The map editor
+
+`/map-editor` has no game behind it, so open it on its own, paste `fixtures.js`, and call
+`VISUAL.editor()`. **Do the full five viewports** - 1280x650, 390x844, 360x640, 844x390, 640x360 -
+because the rail turns from a column into a strip at 768px wide and the dock stops wrapping at
+480px tall, and clear `localStorage` between them (`board_ui` remembers pan and zoom per origin).
+
+Gate on the report, in this order:
+
+- `chrome.overlap` and `chrome.hScroll` false at every viewport, and `chrome.boardShare` the
+  larger part of the screen.
+- `taps.min` at least 44 at every viewport, including the landscape ones over 768px wide.
+- `rim.sides` all four, and each rim button 44px on screen whatever the zoom - they live inside
+  the board and divide its scale back out.
+- `coast.doubleDrawn` zero, and more than one entry in `coast.variants`.
+- `port.coversSubject` false: the popover is anchored beside its tile, not over it.
+- `info.dice` ten columns, 7 absent, the 6 and the 8 flagged `red`, the tallest `fill` at 100%,
+  and the counts adding up to the numbered land in `info.facts`.
+- `gameSetup.shown` true, with `gameSetup.seats` saying what the map can seat.
+- `float.clearOfDock`, `float.clearOfRail` and `float.inView` all true: undo and redo hover over
+  the board, never under the chrome.
+- every entry in `toggles` carries a `mark` - the ring or the tick is what says on or off, and a
+  chip without one is just a button.
+
+Two maps are worth the pass, both through `VISUAL.editor(mapkey)`:
+
+```js
+VISUAL.editor()                                            // the default map: coast all on sea
+VISUAL.editor('G6.J8.C5\n-F4.D.M10.G2\n-J3.M9.F12.C11')    // land to the rim: coast all on land
+```
+
+The second is the case the land-side coast exists for, and it should also report
+`flagged: [...]` for the touching 6 and 8.
+
+By hand, at 390x844 and with a finger rather than a mouse, because none of it is in the report:
+
+1. pick a terrain brush, tap a sea tile, then drag across several - every tile the finger enters
+   takes the brush, and one undo takes the whole drag back;
+2. pick the eraser (the `Erase` chip) and drag back over them;
+3. with `Pan` selected, drag - the board moves and nothing is painted; pinch - it zooms and
+   nothing is painted. On a keyboard, holding Space does the same without putting the brush
+   down, and the brush is back in hand on release;
+4. tap a sea tile with the `Port` brush, pick a type, then tap one of the six edges of the
+   hexagon in the popover;
+5. tap each of the four rim `+` buttons; the map grows on that side and nothing else moves;
+6. with the `Random` number chip selected, paint a run of land - every tile comes out with a
+   different number, and dragging back over one does not re-roll it.
+
+Then press Back: it should leave the editor, not undo an edit. Editing writes no history entry.
 
 ## 5. Comparing
 

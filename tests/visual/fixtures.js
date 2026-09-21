@@ -16,12 +16,14 @@
  */
 () => {
   const game = window.game
-  if (!game) return 'no window.game - open /game/<id> first'
+  // `editor()` runs on /map-editor, which has no game; every other hook needs one.
+  const editor = window.map_editor
+  if (!game && !editor) { return 'no window.game or window.map_editor - open /game/<id> or /map-editor first' }
 
   const $$ = sel => [...document.querySelectorAll(sel)]
   const free = sel => $$(sel).filter($_ => !$_.classList.contains('taken')).map($_ => $_.dataset.id)
   /** Someone other than the viewer - an offer from yourself renders as an ongoing trade instead. */
-  const other = game.opponents?.[0]?.id || 2
+  const other = game?.opponents?.[0]?.id || 2
   /** The viewer's own player object (absent for spectators). */
   const self = () => [...Array(12).keys()].map(i => game.getPlayer(i + 1)).find(p => p && !game.opponents.includes(p))
 
@@ -315,6 +317,146 @@
         unlabelled: items.filter(i => !i.label).length,
         minHit: items.length ? Math.min(...items.map(i => Math.min(i.w, i.h))) : null,
         items,
+      }
+    },
+
+    /**
+     * The map editor, on /map-editor - the one page with no game behind it. Reports the tool
+     * dock, the rail, the rim phantoms and the coastline, then opens the port popover on a real
+     * port tile and leaves it on screen for the screenshot that follows.
+     *
+     * The numbers to gate on: `chrome.overlap` and `chrome.hScroll` false at every viewport,
+     * `taps.min` at least 44, `coast.doubleDrawn` zero, `rim.sides` all four, and `coast.onLand`
+     * above zero on a map whose land reaches the edge of the grid.
+     */
+    editor(mapkey) {
+      if (!editor) { return 'no window.map_editor - open /map-editor first' }
+      if (mapkey) {
+        document.querySelector('#mapkey').value = mapkey
+        editor.renderMapkey()
+      }
+      const px = n => +n.toFixed(1)
+      const box = $_ => { const r = $_.getBoundingClientRect(); return { x: px(r.left), y: px(r.top), w: px(r.width), h: px(r.height) } }
+      const $dock = document.querySelector('#editor-dock')
+      const $rail = document.querySelector('#editor-rail')
+      const dock = box($dock), rail = box($rail)
+
+      const controls = [...document.querySelectorAll('#editor-dock button, #editor-rail button, #editor-float button')]
+        .filter($_ => !$_.hidden && $_.offsetParent)
+      const taps = controls.map($_ => { const r = $_.getBoundingClientRect(); return Math.min(r.width, r.height) })
+
+      const vp = editor.board_ui.getViewport()
+      const $rim = [...document.querySelectorAll('.rim-add')]
+
+      // One element per coast edge, and never two for the same edge.
+      const beaches = [...document.querySelectorAll('#game .board .beach')]
+      const owners = beaches.map($_ => {
+        const $tile = $_.closest('.tile')
+        return { id: +$tile.dataset.id, sea: $tile.classList.contains('S'), dir: $_.className.match(/beach-([a-z_]+)/)[1] }
+      })
+      const opposite = { top_left: 'bottom_right', top_right: 'bottom_left', right: 'left',
+        bottom_right: 'top_left', bottom_left: 'top_right', left: 'right' }
+      const key = new Set(owners.map(o => `${o.id}:${o.dir}`))
+      const doubleDrawn = owners.filter(o => {
+        const neighbour = editor.board.findTile(o.id)?.adjacent_tiles[o.dir]
+        return neighbour && key.has(`${neighbour.id}:${opposite[o.dir]}`)
+      }).length
+
+      // Park the port popover open, on a tile that already carries a port.
+      const port_tile = editor.board.tile_rows.flat().find(t => t.type === 'S' && t.trade_edge)
+      if (port_tile) {
+        document.querySelector('.brush[data-brush="port"]').click()
+        editor.openPort(port_tile.id)
+      }
+      const $popover = document.querySelector('.editor-popover.open')
+
+      return {
+        viewport: `${innerWidth}x${innerHeight}`,
+        chrome: {
+          dock, rail,
+          dockShare: px(dock.h / innerHeight * 100) + '%',
+          hScroll: document.documentElement.scrollWidth > innerWidth,
+          overlap: dock.y < rail.y + rail.h && dock.y + dock.h > rail.y
+            && dock.x < rail.x + rail.w && dock.x + dock.w > rail.x,
+          boardShare: px(vp.width * vp.height / (innerWidth * innerHeight) * 100) + '%',
+        },
+        taps: { count: taps.length, min: px(Math.min(...taps)) },
+        dockRows: {
+          brushes: [...document.querySelectorAll('.brush')].map($_ => $_.dataset.brush),
+          numbers: [...document.querySelectorAll('.num-chip')].map($_ => $_.dataset.number || 'none'),
+          active: document.querySelector('.brush.active')?.dataset.brush || null,
+          undo: document.querySelector('.editor-undo').disabled ? 'empty' : 'available',
+          issues: document.querySelector('.dock-issues').hidden ? null : document.querySelector('.dock-issues').textContent.trim(),
+        },
+        rim: { count: $rim.length, sides: $rim.map($_ => $_.dataset.side), size: $rim[0] && px($rim[0].getBoundingClientRect().width) },
+        // Undo and redo float over the board; they have to clear both pieces of bottom chrome.
+        float: (() => {
+          const f = document.querySelector('#editor-float').getBoundingClientRect()
+          return {
+            box: box(document.querySelector('#editor-float')),
+            clearOfDock: f.bottom <= dock.y + 0.5,
+            clearOfRail: f.right <= rail.x + 0.5 || f.bottom <= rail.y + 0.5,
+            inView: f.top >= 0 && f.left >= 0 && f.right <= innerWidth && f.bottom <= innerHeight,
+          }
+        })(),
+        toggles: [...document.querySelectorAll('.opt-chip')].map($_ => ({
+          option: $_.dataset.shuffle || $_.dataset.keep,
+          on: $_.getAttribute('aria-pressed'),
+          mark: !!$_.querySelector('.chip-mark'),
+        })),
+        coast: {
+          total: beaches.length,
+          onLand: owners.filter(o => !o.sea).length,
+          onSea: owners.filter(o => o.sea).length,
+          doubleDrawn,
+          variants: [...new Set(beaches.map($_ => $_.className.match(/beach-(\d)/)[1]))].sort(),
+        },
+        port: $popover && {
+          id: $popover.id,
+          box: box($popover),
+          coversSubject: (() => {
+            const $tile = document.querySelector(`.tile[data-id="${port_tile.id}"]`)
+            const t = $tile.getBoundingClientRect(), p = $popover.getBoundingClientRect()
+            return t.right > p.left && t.left < p.right && t.bottom > p.top && t.top < p.bottom
+          })(),
+          edges: [...document.querySelectorAll('.port-edge')].map($_ => {
+            const r = $_.getBoundingClientRect()
+            return { edge: $_.dataset.edge, w: px(r.width), h: px(r.height), active: $_.classList.contains('active') }
+          }),
+          type: document.querySelector('.port-type.active')?.dataset.type || null,
+        },
+        flagged: [...document.querySelectorAll('.tile.flagged')].map($_ => +$_.dataset.id),
+        info: (() => {
+          // Map info reads the map back: the terrain bars and the dice strip are the panel.
+          editor.togglePopover('info')
+          const rows = [...document.querySelectorAll('.res-row')].map($_ => ({
+            name: $_.querySelector('.res-name').textContent.trim().replace(/\s+/g, ' '),
+            count: +$_.querySelector('.res-count').textContent,
+            fill: $_.style.getPropertyValue('--fill').trim(),
+          }))
+          // A bar per number, standing on the board's own token as its label.
+          const dice = [...document.querySelectorAll('.dice-col')].map($_ => ({
+            num: $_.querySelector('.dice-token').getAttribute('num'),
+            red: $_.querySelector('.dice-token').classList.contains('red'),
+            count: +($_.querySelector('.dice-count').textContent || 0),
+            fill: $_.querySelector('.dice-bar').style.getPropertyValue('--fill').trim(),
+            label: $_.getAttribute('aria-label'),
+          }))
+          return {
+            facts: [...document.querySelectorAll('.info-facts > *')].map($_ => $_.textContent.trim()),
+            terrain: rows, dice,
+            problems: [...document.querySelectorAll('.info-problems li')].map($_ => $_.textContent.trim()),
+          }
+        })(),
+        gameSetup: (() => {
+          // The one surface that takes the screen; everything else edits in place.
+          editor.openGameSetup()
+          const $modal = document.querySelector('#modal-game')
+          const shown = !document.querySelector('.editor-scrim').hidden
+          const out = { shown, box: box($modal), seats: document.querySelector('#seat-note').textContent.trim() }
+          editor.closeModal()
+          return out
+        })(),
       }
     },
 

@@ -24,18 +24,20 @@
     cursor: pointer;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 
-    &:hover, &:focus {
+    &:hover, &:focus-visible {
         opacity: 1;
         box-shadow: 0 0 10px 0 #000;
         color: #fff;
         background-color: #000;
 
+        /* Anchored to the button's own box, so a bigger icon never sits under its label. */
         &::after {
             content: attr(title);
             white-space: nowrap;
             position: absolute;
-            left: 35px;
-            top: 2px;
+            left: calc(100% + 5px);
+            top: 50%;
+            transform: translateY(-50%);
             background: inherit;
             font-size: 0.8125rem;
             font-family: var(--font-ui), sans-serif;
@@ -45,9 +47,9 @@
         }
     }
 
-    &.right:hover::after, &.right:focus::after {
+    &.right:hover::after, &.right:focus-visible::after {
         left: auto;
-        right: 35px;
+        right: calc(100% + 5px);
     }
 }
 
@@ -61,12 +63,20 @@
     z-index: var(--z-accessibility);
     pointer-events: auto;
 
+    /* The way into everything else, so it is the one control at full tap size.
+       The glyph is an SVG mask painted in currentColor: it stays crisp at any size and
+       does not depend on the platform's emoji font, unlike the '⚙' it replaces. */
     .settings-gear {
         opacity: 0.9;
-        font-size: 1.2em;
+        width: 44px;
+        height: 44px;
 
         &::before {
-            content: '⚙';
+            content: '';
+            width: 22px;
+            height: 22px;
+            background: currentColor;
+            mask: var(--icon-menu) center / contain no-repeat;
         }
     }
 
@@ -127,7 +137,7 @@
             text-align: left;
             cursor: pointer;
 
-            &:hover, &:focus {
+            &:hover, &:focus-visible {
                 background: var(--sand-color-dark);
                 color: #fff;
             }
@@ -159,7 +169,7 @@
             color: var(--trade-negative);
         }
 
-        .item.danger:hover, .item.danger:focus, .item.armed {
+        .item.danger:hover, .item.danger:focus-visible, .item.armed {
             background: var(--trade-negative);
             color: #fff;
         }

@@ -1,5 +1,6 @@
 import Board from "../board/board.js"
 import * as CONST from "../const.js"
+import { EDGES, beachVariant, ownsCoast } from "../board/coastline.js"
 const $ = document.querySelector.bind(document)
 const oKeys = Object.keys
 
@@ -44,6 +45,22 @@ export default class BoardUI {
   }
 
   toggleBlur(bool) { this.$el.classList[bool ? 'add' : 'remove']('blur') }
+
+  /**
+   * Whether a one-pointer drag on the board pans it. The map editor paints with the same gesture,
+   * so it turns panning off while a brush is selected. Pinch-zoom is never affected.
+   */
+  canPan() { return true }
+
+  /** Swap in a new board without throwing away the instance - and its listeners - around it. */
+  setBoard(board) { this.#board = board }
+
+  /** Move the board without changing zoom, so a caller can keep something clear of a popover. */
+  panBy(dx, dy) {
+    this.#pan.x += dx
+    this.#pan.y += dy
+    this.#updateTransform()
+  }
 
   render() {
     this.#renderedCorners = []
@@ -169,7 +186,7 @@ export default class BoardUI {
         <div class="background"></div>
         <div class="corners">${this.renderCorners(tile)}</div>
         <div class="edges">${this.renderEdges(tile)}</div>
-        ${tile.type === 'S' ? `<div class="beaches">${this.renderBeaches(tile)}</div>` : ''}
+        <div class="beaches">${this.renderBeaches(tile)}</div>
         ${tile.num
         ? `<div
               class="number ${tile.num > 5 && tile.num < 9 ? 'red' : ''}"
@@ -230,21 +247,12 @@ export default class BoardUI {
     }).join('')
   }
 
+  /** Coast for one tile; ownership and art live in `board/coastline.js`, where they are testable. */
   renderBeaches(tile) {
-    return oKeys(tile.adjacent_tiles).map(dir => {
-      const neighbor = tile.adjacent_tiles[dir]
-      const variant = Math.floor(Math.random() * 3) + 1
-      // Sea tiles: show beach where adjacent tile is land
-      if (tile.type === 'S') {
-        return (neighbor && neighbor.type !== 'S')
-          ? `<div class="beach beach-${variant} beach-${dir}"></div>`
-          : ''
-      }
-      // Land tiles: show beach on map border (no neighbor)
-      return (!neighbor)
-        ? `<div class="beach beach-${variant} beach-${dir}"></div>`
-        : ''
-    }).join('')
+    return EDGES
+      .filter(dir => ownsCoast(tile, dir))
+      .map(dir => `<div class="beach beach-${beachVariant(tile.id, dir)} beach-${dir}"></div>`)
+      .join('')
   }
 
   #setupEvents() {
@@ -281,7 +289,7 @@ export default class BoardUI {
     }, { passive: false })
 
     $container.addEventListener('mousedown', e => {
-      if (e.button !== 0) return
+      if (e.button !== 0 || !this.canPan()) return
       this.#isDragging = true
       this.#lastMousePos = { x: e.clientX, y: e.clientY }
     })
@@ -326,6 +334,7 @@ export default class BoardUI {
 
     $container.addEventListener('touchmove', e => {
       if (e.touches.length === 1 && lastTouchPos) {
+        if (!this.canPan()) return
         e.preventDefault()
         const dx = e.touches[0].clientX - lastTouchPos.x
         const dy = e.touches[0].clientY - lastTouchPos.y
@@ -384,6 +393,9 @@ export default class BoardUI {
     if (isNaN(this.#scale) || !isFinite(this.#scale)) { this.#scale = 1 }
     this.#clampPan()
     this.$el.style.transform = `translate(${this.#pan.x}px, ${this.#pan.y}px) scale(${this.#scale})`
+    // Published so a rule can undo the zoom for something that must keep its size on screen -
+    // the map editor's rim buttons, which are touch targets sitting inside the scaled board.
+    this.$el.style.setProperty('--board-scale', String(this.#scale))
     try {
       const vp = this.#lastViewport || this.getViewport()
       localStorage.setItem(this.viewStorageKey, JSON.stringify({

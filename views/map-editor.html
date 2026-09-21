@@ -13,6 +13,13 @@
   </div>
   <div class="accessibility-zone"></div>
 </div>
-<div id="shuffler"></div>
-<div id="tile-selection-container"></div>
+<!-- Right icon rail: each button opens one of the popovers below it -->
+<div id="editor-rail" class="editor-rail"></div>
+<!-- Bottom tool dock: the brushes and the numbers they paint with -->
+<div id="editor-dock" class="editor-dock panel--drawer"></div>
+<!-- Undo and redo, floating over the board just clear of the dock -->
+<div id="editor-float" class="editor-float"></div>
+<div id="editor-popovers"></div>
+<!-- Game setup, the one surface that takes over the screen: it is about leaving, not editing -->
+<div id="editor-modals"></div>
 <script src="js/map-editor.js" type="module"></script>

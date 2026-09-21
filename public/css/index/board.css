@@ -546,12 +546,21 @@
         position: absolute;
     }
 
+    /* The six offsets below are tuned to the tile box - `--tile-width` wide, 176px tall - and the
+       box is the same whether the tile is sea or land, so one set serves both owners. */
     .beach {
         width: 30px;
         z-index: -1;
         position: absolute;
         background-repeat: no-repeat;
         background-size: contain;
+    }
+
+    /* Sea pushes its own background to -2 so the coast sits over it. A land tile's background is
+       not pushed back, so its coast - drawn only where it has no neighbour at all - goes above
+       instead, still under the number and the corners at 3. */
+    &:not(.S) .beach {
+        z-index: 1;
     }
 
     .beach-1 {

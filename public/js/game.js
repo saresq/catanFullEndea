@@ -103,6 +103,7 @@ export default class Game {
   }
   // STATE - Roll
   #onPlayerRoll() {
+    this.#ui.alert_ui.alertTurnStart(this.getActivePlayer())
     this.#ui.toggleActions(0)
     this.#ui.hideAllShown()
     this.#ui.trade_ui.clearRequests()

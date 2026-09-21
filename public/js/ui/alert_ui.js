@@ -40,7 +40,7 @@ export default class AlertUI {
     this.$alert.classList.add(pcClass)
     this.$status_bar.innerHTML = this.#player.last_status || '...'
     this.$status_history_container.innerHTML = this.#status_history.map(s => {
-      if (s === TURN_SEP) return '<hr class="turn-separator">'
+      if (s.startsWith(TURN_SEP)) return '<hr class="turn-separator">'
       return `<div class="status">${s}</div>`
     }).join('')
     this.$alert.querySelector('.close').addEventListener('click', e => this.closeBigAlert())
@@ -75,20 +75,15 @@ export default class AlertUI {
     $container.prepend($btn)
   }
 
-  addTurnSeparator() {
-    // Avoid duplicate separators in DOM
-    const firstDom = this.$status_history_container.firstElementChild
-    const needDomInsert = !(firstDom && firstDom.classList.contains('turn-separator'))
-    // Persist separator in history if not already at head
-    if (this.#status_history[0] !== TURN_SEP) {
-      this.#status_history.unshift(TURN_SEP)
-      try { localStorage.setItem(KEYS.STATUS_HISTORY, JSON.stringify(this.#status_history)) } catch (e) {}
-    }
-    if (needDomInsert) {
-      const hr = document.createElement('hr')
-      hr.className = 'turn-separator'
-      this.$status_history_container.prepend(hr)
-    }
+  /** Separators are stored as TURN_SEP + label (the turn's player). */
+  addTurnSeparator(label = '') {
+    // Same label as the newest separator: same turn (page reload re-emits the state), skip
+    if (this.#status_history.find(s => s.startsWith(TURN_SEP)) === TURN_SEP + label) return
+    this.#status_history.unshift(TURN_SEP + label)
+    try { localStorage.setItem(KEYS.STATUS_HISTORY, JSON.stringify(this.#status_history)) } catch (e) {}
+    const hr = document.createElement('hr')
+    hr.className = 'turn-separator'
+    this.$status_history_container.prepend(hr)
   }
 
   closeBigAlert() {
@@ -125,8 +120,8 @@ export default class AlertUI {
     this.$status_bar.innerHTML += add
     // Determine index of the latest status (skip leading separator if present)
     let idx = 0
-    if (this.#status_history[0] === TURN_SEP) idx = 1
-    if (typeof this.#status_history[idx] === 'string' && this.#status_history[idx] !== TURN_SEP) {
+    if (this.#status_history[0]?.startsWith(TURN_SEP)) idx = 1
+    if (typeof this.#status_history[idx] === 'string' && !this.#status_history[idx].startsWith(TURN_SEP)) {
       this.#status_history[idx] = this.$status_bar.innerHTML
       try { localStorage.setItem(KEYS.STATUS_HISTORY, JSON.stringify(this.#status_history)) } catch (e) {}
       const firstStatusEl = this.$status_history_container.querySelector('.status')
@@ -154,8 +149,8 @@ export default class AlertUI {
   alertRollTurn(p) {
     this.setStatusBarOnly(this.#isMe(p) ? MSG.ROLL_TURN.self() : MSG.ROLL_TURN.other(p))
   }
+  alertTurnStart(p) { this.addTurnSeparator(getName(this.#isNotMe(p))) }
   alertDiceValue(p, d1, d2, rob_res) {
-    this.addTurnSeparator()
     this.setStatus(MSG.DICE_VALUE.all(d1, d2, this.#isNotMe(p), rob_res))
   }
   alertBuild(p, piece) { this.setStatus(MSG.BUILDING.all(piece, this.#isNotMe(p))) }

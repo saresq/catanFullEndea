@@ -1,38 +1,41 @@
+@import "constants.css";
+@import "fonts.css";
+@import "base.css";
+@import "ui/primitives.css";
 @import "index/accessibility.css";
 @import "index/board.css";
-@import "constants.css";
-@import "base.css";
 
+/*
+ * MAP EDITOR
+ * ==========
+ * One layout, always editable. A tool dock along the bottom holds the brushes, the numbers, undo
+ * and the pinned primary action; an icon rail down the right opens the panels that are not part of
+ * drawing a map. The board is fitted to whatever those leave it - measured, in `--dock-h`,
+ * `--rail-h` and `--rail-w`, because both change size with their contents and the viewport.
+ */
 
-@font-face {
-    font-family: EagleLake;
-    src: url(fonts/EagleLake-Regular.ttf);
+:root {
+    --dock-h: 0px;
+    --rail-h: 0px;
+    --rail-w: 0px;
+    --editor-chip: 2.75rem;
+
+    /*
+     * The dock and the rail are the table the board is laid on: dark, warm, stained with the same
+     * sand the tiles are made of. The shared `--surface-drawer` is that sand at half black, which
+     * over bright water comes out a flat olive and leaves the sand chips sitting on their own
+     * colour. This is out of the same pigment but taken much further down, so a parchment popover
+     * reads as paper on wood and a number token has something to sit on.
+     */
+    --editor-chrome: color-mix(in srgb, var(--sand-color) 16%, #14100a);
+    --editor-chrome-surface: color-mix(in srgb, var(--editor-chrome) 94%, transparent);
+    --editor-chrome-text: color-mix(in srgb, var(--sand-color) 88%, #fff);
+    --editor-chrome-edge: #0007;
 }
 
-@font-face {
-    font-family: Raleway;
-    src: url(fonts/Raleway-Light.ttf);
-    font-weight: 200;
-}
-
-@font-face {
-    font-family: Raleway;
-    src: url(fonts/Raleway-Regular.ttf);
-}
-
-@font-face {
-    font-family: Raleway;
-    src: url(fonts/Raleway-Bold.ttf);
-    font-weight: 600;
-}
-
-@keyframes beach-blink {
-    0% {
-        filter: saturate(8);
-    }
-    100% {
-        filter: saturate(1);
-    }
+/* `.btn` and the dock rows set `display`, which would otherwise win over the attribute. */
+[hidden] {
+    display: none !important;
 }
 
 html {
@@ -51,76 +54,78 @@ html {
     }
 }
 
-html,
-body {
+html, body {
     height: 100%;
     margin: 0;
     background: var(--water-color);
-    font-family: var(--font-ui), sans-serif;
+    font-family: var(--font-body), sans-serif;
     letter-spacing: .2px;
     font-size: 1rem;
 }
 
-/* hr { border-top-color: #fff; border-bottom-color: #fff; } */
 
-.button {
-    padding: 7px 25px;
-    width: fit-content;
-    box-sizing: border-box;
-    font-family: var(--font-main), sans-serif;
-    border: 2px solid;
-    border-radius: 50px;
-    text-align: center;
-    background: #333;
-    color: var(--sand-color);
-    font-size: 1.2em;
-    font-weight: bold;
-    word-spacing: 5px;
-    transition: all var(--t-base) ease;
-    display: inline-block;
+/*
+ * The board's number token, wherever one is shown off the board: the `.number` rule from
+ * `index/board.css` with every measurement divided by its 50px and written in `em`, so one
+ * `font-size` resizes the whole piece - disc, numeral and pips - in proportion. No bevel, because
+ * the board's has none. A sand token needs a ground, so whatever holds one is darker than it.
+ */
+.token {
+    display: block;
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background-color: var(--sand-color);
+    /* Stated, not inherited: on the board the numeral is black, and a token dropped on the dock
+       or in a panel would otherwise take that surface's text colour and come out white or brown. */
+    color: #000;
 
-    &:active {
-        background: #000;
+    &::before {
+        display: block;
+        content: attr(num) "\a " attr(dots);
+        font-family: var(--font-main), sans-serif;
+        font-weight: bold;
+        white-space: pre;
+        text-align: center;
+        /* 25 / 50, then 10 / 25 and 15 / 25 against this element's own halved em */
+        font-size: 0.5em;
+        line-height: 0.4em;
+        position: relative;
+        top: 0.6em;
     }
 
-    &:hover, &:focus {
-        box-shadow: 0 0 10px 0 var(--sand-color), 0 0 20px 0 #333;
-    }
-
-    &.secondary {
-        padding: 5px 15px;
-        font-size: 1em;
-        color: var(--sand-color-text-dark);
-        background: transparent;
-
-        &:active {
-            background: var(--sand-color-text-dark);
-            color: var(--sand-color);
-        }
-    }
-
-    &.text {
-        padding: 5px;
-        font-size: 1em;
-        background: none;
-        border: none;
-        color: #333;
-        text-decoration: underline;
-
-        &:hover, &:focus {
-            color: var(--sand-color-text-dark);
-            box-shadow: none;
-        }
+    &.red::before {
+        color: #d21c0e;
     }
 }
 
+.dock-token {
+    font-size: 2rem;
+}
+
+
+/*
+ * Icons are masks on a square box, not glyphs. A glyph carries the typeface's own bearings and
+ * baseline, so centring its box does not centre what you see; a mask has nothing but the drawing.
+ * Named `.btn-icon` because `.icon` already belongs to the accessibility buttons.
+ */
+.btn-icon {
+    display: block;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: currentColor;
+    mask: var(--icon) center / contain no-repeat;
+}
+
+
 /* --------------------------------------
- * GAME & BOARD
+ * BOARD
  * -------------
 */
 
 #game .board-container {
-    /* Board is panned/zoomed by transform; keep its container pinned to the viewport so the page never scrolls */
+    /* Board is panned/zoomed by transform; keep its container pinned so the page never scrolls */
     position: fixed;
     top: 0;
     left: 0;
@@ -130,922 +135,1097 @@ body {
     touch-action: none;
 }
 
-#game :is(.board-container, .accessibility-zone) {
-    transition: all .125s ease-in;
-}
-
-#game.board--editing .board-container {
-    top: calc(170px + 10px);
-}
-
-#game.board--editing .accessibility-zone {
-    margin-top: calc(170px + 10px);
-}
-
 .board .tile.robbed::before {
-    background-image: url(../images/robber.png);
+    background-image: url(/images/robber.png);
     left: 53px;
     top: 30px;
     height: 90px;
     width: 47px;
 }
 
-#game.board--editing .board .tile {
+/* The brush arbitrates paint against pan, so the cursor says which one the board is doing. */
+body.painting .board .tile {
+    cursor: crosshair;
+}
+
+body.port-picking .board .tile.S {
+    cursor: pointer;
+}
+
+/* What is wrong with a tile, shown on the tile */
+.board .tile .tile-flag {
+    display: none;
+}
+
+.board .tile.flagged .tile-flag {
+    display: block;
+    position: absolute;
+    z-index: 4;
+    left: calc(var(--tile-width) / 2 - 0.75rem);
+    top: 1.75rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    line-height: 1.5rem;
+    text-align: center;
+    border-radius: 50%;
+    background: var(--trade-negative);
+    color: #fff;
+    font-size: var(--text-sm);
+    box-shadow: var(--shadow-1);
+
+    &::before {
+        content: '!';
+        font-weight: bold;
+    }
+}
+
+/* --- Rim: growth is explicit, on all four sides, and previewed where it will land --- */
+
+.board .rim-add {
+    /*
+     * These sit inside the board, so they are zoomed with it. The zoom is divided back out to
+     * keep them at the shared touch minimum on screen, clamped so they never swallow a tile or
+     * shrink to a dot at the ends of the zoom range.
+     */
+    --rim-size: clamp(
+        calc(var(--tile-width) * 0.3),
+        calc(2.75rem / var(--board-scale, 1)),
+        calc(var(--tile-width) * 0.9)
+    );
+    /* `left` and `top` are written by the editor, from the rows' measured bounds: the board's own
+       box is wider than the rows it holds, so a rule keyed on it would miss the rim. */
+    position: absolute;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--rim-size);
+    height: var(--rim-size);
+    border-radius: 50%;
+    border: 0.125rem dashed var(--surface-sand);
+    background: color-mix(in srgb, var(--surface-ink) 55%, transparent);
+    color: var(--surface-sand);
     cursor: pointer;
 
-    .tile-replace {
-        font-family: var(--font-ui), sans-serif;
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 50px;
-        height: 50px;
-        border-radius: 50px;
-        margin-left: 48px;
-        margin-top: 61px;
-        z-index: 4;
-        opacity: 0;
-        background: #333;
-        color: var(--sand-color);
-        font-size: 3.125rem;
-        text-align: center;
-        line-height: 45px;
-        box-shadow: 0 0 10px 0 var(--sand-color), 0 0 20px 0 #333;
+    .btn-icon {
+        width: 50%;
+        height: 50%;
+    }
+    transform: translate(-50%, -50%);
+    transition: background-color var(--t-fast) linear;
 
-        &::before {
-            content: '↺';
-        }
+    &:hover, &:focus-visible {
+        background: var(--surface-ink);
     }
 
-    &.S:not([data-trade]) .tile-replace {
-        line-height: 45px;
-
-        &::before {
-            content: '+';
-        }
-    }
-
-
-    .background, .number {
-        transition: all .125s ease-in;
-    }
-
-    &:is(:hover, .picked) .tile-replace {
-        opacity: 1;
-        transition: all .125s ease-in;
-    }
-
-    &.picked .tile-replace {
-        transform: scale(1.5);
-        font-size: 1.875rem;
-
-        &::before {
-            content: '…' !important;
-        }
-    }
-
-    &:hover, &.picked {
-        /* .tile-replace { display: block; } */
-
-        &:not(.S) {
-            .tile-replace {
-                margin-left: 45px;
-                margin-top: 57px;
-            }
-
-            .background {
-                z-index: 1;
-                top: -3px;
-                left: -3px;
-                animation: none;
-                filter: drop-shadow(5px 5px 5px #000) sepia(.8) brightness(0.9);
-            }
-
-            .number {
-                margin-left: 45px;
-                margin-top: 57px;
-                animation: none;
-                background: #999;
-
-                &::before {
-                    color: #666;
-                }
-            }
-
-        }
+    &:focus-visible {
+        outline: 0.125rem solid #fff;
+        outline-offset: 0.125rem;
     }
 }
 
-/* Images reloaded for the different URL path */
-
-:is(.board, #tile-selector) .tile.G .background, #tile-selector[data-tile="G"] .select-number .tile .background {
-    background-image: url('../images/tiles/Grassland.png');
-}
-
-:is(.board, #tile-selector) .tile.J .background, #tile-selector[data-tile="J"] .select-number .tile .background {
-    background-image: url('../images/tiles/Jungle.png');
-}
-
-:is(.board, #tile-selector) .tile.C .background, #tile-selector[data-tile="C"] .select-number .tile .background {
-    background-image: url('../images/tiles/Clay Pit.png');
-}
-
-:is(.board, #tile-selector) .tile.M .background, #tile-selector[data-tile="M"] .select-number .tile .background {
-    background-image: url('../images/tiles/Mountain.png');
-}
-
-:is(.board, #tile-selector) .tile.F .background, #tile-selector[data-tile="F"] .select-number .tile .background {
-    background-image: url('../images/tiles/Fields.png');
-}
-
-:is(.board, #tile-selector) .tile.D .background, #tile-selector[data-tile="D"] .select-number .tile .background {
-    background-image: url('../images/tiles/Desert.png');
-}
-
-:is(.board, #tile-selector) .tile.S .background, #tile-selector[data-tile="S"] .select-number .tile .background {
-    background-image: url('../images/tiles/Sea.png');
-}
-
-:is(.board, #tile-selector) .tile {
-    &.S[data-trade="B"]::after {
-        background-image: url(../images/trade/Brick.png);
-    }
-
-    &.S[data-trade="L"]::after {
-        background-image: url(../images/trade/Lumber.png);
-    }
-
-    &.S[data-trade="O"]::after {
-        background-image: url(../images/trade/Ore.png);
-    }
-
-    &.S[data-trade="S"]::after {
-        background-image: url(../images/trade/Sheep.png);
-    }
-
-    &.S[data-trade="W"]::after {
-        background-image: url(../images/trade/Wheat.png);
-    }
-
-    &.S[data-trade="*"]::after {
-        background-image: url(../images/trade/*3.png);
-    }
-
-    .beach-1 {
-        background-image: url(../images/beach-1.png);
-    }
-
-    .beach-2 {
-        background-image: url(../images/beach-2.png);
-    }
-
-    .beach-3 {
-        background-image: url(../images/beach-3.png);
-    }
-
-    .trade-post {
-        background-image: url(../images/trade/Dock.png);
-    }
-}
 
 /* --------------------------------------
- * TILE SELECTOR
+ * EDITOR TILE  (brush chips and the port dial)
  * -------------
 */
 
-#tile-selector {
-    font-family: var(--font-main), sans-serif;
-    position: fixed;
-    left: 0;
-    top: -230px;
-    width: calc(100% - 280px);
-    padding: 10px;
-    box-sizing: border-box;
-    height: 170px;
-    overflow: auto;
-    background: var(--sand-color);
-    color: #333;
-    filter: drop-shadow(0px 0 30px #000);
-    transition: all .125s ease-in;
+.editor-tile {
+    display: block;
+    position: relative;
+    width: var(--editor-chip);
+    aspect-ratio: 1 / 1.164;
 
-    &.open {
-        top: 0;
+    .background {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
     }
 
-    .tile {
-        width: 95px;
-        aspect-ratio: 1 / 1.164;
-        position: relative;
-        transition: top .125s ease-in;
+    &:not(.S) .background {
+        filter: drop-shadow(0 0 1px #0009);
+    }
 
-        .background {
+    &.G .background { background-image: url('/images/tiles/Grassland.png'); }
+    &.J .background { background-image: url('/images/tiles/Jungle.png'); }
+    &.C .background { background-image: url('/images/tiles/Clay Pit.png'); }
+    &.M .background { background-image: url('/images/tiles/Mountain.png'); }
+    &.F .background { background-image: url('/images/tiles/Fields.png'); }
+    &.D .background { background-image: url('/images/tiles/Desert.png'); }
+    &.S .background { background-image: url('/images/tiles/Sea.png'); opacity: .55; }
+
+    /* Flat-top hexagon of water behind the sea chip, so "erase" reads as a tile, not a blank */
+    .sea-hexagon {
+        position: absolute;
+        left: 0;
+        top: 26%;
+        width: 100%;
+        height: 49%;
+        background-color: var(--water-color);
+
+        /* `left`/`top` are not optional: the chip is a centred button, so a static position
+           would put these in the middle of the line box and the hexagon would come out a star. */
+        &::before, &::after {
+            content: '';
             position: absolute;
-            width: 100%;
-            height: 100%;
             left: 0;
             top: 0;
-            background-size: cover;
+            width: 100%;
+            height: 100%;
+            background: inherit;
         }
 
-        &:not(.S) .background {
-            filter: drop-shadow(0px 0 1px #0009);
-        }
-
-        &.S .sea-hexagon {
-            background-color: var(--water-color);
-            width: calc(100% - 1px);
-            height: 49%;
-            position: absolute;
-            top: 26%;
-            /* border: 0.9px solid; border-top: none; border-bottom: none; */
-
-            &::before {
-                content: '';
-                background: inherit;
-                border: inherit;
-                position: absolute;
-                width: 100%;
-                height: 100%;
-                transform: rotate(60deg);
-            }
-
-            &::after {
-                content: '';
-                background: inherit;
-                border: inherit;
-                position: absolute;
-                width: 100%;
-                height: 100%;
-                transform: rotate(-60deg);
-            }
-        }
-    }
-
-    /* Beaches */
-
-    .beaches {
-        /* display: none; */
-        position: absolute;
-        transform: scale(0.623) translate(1px, 2px);
-    }
-
-    .beach {
-        width: 30px;
-        z-index: -1;
-        position: absolute;
-        background-repeat: no-repeat;
-        background-size: contain;
-        display: none;
-    }
-
-    .beach-1 {
-        height: 104px;
-    }
-
-    .beach-2 {
-        height: 102px;
-    }
-
-    .beach-3 {
-        height: 106px;
-    }
-
-    .beach-left {
-        top: 38px;
-        left: -1px;
-        width: 27px;
-    }
-
-    .beach-top_left {
-        top: -16px;
-        left: 29px;
-        transform: rotate(60deg);
-    }
-
-    .beach-top_right {
-        top: -17px;
-        left: 91px;
-        width: 28px;
-        transform: rotate(121deg);
-    }
-
-    .beach-right {
-        top: 31px;
-        left: 124px;
-        width: 26.5px;
-        transform: rotate(180deg);
-    }
-
-    .beach-bottom_right {
-        top: 88.5px;
-        left: 94px;
-        width: 26.5px;
-        transform: rotate(-120deg);
-    }
-
-    .beach-bottom_left {
-        top: 91px;
-        left: 31px;
-        width: 28px;
-        transform: rotate(-60deg);
-    }
-
-    &[data-land_left="true"] .beach-left {
-        display: block;
-    }
-
-    &[data-land_top_left="true"] .beach-top_left {
-        display: block;
-    }
-
-    &[data-land_top_right="true"] .beach-top_right {
-        display: block;
-    }
-
-    &[data-land_right="true"] .beach-right {
-        display: block;
-    }
-
-    &[data-land_bottom_right="true"] .beach-bottom_right {
-        display: block;
-    }
-
-    &[data-land_bottom_left="true"] .beach-bottom_left {
-        display: block;
-    }
-
-    > .title {
-        height: 100%;
-        display: none;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        opacity: 0.15;
-        font-size: 3em;
-
-        span {
-            font-size: .3em;
-        }
-    }
-
-    &[data-mode="start"] > .title {
-        display: flex;
-    }
-
-    > .select-tiles, > .select-number {
-        display: none;
-        justify-content: center;
-        align-items: center;
-        gap: 20px;
-        overflow: auto;
-        padding-top: 18px;
-        margin-top: -10px;
-
-        .tile-container, .number-container {
-            flex-shrink: 0;
-            cursor: pointer;
-
-            .tile.S .background {
-                opacity: 0.3;
-            }
-
-            &:hover .tile {
-                filter: drop-shadow(0px 5px 5px #0009);
-                top: -5px;
-            }
-
-            .tile-text {
-                text-align: center;
-                margin-top: 5px;
-                opacity: 0.5;
-            }
-        }
-    }
-
-    &[data-mode="tiles"] > .select-tiles {
-        display: flex;
-    }
-
-    > .select-number {
-        gap: 50px;
-
-        .number-slider-container {
-            position: relative;
-            max-width: 400px;
-            flex-grow: 1;
-            margin: 10px 20px 0;
-
-            .number-slider-line {
-                width: 100%;
-                height: 2px;
-                position: absolute;
-                background: var(--sand-color-text-dark);
-                top: 10px;
-
-                div {
-                    background: inherit;
-                    position: absolute;
-                    top: -4px;
-                    margin-left: -5px;
-                    width: 10px;
-                    height: 10px;
-                    border-radius: 10px;
-                }
-            }
-
-            .number-slider-thumb {
-                position: absolute;
-                width: 34px;
-                height: 34px;
-                top: -8px;
-                line-height: 32px;
-                margin-left: -19px;
-                text-align: center;
-                background: var(--sand-color-text-dark);
-                color: var(--sand-color);
-                border: 2px solid var(--sand-color);
-                border-radius: 50px;
-                left: 44.44%;
-                transition: all .05s ease-in;
-
-                &::before {
-                    content: attr(data-num);
-                }
-
-                &:has(+ .number-slider-input:hover) {
-                    box-shadow: 0 0 6px 0 var(--sand-color-text-dark);
-                }
-            }
-
-            .number-slider-input {
-                opacity: 0;
-                width: 100%;
-                cursor: pointer;
-            }
-
-            .probability-text {
-                margin-top: 20px;
-                text-align: center;
-                font-family: var(--font-mono), sans-serif;
-                opacity: 0.3;
-
-                span {
-                    display: none;
-                }
-            }
-
-            .number-slider-thumb[data-num="2"] ~ .probability-text span[data-p-num="2"],
-            .number-slider-thumb[data-num="3"] ~ .probability-text span[data-p-num="3"],
-            .number-slider-thumb[data-num="4"] ~ .probability-text span[data-p-num="4"],
-            .number-slider-thumb[data-num="5"] ~ .probability-text span[data-p-num="5"],
-            .number-slider-thumb[data-num="6"] ~ .probability-text span[data-p-num="6"],
-            .number-slider-thumb[data-num="8"] ~ .probability-text span[data-p-num="8"],
-            .number-slider-thumb[data-num="9"] ~ .probability-text span[data-p-num="9"],
-            .number-slider-thumb[data-num="10"] ~ .probability-text span[data-p-num="10"],
-            .number-slider-thumb[data-num="11"] ~ .probability-text span[data-p-num="11"],
-            .number-slider-thumb[data-num="12"] ~ .probability-text span[data-p-num="12"] {
-                display: inline;
-            }
-        }
-
-        .number {
-            z-index: 3;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            position: absolute;
-            left: 22px;
-            top: 30px;
-            /* opacity: 0.8; */
-            box-shadow: 3px 3px 5px -1px #000,
-            5px 5px 4px -1px #fffa inset,
-            -8px -8px 8px -6px #000a inset;
-            background-color: var(--sand-color);
-            transform: scale(0.9);
-
-            &::before {
-                display: block;
-                content: attr(data-num) "\a " attr(data-dots);
-                font-family: var(--font-main), sans-serif;
-                font-weight: bold;
-                white-space: pre;
-                text-align: center;
-                font-size: 1.5625rem;
-                /* letter-spacing: 1px; */
-                line-height: 10px;
-                position: relative;
-                top: 15px;
-            }
-
-            &:is([data-num="6"], [data-num="8"])::before {
-                color: #d21c0e;
-            }
-        }
-    }
-
-    &[data-mode="number"] > .select-number {
-        display: flex;
-    }
-
-    > .select-trade {
-        display: none;
-        justify-content: center;
-        gap: 15px;
-        margin-top: 10px;
-
-        .trade-container {
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex: 0 0 100px;
-
-            &:first-child {
-                margin-left: 1px;
-            }
-
-            .trade-type {
-                aspect-ratio: 5 / 6;
-                height: 80px;
-                position: relative;
-
-                &::before {
-                    content: '';
-                    position: absolute;
-                    left: 0;
-                    top: 0;
-                    width: 100%;
-                    height: 100%;
-                    background-size: contain;
-                    background-repeat: no-repeat;
-                }
-
-
-                &.B2::before {
-                    background-image: url(../images/trade/Brick.png);
-                }
-
-                &.L2::before {
-                    background-image: url(../images/trade/Lumber.png);
-                }
-
-                &.O2::before {
-                    background-image: url(../images/trade/Ore.png);
-                }
-
-                &.S2::before {
-                    background-image: url(../images/trade/Sheep.png);
-                }
-
-                &.W2::before {
-                    background-image: url(../images/trade/Wheat.png);
-                }
-
-                &._3::before {
-                    background-image: url(../images/trade/*3.png);
-                }
-            }
-
-            &:hover .trade-type::before {
-                filter: drop-shadow(0px 5px 5px #000a);
-                top: -5px;
-            }
-
-            .trade-text {
-                text-align: center;
-                margin-top: 10px;
-                opacity: 0.5;
-            }
-
-            &:hover .tile {
-                filter: drop-shadow(0px 5px 5px #0009);
-                top: -5px;
-            }
-
-            .no-trade-text {
-                position: absolute;
-                color: color-mix(in srgb, var(--water-color) 70%, #000);
-                text-align: center;
-                width: 100%;
-                margin-top: 28px;
-            }
-        }
-    }
-
-    &[data-mode="trade"] > .select-trade {
-        display: flex;
-    }
-
-    /* @todo Please fkucing modularise this css. Copying and editing is ugly */
-
-    > .select-trade-direction {
-        display: none;
-        justify-content: center;
-        gap: 20px;
-
-        .trade-direction-container {
-            cursor: pointer;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            flex: 0 0 130px;
-
-            &:first-child {
-                margin-left: 1px;
-            }
-
-            .tile {
-                /* Trade Piece */
-
-                &.S[data-trade]::after {
-                    content: '';
-                    background-size: contain;
-                    position: absolute;
-                    width: 65px;
-                    height: 77px;
-                    filter: drop-shadow(2px 2px 3px #000a);
-                }
-
-                &.S[data-trade-dir="bottom_right"]::after {
-                    transform: scale(0.623) translate(11px, 20px);
-                }
-
-                &.S[data-trade-dir="bottom_left"]::after {
-                    transform: scale(0.623) translate(34px, 18px);
-                }
-
-                &.S[data-trade-dir="top_right"]::after {
-                    transform: scale(0.623) translate(26px, 32px);
-                }
-
-                &.S[data-trade-dir="top_left"]::after {
-                    transform: scale(0.623) translate(30px, 27px);
-                }
-
-                &.S[data-trade-dir="right"]::after {
-                    transform: scale(0.623) translate(10px, 23px);
-                }
-
-                &.S[data-trade-dir="left"]::after {
-                    transform: scale(0.623) translate(35px, 21px);
-                }
-
-                /* Trade Dock */
-
-                .trade-post {
-                    width: 34px;
-                    height: 44px;
-                    background-size: contain;
-                    /* transform: rotate(180deg) translate(0px, 20px); */
-                    z-index: 1;
-                    position: absolute;
-
-                    &.p-top {
-                        top: -15px;
-                        left: 60px;
-                        transform: scale(0.623) translate(-46px, 17px);
-                    }
-
-                    &.p-top_left {
-                        top: 30px;
-                        left: -15px;
-                        transform: scale(0.623) rotate(-60deg) translate(32px, 5px);
-                    }
-
-                    &.p-top_right {
-                        top: 20px;
-                        left: 68px;
-                        transform: scale(0.623) rotate(60deg) translate(-10px, 3px);
-                    }
-
-                    &.p-bottom {
-                        top: 82px;
-                        left: 33px;
-                        transform: scale(0.623) rotate(180deg) translate(3px, 15px);
-                    }
-
-                    &.p-bottom_left {
-                        top: 59px;
-                        left: -6px;
-                        transform: scale(0.623) rotate(-120deg) translate(7px, 11px);
-                    }
-
-                    &.p-bottom_right {
-                        top: 61px;
-                        left: 68px;
-                        transform: scale(0.623) rotate(120deg) translate(-5px, 13px);
-                    }
-                }
-            }
-
-            &:hover .tile.S[data-trade-dir="bottom_right"] .beaches .beach-bottom_right, &:hover .tile.S[data-trade-dir="bottom_left"] .beaches .beach-bottom_left, &:hover .tile.S[data-trade-dir="top_right"] .beaches .beach-top_right, &:hover .tile.S[data-trade-dir="top_left"] .beaches .beach-top_left, &:hover .tile.S[data-trade-dir="right"] .beaches .beach-right, &:hover .tile.S[data-trade-dir="left"] .beaches .beach-left, &:hover .tile.S .trade-post {
-                filter: saturate(1) brightness(0.9) contrast(2);
-                /* transition: all .125s ease-in-out; */
-                /* animation: beach-blink var(--t-slow) infinite alternate ease-in-out; */
-            }
-
-            &:hover .tile {
-                filter: drop-shadow(0px 5px 5px #0009);
-                top: -5px;
-            }
-        }
-
-        .trade-dir-text {
-            text-align: center;
-            margin-top: 10px;
-            opacity: 0.5;
-            text-transform: capitalize;
-        }
-    }
-
-    &[data-mode="trade-direction"] > .select-trade-direction {
-        display: flex;
-    }
-
-
-    &[data-land_left="true"] > .select-trade-direction .trade-direction-container[data-trade-dir="left"] {
-        display: flex;
-    }
-
-    &[data-land_top_left="true"] > .select-trade-direction .trade-direction-container[data-trade-dir="top_left"] {
-        display: flex;
-    }
-
-    &[data-land_top_right="true"] > .select-trade-direction .trade-direction-container[data-trade-dir="top_right"] {
-        display: flex;
-    }
-
-    &[data-land_right="true"] > .select-trade-direction .trade-direction-container[data-trade-dir="right"] {
-        display: flex;
-    }
-
-    &[data-land_bottom_right="true"] > .select-trade-direction .trade-direction-container[data-trade-dir="bottom_right"] {
-        display: flex;
-    }
-
-    &[data-land_bottom_left="true"] > .select-trade-direction .trade-direction-container[data-trade-dir="bottom_left"] {
-        display: flex;
-    }
-
-    &[data-trade-type="B2"] .tile.S::after {
-        background-image: url(../images/trade/Brick.png);
-    }
-
-    &[data-trade-type="L2"] .tile.S::after {
-        background-image: url(../images/trade/Lumber.png);
-    }
-
-    &[data-trade-type="O2"] .tile.S::after {
-        background-image: url(../images/trade/Ore.png);
-    }
-
-    &[data-trade-type="S2"] .tile.S::after {
-        background-image: url(../images/trade/Sheep.png);
-    }
-
-    &[data-trade-type="W2"] .tile.S::after {
-        background-image: url(../images/trade/Wheat.png);
-    }
-
-    &[data-trade-type="*3"] .tile.S::after {
-        background-image: url(../images/trade/*3.png);
+        &::before { transform: rotate(60deg); }
+        &::after { transform: rotate(-60deg); }
     }
 }
 
+.port-mark {
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    width: 55%;
+    height: 55%;
+    transform: translate(-50%, -50%);
+    background: url(/images/trade/Dock.png) center / contain no-repeat;
+}
+
+
 /* --------------------------------------
- * SHUFFLER
+ * TOOL DOCK
  * -------------
 */
 
-#shuffler {
+.editor-dock {
+    position: fixed;
+    left: 0;
+    right: var(--rail-w);
+    bottom: 0;
+    z-index: var(--z-panel);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    box-sizing: border-box;
+    background: var(--editor-chrome-surface);
+    color: var(--editor-chrome-text);
+    border: 0;
+    border-top: 0.0625rem solid var(--editor-chrome-edge);
+}
+
+/*
+ * Both rows centre on the board, not on the left edge - the dock is a strip of tools under a map,
+ * and the map is in the middle. `safe center` so an overflowing strip still starts at its first
+ * item instead of scrolling in with the front cut off.
+ */
+.dock-row {
+    display: flex;
+    align-items: center;
+    justify-content: safe center;
+    gap: var(--space-3);
+}
+
+/*
+ * The numbers row carries a label and, sometimes, a problem count. Three columns with matching
+ * outer tracks keep the chips dead centre whether or not that count is showing, so they do not
+ * jump sideways every time an edit creates or clears a problem.
+ */
+@media screen and (min-width: 481px) {
+    .dock-row--numbers {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    }
+
+    /* Placed by hand: auto-placement would drop the strip into the left track the moment the
+       row has nothing to its left. */
+    .dock-row--numbers .number-strip {
+        grid-column: 2;
+    }
+
+    .dock-row--numbers .dock-issues {
+        grid-column: 3;
+        justify-self: start;
+        white-space: nowrap;
+    }
+}
+
+/*
+ * The shared touch minimum, at every width rather than only below the breakpoint: the dock and
+ * the rail are thumb targets on a phone held sideways too, and that is over 768px wide.
+ */
+.editor-dock button, .editor-rail button, .port-edge {
+    min-width: 44px;
+    min-height: 44px;
+}
+
+.brush-strip, .number-strip {
+    display: flex;
+    align-items: flex-end;
+    justify-content: safe center;
+    gap: var(--space-1);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    flex: 0 1 auto;
+    min-width: 0;
+    padding-bottom: var(--space-1);
+}
+
+.brush {
+    flex-direction: column;
+    gap: var(--space-1);
+    flex-shrink: 0;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-md);
+    font-family: var(--font-body), sans-serif;
+    font-weight: normal;
+    font-size: var(--text-sm);
+
+    &:hover {
+        text-decoration: none;
+        background: #fff2;
+    }
+
+    &.active {
+        background: var(--surface-sand);
+        color: var(--surface-ink);
+    }
+
+    .brush-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--editor-chip);
+        height: calc(var(--editor-chip) * 1.164);
+        font-size: var(--text-xl);
+    }
+
+    .brush-label {
+        white-space: nowrap;
+    }
+}
+
+.num-chip {
+    flex-shrink: 0;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-body), sans-serif;
+
+    &:hover {
+        text-decoration: none;
+        background: #fff2;
+    }
+
+    &.active {
+        background: var(--surface-sand);
+        color: var(--surface-ink);
+        font-weight: bold;
+    }
+}
+
+/*
+ * A number chip is the token it paints, so the selection is carried by the piece itself: the ones
+ * not in hand are set back, and the one in hand is the only token at full strength. A ring or a
+ * fill would either vanish against the sand or turn the token into something it is not.
+ */
+.num-chip--token {
+    padding: var(--space-1);
+
+    .token {
+        opacity: .45;
+        transition: opacity var(--t-fast) linear;
+    }
+
+    &:hover {
+        background: none;
+
+        .token {
+            opacity: .75;
+        }
+    }
+
+    &.active {
+        background: none;
+
+        .token {
+            opacity: 1;
+        }
+    }
+}
+
+/*
+ * Undo and redo float over the board, clear of the dock. They belong to what you just did on the
+ * map rather than to the tools, and off the dock they keep the same place whether the dock is one
+ * row or three. Left-hand side, where the rail never reaches; `--chrome-bottom` is the stacked
+ * bottom chrome, measured.
+ */
+.editor-float {
+    position: fixed;
+    left: var(--space-3);
+    bottom: calc(var(--chrome-bottom, 0px) + var(--space-3));
+    z-index: var(--z-hud);
+    display: flex;
+    gap: var(--space-2);
+}
+
+/* An ink disc over the water, the same object as the options button in the opposite corner */
+.icon-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border-radius: 50%;
+    border-color: #fff3;
+    background: color-mix(in srgb, var(--surface-ink) 78%, transparent);
+    color: var(--surface-sand);
+    box-shadow: var(--shadow-1);
+
+    &:hover {
+        text-decoration: none;
+        background: var(--surface-ink);
+        border-color: #fff9;
+    }
+
+    /* The shared disabled fill is for a solid button; these keep their shape and fade instead,
+       so a pair stays a pair when only one of them can be used. */
+    &:disabled {
+        background: color-mix(in srgb, var(--surface-ink) 78%, transparent);
+        border-color: #fff2;
+        color: var(--surface-sand);
+        opacity: .5;
+    }
+}
+
+.dock-issues {
+    flex-shrink: 0;
+    color: var(--trade-negative);
+    font-family: var(--font-body), sans-serif;
+
+    &:hover {
+        text-decoration: none;
+    }
+}
+
+
+/* --------------------------------------
+ * TOOL RAIL
+ * -------------
+*/
+
+.editor-rail {
     position: fixed;
     right: 0;
     top: 0;
     height: 100%;
-    padding: 10px 30px 30px;
+    z-index: var(--z-panel);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-2);
     box-sizing: border-box;
+    background: var(--editor-chrome-surface);
+    color: var(--editor-chrome-text);
+    border-left: 0.0625rem solid var(--editor-chrome-edge);
+}
+
+.rail-btn {
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-2);
+    border-radius: var(--radius-md);
+    font-family: var(--font-body), sans-serif;
+    font-weight: normal;
+    font-size: var(--text-xs);
+
+    &:hover {
+        text-decoration: none;
+        background: #fff2;
+    }
+
+    &[aria-expanded="true"] {
+        background: var(--surface-sand);
+        color: var(--surface-ink);
+    }
+
+    .rail-icon {
+        font-size: var(--text-lg);
+        line-height: 1.2;
+    }
+
+    .rail-text {
+        white-space: nowrap;
+    }
+
+    &.copied .rail-text::after {
+        content: ' ✓';
+    }
+}
+
+
+/* --------------------------------------
+ * POPOVERS
+ * -------------
+*/
+
+.editor-popover {
+    position: fixed;
+    right: calc(var(--rail-w) + var(--space-2));
+    top: var(--space-4);
+    z-index: var(--z-panel);
+    width: 20rem;
+    max-width: calc(100vw - var(--rail-w) - var(--space-4));
+    max-height: calc(100vh - var(--dock-h) - var(--space-6));
     overflow: auto;
-    background: var(--sand-color);
-    color: #333;
-    z-index: 1;
-    filter: drop-shadow(0px 0 30px #000);
+    box-sizing: border-box;
+}
 
-    .title {
-        font-size: 1.2em;
-        margin-bottom: 10px;
-        opacity: 0.5;
+.popover-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+    border-bottom: 0.0625rem solid var(--sand-color-dark);
+
+    h2 {
+        margin: 0;
+        font-family: var(--font-heading), serif;
+        font-size: var(--text-lg);
+    }
+}
+
+.popover-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+}
+
+.popover-note {
+    margin: 0;
+    font-size: var(--text-sm);
+    opacity: .8;
+}
+
+.popover-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.popover-hint {
+    margin: 0;
+    font-size: var(--text-sm);
+    opacity: .65;
+}
+
+.popover-actions--end {
+    justify-content: flex-end;
+    align-items: center;
+}
+
+/* A hairline and a heading where a popover carries a second, lesser thing */
+.popover-split {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding-top: var(--space-3);
+    border-top: 0.0625rem solid var(--sand-color-dark);
+}
+
+/*
+ * Toggle chips instead of a stack of checkboxes. Three options of one kind read as one control
+ * on one line, and the heading above them carries the verb once instead of three times.
+ */
+.chip-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+}
+
+/*
+ * The mark carries the state, not the pill. Off is a hollow ring on a flat chip; on is a filled
+ * tick on an ink pill. A pill alone reads as something you press to make something happen, which
+ * is the opposite of what a setting is.
+ */
+.opt-chip {
+    gap: var(--space-2);
+    /* The mark is the chip's left edge, near enough: a full text inset would float it in space */
+    padding-inline-start: var(--space-1);
+    border-radius: var(--radius-pill);
+    font-family: var(--font-body), sans-serif;
+    border-color: transparent;
+    background: none;
+    color: color-mix(in srgb, var(--surface-sand-text) 75%, transparent);
+
+    &:hover {
+        text-decoration: none;
+        background: #fff6;
+        color: var(--surface-sand-text);
+
+        .chip-mark {
+            border-color: var(--surface-sand-text);
+        }
     }
 
-    label {
-        display: block;
-        cursor: pointer;
-        margin: 10px 0;
+    &[aria-pressed="true"] {
+        background: var(--surface-ink);
+        color: var(--surface-sand);
+        border-color: var(--surface-ink);
 
-        &:has(input:not(:checked)) {
-            opacity: 0.5;
-        }
-
-        &:hover {
-            opacity: 1 !important;
-            color: var(--sand-color-text-dark);
-        }
-    }
-
-    .button {
-        &.shuffle {
-            margin: 20px 0 15px;
-            display: block;
-            font-family: var(--font-main), sans-serif;
-        }
-
-        &.balance-numbers, &.balance-resources {
-            margin: 10px 0;
-            display: block;
-            font-family: var(--font-main), sans-serif;
-        }
-
-        &.reset {
-            margin-bottom: 10px;
-        }
-
-        &.play {
-            margin: 1em 0;
-        }
-
-        /* &.reset { margin-left: 10px; margin-bottom: 20px; } */
-
-        &.copy {
-            margin-bottom: 10px;
+        .chip-mark {
+            background: var(--surface-sand);
+            border-color: var(--surface-sand);
 
             &::before {
-                content: 'Copy URL';
-            }
-
-            &.copied {
-                transition: none;
-                cursor: not-allowed;
-                opacity: 0.5;
-                color: #333;
-
-                &::before {
-                    content: 'Copied…';
-                }
+                content: '';
+                display: block;
+                width: 100%;
+                height: 100%;
+                background: var(--surface-ink);
+                mask: var(--icon-check) center / 70% no-repeat;
             }
         }
+    }
+}
 
-        &.render {
-            margin: 20px 10px 0 0;
+.chip-mark {
+    flex-shrink: 0;
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 50%;
+    border: 0.09375rem solid currentColor;
+    text-align: center;
+}
+
+/* A button that is a whole row: what it does, and what that means, on two lines */
+.action-row {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: var(--space-3);
+    border: 0.0625rem solid var(--sand-color-dark);
+    border-radius: var(--radius-md);
+    background: #fff4;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    transition: background-color var(--t-fast) linear;
+
+    b {
+        display: block;
+        font-family: var(--font-heading), serif;
+        font-size: var(--text-md);
+    }
+
+    span {
+        display: block;
+        margin-top: 0.125rem;
+        font-size: var(--text-sm);
+        opacity: .7;
+    }
+
+    &:hover {
+        background: #fff9;
+    }
+
+    &:focus-visible {
+        outline: 0.125rem solid var(--surface-ink);
+        outline-offset: 0.125rem;
+    }
+}
+
+:is(.editor-popover, .editor-modal) {
+    h3 {
+        margin: 0;
+        font-family: var(--font-heading), serif;
+        font-size: var(--text-md);
+    }
+
+    .field {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-3);
+    }
+
+    .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .select {
+        font: inherit;
+        /* One width for both, whatever the longest option says */
+        width: 9rem;
+        padding: var(--space-1) var(--space-2);
+        border-radius: var(--radius-sm);
+        border: 0.0625rem solid var(--sand-color-dark);
+        background: #fff6;
+        color: inherit;
+
+        &:focus-visible {
+            outline: 0.125rem solid var(--surface-ink);
+            outline-offset: 0.125rem;
         }
     }
 
-    .edit-section {
-        padding: 10px 0;
-
-        input {
-            display: none;
-        }
-
-        > .button {
-            display: none;
-        }
-
-        input:not(:checked) ~ .open-edit-text {
-            display: block;
-        }
-
-        input:checked ~ .close-edit-text {
-            display: block;
-        }
-
-        /* override */
-
-        &:has(input:not(:checked)) {
-            opacity: 1;
-        }
+    textarea {
+        font-family: var(--font-mono), monospace;
+        font-size: var(--text-sm);
+        width: 100%;
+        box-sizing: border-box;
+        border-radius: var(--radius-sm);
+        border: 0.0625rem solid var(--sand-color-dark);
+        background: #fff6;
+        color: inherit;
+        padding: var(--space-2);
+        resize: vertical;
     }
 
-    .mapkey-section {
-        textarea {
-            font-size: .85em;
-            width: 100%;
-            min-height: 115px;
-        }
+    .mapkey-error, .seat-note.warn {
+        color: color-mix(in srgb, var(--trade-negative) 70%, #000);
+        font-size: var(--text-sm);
+        margin: 0;
     }
 
-    .info-section {
-        .info-title {
-            font-weight: bold;
-            margin-top: 10px;
-            margin-bottom: 5px;
-        }
+    .seat-note {
+        margin: 0;
+        margin-top: calc(var(--space-2) * -1);
+        font-size: var(--text-sm);
+        opacity: .85;
+    }
+}
 
-        .info-item {
-            margin-left: 10px;
-            margin-bottom: 3px;
-        }
 
-        #resource-info, #number-info {
-            margin-bottom: 15px;
-        }
+/* --------------------------------------
+ * GAME SETUP MODAL
+ * -------------
+ * The only surface here that takes the screen. Everything else edits the map in place; this one
+ * is about leaving it, so it stops the map and asks.
+*/
+
+.editor-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+    background: var(--overlay-bg);
+}
+
+.editor-modal {
+    width: 22rem;
+    max-width: 100%;
+    max-height: calc(100vh - var(--space-6));
+    overflow: auto;
+    box-sizing: border-box;
+}
+
+
+/* --------------------------------------
+ * MAP INFO
+ * -------------
+ * The map read back: what it seats, what it grows, and the shape of its dice numbers. The dice
+ * strip is the one loud thing in the panel - a fair map is a bell curve, and a row of the game's
+ * own number tokens says that at a glance.
+*/
+
+.info-facts {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-1) var(--space-4);
+    margin: 0;
+    font-size: var(--text-sm);
+
+    dt {
+        opacity: .6;
+    }
+
+    dd {
+        margin: 0;
+        font-weight: bold;
+    }
+}
+
+.info-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding-top: var(--space-2);
+    border-top: 0.0625rem solid color-mix(in srgb, var(--sand-color-dark) 50%, transparent);
+}
+
+.info-problems {
+    padding: var(--space-2) var(--space-3);
+    border-left: 0.1875rem solid var(--trade-negative);
+    background: color-mix(in srgb, var(--trade-negative) 12%, transparent);
+    font-size: var(--text-sm);
+
+    h3 {
+        color: color-mix(in srgb, var(--trade-negative) 70%, #000);
+    }
+
+    ul {
+        margin: var(--space-1) 0 0;
+        padding-left: var(--space-4);
+    }
+}
+
+.res-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.res-row {
+    display: grid;
+    grid-template-columns: 6.5rem 1fr 1.5rem;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+}
+
+.res-name {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    white-space: nowrap;
+}
+
+.res-icon {
+    width: 1.125rem;
+    text-align: center;
+}
+
+/* The bar carries the terrain's own colour, so the list reads the way the board does */
+.res-bar {
+    height: 0.625rem;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--sand-color-dark) 30%, transparent);
+
+    &::before {
+        content: '';
+        display: block;
+        width: var(--fill);
+        height: 100%;
+        border-radius: inherit;
+        background: var(--hue);
+    }
+}
+
+.res-count {
+    text-align: right;
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+}
+
+/*
+ * A bar per number, standing on the board's own token as its label. The token is the board's
+ * `.number` rule at a smaller size, not a lookalike: every measurement is that design divided by
+ * its 50px and written in `em`, so one `font-size` resizes the whole piece - disc, numeral and
+ * pips - in proportion, and it carries no bevel because the board's does not.
+ *
+ * That size is capped against the strip's own width, so ten columns never collide, and the whole
+ * strip sits in a recessed well: a sand token needs a ground the way it has a tile on the board.
+ */
+.dice-strip {
+    container-type: inline-size;
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    align-items: end;
+    justify-items: center;
+    padding: var(--space-2) var(--space-1);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--sand-color-dark) 45%, transparent);
+}
+
+.dice-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.125rem;
+
+    /* A number nothing carries still holds its place in the row, greyed back */
+    &.empty {
+        opacity: .5;
+    }
+}
+
+.dice-count {
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    min-height: 1em;
+    color: var(--surface-sand-text);
+}
+
+.dice-token, .dice-bar {
+    font-size: min(1.5rem, 8.6cqw);
+}
+
+/* The red numbers keep their colour all the way up the bar */
+.dice-col:has(.token.red) .dice-bar::before {
+    background: #d21c0e;
+}
+
+/* Narrow enough to read as a measure against the token, not as a plinth holding it up */
+.dice-bar {
+    width: 0.5em;
+    height: 1.7em;
+    border-radius: 0.25em 0.25em 0 0;
+    /* A faint guide to measure against, not a channel the bar slides in */
+    background: color-mix(in srgb, var(--sand-color-dark) 22%, transparent);
+    display: flex;
+    align-items: flex-end;
+
+    &::before {
+        content: '';
+        display: block;
+        width: 100%;
+        height: var(--fill);
+        border-radius: inherit;
+        background: color-mix(in srgb, var(--surface-ink) 75%, transparent);
+    }
+}
+
+
+
+
+/* --------------------------------------
+ * PORT POPOVER
+ * -------------
+*/
+
+.port-types {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-1);
+}
+
+.port-type {
+    justify-content: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body), sans-serif;
+    font-weight: normal;
+    font-size: var(--text-sm);
+
+    &:hover {
+        text-decoration: none;
+        background: #fff6;
+    }
+
+    &.active {
+        background: var(--surface-ink);
+        color: var(--surface-sand);
+    }
+
+    .trade-type {
+        flex-shrink: 0;
+        width: 1.5rem;
+        height: 1.8rem;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+
+    .trade-type.S2 { background-image: url(/images/trade/Sheep.png); }
+    .trade-type.L2 { background-image: url(/images/trade/Lumber.png); }
+    .trade-type.B2 { background-image: url(/images/trade/Brick.png); }
+    .trade-type.O2 { background-image: url(/images/trade/Ore.png); }
+    .trade-type.W2 { background-image: url(/images/trade/Wheat.png); }
+    .trade-type._3 { background-image: url('/images/trade/*3.png'); }
+}
+
+/*
+ * The direction is picked on the tile itself: the six edges of the real hexagon, each its own
+ * target. They are sized from the touch minimum outwards and the hexagon is grown to fit them,
+ * never the other way round.
+ */
+.port-dial {
+    position: relative;
+    align-self: center;
+    padding: 2.75rem;
+
+    .editor-tile {
+        --editor-chip: 9rem;
+    }
+
+    .editor-tile:not([data-trade=""])::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 46%;
+        width: 55%;
+        height: 65%;
+        transform: translate(-50%, -50%);
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        filter: drop-shadow(2px 2px 3px #000a);
+    }
+
+    .editor-tile[data-trade="S"]::after { background-image: url(/images/trade/Sheep.png); }
+    .editor-tile[data-trade="L"]::after { background-image: url(/images/trade/Lumber.png); }
+    .editor-tile[data-trade="B"]::after { background-image: url(/images/trade/Brick.png); }
+    .editor-tile[data-trade="O"]::after { background-image: url(/images/trade/Ore.png); }
+    .editor-tile[data-trade="W"]::after { background-image: url(/images/trade/Wheat.png); }
+    .editor-tile[data-trade="*"]::after { background-image: url('/images/trade/*3.png'); }
+}
+
+.port-edge {
+    position: absolute;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    border: 0.125rem solid var(--sand-color-dark);
+    background: var(--surface-sand);
+    color: var(--surface-sand-text);
+    cursor: pointer;
+    z-index: 2;
+
+    /* The label is for a screen reader; the target itself shows the dock that would be built. */
+    .port-edge-label {
+        display: block;
+        font-size: 0;
+        width: 100%;
+        height: 100%;
+        background: url(/images/trade/Dock.png) center / 65% no-repeat;
+        opacity: .55;
+    }
+
+    &:hover .port-edge-label, &.active .port-edge-label {
+        opacity: 1;
+    }
+
+    &:hover {
+        background: #fff;
+    }
+
+    &.active {
+        background: var(--surface-ink);
+        border-color: var(--surface-sand);
+    }
+
+    &:focus-visible {
+        outline: 0.125rem solid var(--surface-ink);
+        outline-offset: 0.125rem;
+    }
+
+    /*
+     * Centred on the six edge midpoints of a pointy-top hexagon: the sides are at 25% and 75% of
+     * the width and 12.5% and 87.5% of the height, the left and right edges at the half-height.
+     * Written against the hexagon's own box, so the targets keep their size - they are sized from
+     * the touch minimum, and the dial's padding is what grows to fit them.
+     */
+    &[data-edge="top_left"] { left: calc(25% - 1.375rem); top: calc(12.5% - 1.375rem); }
+    &[data-edge="top_right"] { right: calc(25% - 1.375rem); top: calc(12.5% - 1.375rem); }
+    &[data-edge="right"] { right: -1.375rem; top: calc(50% - 1.375rem); }
+    &[data-edge="bottom_right"] { right: calc(25% - 1.375rem); bottom: calc(12.5% - 1.375rem); }
+    &[data-edge="bottom_left"] { left: calc(25% - 1.375rem); bottom: calc(12.5% - 1.375rem); }
+    &[data-edge="left"] { left: -1.375rem; top: calc(50% - 1.375rem); }
+}
+
+
+/* --------------------------------------
+ * PHONES & SHORT VIEWPORTS
+ * -------------
+*/
+
+@media screen and (max-width: 768px) {
+    :root {
+        --editor-chip: 2.5rem;
+    }
+
+    /* The rail folds into a strip above the dock: same buttons, icons only, within thumb reach */
+    .editor-rail {
+        top: auto;
+        bottom: var(--dock-h);
+        left: 0;
+        right: 0;
+        height: auto;
+        flex-direction: row;
+        justify-content: flex-start;
+        overflow-x: auto;
+        gap: var(--space-1);
+        padding: var(--space-1) var(--space-2);
+        border-left: 0;
+        border-top: 0.0625rem solid var(--editor-chrome-edge);
+    }
+
+    /* Stacked on the rail, so the line between them is the rail's own top edge */
+    .editor-dock {
+        border-top: 0;
+    }
+
+    .editor-dock {
+        right: 0;
+    }
+
+    .rail-btn .rail-text {
+        font-size: var(--text-xs);
+    }
+
+    /* Play and undo get their own line: on a phone they would otherwise squeeze the brushes out */
+    .dock-row {
+        flex-wrap: wrap;
+        gap: var(--space-2);
+    }
+
+    .brush-strip {
+        flex-basis: 100%;
+    }
+
+    /* Popovers become bottom sheets, above both strips */
+    .editor-popover {
+        left: 0;
+        right: 0;
+        top: auto;
+        bottom: calc(var(--dock-h) + var(--rail-h));
+        width: auto;
+        max-width: none;
+        max-height: 60vh;
+        border-radius: var(--radius-md) var(--radius-md) 0 0;
+    }
+
+    .brush .brush-label {
+        display: none;
+    }
+
+    .dock-issues {
+        font-size: var(--text-xs);
+    }
+}
+
+/* Short and wide: the dock has to give the board back some height, so nothing wraps and the
+   labels go - two rows of targets, still at the full touch size. */
+@media screen and (max-height: 480px) {
+    .brush .brush-label, .rail-btn .rail-text {
+        display: none;
+    }
+
+    .editor-dock {
+        gap: var(--space-1);
+        padding: var(--space-1) var(--space-2);
+    }
+
+    .dock-row {
+        flex-wrap: nowrap;
+    }
+
+    .brush-strip {
+        flex-basis: auto;
+    }
+
+    .editor-popover {
+        max-height: calc(100vh - var(--dock-h) - var(--rail-h) - var(--space-4));
     }
 }
