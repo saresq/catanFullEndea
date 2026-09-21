@@ -138,6 +138,7 @@ test('full game flow', async t => {
     await until(() => game.state === ST.END, 'the game to end') // deferred by 200ms
     assert.equal(game.end_context.pid, winner.id)
     assert.equal(game.end_context.vps, game.config.win_points)
+    assert.deepEqual(game.end_context.dVps, Object.fromEntries(game.players.filter(Boolean).map(p => [p.id, p.private_vps])))
     clearTimeout(game.end_cleanup_timer) // otherwise it keeps the process alive for 240s
   })
 })

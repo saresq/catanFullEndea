@@ -788,8 +788,9 @@
         }
 
         /* The whole bar toggles the sheet, so the button never needs a box of its own: it keeps
-           the dock inside the height budget action-bar-dock set (27% / 30% / 32%). */
-        .history-toggle {
+           the dock inside the height budget action-bar-dock set (27% / 30% / 32%). "Results"
+           after the end is sized the same. */
+        .history-toggle, .show-end-game {
             flex: none;
             min-width: 0;
             min-height: 0;

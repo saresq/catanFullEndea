@@ -96,10 +96,43 @@
       }, after))
     },
 
-    /** End-game modal (`alert.css .game-ended.pcN`). `game.js` defers it 3s; await the promise. */
+    /**
+     * End-game modal (`alert.css .game-ended.pcN`). `game.js` defers it 3s; await the promise.
+     * `dVps` gives every third player a VP card, so the VP card column is not all zeros. The report
+     * reads a cell's VP from its first node: the main number, or "–" for none.
+     */
     end(pid = other, color_id = 5) {
-      game.updateGameEndSoc({ pid, color_id, vps: 10, S: 3, C: 2, dVp: 1, largest_army: 3, longest_road: 6 })
-      return new Promise(res => setTimeout(() => res(document.querySelector('.game-ended')?.className || 'no modal'), 3400))
+      const dVps = Object.fromEntries([self(), ...game.opponents].filter(Boolean).map((p, i) => [p.id, +(i % 3 === 0)]))
+      dVps[pid] = 1
+      game.updateGameEndSoc({ pid, color_id, vps: 10, S: 3, C: 2, dVp: 1, dVps, largest_army: 3, longest_road: 6 })
+      return new Promise(res => setTimeout(() => {
+        const $end = document.querySelector('.game-ended')
+        if (!$end) return res('no modal')
+        const $scroll = $end.querySelector('.end-overview')
+        const rows = $$('.game-ended .end-table tbody tr')
+        const vp = $td => parseInt($td.firstChild?.textContent) || 0
+        const inView = $el => {
+          const r = $el?.getBoundingClientRect()
+          return !!r && r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight && r.right <= innerWidth
+        }
+        res({
+          viewport: `${innerWidth}x${innerHeight}`,
+          className: $end.className,
+          rows: rows.length,
+          firstIsWinner: !!rows[0]?.classList.contains('winner'),
+          // Cells: name, total, then the five parts
+          partsSum: rows.every(tr => { const [, total, ...parts] = tr.cells; return vp(total) === parts.reduce((s, td) => s + vp(td), 0) }),
+          tabs: !!document.querySelector('.end-tab'),
+          placeholder: /coming soon|\(WIP\)/i.test($end.textContent),
+          tableOverflowX: $scroll ? $scroll.scrollWidth > $scroll.clientWidth : null,
+          tableScrolls: $scroll ? $scroll.scrollHeight > $scroll.clientHeight : null,
+          pageOverflowX: document.documentElement.scrollWidth > innerWidth,
+          winnerInView: inView(rows[0]),
+          voteInView: inView($end.querySelector('.vote-rematch')),
+          timerInView: inView($end.querySelector('.rematch-timer')),
+          results: !!document.querySelector('#game .status-bar .show-end-game'),
+        })
+      }, 3400))
     },
 
     /**

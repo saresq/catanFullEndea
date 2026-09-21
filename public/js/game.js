@@ -327,7 +327,7 @@ export default class Game {
   #onGameEnd(context = this.end_context) {
     if (!context) return
     this.#ui.alert_ui.alertGameEnd(this.getPlayer(context.pid), context, this)
-    this.#ui.alert_ui.showEndGameButton(() => this.#ui.alert_ui.alertGameEnd(this.getPlayer(context.pid), context, this))
+    this.#ui.alert_ui.showEndGameButton()
     this.#audio_manager.playGameEnd()
     context.longest_road && this.#ui.board_ui.showLongestEdges(this.#player.longest_road_list)
     this.#setupRematchUI()
@@ -339,9 +339,6 @@ export default class Game {
     if ($btn) {
       $btn.addEventListener('click', () => {
         $btn.disabled = true
-        // Visually reflect disabled state similar to login btn-secondary
-        $btn.style.backgroundColor = '#344a2d'
-        $btn.style.cursor = 'not-allowed'
         $btn.textContent = 'Voted'
         this.#socket_manager.sendRematchVote()
       }, { once: true })
@@ -359,8 +356,6 @@ export default class Game {
         // Optionally disable button if still present
         if ($btn && !$btn.disabled) {
           $btn.disabled = true
-          $btn.style.backgroundColor = '#344a2d'
-          $btn.style.cursor = 'not-allowed'
           $btn.textContent = 'Time\'s Up'
         }
       }
@@ -377,7 +372,12 @@ export default class Game {
     const $status = document.querySelector('#game > .alert .rematch-status')
     if (!$status) return
     if (!nonVoterNames.length) { $status.innerHTML = ''; return }
-    const list = nonVoterNames.map(n => `<li>${n}</li>`).join('')
+    // Names are all the server sends; the players they belong to give the chip its colour.
+    const list = nonVoterNames.map(n => {
+      const p = [this.#player, ...this.opponents].find(_ => _.name === n)
+      if (p === this.#player) return '<li class="me">No votaste</li>'
+      return `<li${p ? ` class="pc${p.color_id || p.id}"` : ''}>${n}</li>`
+    }).join('')
     $status.innerHTML = `
       <div class="burritos">🫏</div>
       <div class="rematch-text">Estos burritos todavia no votaron:</div>
@@ -400,6 +400,9 @@ export default class Game {
   // SOC - Update Player Quit
   updatePlayerQuitSoc(pid) {
     this.#audio_manager.playPlayerQuit()
+    // The results table reads it to list the quitter last, as a reload would.
+    const quitter = this.getPlayer(pid)
+    if (quitter) quitter.removed = true
     this.#ui.alert_ui.alertPlayerQuit(this.getPlayer(pid), this.state === ST.INITIAL_SETUP)
     if (this.state === ST.INITIAL_SETUP) {
       [...Array(this.config.player_count).keys()].forEach(_ => {

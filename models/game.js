@@ -733,6 +733,7 @@ export default class Game {
         S: player.pieces.S.length,
         C: player.pieces.C.length,
         dVp: player.private_vps,
+        dVps: Object.fromEntries(this.players.filter(Boolean).map(p => [p.id, p.private_vps])),
         largest_army: player.largest_army && player.open_dev_cards.dK,
         longest_road: player.longest_road && player.longest_road_list.length,
       }

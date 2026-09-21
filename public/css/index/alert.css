@@ -72,237 +72,398 @@
         }
     }
 
+    /*
+     * Results. A flex column no taller than the free viewport (the alert's top offset and the
+     * panel's padding, twice): header and rematch block keep their height, the table scrolls.
+     */
     .game-ended {
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 5.5rem);
+        max-height: calc(100dvh - 5.5rem);
+
+        @media screen and (max-width: 768px) {
+            max-height: calc(100vh - 2.6rem);
+            max-height: calc(100dvh - 2.6rem);
+        }
+
+        > * {
+            flex: none;
+        }
+
         .title-emoji {
             font-size: 2.5em;
-            margin-bottom: 0.2em;
+            line-height: 1.2;
+            animation: trophy-drop var(--t-slow) ease-out both;
         }
 
         .player-name {
-            border-radius: 6.25rem;
+            border-radius: var(--radius-pill);
             width: fit-content;
-            margin: 0 auto 1.25rem;
-            padding: 0.75rem 2.2rem;
+            margin: 0 auto var(--space-4);
+            padding: var(--space-3) 2.2rem;
             font-size: 1.3em;
-            box-shadow: 0 0.25rem 0.6rem rgba(0, 0, 0, 0.2);
+            color: #fff;
+            /* Player colours. See the player theme table in constants.css. */
+            background-color: var(--p-color, var(--sand-color-text-dark));
+            box-shadow: var(--shadow-1);
         }
 
-        small {
-            display: flex;
-            flex-direction: row;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 1rem;
-            margin-bottom: 1.25rem;
-        }
-
-        .pts {
-            font-family: var(--font-body), sans-serif;
-            line-height: 1.2;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 0.6rem;
-            border-radius: 0.5rem;
-            width: 8.5rem;
-        }
-
-        .pts-icon {
-            width: 2.5rem;
-            height: 2.5rem;
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            margin-bottom: 0.2rem;
-        }
-
-        .S, .C, .dVp, .army, .road {
-            b {
-                position: relative;
-                margin-right: 0;
-                display: inline-block;
+        /* Landscape phones: every line counts, the table needs them more than the header */
+        @media screen and (orientation: landscape) and (max-height: 500px) {
+            .title-emoji {
+                font-size: 1.6em;
             }
-        }
-    }
 
-    .text .game-ended .player-name {
-        color: #fff;
-        /* Player colours. See the player theme table in constants.css. */
-        background-color: var(--p-color, var(--sand-color-text-dark));
-    }
-
-    .text .game-ended .S .pts-icon {
-        background-image: var(--p-settlement);
-    }
-
-    .text .game-ended .C .pts-icon {
-        background-image: var(--p-city);
-    }
-
-    /* The VP tile is a card: ui/card.css (.card--xs) */
-    .text .game-ended .dVp .card {
-        margin-bottom: 0.2rem;
-    }
-
-    .text .game-ended .army .pts-icon, .text .game-ended .road .pts-icon {
-        background: #daba6a url(/images/extra-vps-sprite.png) -1.9375rem -2.3125rem/9.75rem no-repeat;
-        width: 2.7rem;
-        height: 2.7rem;
-    }
-
-    .text .game-ended .road .pts-icon {
-        background-position-x: -6.4375rem;
-    }
-
-    .text .game-ended :is(.dVp, .army, .road) {
-        cursor: pointer;
-
-        .pts-icon, .card {
-            box-shadow: 0 0 0 1px #733f05;
-            border-radius: 0.2rem;
-        }
-
-        &:hover {
-            .pts-icon, .card {
-                box-shadow: 0 0 0 1px #733f05, 0 0 0.3rem 0 #000;
-            }
-        }
-    }
-
-    /* End Game Tabs */
-
-    .end-tabs {
-        margin-top: 1.25rem;
-        font-size: 0.8rem;
-
-        .end-tabs-header {
-            display: flex;
-            gap: 1.25rem;
-            justify-content: center;
-            border-bottom: 1px solid #ccc;
-        }
-
-        .end-tab {
-            font-family: var(--font-heading), serif;
-            font-size: var(--text-md);
-            padding: 0.6rem 0.9rem;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            margin-bottom: -1px;
-            transition: all 0.2s;
-
-            &:hover {
-                background: rgba(0, 0, 0, 0.05);
+            .player-name {
+                margin-bottom: var(--space-2);
+                padding: var(--space-1) var(--space-5);
+                font-size: 1.05em;
             }
         }
 
-        .end-tab.active {
-            border-bottom-color: var(--sand-color-dark);
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .end-tabs-content {
-            margin-top: 1rem;
-        }
-
-        .end-tab-content.hide {
-            display: none;
+        .end-overview {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
         }
     }
 
-    .end-overview {
-        overflow: auto;
-        margin-top: 0.6rem;
-        border-radius: 0.5rem;
-        background: rgba(255, 255, 255, 0.2);
-    }
-
+    /* One scoresheet for everybody; the winner's row is the one in colour. */
     .end-table {
         width: 100%;
         border-collapse: collapse;
         font-family: var(--font-body), sans-serif;
-        font-size: 0.9em;
+        font-size: var(--text-md);
+        font-weight: normal;
+        letter-spacing: 0;
+        line-height: 1.2;
+        font-variant-numeric: tabular-nums;
 
         th, td {
-            padding: 0.5rem 0.25rem;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            padding: var(--space-1) var(--space-2);
+            white-space: nowrap;
         }
 
-        th {
-            background: rgba(0, 0, 0, 0.05);
+        /* Stays put while the rows scroll under it */
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            vertical-align: bottom;
+            font-size: var(--text-xs);
+            background: var(--surface-sand);
+            border-bottom: 0.0625rem solid var(--sand-color-dark);
         }
 
-        .p-name {
+        th[data-type] {
+            cursor: pointer;
+
+            &:hover :is(.pts-icon, .card) {
+                box-shadow: 0 0 0 1px #733f05, 0 0 0.3rem 0 #000;
+            }
+        }
+
+        .label {
+            display: block;
+        }
+
+        .pts-icon {
+            width: 2.7em;
+            height: 2.7em;
+            margin: 0 auto var(--space-1);
+            font-size: 0.6rem;
+            background: center / contain no-repeat;
+        }
+
+        /* The scoreboard's own VP mark, a disc cut from the board art (all-players.css) */
+        .vp-icon {
+            width: 0.75em;
+            height: 0.75em;
+            margin: 0 auto var(--space-1);
+            font-size: 2.15rem;
+            border-radius: 50%;
+            box-shadow: 1px 1px 3px #000;
+            background: url(/images/catan-bg.png) -1em -0.45em / 2.75em;
+        }
+
+        .S .pts-icon {
+            background-image: var(--p-settlement);
+        }
+
+        .C .pts-icon {
+            background-image: var(--p-city);
+        }
+
+        :is(.army, .road) .pts-icon {
+            background: #daba6a url(/images/extra-vps-sprite.png) -1.9375em -2.3125em / 9.75em no-repeat;
+        }
+
+        .road .pts-icon {
+            background-position-x: -6.4375em;
+        }
+
+        /* The VP tile is a card: ui/card.css, shrunk to the icons' height */
+        .card {
+            --card-w: 1.15rem;
+            margin: 0 auto var(--space-1);
+        }
+
+        :is(.army, .road) .pts-icon, .card {
+            box-shadow: 0 0 0 1px #733f05;
+            border-radius: 0.2rem;
+        }
+
+        tbody td {
+            vertical-align: middle;
+            border-top: 0.0625rem solid color-mix(in srgb, var(--sand-color-dark) 30%, transparent);
+        }
+
+        /* The count under the VP it gives (2 cities under 4 VP) */
+        td small {
+            display: block;
+            font-size: var(--text-xs);
+            opacity: 0.7;
+        }
+
+        /* The name takes what the numbers leave, and truncates. The bar on its edge is the
+           player's colour marker, so the name drops the hexagon. */
+        .name {
+            width: 100%;
+            max-width: 0;
+            text-align: left;
+        }
+
+        td.name {
+            box-shadow: inset 0.1875rem 0 var(--p-color);
+
+            > div {
+                display: flex;
+                align-items: baseline;
+                gap: var(--space-1);
+            }
+
+            .p-name {
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                padding-left: 0;
+                font-weight: bold;
+
+                &::before {
+                    content: none;
+                }
+            }
+
+            small {
+                display: inline;
+                flex: none;
+                font-style: italic;
+            }
+        }
+
+        .total {
             font-weight: bold;
+
+            span {
+                display: inline-block;
+                min-width: 1.6em;
+            }
         }
 
-        tr:last-child td {
-            border-bottom: none;
+        .winner {
+            font-family: var(--font-display), serif;
+            font-size: var(--text-lg);
+            background: var(--p-color-light);
+
+            td {
+                padding-block: var(--space-2);
+            }
+
+            td.name {
+                box-shadow: inset 0.3rem 0 var(--p-color);
+            }
+
+            .p-name {
+                color: var(--p-color-dark);
+            }
+
+            .total span {
+                border-radius: var(--radius-pill);
+                color: #fff;
+                background: var(--p-color);
+            }
         }
 
-        @media screen and (max-width: 480px) {
-            font-size: 0.75em;
+        .left {
+            opacity: 0.5;
+        }
+
+        /* Phones: the icons carry the piece columns, the words stay for screen readers */
+        @media screen and (max-width: 768px), screen and (orientation: landscape) and (max-height: 500px) {
             th, td {
-                padding: 0.4rem 0.1rem;
+                padding-inline: var(--space-1);
+            }
+
+            /* Clear of the colour bar */
+            td.name {
+                padding-left: var(--space-3);
+            }
+
+            /* The numbers get room to breathe; the name takes what is left */
+            table-layout: fixed;
+
+            .name {
+                width: auto;
+            }
+
+            th:not(.name) {
+                width: 2.25rem;
+            }
+
+            th:not(.name) .label {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                overflow: hidden;
+                clip-path: inset(50%);
+            }
+        }
+
+        /* Landscape phones: the head and the winner's row fit above the rematch block */
+        @media screen and (orientation: landscape) and (max-height: 500px) {
+            .pts-icon {
+                font-size: 0.5rem;
+            }
+
+            .vp-icon {
+                font-size: 1.8rem;
+            }
+
+            .card {
+                --card-w: 0.95rem;
+            }
+
+            .winner td {
+                padding-block: var(--space-1);
             }
         }
     }
 
+    /*
+     * Rematch: the call to act on top (vote and time left), then who the table is waiting on,
+     * in a tray of its own so the names read as one group.
+     */
     .rematch-section {
-        margin-top: 1.25rem;
-        padding-top: 0.9rem;
-        border-top: 1px solid #ccc;
+        margin-top: var(--space-3);
+        padding-top: var(--space-3);
+        border-top: 0.0625rem solid var(--sand-color-dark);
+        font-family: var(--font-body), sans-serif;
+        font-weight: normal;
+        letter-spacing: 0;
 
         .rematch-vote-row {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 1rem;
+            gap: var(--space-4);
+        }
+
+        /* Cast or timed out: a settled state, not a dead control */
+        .vote-rematch:disabled {
+            background: none;
+            color: var(--surface-ink);
+            border-color: color-mix(in srgb, var(--surface-ink) 35%, transparent);
         }
 
         .rematch-timer {
-            font-family: var(--font-body), sans-serif;
-            font-size: 1.2rem;
-            color: #555;
+            font-size: var(--text-md);
+            color: var(--surface-sand-text);
+            font-variant-numeric: tabular-nums;
+
+            .time-left {
+                font-size: var(--text-xl);
+                font-weight: bold;
+                color: var(--surface-ink);
+            }
         }
 
         .rematch-status {
-            margin-top: 1.25rem;
-            font-size: 0.9em;
-            font-weight: normal;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            align-items: center;
+            column-gap: var(--space-3);
+            row-gap: var(--space-1);
+            margin-top: var(--space-3);
+            padding: var(--space-2) var(--space-3);
+            border-radius: var(--radius-md);
+            background: color-mix(in srgb, var(--sand-color-dark) 14%, transparent);
+            text-align: left;
+            line-height: 1.3;
+
+            &:empty {
+                display: none;
+            }
 
             .burritos {
-                font-size: 3rem;
+                grid-row: span 2;
+                font-size: 2.5rem;
                 line-height: 1;
             }
 
             .rematch-text {
-                font-size: 0.8rem;
-                margin-bottom: 0.5rem;
+                font-size: var(--text-sm);
+                font-style: italic;
+                color: var(--surface-sand-text);
             }
 
+            /* One chip per player, in their colour; your own is the loud one */
             .rematch-list {
                 display: flex;
                 flex-wrap: wrap;
-                justify-content: center;
-                gap: 0.5rem;
+                gap: var(--space-1);
                 margin: 0;
                 padding: 0;
                 list-style: none;
 
                 li {
+                    padding: 0.0625rem var(--space-2);
+                    border-radius: var(--radius-pill);
+                    font-size: var(--text-sm);
                     font-weight: bold;
-                    color: #734101;
+                    color: var(--surface-ink);
+                    background: var(--p-color-light, var(--sand-color));
                 }
 
-                li::before {
-                    content: '• ';
+                li.me {
+                    color: var(--surface-sand);
+                    background: var(--surface-ink);
+                }
+            }
+
+            @media screen and (orientation: landscape) and (max-height: 500px) {
+                margin-top: var(--space-2);
+                padding-block: var(--space-1);
+
+                .burritos {
+                    font-size: 2rem;
                 }
             }
         }
+    }
+}
+
+/* The one moment of motion: the trophy settles in when the results open. */
+@keyframes trophy-drop {
+    from {
+        opacity: 0;
+        transform: translateY(-0.4em) scale(0.6);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #game > .alert .game-ended .title-emoji {
+        animation: none;
     }
 }
 

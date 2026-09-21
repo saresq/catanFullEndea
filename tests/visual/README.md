@@ -60,7 +60,7 @@ returns the hook names and installs `window.VISUAL`; after that one hook per cal
 | `VISUAL.trade()` | an incoming trade offer; reports the row colour, how many offers are on screen and the list's share of the viewport height (the phone cap is 35%) |
 | `VISUAL.army()` | the Largest Army animation, parked on screen |
 | `VISUAL.road()` | the Longest Road animation, parked on screen |
-| `VISUAL.end()` | the end-game modal |
+| `VISUAL.end()` | the end-game modal, with a `dVps` map in its context; reports the row count, whether the first row is `.winner`, whether every row's parts add up to its total, any `.end-tab` or placeholder text, the table's sideways / inner scroll, page overflow, whether the winner row, `.vote-rematch` and `.rematch-timer` sit fully inside the viewport, and whether "Results" is on the status bar |
 | `VISUAL.colours()` | the scoreboard and the board pieces swept through all 11 colours |
 | `VISUAL.report()` | every resolved colour as JSON, for `diff` |
 | `VISUAL.cards()` | every visible `.card`: location, box, ratio (586/873 = 0.671) and resolved image |

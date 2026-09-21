@@ -319,31 +319,6 @@
     }
 }
 
-.status-history-icon-zone {
-    position: fixed;
-    top: 0;
-    right: var(--scoreboard-width);
-    display: flex;
-    flex-direction: column;
-    margin: 10px 10px 0 0;
-    z-index: var(--z-accessibility);
-    pointer-events: none;
-
-    > * {
-        pointer-events: auto;
-    }
-
-    .show-end-game {
-        background-color: #ffd70066;
-        color: gold;
-        border-color: gold;
-
-        &::before {
-            content: '🏆';
-        }
-    }
-}
-
 .hud-top {
     position: fixed;
     top: 0;
@@ -363,7 +338,7 @@
         flex-wrap: wrap;
     }
 
-    .accessibility-zone, .status-history-icon-zone {
+    .accessibility-zone {
         position: relative;
         top: auto;
         left: auto;
