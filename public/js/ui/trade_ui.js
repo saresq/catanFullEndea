@@ -2,208 +2,192 @@ import * as CONST from "../const.js"
 import { resToText } from "../const_messages.js";
 import { newObject } from "../utils.js";
 
+/**
+ * The trade drawer: one Players | Bank switch, a row of cards to give, a row to get, and the deal
+ * between them. Tap a card to stake it, tap the staked bundle in the deal to take it back - there
+ * is no separate decrease control. Bank mode picks the best rate the player owns per resource and
+ * sends one existing bank request per given resource.
+ */
 export default class TradeUI {
-  #giving_res; #taking_res; #trade_type; #counter_id; #max_trade_requests
-  #player; #onTradeProposal; #onTradeResponse; #toggleHandRes; #resetHand; #toggleBoardBlur
-  $submit; $giving_text; $taking_text;
-  $el = document.querySelector('#game > .trade-zone')
+  #giving_res; #taking_res; #mode = 'players'; #max_trade_requests
+  #player; #onTradeProposal; #onTradeResponse
+  $submit; $guide; $deal;
+  $el = document.querySelector('#game .current-player > .trade-zone')
   $requests = this.$el.querySelector('.trade-requests')
-  $type_selection = this.$el.querySelector('.trade-type-selection')
   $card_selection = this.$el.querySelector('.trade-card-selection')
 
-  constructor(player, max_trade_requests, { onTradeProposal, onTradeResponse,
-    toggleHandRes, resetHand, toggleBoardBlur }) {
+  constructor(player, max_trade_requests, { onTradeProposal, onTradeResponse }) {
     this.#player = player
     this.#max_trade_requests = max_trade_requests
     this.#onTradeProposal = onTradeProposal
     this.#onTradeResponse = onTradeResponse
-    this.#toggleHandRes = toggleHandRes
-    this.#resetHand = resetHand
-    this.#toggleBoardBlur = toggleBoardBlur
+    this.#giving_res = newObject(CONST.RESOURCES, 0)
+    this.#taking_res = newObject(CONST.RESOURCES, 0)
   }
 
-  /** Cards to give per card taken: 2 for a 2:1 port, 3/4 for *3/*4, 1 for a player trade */
-  #tradeRatio(type) {
-    if (type === '*3' || type === '*4') { return +type[1] }
-    if (CONST.TRADE_OFFERS[type] && type.endsWith('2')) { return 2 }
-    return 1
+  /** Cards to give per card taken: 1 between players, else the best port the player owns. */
+  #rate(res) {
+    if (this.#mode === 'players') { return 1 }
+    if (this.#player.trade_offers[res + '2']) { return 2 }
+    if (this.#player.trade_offers['*3']) { return 3 }
+    return 4
   }
 
   render() {
-    this.$type_selection.innerHTML = Object.entries(CONST.TRADE_OFFERS).map(([type, txt]) =>
-      `<button class="trade-type ${type.replace(/\*/, '_')}" data-type="${type}">${type == 'Px' ? txt : ''}</button>`
-    ).join('')
-    this.$type_selection.innerHTML += `<button class="cancel" title="Cancel (Esc)">x</button>`
+    // The row names are CSS `::before` content (trade.css), so a palette is exactly its five cards.
+    // Your own cards sit at the bottom, next to the hand in the dock they come from; what you want
+    // goes on top, and the deal between the two.
+    const cards = row => Object.keys(CONST.RESOURCES).map(res => `
+      <button class="card pick" data-type="${res}" data-row="${row}" title="${CONST.RESOURCES[res]}"
+        >${row === 'give' ? '<span class="count"></span><span class="rate"></span>' : ''}</button>`).join('')
     this.$card_selection.innerHTML = `
-      <div class="card-section">${Object.keys(CONST.RESOURCES).map(res => `
-        <div class="card-container">
-          <div class="card card--lg card--under card--top giving-card" data-count="0" data-type="${res}"></div>
-          <div class="card card--lg card--under card--bottom taking-card" data-count="0" data-type="${res}"></div>
-        </div>`).join('')}
+      <div class="head">
+        <button class="btn btn--sm mode" data-mode="players" aria-pressed="true">Players</button>
+        <button class="btn btn--sm mode" data-mode="bank" aria-pressed="false">Bank</button>
+        <button class="btn btn--quiet btn--sm close" title="Close (Esc)">✕</button>
       </div>
-      <div class="info-section">
-        <div class="giving-text"></div>
-        <div class="action-container">
-          <button class="reset" title="Reset">↺</button>
-          <button class="btn btn--primary btn--gated submit"></button>
-        </div>
-        <div class="taking-text"></div>
+      <div class="palette get"><div class="cards">${cards('get')}</div></div>
+      <div class="deal empty">
+        <div class="side give"></div>
+        <span class="pivot">for</span>
+        <div class="side get"></div>
+        <span class="hint">Tap cards to stake them. Tap them here to take them back.</span>
+      </div>
+      <div class="palette give"><div class="cards">${cards('give')}</div></div>
+      <div class="foot">
+        <span class="guide"></span>
+        <button class="btn btn--quiet btn--sm reset" type="button" title="Clear the trade" aria-label="Clear the trade"></button>
+        <button class="btn btn--primary submit" type="button"></button>
       </div>
     `
-    this.#setRefs()
+    this.$deal = this.$card_selection.querySelector('.deal')
+    this.$submit = this.$card_selection.querySelector('.foot .submit')
+    this.$guide = this.$card_selection.querySelector('.foot .guide')
     this.#setupEvents()
   }
 
-  #setRefs() {
-    this.$submit = this.$card_selection.querySelector('.info-section .submit')
-    this.$giving_text = this.$card_selection.querySelector('.info-section .giving-text')
-    this.$taking_text = this.$card_selection.querySelector('.info-section .taking-text')
+  /**
+   * One listener for the whole drawer. Every control that may not be pressed carries the native
+   * `disabled` attribute, which does not fire a click, so there is nothing to guard here.
+   */
+  #setupEvents() {
+    this.$card_selection.addEventListener('click', e => {
+      const $staked = e.target.closest('.pick, .chip')
+      if ($staked) {
+        const { type: res, row } = $staked.dataset
+        const step = row === 'give' ? this.#rate(res) : 1
+        const res_obj = row === 'give' ? this.#giving_res : this.#taking_res
+        res_obj[res] += $staked.classList.contains('pick') ? step : -step
+        return this.#update()
+      }
+      const $mode = e.target.closest('.head .mode')
+      if ($mode) { return this.#setMode($mode.dataset.mode) }
+      if (e.target.closest('.head .close')) { return this.clearSelections() }
+      if (e.target.closest('.foot .reset')) { return this.#setMode(this.#mode) }
+      if (e.target.closest('.foot .submit')) { return this.#submit() }
+    })
   }
 
-  #setupEvents() {
-    this.$type_selection.querySelector('.cancel').addEventListener('click', e => {
-      this.clearSelections()
+  #setMode(mode) {
+    this.#mode = mode
+    this.#giving_res = newObject(CONST.RESOURCES, 0)
+    this.#taking_res = newObject(CONST.RESOURCES, 0)
+    this.$card_selection.dataset.mode = mode
+    this.$card_selection.querySelectorAll('.head .mode').forEach($el =>
+      $el.setAttribute('aria-pressed', String($el.dataset.mode === mode)))
+    this.#update()
+  }
+
+  /** Counts, rates, the deal, every `disabled`, the guide and the submit label, after every change. */
+  #update() {
+    const bank = this.#mode === 'bank'
+    const total = obj => Object.values(obj).reduce((m, v) => m + v, 0)
+    const give_total = total(this.#giving_res), get_total = total(this.#taking_res)
+    // What the staked cards buy. Every give amount is a whole number of bundles, so this one is too.
+    const buys = Object.keys(CONST.RESOURCES).reduce((m, res) => m + this.#giving_res[res] / this.#rate(res), 0)
+    const over_limit = this.$requests.querySelectorAll('.ongoing[data-id="-1"] .og-request:not(.deleted)')
+      .length >= this.#max_trade_requests
+
+    Object.keys(CONST.RESOURCES).forEach(res => {
+      const held = this.#player.closed_cards[res] || 0
+      const rate = this.#rate(res), give = this.#giving_res[res], get = this.#taking_res[res]
+      const $give = this.$card_selection.querySelector(`.palette.give .pick[data-type="${res}"]`)
+      const $get = this.$card_selection.querySelector(`.palette.get .pick[data-type="${res}"]`)
+      // What staking again would leave you with: the reason a card greys out, before you read it.
+      $give.querySelector('.count').textContent = held - give
+      $give.querySelector('.rate').textContent = bank ? `${rate}:1` : ''
+      $give.disabled = get > 0 || held - give < rate
+      $get.disabled = give > 0 || (bank && get_total >= buys)
     })
-    // Trade Type selection
-    this.$type_selection.querySelectorAll('.trade-type').forEach($el => {
-      $el.addEventListener('click', e => {
-        if (e.target.classList.contains('disabled')) return
-        if (e.target.classList.contains('hide')) return
-        const type = e.target.dataset.type
-        if (!this.#player.trade_offers[type]) return
-        this.$type_selection.querySelectorAll('.trade-type').forEach($el2 => $el2.classList.remove('active'))
-        e.target.classList.add('active')
-        this.renderCardSelection(type)
+
+    this.#paintSide('give', this.#giving_res)
+    this.#paintSide('get', this.#taking_res)
+    this.$deal.classList.toggle('empty', !give_total && !get_total)
+
+    this.$submit.textContent = bank ? 'Trade' : 'Send offer'
+    this.$submit.disabled = bank
+      ? !(buys > 0 && get_total === buys)
+      : !(give_total > 0 && get_total > 0 && !over_limit)
+    this.$guide.textContent = this.#guideText(bank, buys, get_total, give_total, over_limit)
+  }
+
+  /** Repaint one side of the deal, and only when its amounts changed, so chips do not re-enter. */
+  #paintSide(row, res_obj) {
+    const $side = this.$deal.querySelector(`.side.${row}`)
+    const key = Object.keys(CONST.RESOURCES).map(res => res_obj[res]).join()
+    if ($side.dataset.key === key) { return }
+    $side.dataset.key = key
+    $side.innerHTML = Object.keys(CONST.RESOURCES).filter(res => res_obj[res]).map(res => `
+      <button class="chip ${row}" type="button" data-type="${res}" data-row="${row}"
+        title="Take back ${CONST.RESOURCES[res]}"
+        >${res_obj[res]}<span class="res-icon ${res}"></span><span class="x">✕</span></button>`).join('')
+  }
+
+  /** Only what is missing, in the imperative. The chips already say what the trade is. */
+  #guideText(bank, buys, get_total, give_total, over_limit) {
+    const cards = n => `${n} card${n > 1 ? 's' : ''}`
+    if (!bank && over_limit) { return `Max ${this.#max_trade_requests} open offers` }
+    if (bank && buys > get_total) { return `Choose ${buys - get_total} more ${buys - get_total > 1 ? 'cards' : 'card'}` }
+    if (bank && get_total > buys) { return `Take ${cards(get_total - buys)} back` }
+    if (!bank && give_total && !get_total) { return 'Pick what you want in return' }
+    if (!bank && !give_total && get_total) { return 'Pick what you are offering' }
+    return ''
+  }
+
+  /**
+   * Players: the one request the server has always taken. Bank: one request per given resource,
+   * each at that resource's own rate, splitting the "You get" pool between them first come first
+   * served. The requests are disjoint in what they give, so the server validates each on its own.
+   */
+  #submit() {
+    if (this.#mode === 'players') {
+      this.#onTradeProposal('Px', this.#giving_res, this.#taking_res)
+    } else {
+      const pool = { ...this.#taking_res }
+      Object.keys(CONST.RESOURCES).forEach(res => {
+        const give = this.#giving_res[res]
+        if (!give) { return }
+        const rate = this.#rate(res)
+        const part = newObject(CONST.RESOURCES, 0)
+        let left = give / rate
+        Object.keys(pool).forEach(k => {
+          const take = Math.min(left, pool[k])
+          part[k] += take; pool[k] -= take; left -= take
+        })
+        const giving = newObject(CONST.RESOURCES, 0)
+        giving[res] = give
+        this.#onTradeProposal(rate === 2 ? res + '2' : '*' + rate, giving, part)
       })
-    })
-    // Giving & Taking Card (addition only)
-    this.$card_selection.querySelectorAll('.card').forEach($el => {
-      $el.addEventListener('click', e => {
-        if (e.target.classList.contains('disabled')) return
-        if (e.target.classList.contains('full')) return
-        const res = e.target.dataset.type
-        const is_giving = e.target.classList.contains('giving-card')
-        const res_obj = is_giving ? this.#giving_res : this.#taking_res
-        const res_change_count = is_giving ? this.#tradeRatio(this.#trade_type) : 1
-        res_obj[res] += res_change_count
-        e.target.dataset.count = res_obj[res]
-        this.$card_selection
-          .querySelector(`.${is_giving ? 'giving' : 'taking'}-card[data-type="${res}"]`)
-          ?.classList.add('disabled')
-        this.$giving_text.innerHTML = resToText(this.#giving_res)
-        this.$taking_text.innerHTML = resToText(this.#taking_res)
-        // this.#toggleHandRes(res, !is_giving, res_change_count)
-        this.validateAndUpdateTrade()
-      })
-    })
-    // Reset Card selection
-    this.$card_selection.querySelector('.info-section .reset').addEventListener('click', e => {
-      this.renderCardSelection(this.#trade_type)
-      this.#resetHand()
-    })
-    // Submit Trade
-    this.$card_selection.querySelector('.info-section .submit').addEventListener('click', e => {
-      this.#onTradeProposal(this.#trade_type, this.#giving_res, this.#taking_res, this.#counter_id)
-      this.clearSelections()
-    })
+    }
+    this.clearSelections()
   }
 
   renderTradeSelection() {
-    const $og_req = this.$requests.querySelectorAll('.ongoing[data-id="-1"] .og-request:not(.deleted)')
-    const Px_limit_crossed = $og_req.length >= this.#max_trade_requests
-    this.$type_selection.classList.remove('hide')
-    Object.entries(this.#player.trade_offers).forEach(([type, allowed]) => {
-      const $el = this.$type_selection.querySelector(`.trade-type[data-type="${type}"]`)
-      $el.classList[allowed ? 'remove' : 'add']('hide')
-      $el.classList.remove('disabled')
-      const player_res = Object.entries(this.#player.closed_cards).filter(([k]) => !!CONST.RESOURCES[k])
-      const player_res_obj = Object.fromEntries(player_res)
-      const ratio = this.#tradeRatio(type)
-      if (type === 'Px') {
-        (Px_limit_crossed || !player_res.filter(([k, v]) => v > 0).length) && $el.classList.add('disabled')
-      } else if (ratio === 2) {
-        // 2:1 port — only the port's own resource counts
-        player_res_obj[type[0]] < 2 && $el.classList.add('disabled')
-      } else {
-        !player_res.filter(([k, v]) => v >= ratio).length && $el.classList.add('disabled')
-      }
-      $el.classList.remove('active')
-    })
-  }
-
-  renderCardSelection(trade_type) {
-    this.#giving_res = newObject(CONST.RESOURCES, 0)
-    this.#taking_res = newObject(CONST.RESOURCES, 0)
-    this.#trade_type = trade_type
-    this.validateAndUpdateTrade()
-    this.#toggleBoardBlur(true)
     this.$card_selection.classList.remove('hide')
-    this.$card_selection.dataset.trade_type = trade_type
-    this.$giving_text.innerHTML = ''
-    this.$taking_text.innerHTML = ''
-    this.$submit.classList.remove('active')
+    this.#setMode('players')
   }
 
-  validateAndUpdateTrade() {
-    // Clean and Disable ALL cards
-    this.$card_selection.querySelectorAll('.card').forEach($el => {
-      const is_giving = $el.classList.contains('giving-card')
-      $el.dataset.count = is_giving ? this.#giving_res[$el.dataset.type] : this.#taking_res[$el.dataset.type]
-      $el.classList.remove('full'); $el.classList.add('disabled')
-    })
-    const giving_total = Object.values(this.#giving_res).reduce((m, v) => m + v, 0)
-    const taking_total = Object.values(this.#taking_res).reduce((m, v) => m + v, 0)
-
-    const _calculateAndUpdate = (count, ...res_list) => {
-      res_list.forEach(res => {
-        const player_res_count = this.#player.closed_cards[res]
-        const $el_g = this.$card_selection.querySelector(`.giving-card[data-type="${res}"]`)
-        if (this.#taking_res[res]) { return }
-        player_res_count >= count && $el_g.classList.remove('disabled')
-        player_res_count < (this.#giving_res[res] + count) && $el_g.classList.add('full')
-      })
-      const can_take_more = giving_total >= ((taking_total * count) + count)
-      // Show takable cards
-      this.$card_selection.querySelectorAll(`.taking-card`).forEach($el => {
-        if (this.#giving_res[$el.dataset.type]) { return }
-        if (can_take_more) {
-          $el.classList.remove('disabled')
-        } else if ($el.dataset.count) {
-          $el.classList.add('full'); $el.classList.remove('disabled')
-        }
-      })
-      // Submit validation
-      this.$submit.classList[(giving_total === taking_total * count) ? 'add' : 'remove']('active')
-    }
-
-    const ratio = this.#tradeRatio(this.#trade_type)
-    if (ratio === 2) {
-      _calculateAndUpdate(2, this.#trade_type[0])
-    } else if (this.#trade_type === '*3' || this.#trade_type === '*4') {
-      _calculateAndUpdate(ratio, ...Object.keys(CONST.RESOURCES))
-    } else if (this.#trade_type === 'Px') {
-      this.$card_selection.querySelectorAll('.card').forEach($el => {
-        const res = $el.dataset.type
-        const is_giving = $el.classList.contains('giving-card')
-        if (is_giving) {
-          if (this.#taking_res[res]) { return }
-          this.#player.closed_cards[res] && $el.classList.remove('disabled')
-          this.#player.closed_cards[res] <= this.#giving_res[res] && $el.classList.add('full')
-        } else {
-          if (this.#giving_res[res]) { return }
-          $el.classList.remove('disabled')
-        }
-      })
-      this.$submit.classList[(giving_total && taking_total) ? 'add' : 'remove']('active')
-    }
-  }
-
-  clearSelections() {
-    this.$type_selection.classList.add('hide')
-    this.$card_selection.classList.add('hide')
-    this.#toggleBoardBlur()
-    // this.#resetHand()
-  }
+  clearSelections() { this.$card_selection.classList.add('hide') }
 
   renderNewRequest(player, { giving={}, asking={}, id, ...params } = {}) {
     if (player.id === this.#player.id) {
@@ -213,15 +197,12 @@ export default class TradeUI {
     }
     this.$requests.insertAdjacentHTML('beforeend', `
       <div class="request p${player.id} pc${player.color_id || player.id}" data-id="${id}">
-        <span class="info">Trade Offer:</span>
-        <div class="text">
-          ${player.name} is<span class="giving">giving ${resToText(giving)}</span>
-          &<span class="asking disabled">asking ${resToText(asking)}</span>
-        </div>
+        <span class="name">${player.name}</span>
+        <span class="giving">gives ${resToText(giving)}</span>
+        <span class="asking">wants ${resToText(asking)}</span>
         <div class="actions">
-          <button class="btn btn--primary btn--sm btn--gated confirm" data-id="${id}">Accept</button>
-          <button class="btn btn--secondary btn--sm btn--gated counter" data-id="${id}">Counter</button>
-          <button class="btn btn--quiet btn--sm ignore" data-id="${id}">Ignore</button>
+          <button class="btn btn--primary btn--sm confirm" type="button" data-id="${id}">Accept</button>
+          <button class="btn btn--quiet btn--sm ignore" type="button" data-id="${id}">Ignore</button>
         </div>
       </div>
     `)
@@ -232,12 +213,7 @@ export default class TradeUI {
 
   #setupRequestActionEvents($el) {
     $el.querySelector('.confirm').addEventListener('click', e => {
-      if (!e.target.classList.contains('active')) return
       this.#onTradeResponse(e.target.dataset.id, true)
-    })
-    $el.querySelector('.counter').addEventListener('click', e => {
-      if (!e.target.classList.contains('active')) return
-      /** @todo Counter Trade Request - the server already takes a counter_id */
     })
     $el.querySelector('.ignore').addEventListener('click', e => {
       this.#onTradeResponse(e.target.dataset.id)
@@ -281,10 +257,11 @@ export default class TradeUI {
     if (show_req) {
       const can_trade = this.#player.hasAllResources(asking)
       $req?.querySelector('.asking').classList[can_trade ? 'remove' : 'add']('disabled')
-      $req?.querySelector('.confirm').classList[can_trade ? 'add' : 'remove']('active')
-      const show_counter = !this.$requests.querySelector('.ongoing[data-id="-1"]')
-      $req?.querySelector(`.counter`).classList[show_counter ? 'add' : 'remove']('active')
+      const $confirm = $req?.querySelector('.confirm')
+      if ($confirm) { $confirm.disabled = !can_trade }
     }
+    // The open-offer limit and the held amounts both live in the drawer's summary and buttons.
+    if (!this.$card_selection.classList.contains('hide')) { this.#update() }
   }
 
   clearRequests() { this.$requests.innerHTML = '' }

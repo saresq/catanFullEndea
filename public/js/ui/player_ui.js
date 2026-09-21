@@ -226,6 +226,8 @@ export default class PlayerUI {
           break
         case 'Escape':
           this.toggleCosts(false)
+          // Closes the trade drawer and discards its selection (the callback was already wired)
+          this.#onExitTrade()
           if (this.isAnyActionActive()) {
             this.removeActiveActions()
             this.#onPieceClick('', true)

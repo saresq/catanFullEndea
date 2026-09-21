@@ -49,12 +49,24 @@
     /**
      * Incoming trade offer from another player. Requests render with `hide` outside
      * the `player_actions` state, so drop it - the offer is what we came to look at.
+     * Call it several times with different ids to stack offers: `requestsShare` is what the
+     * 35%-of-the-viewport cap on phones is read from.
      */
     trade(pid = other, id = 'visual-1') {
-      game.requestTradeSoc(pid, { id, giving: { W: 2, S: 1 }, asking: { B: 1 } })
+      // `status` and `rejected` are what the socket sends; without them the row renders hidden
+      // and its Accept button is never gated on what the viewer can pay.
+      game.requestTradeSoc(pid, { id, giving: { W: 2, S: 1 }, asking: { B: 1 }, status: 'open', rejected: [] })
       const $req = document.querySelector(`.request[data-id="${id}"]`)
       $req?.classList.remove('hide')
-      return $req ? getComputedStyle($req.querySelector('.text')).borderLeftColor : 'no request'
+      const $list = document.querySelector('#game .trade-requests')
+      return {
+        viewport: `${innerWidth}x${innerHeight}`,
+        // The player colour sits on the row itself; the older markup carried it on `.text`.
+        colour: $req ? getComputedStyle($req.querySelector('.text') || $req).borderLeftColor : 'no request',
+        requests: $$('#game .trade-requests .request:not(.hide)').length,
+        requestsShare: $list ? +($list.getBoundingClientRect().height / innerHeight).toFixed(3) : null,
+        requestsScroll: $list ? $list.scrollHeight > $list.clientHeight : null,
+      }
     },
 
     /**
@@ -146,7 +158,7 @@
         if (pc && !out[`edge.${pc}`]) out[`edge.${pc}`] = of($e, '--p-color', 'background-color')
       })
       out['animation.title'] = of(document.querySelector('#game > .animation-zone .title'), 'color', 'background-color')
-      out['trade.request'] = of(document.querySelector('.request .text'), 'border-left-color')
+      out['trade.request'] = of(document.querySelector('.request .text') || document.querySelector('.request'), 'border-left-color')
       out['alert'] = of(document.querySelector('#game > .alert'), '--p-color')
       out['end.modal'] = of(document.querySelector('.game-ended .player-name'), 'color', 'background-color')
       return out
@@ -330,6 +342,51 @@
         listScrolls: $list.scrollHeight > $list.clientHeight,
         headers: order.filter(o => o.header).map(o => o.header),
         order,
+      }
+    },
+
+    /**
+     * The trade drawer, for the gates in the trade-drawer change: where it lands, whether it
+     * covers a scoreboard row, whether it scrolls the page sideways, the smallest stepper hit box
+     * and the bank rates on show. Opens the way the dock does (`onTradeClick` ->
+     * `renderTradeSelection()`), with the Trade button's turn gate lifted so it opens off-turn
+     * too, then switches mode. Leaves the drawer open for the screenshot that follows.
+     */
+    tradeDrawer(mode = 'players') {
+      const $btn = document.querySelector('#game .current-player .actions .trade')
+      if (!$btn) { return 'no Trade button' }
+      $btn.classList.remove('disabled')
+      $btn.click()
+      const $drawer = document.querySelector('#game .trade-card-selection')
+      if (!$drawer || $drawer.classList.contains('hide')) { return 'drawer did not open' }
+      $drawer.querySelector(`.head .mode[data-mode="${mode}"]`)?.click()
+      const px = n => +n.toFixed(1)
+      const rect = $_ => { const r = $_.getBoundingClientRect(); return { x: px(r.x), y: px(r.y), w: px(r.width), h: px(r.height) } }
+      const overlaps = (a, b) => !!a && !!b && a.right > b.left && a.left < b.right && a.bottom > b.top && a.top < b.bottom
+      const box = $drawer.getBoundingClientRect()
+      // Every control that stakes or unstakes a card: the cards themselves and the deal's chips.
+      const taps = $$('#game .trade-card-selection :is(.pick, .chip)').filter($_ => $_.offsetWidth)
+      const $submit = $drawer.querySelector('.foot .submit')
+      return {
+        viewport: `${innerWidth}x${innerHeight}`,
+        mode: $drawer.dataset.mode,
+        drawer: rect($drawer),
+        share: +(box.height / innerHeight).toFixed(3),
+        inView: box.top >= -0.5 && box.left >= -0.5 && box.right <= innerWidth + 0.5 && box.bottom <= innerHeight + 0.5,
+        // The whole point of the right edge stopping at the scoreboard column.
+        overlapsRows: $$('.all-players .player').filter($p => overlaps(box, $p.getBoundingClientRect())).length,
+        hScroll: document.documentElement.scrollWidth > innerWidth,
+        drawerScrollsX: $drawer.scrollWidth > $drawer.clientWidth + 1,
+        drawerScrollsY: $drawer.scrollHeight > $drawer.clientHeight + 1,
+        minHit: taps.length ? px(Math.min(...taps.map($_ => {
+          const r = $_.getBoundingClientRect(); return Math.min(r.width, r.height)
+        }))) : null,
+        taps: taps.length,
+        rates: $$('#game .trade-card-selection .palette.give .rate').map($_ => $_.textContent.trim()),
+        staked: $$('#game .trade-card-selection .chip').map($_ => $_.dataset.row + ':' + $_.dataset.type + ':' + parseInt($_.textContent, 10)),
+        guide: $drawer.querySelector('.foot .guide')?.textContent.trim() || null,
+        submit: $submit && { label: $submit.textContent.trim(), disabled: $submit.disabled },
+        blurred: !!document.querySelector('.board.blur, .all-players.blur'),
       }
     },
 

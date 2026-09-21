@@ -30,8 +30,10 @@
         color: #fff;
         background-color: #000;
 
-        /* Anchored to the button's own box, so a bigger icon never sits under its label. */
-        &::after {
+        /* Anchored to the button's own box, so a bigger icon never sits under its label. Only when
+           there is a title to show: without one the padded background drew an empty pill, as it
+           did next to the dock's Costs icon, which reuses `.icon` and carries no title. */
+        &[title]::after {
             content: attr(title);
             white-space: nowrap;
             position: absolute;

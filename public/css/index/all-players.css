@@ -249,7 +249,8 @@
         }
     }
 
-    /* Collapsed: one chip per player (colour + VP), same elements so they stay live */
+    /* Collapsed: one chip per player (colour, name, VP), same elements so they stay live. Only the
+       card stats go; who is who and the score stay readable. */
     &.compact {
         display: flex;
         flex-wrap: wrap;
@@ -266,11 +267,19 @@
             border: none;
             border-radius: 3px;
             padding: 0 var(--space-2);
-            gap: 2px;
+            gap: var(--space-2);
             color: #fff;
 
-            .name, .cards-container, .victory-points span::before {
+            .cards-container, .victory-points span::before {
                 display: none;
+            }
+
+            /* The chip is already the player colour, so the name drops its own box. */
+            .name {
+                flex: 0 1 auto;
+                max-width: 7rem;
+                padding: 0;
+                background: none;
             }
 
             .victory-points {

@@ -11,8 +11,8 @@ and `pN`/`pcN` colour-class work. Everything below is a recipe that ran, not a p
 ```bash
 git worktree add /tmp/catan-base HEAD          # the "before" tree, untouched
 ln -s "$PWD/node_modules" /tmp/catan-base/node_modules
-(cd /tmp/catan-base && PORT=3001 node index.js) &   # before
-PORT=3000 node index.js &                           # after (the working tree)
+(cd /tmp/catan-base && PORT=3101 node index.js) &   # before
+PORT=3100 node index.js &                           # after (the working tree)
 ```
 
 Plain `node`, not `npm start`: nodemon restarting mid-capture loses the game.
@@ -22,14 +22,14 @@ When the run is over, `git worktree remove /tmp/catan-base`.
 
 Players are the `game_id` / `player_id` cookies, and **cookies ignore the port** - they are per
 host. So `localhost` and `127.0.0.1` are two cookie jars and one browser drives two players, but
-`localhost:3000` and `localhost:3001` are the *same* jar: finish one server before starting on the
+`localhost:3100` and `localhost:3101` are the *same* jar: finish one server before starting on the
 other, and re-enter through the URLs below, which always set fresh cookies.
 
 Everything is a URL, no form filling:
 
 ```
-tab 0  http://localhost:3000/game/new?name=Alice&players=2&config=%7B%22map_shuffle%22%3A%22none%22%7D
-tab 1  http://127.0.0.1:3000/login?game_id=<id>&name=Bob
+tab 0  http://localhost:3100/game/new?name=Alice&players=2&config=%7B%22map_shuffle%22%3A%22none%22%7D
+tab 1  http://127.0.0.1:3100/login?game_id=<id>&name=Bob
 ```
 
 `/game/new` redirects to `/game/<id>` - read the id out of the URL. `map_shuffle: none` keeps the
@@ -57,7 +57,7 @@ returns the hook names and installs `window.VISUAL`; after that one hook per cal
 | Hook | What it puts on screen |
 |---|---|
 | `VISUAL.build()` | settlements, cities and roads for both players |
-| `VISUAL.trade()` | an incoming trade offer |
+| `VISUAL.trade()` | an incoming trade offer; reports the row colour, how many offers are on screen and the list's share of the viewport height (the phone cap is 35%) |
 | `VISUAL.army()` | the Largest Army animation, parked on screen |
 | `VISUAL.road()` | the Longest Road animation, parked on screen |
 | `VISUAL.end()` | the end-game modal |
@@ -68,6 +68,7 @@ returns the hook names and installs `window.VISUAL`; after that one hook per cal
 | `VISUAL.hand(cards?)` | the viewer's hand filled (default: five resources, several dev cards); `hand({})` empties it |
 | `VISUAL.menu()` | opens the options menu and reports it: label / state / key hint / tap size per item, items without a label, lines the list takes, whether recenter is reachable with the menu closed |
 | `VISUAL.history()` | fills the history (Setup build, two turns with rolls, a trade, one long status), opens the sheet and reports it: rect and viewport share, overlap with the scoreboard and the dock, status text on one line, History control hit size, turn headers and the entries under each |
+| `VISUAL.tradeDrawer(mode?)` | opens the trade drawer in `'players'` (default) or `'bank'` mode and reports it: rect and viewport share, whether it stays on screen, how many scoreboard rows it covers, page/drawer overflow, smallest hit box across the cards and the deal's chips, the bank rates on the give cards, what is staked, the guide line and the submit button's label and state |
 | `VISUAL.dock()` | dock geometry: height and viewport share, hand cards above the dock top, tap size (grown `::after` included) / label / accessible name per action, dock height with an empty vs a full hand |
 | `VISUAL.editor()` | the map editor (`/map-editor`, no game): dock and rail boxes, whether they overlap or scroll the page, the board's share of the viewport, smallest tap size, the brushes and numbers on the dock, the four rim phantoms, the coastline (per tile, land-owned against sea-owned, double-drawn edges, variants in use), the port popover opened on a real port tile, the Map info sheet (terrain bars and the dice-number bars) and the game-setup modal. Takes an optional mapkey to render first |
 | `VISUAL.reset()` | reload, back to server state |
@@ -151,8 +152,8 @@ Then press Back: it should leave the editor, not undo an edit. Editing writes no
 plain strings; `browser_evaluate`'s `filename` writes it to a file:
 
 ```
-browser_evaluate(fn = VISUAL.report(), filename = '.playwright-mcp/report-base.json')   # on :3001
-browser_evaluate(fn = VISUAL.report(), filename = '.playwright-mcp/report-cur.json')    # on :3000
+browser_evaluate(fn = VISUAL.report(), filename = '.playwright-mcp/report-base.json')   # on :3101
+browser_evaluate(fn = VISUAL.report(), filename = '.playwright-mcp/report-cur.json')    # on :3100
 diff .playwright-mcp/report-base.json .playwright-mcp/report-cur.json
 ```
 

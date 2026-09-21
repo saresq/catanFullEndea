@@ -1,616 +1,532 @@
-#game > .trade-zone {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
+/*
+ * Trade: the incoming/own offer list and the drawer under it.
+ *
+ * The zone lives inside the dock and hangs above it, like the history sheet, and its right edge
+ * stops where the scoreboard column starts - so on desktop the drawer can never cover a
+ * scoreboard row, with no measurement and no resize listener. Phones have no scoreboard column
+ * (it is an in-flow strip at the top), so there the zone spans the full width.
+ *
+ * Skins come from elsewhere: ui/primitives.css (.btn, .panel--drawer), ui/card.css (.card),
+ * resources.css (.res-icon). --card-w is the only size knob of the two card palettes.
+ */
+/* The dock sits at --z-hud (20) and so does everything inside it, including this zone - but the
+   scoreboard and the gear are at 50 and would paint over a drawer that reaches the top of a phone
+   screen. While the drawer is open the dock rises to the panel layer, where the trade UI used to
+   live; the board and the scoreboard stay visible and unblurred underneath. */
+#game > .current-player:has(> .trade-zone > .trade-card-selection:not(.hide)) {
     z-index: var(--z-panel);
-    /* border-bottom: 5px solid var(--sand-color-dark); */
-    box-shadow: 0 0 15px 0 #000;
-    font-family: var(--font-ui), sans-serif;
+}
+
+#game .current-player > .trade-zone {
+    position: absolute;
+    /* `100%` is the dock's padding box, so the extra 0.3125rem clears its top border. */
+    bottom: calc(100% + 0.3125rem);
+    right: var(--scoreboard-width);
+    width: min(40rem, calc(100% - var(--scoreboard-width) - 3.75rem));
+    /* Above the history sheet (4): where the two overlap, the drawer is the one being used. */
+    z-index: 5;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    /* On an absolutely positioned box a percentage height resolves against the dock, so this is
+       exactly the free height above it - the zone can never run off the top of the screen. */
+    max-height: calc(100vh - 100% - 0.3125rem);
+    max-height: calc(100dvh - 100% - 0.3125rem);
+    justify-content: flex-end;
+    gap: var(--space-2);
+    text-align: left;
+    font-family: var(--font-body), sans-serif;
+    /* An empty zone must never eat a board click; its two children take their own back. */
+    pointer-events: none;
+
+    > * {
+        pointer-events: auto;
+    }
+
+    /* Phones, portrait and landscape: the same media query the scoreboard switches on. */
+    @media screen and (max-width: 768px), screen and (orientation: landscape) and (max-height: 500px) {
+        left: 0;
+        right: 0;
+        width: auto;
+    }
+
+    /* ---- OFFER LISTS ---- */
 
     .trade-requests {
-        > div {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: var(--sand-color);
-            color: var(--sand-color-text-dark);
-            border-top: 1px solid;
-        }
-
-        .ongoing {
-            align-items: stretch;
-
-            @media screen and (max-width: 768px) {
-                flex-direction: column;
-                .text {
-                    padding: 5px 0 0;
-                    margin-bottom: 2px;
-                }
-
-                .og-request {
-                    border-left-width: 4px;
-                    padding-right: 10px;
-                    margin: 2px 0;
-                }
-            }
-
-            .text {
-                font-size: 0.8em;
-                color: #999;
-                margin-right: 5px;
-                padding: 2px;
-            }
-
-            .og-request {
-                padding-right: 20px;
-                position: relative;
-                border-left: 8px solid #fff;
-                min-height: 22px;
-
-                .giving {
-                    color: var(--trade-negative);
-                }
-
-                .for {
-                    margin-left: -3px;
-                    font-size: .8em;
-                }
-
-                .asking {
-                    color: color-mix(in srgb, var(--trade-positive) 80%, #000);
-                }
-
-                .res-icon {
-                    margin-right: 3px;
-                }
-
-                /* Withdraw: skin from ui/primitives.css (.btn--quiet) */
-                .cancel {
-                    display: none;
-                    vertical-align: middle;
-                    margin: -3px 0 -3px 6px;
-                    color: color-mix(in srgb, var(--trade-negative) 80%, #000);
-                }
-
-                &.deleted {
-                    display: none;
-                }
-
-                &.open .cancel {
-                    display: inline-flex;
-                }
-
-                &.closed {
-                    border-color: #999;
-                    background-color: #ddd;
-
-                    .giving {
-                        filter: grayscale(1) contrast(0.5) brightness(1.5);
-                    }
-                }
-
-                &.success, &.failed {
-                    color: #9998;
-
-                    .res-icon {
-                        opacity: .5;
-                        filter: grayscale(.5);
-                    }
-
-                    .giving, .asking {
-                        color: #9998;
-                    }
-                }
-
-                &.success {
-                    border-color: var(--trade-positive);
-                    background-color: color-mix(in srgb, var(--trade-positive), #fff);
-                }
-
-                &.failed {
-                    border-color: var(--trade-negative);
-                    background-color: color-mix(in srgb, var(--trade-negative), #fff);
-                }
-            }
-
-            /* Touch targets. After the .og-request block on purpose: a media query adds no
-               specificity, so the base declarations above would otherwise win on source order. */
-            @media screen and (max-width: 768px) {
-                .og-request {
-                    display: flex;
-                    align-items: center;
-                    gap: 3px;
-                    min-height: 44px;
-
-                    .cancel {
-                        margin: 0 0 0 auto;
-                        padding: 14px 18px 13px;
-                        font-size: .75em;
-                    }
-                }
-            }
-        }
-
-        .request {
-            justify-content: end;
-
-            &.hide {
-                display: none;
-            }
-
-            @media screen and (max-width: 768px) {
-                flex-direction: column;
-                .info {
-                    padding: 10px 0 0;
-                }
-
-                .text {
-                    margin: 0;
-                    padding: 10px 5px;
-                    border: none;
-
-                    .giving, .asking {
-                        padding: 8px 5px 8px 10px;
-
-                        .res-icon {
-                            transform: scale(1.2);
-                            margin: 0 10px 0 5px;
-                        }
-                    }
-                }
-
-                .actions {
-                    width: 100%;
-                    border: none;
-                    border-top: 1px solid #999;
-                    padding: 10px 0;
-                    justify-content: space-evenly;
-
-                    .confirm, .counter, .ignore {
-                        margin: 0;
-                    }
-                }
-            }
-
-            .info {
-                opacity: 0.5;
-            }
-
-            .text {
-                padding: 20px;
-                padding-left: 10px;
-                margin-left: 10px;
-                /* Player colour. See the player theme table in constants.css. */
-                border-left: 10px solid var(--p-color, #999);
-
-                .giving, .asking {
-                    color: #0006;
-                    border-radius: 50px;
-                    font-family: var(--font-body), sans-serif;
-                    padding: 10px 5px 10px 13px;
-                    margin: 0 0 0 5px;
-
-                    .res-icon {
-                        transform: scale(1.5);
-                        margin: 0 13px 0 8px;
-                    }
-                }
-
-                .giving {
-                    background: color-mix(in srgb, var(--trade-positive) 30%, transparent);
-                }
-
-                .asking {
-                    background: color-mix(in srgb, var(--trade-negative) 30%, transparent);
-                }
-
-                .asking.disabled {
-                    cursor: not-allowed;
-                    color: #0009;
-                    filter: contrast(0.5) brightness(1.3) grayscale(1);
-
-                    .res-icon {
-                        filter: contrast(2);
-                    }
-                }
-            }
-
-            .actions {
-                display: flex;
-                border-left: 1px solid #999;
-                /* margin: 0 15px 0 5px; */
-                padding: 15px 15px 15px 10px;
-                @media screen and (min-width: 994px) {
-                    width: 30%;
-                }
-
-                /* Skins: ui/primitives.css (.btn--primary / --secondary / --quiet) */
-                .confirm {
-                    margin: -4px 0;
-                }
-
-                .counter {
-                    display: none;
-                    margin: -4px 10px;
-                }
-
-                .ignore {
-                    margin: -2px 10px;
-                }
-            }
-        }
-    }
-
-    .trade-type-selection {
         display: flex;
-        justify-content: center;
-        align-items: center;
-        @media screen and (max-width: 768px) {
-            flex-wrap: wrap;
-        }
-        background: var(--sand-color);
-        /* background: var(--water-color); */
-        border-width: 2px 0;
-        padding: 0 5px;
+        flex-direction: column;
+        gap: var(--space-1);
+        /* When the zone runs short the offers give way first and scroll; the drawer keeps its size. */
+        flex: 0 100 auto;
+        min-height: 2.5rem;
+        overflow-y: auto;
 
-        &.hide {
+        &:empty {
             display: none;
         }
 
-        > button {
-            box-sizing: content-box;
-
-            &.hide {
-                display: none;
-            }
-        }
-
-        .trade-type:not(.Px) {
-            width: 50px;
-            height: 60px;
-            position: relative;
-            border-width: 10px 7px;
-
-            &._4 {
-                width: 91px;
-            }
-
-            &.active {
-                background: var(--sand-color-dark);
-            }
-
-            &.disabled {
-                filter: grayscale(1) brightness(.6) opacity(.5);
-                cursor: not-allowed;
-            }
-
-            &::before {
-                content: '';
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: 100%;
-                background-size: contain;
-                background-repeat: no-repeat;
-            }
-
-            &:not(.disabled):is(:hover, :focus)::before {
-                filter: drop-shadow(2px 2px 3px #000a);
-                top: -2px;
-                left: -2px;
-            }
-
-            &.B2::before {
-                background-image: url(/images/trade/Brick.png);
-            }
-
-            &.L2::before {
-                background-image: url(/images/trade/Lumber.png);
-            }
-
-            &.O2::before {
-                background-image: url(/images/trade/Ore.png);
-            }
-
-            &.S2::before {
-                background-image: url(/images/trade/Sheep.png);
-            }
-
-            &.W2::before {
-                background-image: url(/images/trade/Wheat.png);
-            }
-
-            &._3::before {
-                background-image: url(/images/trade/*3.png);
-            }
-
-            &._4::before {
-                background-image: url(/images/trade/trader-*4.png);
-            }
-        }
-
-        .trade-type.Px {
-            display: flex;
-            align-items: center;
-            background: #333;
-            color: #fff;
-            padding: 5px 10px;
-            height: 20px;
-            border-width: 25px 10px;
-            font-family: var(--font-main), sans-serif;
-
-            &.active {
-                border-color: var(--sand-color-dark);
-                background: var(--sand-color-dark);
-            }
-
-            &.disabled {
-                background: #ccc;
-                color: #999;
-                cursor: not-allowed;
-            }
-
-            &:not(.active, .disabled):is(:hover, :focus) {
-                background: #fff;
-                color: #333;
-            }
-        }
-
-        .cancel {
-            position: fixed;
-            right: 5px;
-            top: 0;
-            z-index: 1;
-            font-family: var(--font-heading), sans-serif;
-            font-size: 3em;
-            margin: 2px 10px 0 0;
-            color: #666;
-            cursor: pointer;
-
-            &:hover, &:focus {
-                color: var(--trade-negative);
-                text-shadow: 0 0 5px #fff;
-            }
+        /* The board and the dock have to stay usable with three offers on a phone. */
+        @media screen and (max-width: 768px), screen and (orientation: landscape) and (max-height: 500px) {
+            max-height: 35dvh;
         }
     }
 
-    .trade-card-selection {
+    /* One incoming offer: who, what they give, what they want, Accept / Ignore. */
+    .request {
         display: flex;
         flex-wrap: wrap;
-        justify-content: center;
-        /* Skin: ui/primitives.css (.panel--drawer) */
-        padding-top: 1.25rem;
+        align-items: center;
+        gap: var(--space-1) var(--space-2);
+        box-sizing: border-box;
+        padding: var(--space-1) var(--space-3);
+        /* Player colour. See the player theme table in constants.css. */
+        border-left: 0.375rem solid var(--p-color, #999);
+        border-radius: var(--radius-sm);
+        background: var(--surface-sand);
+        color: var(--surface-sand-text);
+        box-shadow: var(--shadow-1);
+        font-size: var(--text-sm);
 
         &.hide {
             display: none;
         }
 
-        .card-section {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-
-            .card-container {
-                margin: 0 0 1.25rem 1.25rem;
-
-                /* One card split in two halves: ui/card.css (.card--lg.card--under + --top / --bottom) */
-                .card {
-                    cursor: pointer;
-                    box-shadow: 0.125rem 0.125rem 0.3125rem 0.0625rem #0006;
-
-                    &.disabled {
-                        cursor: not-allowed;
-                        filter: grayscale(1) brightness(0.4);
-                    }
-
-                    &.disabled[data-type=L] {
-                        filter: grayscale(1) brightness(0.5);
-                    }
-
-                    &.full {
-                        cursor: not-allowed;
-                    }
-
-                    &.giving-card {
-                        &:not(.disabled):not([data-count="0"]) {
-                            z-index: 1;
-                            box-shadow: 0 0 0.3125rem 0.3125rem var(--trade-negative);
-
-                            &::before {
-                                border-color: color-mix(in srgb, var(--trade-negative), #000);
-                            }
-
-                            &.full::before {
-                                border-color: var(--trade-negative);
-                            }
-                        }
-                    }
-
-                    &.taking-card {
-                        &:not(.disabled):not([data-count="0"]) {
-                            z-index: 1;
-                            box-shadow: 0 0 0.3125rem 0.3125rem var(--trade-positive);
-
-                            &::before {
-                                border-color: color-mix(in srgb, var(--trade-positive), #000);
-                            }
-
-                            &.full::before {
-                                border-color: var(--trade-positive);
-                            }
-                        }
-                    }
-
-                    /* The seam between the two halves */
-
-                    &.giving-card::before {
-                        border-bottom: 0.1875rem solid var(--sand-color-dark);
-                    }
-
-                    &.taking-card::before {
-                        border-top: 0.1875rem solid var(--sand-color-dark);
-                    }
-
-                    &.full:not(.disabled)::before {
-                        filter: brightness(0.5);
-                    }
-
-                    /* Text on Card */
-
-                    &:not(.disabled) {
-                        &::after {
-                            position: absolute;
-                            width: 2.5rem;
-                            height: 1.5625rem;
-                            padding: 0 0.1875rem;
-                            border-style: solid;
-                            display: flex;
-                            align-items: center;
-                            transition: all .05s linear;
-                        }
-
-                        &.giving-card::after {
-                            content: attr(data-count) ' →';
-                            bottom: 0.1875rem;
-                            left: 0.0625rem;
-                            background-color: var(--trade-negative);
-                            border-width: 0.0625rem 0.0625rem 0 0;
-                            border-color: color-mix(in srgb, var(--trade-negative), #000);
-                            border-top-right-radius: 1.25rem;
-                            justify-content: flex-start;
-                        }
-
-                        &.taking-card::after {
-                            content: '← ' attr(data-count);
-                            top: 0.1875rem;
-                            right: 0.0625rem;
-                            background-color: var(--trade-positive);
-                            border-width: 0 0 0.0625rem 0.0625rem;
-                            border-color: color-mix(in srgb, var(--trade-positive), #000);
-                            border-bottom-left-radius: 1.25rem;
-                            justify-content: flex-end;
-                        }
-
-                        &:not(.full):is(:hover, :focus) {
-                            &::after {
-                                width: calc(100% - 0.125rem);
-                                height: calc(100% - 0.1875rem - 0.0625rem);
-                                padding: 0;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                text-shadow: 0 0 0.0625rem #000, 0 0 0.0625rem #000, 0 0 0.125rem #000, 0 0 0.125rem #000;
-                                border-width: 0;
-                            }
-
-                            &.giving-card::after {
-                                content: 'Give 2 →';
-                                border-radius: 0.8125rem 0.8125rem 0 0;
-                                background-color: color-mix(in srgb, var(--trade-negative) 60%, transparent);
-                            }
-
-                            &.taking-card::after {
-                                content: '← Take 1';
-                                border-radius: 0 0 0.8125rem 0.8125rem;
-                                background-color: color-mix(in srgb, var(--trade-positive) 60%, transparent);
-                            }
-                        }
-                    }
-                }
-            }
+        .name {
+            font-family: var(--font-display), serif;
+            color: var(--p-color-dark, inherit);
         }
 
-        .info-section {
+        .giving {
+            color: color-mix(in srgb, var(--trade-positive) 70%, #000);
+        }
+
+        .asking {
+            color: color-mix(in srgb, var(--trade-negative) 70%, #000);
+        }
+
+        /* What the player cannot pay for */
+        .asking.disabled {
+            filter: grayscale(1);
+            opacity: 0.7;
+        }
+
+        /* Accept and Ignore stay side by side; the row wraps around them when it is narrow. */
+        .actions {
             display: flex;
-            flex-direction: column;
+            flex-wrap: nowrap;
+            flex-shrink: 0;
             align-items: center;
-            justify-content: center;
-            margin-left: 30px;
-            color: var(--sand-color);
-            @media screen and (max-width: 768px) {
-                margin-left: 0;
-                padding: 10px;
-            }
-
-            .giving-text, .taking-text {
-                height: 20px;
-
-                &::before {
-                    text-shadow: 0 0 5px #000c;
-                    margin-right: 5px;
-                }
-            }
-
-            .giving-text::before {
-                content: 'Giving…';
-                color: var(--trade-negative);
-            }
-
-            .taking-text {
-                margin-bottom: 20px;
-
-                &::before {
-                    content: 'Taking…';
-                    color: var(--trade-positive);
-                }
-            }
-
-            .action-container {
-                display: flex;
-                align-items: center;
-            }
-
-            .reset {
-                width: 35px;
-                height: 35px;
-                border-radius: 30px;
-                font-size: 1.875rem;
-                line-height: 32px;
-                text-align: center;
-                background-color: var(--sand-color-dark);
-                color: var(--sand-color);
-                border: 2px solid;
-
-                &:hover, &:focus {
-                    background-color: var(--sand-color);
-                    color: #333;
-                }
-            }
-
-            /* Skin: ui/primitives.css (.btn--primary) */
-            .submit {
-                margin: 20px 10px;
-
-                &::before {
-                    content: 'Trade';
-                }
-            }
-        }
-
-        &[data-trade_type="Px"] .info-section .taking-text::before {
-            content: 'Asking…';
-        }
-
-        &[data-trade_type="Px"] .info-section .submit::before {
-            content: 'Send Request';
-        }
-
-        &[data-trade_type="Px"] .card-section .card-container .card.giving-card:not(.disabled):not(.full):is(:hover, :focus)::after {
-            content: 'Give 1 →'
-        }
-
-        &[data-trade_type="Px"] .card-section .card-container .card.taking-card:not(.disabled):not(.full):is(:hover, :focus)::after {
-            content: '← Ask 1'
-        }
-
-        &[data-trade_type="*3"] .card-section .card-container .card.giving-card:not(.disabled):not(.full):is(:hover, :focus)::after {
-            content: 'Give 3 →'
-        }
-
-        &[data-trade_type="*4"] .card-section .card-container .card.giving-card:not(.disabled):not(.full):is(:hover, :focus)::after {
-            content: 'Give 4 →'
+            gap: var(--space-2);
+            margin-left: auto;
         }
     }
+
+    /* My own open offers, with their status and a withdraw control. */
+    .ongoing {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-1) var(--space-2);
+        padding: var(--space-1) var(--space-3);
+        border-radius: var(--radius-sm);
+        background: var(--surface-sand);
+        color: var(--surface-sand-text);
+        box-shadow: var(--shadow-1);
+        font-size: var(--text-sm);
+
+        > .text {
+            font-size: var(--text-xs);
+            opacity: 0.7;
+        }
+
+        .og-request {
+            display: flex;
+            align-items: center;
+            gap: var(--space-1);
+            min-height: 1.75rem;
+            padding-right: var(--space-2);
+            padding-left: var(--space-2);
+            border-left: 0.25rem solid var(--sand-color-dark);
+            border-radius: var(--radius-sm);
+
+            .giving {
+                color: color-mix(in srgb, var(--trade-negative) 80%, #000);
+            }
+
+            .asking {
+                color: color-mix(in srgb, var(--trade-positive) 80%, #000);
+            }
+
+            .for {
+                font-size: var(--text-xs);
+                opacity: 0.7;
+            }
+
+            /* The status word, one per state. Skin: ui/primitives.css (.btn--quiet) */
+            &::after {
+                font-size: var(--text-xs);
+                text-transform: uppercase;
+                letter-spacing: 0.0625rem;
+                opacity: 0.7;
+            }
+
+            .cancel {
+                display: none;
+                color: color-mix(in srgb, var(--trade-negative) 80%, #000);
+            }
+
+            &.deleted {
+                display: none;
+            }
+
+            &.open {
+                border-color: var(--p-color, var(--sand-color-dark));
+
+                &::after {
+                    content: 'open';
+                }
+
+                .cancel {
+                    display: inline-flex;
+                }
+            }
+
+            &.closed {
+                border-color: #999;
+                opacity: 0.6;
+
+                &::after {
+                    content: 'closed';
+                }
+            }
+
+            &.success {
+                border-color: var(--trade-positive);
+                background: color-mix(in srgb, var(--trade-positive) 25%, transparent);
+
+                &::after {
+                    content: 'traded';
+                }
+            }
+
+            &.failed {
+                border-color: var(--trade-negative);
+                background: color-mix(in srgb, var(--trade-negative) 25%, transparent);
+
+                &::after {
+                    content: 'failed';
+                }
+            }
+        }
+    }
+
+
+    /* ==============================================================
+       THE DRAWER
+
+       Tap a card to stake it, tap the staked bundle in the deal to take it back. The deal sits
+       between the two palettes: shortest reach from either, and literally between what you give
+       and what you get. --card-w is the only size knob of the palettes.
+       ============================================================== */
+
+    .trade-card-selection {
+        --card-w: 3.5rem;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+        padding: var(--space-3);
+        /* It floats above the dock instead of docking to an edge, so it keeps its corners. */
+        border-radius: var(--radius-md);
+        border-bottom: 0;
+        /* Safety net, not the plan: a tall drawer scrolls instead of running off the screen. */
+        flex: 0 1 auto;
+        min-height: 0;
+        max-height: 70vh;
+        max-height: 70dvh;
+        overflow-y: auto;
+
+        &.hide {
+            display: none;
+        }
+
+        .head {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            flex: none;
+
+            /* Two states of one switch, both from .btn--sm */
+            .mode {
+                background: transparent;
+                color: inherit;
+                border-color: currentColor;
+            }
+
+            .mode[aria-pressed="true"] {
+                background: var(--surface-sand);
+                color: var(--surface-ink);
+                border-color: var(--surface-ink);
+            }
+
+            .close {
+                margin-left: auto;
+                font-family: var(--font-mono), sans-serif;
+            }
+        }
+
+        /* A palette of cards. The row's name hangs off the left edge of the grid, not the drawer's. */
+        .palette {
+            flex: none;
+            display: grid;
+            justify-content: center;
+            justify-items: start;
+            gap: var(--space-2);
+
+            &::before {
+                font-size: var(--text-sm);
+                opacity: 0.75;
+            }
+
+            &.give::before { content: 'From your hand'; }
+            &.get::before { content: 'You want'; }
+
+            .cards {
+                display: grid;
+                grid-template-columns: repeat(5, var(--card-w));
+                gap: var(--space-3);
+            }
+        }
+
+        /* The card is the whole control. `.card` declares its own --card-w, so take the
+           drawer's by inheriting it. */
+        .pick {
+            --card-w: inherit;
+            position: relative;
+            padding: 0;
+            cursor: pointer;
+            transition: transform var(--t-fast) ease;
+
+            &:not(:disabled):hover { transform: translateY(-0.25rem); }
+            &:not(:disabled):active { transform: translateY(-0.0625rem); }
+
+            &:focus-visible {
+                outline: 0.125rem solid #fff;
+                outline-offset: 0.1875rem;
+            }
+
+            &:disabled {
+                cursor: not-allowed;
+                filter: grayscale(1) brightness(0.55);
+            }
+        }
+
+        /* How many you would be left with, in the badge the dock puts over a hand stack. */
+        .count {
+            position: absolute;
+            top: -0.625rem;
+            left: 50%;
+            translate: -50% 0;
+            width: 1.5625rem;
+            height: 1.5625rem;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-pill);
+            border: 0.0625rem solid var(--card-face);
+            background: var(--card-border);
+            color: var(--card-face);
+            font-size: var(--text-sm);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .pick:disabled .count { opacity: 0.6; }
+
+        /* Bank rate: a ribbon across the foot of the card. Empty in Players mode, so it goes away. */
+        .rate {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 0.0625rem 0;
+            border-radius: 0 0 calc(var(--card-w) * .075) calc(var(--card-w) * .075);
+            background: color-mix(in srgb, var(--card-border) 88%, transparent);
+            color: var(--card-face);
+            font-size: var(--text-xs);
+            font-variant-numeric: tabular-nums;
+            text-align: center;
+
+            &:empty {
+                display: none;
+            }
+        }
+
+        /* ---- THE DEAL: the one place colour is spent, and the only way back out ---- */
+
+        /* One line that reads as a sentence - give chips, "for", get chips - wrapping like text and
+           centred, so a chip that ends up alone on a line sits in the middle of it. The two sides
+           are `display: contents`: they exist to repaint separately, not to lay anything out. */
+        .deal {
+            flex: none;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-2);
+            min-height: 3.5rem;
+            box-sizing: border-box;
+            margin: var(--space-1) 0;
+            padding: var(--space-2) var(--space-3);
+            border-radius: var(--radius-md);
+            background: color-mix(in srgb, #241d10 72%, transparent);
+            border: 0.0625rem solid color-mix(in srgb, var(--sand-color) 30%, transparent);
+            box-shadow: inset 0 0.125rem 0.5rem #0007;
+
+            .side {
+                display: contents;
+            }
+
+            .pivot {
+                padding: 0 var(--space-1);
+                font-family: var(--font-heading), serif;
+                font-size: var(--text-md);
+                opacity: 0.6;
+            }
+
+            .hint {
+                font-size: var(--text-sm);
+                opacity: 0.7;
+                text-align: center;
+            }
+
+            &:not(.empty) .hint { display: none; }
+
+            /* Nothing staked yet: the hint takes the whole box, which is already the right size. */
+            &.empty .pivot { display: none; }
+        }
+
+        /* One staked bundle. Pressing it puts the cards back. */
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.125rem;
+            min-height: 2.75rem;
+            padding: 0 var(--space-2) 0 var(--space-3);
+            border-radius: var(--radius-pill);
+            border: 0.0625rem solid;
+            font-size: var(--text-md);
+            font-variant-numeric: tabular-nums;
+            cursor: pointer;
+            animation: chip-in var(--t-fast) ease-out;
+
+            .x {
+                margin-left: 0.125rem;
+                width: 1.25rem;
+                font-family: var(--font-mono), sans-serif;
+                font-size: var(--text-sm);
+                opacity: 0.55;
+            }
+
+            &:is(:hover, :focus-visible) .x { opacity: 1; }
+
+            &:focus-visible {
+                outline: 0.125rem solid #fff;
+                outline-offset: 0.125rem;
+            }
+
+            &.give {
+                background: color-mix(in srgb, var(--trade-negative) 38%, #2a1010);
+                border-color: var(--trade-negative);
+                color: #ffe4e4;
+            }
+
+            &.get {
+                background: color-mix(in srgb, var(--trade-positive) 38%, #0f2210);
+                border-color: var(--trade-positive);
+                color: #e2f6e2;
+            }
+        }
+
+        .foot {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            flex: none;
+
+            .guide {
+                flex: 1 1 auto;
+                font-size: var(--text-sm);
+                opacity: 0.8;
+            }
+
+            /* The undo arrow from the icon set (constants.css), drawn as a mask so it takes the
+               text colour and sits dead centre in its ring - a font glyph did neither. */
+            .reset {
+                width: 2.25rem;
+                height: 2.25rem;
+                padding: 0;
+                color: var(--surface-sand);
+                background: color-mix(in srgb, #000 25%, transparent);
+                border-color: color-mix(in srgb, var(--surface-sand) 70%, transparent);
+                border-radius: var(--radius-pill);
+
+                &::before {
+                    content: '';
+                    width: 1.25rem;
+                    height: 1.25rem;
+                    background: currentColor;
+                    mask: var(--icon-undo) center / contain no-repeat;
+                }
+            }
+
+            .submit {
+                margin-left: auto;
+            }
+        }
+
+        /* Phones: a smaller card, and every control a thumb has to hit is at least 44px. .btn
+           already carries that minimum under 768px; landscape phones are wider than that. px, not
+           rem, because the root font size drops to 14px and then 12px (index.css). */
+        @media screen and (max-width: 768px), screen and (orientation: landscape) and (max-height: 500px) {
+            --card-w: 44px;
+            padding: var(--space-2);
+
+            .palette .cards { gap: var(--space-2); }
+            .head .mode, .head .close, .foot .reset { min-width: 44px; min-height: 44px; }
+            .deal { padding: var(--space-1) var(--space-2); }
+            .chip { min-height: 44px; }
+            .chip {
+                min-width: 44px;
+                justify-content: center;
+                font-size: var(--text-sm);
+                padding: 0 var(--space-1) 0 var(--space-2);
+            }
+        }
+
+        /* Landscape phones are short: the palettes face each other, the switch and the guide share
+           the top line, and the deal spans underneath - so nothing falls below the fold. */
+        @media screen and (orientation: landscape) and (max-height: 500px) {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-areas: "head foot" "give get" "deal deal";
+            align-content: start;
+
+            .head { grid-area: head; }
+            .foot { grid-area: foot; }
+            .palette.give { grid-area: give; }
+            .palette.get { grid-area: get; }
+            .deal { grid-area: deal; }
+        }
+    }
+}
+
+@keyframes chip-in {
+    from { transform: scale(0.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #game .current-player > .trade-zone .chip { animation: none; }
+    #game .current-player > .trade-zone .pick { transition: none; }
 }

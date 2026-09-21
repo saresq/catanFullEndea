@@ -3,7 +3,10 @@
     height: 20px;
     width: 30px;
     margin: 0 7px 0 3px;
-    vertical-align: bottom;
+    /* Centre the icon on the digits beside it at any font size: `vertical-align` lifts the box's
+       bottom edge off the baseline, so lifting it by (digit centre - half the icon) puts the two
+       centres level. Digits stand about 0.7em tall, so their centre is 0.35em up. */
+    vertical-align: calc(0.35em - 10px);
     background-image: url(/images/res-icons.png);
     background-repeat: no-repeat;
     --glow-color: #fff;
