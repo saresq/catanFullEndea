@@ -191,6 +191,10 @@ class MapEditor {
     `
 
     this.$rail.innerHTML = `
+      <a class="rail-btn btn btn--quiet editor-back" href="/login" title="Back to the game">
+        <span class="rail-icon" aria-hidden="true">←</span>
+        <span class="rail-text">Back</span>
+      </a>
       ${RAIL.map(item => `
         <button class="rail-btn btn btn--quiet" data-popover="${item.id}"
           aria-expanded="false" aria-controls="popover-${item.id}" title="${item.label}">

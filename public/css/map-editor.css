@@ -353,7 +353,7 @@ body.port-picking .board .tile.S {
  * The shared touch minimum, at every width rather than only below the breakpoint: the dock and
  * the rail are thumb targets on a phone held sideways too, and that is over 768px wide.
  */
-.editor-dock button, .editor-rail button, .port-edge {
+.editor-dock button, .editor-rail .rail-btn, .port-edge {
     min-width: 44px;
     min-height: 44px;
 }
@@ -535,6 +535,7 @@ body.port-picking .board .tile.S {
     font-family: var(--font-body), sans-serif;
     font-weight: normal;
     font-size: var(--text-xs);
+    text-decoration: none;
 
     &:hover {
         text-decoration: none;
