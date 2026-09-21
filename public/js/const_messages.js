@@ -44,7 +44,7 @@ const GAME_MESSAGES = {
     other: p => `${getName(p)} is Robbed.`,
   },
   ROBBER: {
-    self: drop_count => ` A descartar BURRITO!<br><b>tenés que descartar ${drop_count} recursos</b> 🥷.`,
+    self: drop_count => ` A descartar BURRITO!<br><b>tenés que descartar ${drop_count} recursos</b>.`,
     other: _ => ` 🥷 Robber is actived. Opponents are dropping resources.`,
   },
   ROBBER_MOVE: {

@@ -1,136 +1,86 @@
 import * as CONST from "../const.js"
+import { default as MSG } from "../const_messages.js"
 
+/**
+ * The discard drawer: the trade drawer's header, deal and foot, with no palette of its own. The
+ * glowing cards in the hand are the palette: tapping one reaches `game.onCardClick()`, which checks
+ * and calls `give()`; a staked chip puts the card back in the hand.
+ */
 export default class RobberDropUI {
-  #res; #total; #goal; #max; #waiting
-  #onDropSubmit; #onTakenBack; #onAddRequested
-  $el = document.querySelector('#game > .robber-drop-zone')
-  $card_area = this.$el.querySelector('.card-area')
-  $dropped_count = this.$el.querySelector('.dropped-count')
-  $robber_emoji = this.$el.querySelector('.drop-emoji')
-  $drop_submit = this.$el.querySelector('.drop-give-button')
-  $drop_actions = this.$el.querySelector('.drop-actions')
-  $waiting_text = null
+  #res; #total; #goal; #max; #waiting = false
+  #onDropSubmit; #onTakenBack
+  $el = document.querySelector('#game .current-player > .trade-zone > .robber-drop-zone')
 
-  constructor({ onDropSubmit, onTakenBack, playRobberAudio, onAddRequested }) {
+  constructor({ onDropSubmit, onTakenBack, playRobberAudio }) {
     this.#onDropSubmit = onDropSubmit
     this.#onTakenBack = onTakenBack
-    this.#onAddRequested = onAddRequested
-    this.#waiting = false
-    // Prepare waiting text element (hidden by default)
-    this.$waiting_text = document.createElement('div')
-    this.$waiting_text.className = 'waiting-text'
-    this.$waiting_text.textContent = 'Waiting for other players to discard...'
-    this.$waiting_text.style.display = 'none'
-    this.$el.appendChild(this.$waiting_text)
-    this.$robber_emoji.addEventListener('click', e => playRobberAudio())
-    // Bound once: $drop_submit lives for the whole game, unlike the per-render .ctrl buttons
-    this.$drop_submit.addEventListener('click', e => {
-      if (!this.$drop_submit.classList.contains('active')) return
-      // Enter waiting state immediately to give visual feedback
-      this.setWaiting(true)
-      const clean_obj = Object.fromEntries(Object.entries(this.#res)
-        .filter(([k]) => CONST.RESOURCES[k]))
-      this.#onDropSubmit(clean_obj)
-    })
-  }
-
-  hide() { this.$el.classList.remove('show') }
-
-  render(count, hand_cards) {
-    const holding_res = Object.entries(hand_cards)
-      .filter(([k, v]) => v && CONST.RESOURCES[k]).map(([k]) => k)
-    this.#res = Object.fromEntries(holding_res.map(k => [k, 0]))
-    this.#max = Object.fromEntries(holding_res.map(k => [k, hand_cards[k]]))
-    this.#total = 0
-    this.#goal = count
-    // Reset any previous waiting state
-    this.#waiting = false
-    this.$drop_submit.classList.remove('waiting')
-    // Ensure normal UI is visible
-    if (this.$waiting_text) this.$waiting_text.style.display = 'none'
-    this.$card_area.style.display = ''
-    this.$drop_actions.style.display = ''
-    this.$card_area.innerHTML = holding_res.map(k => `
-      <div class="card card--md card--under drop-card" data-type="${k}" data-count="0">
-        <button class="ctrl minus" title="Remove one">−</button>
-        <button class="ctrl plus" title="Add one">+</button>
-      </div>
-    `).join('')
-    this.$dropped_count.innerHTML = [...Array(count)].map((_, i) => `
-      <div class="dropped-count-light l-${i}" style="transform:rotate(${((360) * i / count)}deg)"></div>
-    `).join('')
-    this.$el.classList.add('show')
-    // Initialize button label with 0/#
-    this.updateCount()
-    this.#addEventListeners()
-  }
-
-  #addEventListeners() {
-    // Minus: take back one from this slot
-    this.$card_area.querySelectorAll('.drop-card .ctrl.minus').forEach($btn => {
-      $btn.addEventListener('click', e => {
-        e.stopPropagation()
-        if (this.#waiting) return
-        const $card = e.currentTarget.closest('.drop-card')
-        if (!$card) return
-        if (!+$card.dataset.count) return
-        const type = $card.dataset.type
-        if (this.#res[type] === undefined) return
+    // One listener for the whole drawer. Controls that may not be pressed carry the native
+    // `disabled` attribute, which does not fire a click.
+    this.$el.addEventListener('click', e => {
+      if (e.target.closest('.robber')) { return playRobberAudio() }
+      if (this.#waiting) { return }
+      const $chip = e.target.closest('.chip')
+      if ($chip) {
+        const type = $chip.dataset.type
         this.#res[type] -= 1
         this.#total -= 1
         this.updateCount()
-        this.#onTakenBack(type)
-      })
-    })
-    // Plus: request to add one (simulate clicking the hand card logic)
-    this.$card_area.querySelectorAll('.drop-card .ctrl.plus').forEach($btn => {
-      $btn.addEventListener('click', e => {
-        e.stopPropagation()
-        if (this.#waiting) return
-        if (e.currentTarget.classList.contains('disabled')) return
-        if (this.hasReachedGoal()) return
-        const $card = e.currentTarget.closest('.drop-card')
-        if (!$card) return
-        const type = $card.dataset.type
-        if (!this.isResourceSlotAvailable(type)) return
-        if (this.#max && this.#max[type] !== undefined && this.#res[type] >= this.#max[type]) return
-        // Delegate to UI to perform the same flow as clicking hand
-        this.#onAddRequested?.(type)
-      })
+        return this.#onTakenBack(type)
+      }
+      if (e.target.closest('.foot .submit')) {
+        this.setWaiting(true)
+        this.#onDropSubmit({ ...this.#res })
+      }
     })
   }
 
+  hide() { this.$el.classList.add('hide') }
+
+  render(count, hand_cards) {
+    this.#res = Object.fromEntries(Object.keys(CONST.RESOURCES).map(k => [k, 0]))
+    this.#max = Object.fromEntries(Object.keys(CONST.RESOURCES).map(k => [k, hand_cards[k] || 0]))
+    this.#total = 0
+    this.#goal = count
+    this.$el.innerHTML = `
+      <div class="head">
+        <button class="robber" type="button" title="Robber">🥷</button>
+        <div class="title">${MSG.ROBBER.self(count)}</div>
+        <span class="counter"></span>
+      </div>
+      <div class="deal empty">
+        <div class="side give"></div>
+        <span class="hint">Tap the glowing cards in your hand to discard them. Tap them here to take them back.</span>
+      </div>
+      <div class="foot">
+        <span class="guide"></span>
+        <button class="btn btn--primary submit" type="button">Discard</button>
+      </div>
+      <div class="waiting">Waiting for other players to discard...</div>
+    `
+    this.setWaiting(false)
+    this.updateCount()
+    this.$el.classList.remove('hide')
+  }
+
+  /** The chips, the counter, the guide and the submit, after every change. */
   updateCount() {
-    // Goal Update
-    const goal_reached = this.#goal === this.#total
-    this.$drop_submit.classList[goal_reached ? 'add' : 'remove']('active')
-    // Update submit button label: show X/# and switch to Discard when goal reached
-    if (goal_reached) {
-      this.$drop_submit.textContent = 'Discard'
-    } else {
-      this.$drop_submit.textContent = `${this.#total}/${this.#goal}`
+    const done = this.#total >= this.#goal
+    const $deal = this.$el.querySelector('.deal')
+    $deal.classList.toggle('empty', !this.#total)
+    // Repaint the chips only when the amounts changed, so they do not re-enter.
+    const $side = $deal.querySelector('.side.give'), key = Object.values(this.#res).join()
+    if ($side.dataset.key !== key) {
+      $side.dataset.key = key
+      $side.innerHTML = Object.keys(CONST.RESOURCES).filter(k => this.#res[k]).map(k => `
+        <button class="chip give" type="button" data-type="${k}" title="Take back ${CONST.RESOURCES[k]}"
+          >${this.#res[k]}<span class="res-icon ${k}"></span><span class="x">✕</span></button>`).join('')
     }
-    // Total Update
-    this.$dropped_count.dataset.count = this.#total
-    this.$dropped_count.querySelectorAll(`.dropped-count .dropped-count-light`).forEach(($el, i) => {
-      if (i < this.#total) $el.classList.add('on')
-      else $el.classList.remove('on')
-    })
-    // Resource Update
-    Object.entries(this.#res).forEach(([key, value]) => {
-      const $drop = this.$card_area.querySelector(`.drop-card[data-type="${key}"]`)
-      $drop.dataset.count = value
-      $drop.classList[value ? 'add' : 'remove']('valued')
-      const $plus = $drop.querySelector('.ctrl.plus')
-      if ($plus) {
-        const max = this.#max?.[key] ?? Infinity
-        $plus.classList[value >= max ? 'add' : 'remove']('disabled')
-      }
-      const $minus = $drop.querySelector('.ctrl.minus')
-      if ($minus) {
-        $minus.classList[value <= 0 ? 'add' : 'remove']('disabled')
-      }
-    })
+    const $counter = this.$el.querySelector('.head .counter')
+    $counter.textContent = `${this.#total} / ${this.#goal}`
+    $counter.classList.toggle('done', done)
+    const left = this.#goal - this.#total
+    this.$el.querySelector('.foot .guide').textContent = left > 0 ? `Choose ${left} more` : ''
+    this.$el.querySelector('.foot .submit').disabled = this.#total !== this.#goal
   }
 
   give(res_type) {
@@ -140,20 +90,10 @@ export default class RobberDropUI {
   }
 
   hasReachedGoal() { return this.#total >= this.#goal }
-  isResourceSlotAvailable(res_type) { return this.#res[res_type] !== undefined }
+  isResourceSlotAvailable(res_type) { return this.#max?.[res_type] - this.#res?.[res_type] > 0 }
   setWaiting(flag) {
     this.#waiting = !!flag
-    // Hide controls and cards when waiting; show only waiting text
-    this.$card_area.style.display = flag ? 'none' : ''
-    this.$drop_actions.style.display = flag ? 'none' : ''
-    if (this.$waiting_text) this.$waiting_text.style.display = flag ? 'block' : 'none'
-    // Ensure submit button is not interactive while waiting
-    this.$drop_submit.classList.remove('active')
-    this.$drop_submit.classList[flag ? 'add' : 'remove']('waiting')
-    // Do not place waiting text on the button; keep button label as Discard or X/# when visible
-    if (!flag) {
-      this.$drop_submit.textContent = (this.#goal === this.#total ? 'Discard' : `${this.#total}/${this.#goal}`)
-    }
+    this.$el.classList.toggle('waiting', this.#waiting)
   }
-  isWaiting() { return !!this.#waiting }
+  isWaiting() { return this.#waiting }
 }

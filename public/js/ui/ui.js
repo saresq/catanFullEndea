@@ -70,7 +70,6 @@ export default class UI {
       onDropSubmit: res => game.onGiveToRobber(res),
       onTakenBack: type => this.player_ui.toggleHandResource(type, true),
       playRobberAudio: _ => game.playRobberAudio(),
-      onAddRequested: type => this.player_ui.clickCard(type),
     })
 
     this.trade_ui = new TradeUI(player, game.config.max_trade_requests, {
@@ -84,6 +83,7 @@ export default class UI {
     this.res_selection_ui = new ResSelectionUI({
       onSubmit: (type, res1, res2) => game.onMonopolyYearOfPlentyResSelection(type, res1, res2),
       onDevCardClick: type => this.player_ui.clickCard(type),
+      onCancel: _ => game.clearDevCardUsage(),
     })
   }
 

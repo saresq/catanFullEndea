@@ -391,6 +391,78 @@
     },
 
     /**
+     * The discard drawer, reached the way the socket reaches it: 14 resources in the hand (so 7 to
+     * discard), then the drop state through `updateStateChangeSoc()`. `resource_count` is what the
+     * server sends next to the hand, so it is set by hand here. Reports the drawer (see `drawer()`)
+     * and whether the big alert is up over it; the drawer has no cards of its own, so it also
+     * reports the glowing (`active`) hand stacks on screen. Leaves the drawer open.
+     */
+    discard(cards = { S: 3, L: 3, B: 3, O: 3, W: 2 }) {
+      const me = self()
+      if (!me) return 'no player - spectating?'
+      VISUAL.hand(cards)
+      me.resource_count = Object.values(cards).reduce((m, v) => m + v, 0)
+      game.updateStateChangeSoc('drop_resource_for_robber', other)
+      const report = VISUAL.drawer('.robber-drop-zone')
+      if (typeof report === 'string') return report
+      const glowing = $$('.hand .card-group.active').filter($g => {
+        const b = $g.getBoundingClientRect()
+        return b.width > 0 && b.top >= -0.5 && b.bottom <= innerHeight + 0.5 && b.left >= -0.5 && b.right <= innerWidth + 0.5
+      })
+      return { ...report, handGlowingInView: glowing.map($g => $g.dataset.type) }
+    },
+
+    /**
+     * Year of Plenty (`'dY'`) or Monopoly (`'dM'`) picker, through `game.onDevCardActivate()`.
+     * `canPlayDevCard` wants the card in hand, `can_play_dc`, the viewer's own action phase and no
+     * card already in play, so the hook sets exactly that: the hand, then the action state for the
+     * viewer through `updateStateChangeSoc()` (which also clears any card in play). Leaves it open.
+     */
+    picker(type = 'dY') {
+      const me = self()
+      if (!me) return 'no player - spectating?'
+      VISUAL.hand()
+      me.can_play_dc = true
+      me.turn_bought_dc = {}
+      game.updateStateChangeSoc('player_actions', me.id)
+      game.onDevCardActivate(type)
+      return VISUAL.drawer('.resource-selection-zone')
+    },
+
+    /** Geometry and state of one resource drawer, for `discard()` and `picker()`. */
+    drawer(sel) {
+      const $d = document.querySelector(`#game ${sel}`)
+      if (!$d || !$d.offsetWidth) return `${sel} not shown`
+      const px = n => +n.toFixed(1)
+      const r = $d.getBoundingClientRect()
+      const $dock = document.querySelector('#game > .current-player')
+      const dock = $dock.getBoundingClientRect()
+      const taps = [...$d.querySelectorAll('button, .btn, .card, .ctrl, .drop-emoji')].filter($_ => $_.offsetWidth)
+      const $submit = $d.querySelector('.submit, .drop-give-button')
+      const inView = $_ => { const b = $_.getBoundingClientRect(); return b.width > 0 && b.top >= -0.5 && b.left >= -0.5 && b.right <= innerWidth + 0.5 && b.bottom <= innerHeight + 0.5 }
+      return {
+        viewport: `${innerWidth}x${innerHeight}`,
+        drawer: { x: px(r.x), y: px(r.y), w: px(r.width), h: px(r.height) },
+        share: +(r.height / innerHeight).toFixed(3),
+        inView: inView($d),
+        alertShown: !!document.querySelector('#game > .alert.show'),
+        hScroll: document.documentElement.scrollWidth > innerWidth,
+        drawerScrollsX: $d.scrollWidth > $d.clientWidth + 1,
+        drawerScrollsY: $d.scrollHeight > $d.clientHeight + 1,
+        overlapsDock: r.bottom > dock.top + 0.5,
+        dockInView: dock.top < innerHeight && dock.height > 0,
+        timerInView: !!$dock.querySelector('.timer') && inView($dock.querySelector('.timer')),
+        minHit: taps.length ? px(Math.min(...taps.map($_ => { const b = $_.getBoundingClientRect(); return Math.min(b.width, b.height) }))) : null,
+        resourcesInView: [...$d.querySelectorAll('.pick')].filter(inView).length,
+        title: $d.querySelector('.title')?.textContent.trim() || null,
+        counter: $d.querySelector('.counter')?.textContent.trim() || null,
+        counterInView: !!$d.querySelector('.counter') && inView($d.querySelector('.counter')),
+        guide: $d.querySelector('.guide')?.textContent.trim() || null,
+        submit: $submit && { label: $submit.textContent.trim(), disabled: $submit.disabled || !!$submit.matches('.btn--gated:not(.active)'), inView: inView($submit) },
+      }
+    },
+
+    /**
      * Options menu, for the gates in the options-menu change: one entry per item (label, state
      * text, key hint, tap size), how many items carry no label, and whether recenter is reachable
      * with the menu closed. Works on any page that renders the zone (game, login, waiting room,

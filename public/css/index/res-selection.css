@@ -1,138 +1,42 @@
-#game > .resource-selection-zone {
-    position: fixed;
-    top: 0;
-    left: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    z-index: var(--z-panel);
-    /* Skin: ui/primitives.css (.panel--drawer) */
-    padding: 0 20px 0;
-    @media screen and (max-width: 768px) {
-        padding: 0;
-    }
-    box-sizing: border-box;
-    font-family: var(--font-ui), sans-serif;
-
-    &.hide {
-        display: none;
-    }
-
+/*
+ * Year of Plenty and Monopoly. Placement, cards, chips and buttons are the trade drawer's
+ * (trade.css); this file adds only the development card in the header and the row's name.
+ */
+#game .current-player > .trade-zone > .resource-selection-zone {
     .title {
+        flex: 1 1 auto;
         font-family: var(--font-heading), serif;
-        color: var(--sand-color-text-dark);
-        font-size: 1.5em;
-        text-align: center;
-        font-weight: 200;
-        padding: 10px 20px 8px;
-        margin-bottom: 20px;
-        background-color: var(--sand-color);
-        width: 100%;
+        font-size: var(--text-lg);
     }
 
-    .content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-    }
+    /* The card being played; tapping it opens its preview. */
+    .dev-card {
+        --card-w: 2.75rem;
+        padding: 0;
+        cursor: pointer;
+        transition: transform var(--t-fast) ease;
 
-    .card-area {
-        display: flex;
-        flex-wrap: nowrap;
-        justify-content: center;
-        width: 100%;
-        gap: 0.5rem;
-        overflow-x: auto;
-        box-sizing: border-box;
-        padding: 0 10px 5px;
+        &:hover { transform: translateY(-0.125rem); }
 
-        @media screen and (max-width: 500px) {
-            justify-content: flex-start;
-        }
-
-        /* Face and size: ui/card.css (.card--md.card--under) */
-        .card {
-            cursor: pointer;
-            margin-bottom: 0.5rem;
-
-            &::before {
-                filter: brightness(0.4) sepia(0.5);
-                transition: all var(--t-fast) linear;
-            }
-
-            &:not([data-count="0"])::before {
-                filter: none;
-                box-shadow: 0 0 0.3125rem 0.3125rem #0006;
-            }
-
-            &:not([data-count="0"]):hover {
-                transform: scale(1.1);
-
-                &::before {
-                    box-shadow: 0 0 0.625rem 0.3125rem #0009;
-                }
-            }
-
-            &::after {
-                display: none;
-                content: "Take " attr(data-text);
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                width: 100%;
-                text-align: center;
-                background: var(--sand-color-dark);
-                border-bottom-right-radius: inherit;
-                border-bottom-left-radius: inherit;
-                color: #fff9;
-                /* font-size: 2em;
-                font-weight: 600; */
-                padding: 0.3125rem 0;
-                /* border-top: 1px solid var(--sand-color); */
-                box-shadow: 0 -0.3125rem 0.3125rem -0.1875rem var(--sand-color);
-            }
-
-            &:not([data-count="0"], [data-count="1"])::after {
-                content: "Take " attr(data-count) " " attr(data-text);
-            }
-
-            &:not([data-count="0"])::after {
-                display: block;
-            }
-        }
-
-        &.inactive .card[data-count="0"] {
-            cursor: not-allowed;
-        }
-
-        &:not(.inactive) .card:hover::before {
-            filter: none;
-            box-shadow: 0 0 5px 5px #0006;
+        &:focus-visible {
+            outline: 0.125rem solid #fff;
+            outline-offset: 0.125rem;
         }
     }
 
-    .actions {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
+    .palette.get::before { content: 'You get'; }
 
-        /* The dev card being played (Monopoly / Year of Plenty): ui/card.css (.card--sm) */
-        .dev-card {
-            cursor: pointer;
-            margin-right: 1.25rem;
-
-            &:hover {
-                transform: scale(1.1);
-            }
-        }
-
-        /* Skin: ui/primitives.css (.btn--primary.btn--gated) */
-        .submit {
-            margin: 10px;
-            width: 160px;
-        }
+    /* Phones: 44px to hit, px because the root font size drops (see trade.css). */
+    @media screen and (max-width: 768px), screen and (orientation: landscape) and (max-height: 500px) {
+        .dev-card { --card-w: 44px; }
     }
+
+    /* Landscape phones: head and foot share the top line, the palette and the deal the second. */
+    @media screen and (orientation: landscape) and (max-height: 500px) {
+        grid-template-areas: "head foot" "get deal";
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #game .current-player > .trade-zone > .resource-selection-zone .dev-card { transition: none; }
 }

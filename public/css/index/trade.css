@@ -13,7 +13,7 @@
    scoreboard and the gear are at 50 and would paint over a drawer that reaches the top of a phone
    screen. While the drawer is open the dock rises to the panel layer, where the trade UI used to
    live; the board and the scoreboard stay visible and unblurred underneath. */
-#game > .current-player:has(> .trade-zone > .trade-card-selection:not(.hide)) {
+#game > .current-player:has(> .trade-zone > .panel--drawer:not(.hide)) {
     z-index: var(--z-panel);
 }
 
@@ -229,7 +229,7 @@
        and what you get. --card-w is the only size knob of the palettes.
        ============================================================== */
 
-    .trade-card-selection {
+    :is(.trade-card-selection, .robber-drop-zone, .resource-selection-zone) {
         --card-w: 3.5rem;
         box-sizing: border-box;
         display: flex;

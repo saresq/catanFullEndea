@@ -5,8 +5,8 @@
 @import './index/all-players.css';
 @import './index/board.css';
 @import './index/current-player.css';
-@import './index/robber-drop.css';
 @import './index/trade.css';
+@import './index/robber-drop.css';
 @import './index/res-selection.css';
 @import './index/animations.css';
 @import './index/accessibility.css';

@@ -170,7 +170,7 @@ export default class AlertUI {
   alertResTaken(res) { this.appendStatus(MSG.RES_TAKEN.all(res)) }
   alertDevCardTaken(p, card) { this.setStatus(MSG.DEVELOPMENT_CARD_BUY.all(this.#isNotMe(p), card)) }
   alertRobberDrop(drop_count) {
-    if (drop_count) this.bigAlert(MSG.ROBBER.self(drop_count))
+    if (drop_count) this.setStatusBarOnly(MSG.ROBBER.self(drop_count))
     else this.appendStatus(MSG.ROBBER.other())
   }
   alertRobberDropDone() { this.setStatus(MSG.ROBBER.other()) }
