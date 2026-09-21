@@ -70,7 +70,7 @@ export default class UI {
 
     this.robber_drop_ui = new RobberDropUI({
       onDropSubmit: res => game.onGiveToRobber(res),
-      onTakenBack: type => this.player_ui.toggleHandResource(type, true),
+      onStakes: stakes => this.player_ui.setHandStakes(stakes),
       playRobberAudio: _ => game.playRobberAudio(),
     })
 
@@ -145,7 +145,6 @@ export default class UI {
   robberDrop(count) {
     this.board_ui.toggleBlur(true)
     this.robber_drop_ui.render(count, this.#player.closed_cards)
-    this.player_ui.activateResourceCards()
   }
 
   build(pid, piece, loc) {

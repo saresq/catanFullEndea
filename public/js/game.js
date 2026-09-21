@@ -560,7 +560,6 @@ export default class Game {
       if (this.#ui.robber_drop_ui.isWaiting && this.#ui.robber_drop_ui.isWaiting()) return
       if (this.#ui.robber_drop_ui.hasReachedGoal()) return
       if (!this.#ui.robber_drop_ui.isResourceSlotAvailable(type)) return
-      if (!this.#ui.player_ui.toggleHandResource(type)) return
       this.#ui.robber_drop_ui.give(type)
     }
   }

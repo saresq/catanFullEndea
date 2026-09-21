@@ -3,17 +3,17 @@ import { default as MSG } from "../const_messages.js"
 
 /**
  * The discard drawer: the trade drawer's header, deal and foot, with no palette of its own. The
- * glowing cards in the hand are the palette: tapping one reaches `game.onCardClick()`, which checks
- * and calls `give()`; a staked chip puts the card back in the hand.
+ * glowing cards in the hand are the palette (`onStakes`, as the trade drawer does): tapping one
+ * reaches `game.onCardClick()`, which checks and calls `give()`; a staked chip puts the card back.
  */
 export default class RobberDropUI {
   #res; #total; #goal; #max; #waiting = false
-  #onDropSubmit; #onTakenBack
+  #onDropSubmit; #onStakes
   $el = document.querySelector('#game .current-player > .trade-zone > .robber-drop-zone')
 
-  constructor({ onDropSubmit, onTakenBack, playRobberAudio }) {
+  constructor({ onDropSubmit, onStakes, playRobberAudio }) {
     this.#onDropSubmit = onDropSubmit
-    this.#onTakenBack = onTakenBack
+    this.#onStakes = onStakes
     // One listener for the whole drawer. Controls that may not be pressed carry the native
     // `disabled` attribute, which does not fire a click.
     this.$el.addEventListener('click', e => {
@@ -24,8 +24,7 @@ export default class RobberDropUI {
         const type = $chip.dataset.type
         this.#res[type] -= 1
         this.#total -= 1
-        this.updateCount()
-        return this.#onTakenBack(type)
+        return this.updateCount()
       }
       if (e.target.closest('.foot .submit')) {
         this.setWaiting(true)
@@ -34,7 +33,12 @@ export default class RobberDropUI {
     })
   }
 
-  hide() { this.$el.classList.add('hide') }
+  /** Closes the drawer; the hand goes back to normal only if the drawer was the one showing on it. */
+  hide() {
+    if (this.$el.classList.contains('hide')) { return }
+    this.$el.classList.add('hide')
+    this.#onStakes(null)
+  }
 
   render(count, hand_cards) {
     this.#res = Object.fromEntries(Object.keys(CONST.RESOURCES).map(k => [k, 0]))
@@ -58,11 +62,10 @@ export default class RobberDropUI {
       <div class="waiting">Waiting for other players to discard...</div>
     `
     this.setWaiting(false)
-    this.updateCount()
     this.$el.classList.remove('hide')
   }
 
-  /** The chips, the counter, the guide and the submit, after every change. */
+  /** The hand's stakes, the chips, the counter, the guide and the submit, after every change. */
   updateCount() {
     const done = this.#total >= this.#goal
     const $deal = this.$el.querySelector('.deal')
@@ -81,6 +84,11 @@ export default class RobberDropUI {
     const left = this.#goal - this.#total
     this.$el.querySelector('.foot .guide').textContent = left > 0 ? `Choose ${left} more` : ''
     this.$el.querySelector('.foot .submit').disabled = this.#total !== this.#goal
+    // `left` is absolute, so a hand update that lands while waiting renders the same numbers.
+    this.#onStakes(Object.fromEntries(Object.keys(CONST.RESOURCES).map(k => {
+      const left = this.#max[k] - this.#res[k]
+      return [k, { left, disabled: this.#waiting || done || !left }]
+    })))
   }
 
   give(res_type) {
@@ -94,6 +102,7 @@ export default class RobberDropUI {
   setWaiting(flag) {
     this.#waiting = !!flag
     this.$el.classList.toggle('waiting', this.#waiting)
+    this.updateCount()
   }
   isWaiting() { return this.#waiting }
 }

@@ -8,7 +8,7 @@ export default class PlayerUI {
   #onEndTurnClick; #onCardClick; #getPossibleLocations; #toggleBoardBlur; #onDevCardActivate
   #canPlayDevCard
   #is_dev_row_open = false
-  /** What the trade drawer has staked, shown on the hand: `null` or `{ [res]: { left, rate, disabled } }` */
+  /** What the trade or discard drawer has staked, shown on the hand: `null` or `{ [res]: { left, rate?, disabled } }` */
   #stakes = null
   #onHandUpdated
   #is_end_cooldown = false
@@ -48,7 +48,7 @@ export default class PlayerUI {
     this.renderActionBar()
     this.renderHand()
     this.#setupCardPreviewEvents()
-    // A glowing stack is focusable (renderHand, activateResourceCards): Enter / Space taps it.
+    // A glowing stack is focusable (renderHand): Enter / Space taps it.
     // Stopped here so Space does not also reach the roll / end-turn shortcut.
     this.$hand.addEventListener('keydown', e => {
       const $group = e.target.closest?.('.card-group.active')
@@ -414,7 +414,7 @@ export default class PlayerUI {
       return a[0].length - b[0].length || a[0].localeCompare(b[0])
     })
 
-    // While trading, a resource stack shows what staking leaves; every other group is disabled.
+    // While trading or discarding, a resource stack shows what staking leaves; every other group is disabled.
     const stakes = this.#stakes
     const groupToHtml = ([type, held]) => {
       const stake = stakes?.[type]
@@ -463,7 +463,7 @@ export default class PlayerUI {
     this.#setupHandEvents()
   }
 
-  /** Show the trade drawer's stakes on the hand (`null`: the normal hand). Kept across re-renders. */
+  /** Show a drawer's stakes on the hand (`null`: the normal hand). Kept across re-renders. */
   setHandStakes(stakes) {
     this.#stakes = stakes
     this.renderHand()
@@ -548,41 +548,6 @@ export default class PlayerUI {
     this.renderHand()
     oKeys(CONST.COST).forEach(key => this.canIBuy(key))
     this.#onHandUpdated?.()
-  }
-
-  activateResourceCards() {
-    this.renderHand()
-    const res_selector = oKeys(CONST.RESOURCES).map(k => `.card-group[data-type="${k}"]`).join(',')
-    this.$hand.querySelectorAll(res_selector).forEach($el => { $el.classList.add('active'); $el.tabIndex = 0 })
-    const dev_selector = oKeys(CONST.DEVELOPMENT_CARDS).map(k => `.card-group[data-type="${k}"]`).join(',')
-    this.$hand.querySelectorAll(dev_selector).forEach($el => $el.classList.add('disabled'))
-  }
-
-  /** During Robber Drop */
-  toggleHandResource(type, add) {
-    const $group = this.$hand.querySelector(`.card-group[data-type="${type}"]`)
-    const $count = $group.querySelector('.card-count')
-    const count = +$count.innerHTML + (add ? 1 : -1)
-    if (add) {
-      $group.classList.remove('disabled')
-      if (count <= this.maxVisualCards) {
-        const $hidden = $group.querySelectorAll('.card.hide')
-        if ($hidden.length) $hidden[0].classList.remove('hide')
-      }
-    } else {
-      if (count < 0) return
-      if (count < this.maxVisualCards) {
-        const $visible = $group.querySelectorAll('.card:not(.hide)')
-        if ($visible.length) $visible[$visible.length - 1].classList.add('hide')
-      }
-      if (count === 0) $group.classList.add('disabled')
-    }
-    $count.innerHTML = count
-    $count.classList.toggle('hide', count < 2)
-    const visualCount = Math.min(count, this.maxVisualCards)
-    $count.style.left = `calc(var(--hand-card-w) / 2 - 0.78125rem + ${Math.max(0, visualCount - 1) * 4}px)`
-    $count.style.top = `calc(-0.75rem - ${Math.max(0, visualCount - 1) * 2}px)`
-    return 1
   }
   //#endregion
 }
