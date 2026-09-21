@@ -457,6 +457,8 @@ export default class Game {
     // Reject trading the same resources
     if (Object.entries(giving).filter(([k, v]) => v && taking[k]).length) return
     const player = this.getPlayer(pid)
+    // Only a rate the player owns: Px and *4 for everyone, *3 and the 2:1s once built on that port
+    if (!player.trade_offers[type]) return
     if (!player.hasAllResources(giving)) return
     const giving_total = Object.values(giving).reduce((m, v) => m + v, 0)
     const taking_total = Object.values(taking).reduce((m, v) => m + v, 0)
