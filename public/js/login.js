@@ -22,6 +22,7 @@ class LoginUI {
     const isFull = params.get('full') === '1'
     const preGameId = (params.get('game_id') || '').toLowerCase()
     const preName = params.get('name') || ''
+    const notice = params.get('notice') || ''
 
     const name = preName || localStorage.getItem(CONST.STORAGE_KEYS.PLAYER_NAME) || ''
     const joinSectionContent = isFull ? `
@@ -33,8 +34,8 @@ class LoginUI {
         </div>
       </div>
     ` : `
-      <input type="text" class="name" name="name" placeholder="Your Name" value="${name}"/>
-      <input type="text" class="game-key" name="game_id" placeholder="Game Key" value="${preGameId}"/>
+      <input type="text" class="field name" name="name" placeholder="Your Name"/>
+      <input type="text" class="field game-key" name="game_id" placeholder="Game Key"/>
       <button class="btn btn--primary join">Join Game</button>
     `
 
@@ -45,30 +46,31 @@ class LoginUI {
         <label><span>Join</span><input type="radio" name="action_type" value="join" ${(isFull || preGameId) ? 'checked="checked"' : ''}/></label>
       </div>
       <div class="action-container">
+        <div class="notice" role="status"></div>
         <div class="section host-section">
-          <input type="text" class="name" name="name" placeholder="Your Name" value="${name}"/>
+          <input type="text" class="field name" name="name" placeholder="Your Name"/>
           <div class="content-wrapper">
             <div class="section-group">
-              <label class="section-label" for="player-count">Players:</label>
-              <select id="player-count" class="select player-count">
+              <label class="section-label" for="player-count">Players</label>
+              <select id="player-count" class="field player-count">
                 ${CONST.PLAYER_COUNTS.map(n => `<option value="${n}" ${n === CONST.PLAYER_COUNTS[0] ? 'selected' : ''}>${n}</option>`).join('')}
               </select>
             </div>
             <div class="section-group">
-              <label class="section-label" for="map-size">Map Size:</label>
-              <select id="map-size" class="select map-size">
+              <label class="section-label" for="map-size">Map Size</label>
+              <select id="map-size" class="field map-size">
                 ${CONST.MAP_LIST.map((m, i) => `<option value="${m.id}" ${i === 0 ? 'selected' : ''}>${m.name}</option>`).join('')}
               </select>
             </div>
             <div class="section-group">
-              <label class="section-label" for="win-points">Victory Points:</label>
-              <select id="win-points" class="select win-points">
+              <label class="section-label" for="win-points">Victory Points</label>
+              <select id="win-points" class="field win-points">
                 ${CONST.WIN_POINT_OPTIONS.map(v => `<option value="${v}" ${v === CONST.GAME_CONFIG.win_points ? 'selected' : ''}>${v}</option>`).join('')}
               </select>
             </div>
             <div class="section-group">
-              <label class="section-label" for="dice-mode">Dice Mode:</label>
-              <select id="dice-mode" class="select dice-mode">
+              <label class="section-label" for="dice-mode">Dice Mode</label>
+              <select id="dice-mode" class="field dice-mode">
                 <option value="random" selected>Random</option>
                 <option value="balanced">Balanced</option>
               </select>
@@ -84,6 +86,13 @@ class LoginUI {
         </div>
       </div>
     `
+    // Query values go in as text, never as markup
+    this.$container.querySelectorAll('input.name').forEach($_ => $_.value = name)
+    const $key = this.$container.querySelector('input.game-key')
+    if ($key) { $key.value = preGameId }
+    const $notice = this.$container.querySelector('.action-container > .notice')
+    $notice.textContent = notice
+    $notice.hidden = !notice
 
     // Focus name input if empty to prompt selection
     if (!isFull) {
@@ -94,7 +103,6 @@ class LoginUI {
       }
     }
     this.#setupEvents(isFull, preGameId)
-    setTimeout(_ => $('.notice')?.classList.add('hide'), 5000)
     window.config = CONST.GAME_CONFIG
   }
 

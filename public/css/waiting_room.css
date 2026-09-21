@@ -6,20 +6,12 @@
 @import "/css/ui/primitives.css";
 
 :root {
-    --title-padding: .8em 20px .2em;
     --box-width: 500px;
 }
 
 @media screen and (max-width: 800px) {
     :root {
-        --title-padding: 2em 20px 1em;
         --box-width: 90%;
-    }
-}
-
-@media screen and (max-width: 450px) {
-    :root {
-        --title-padding: 2em 10px 1em;
     }
 }
 
@@ -42,319 +34,334 @@ html {
 
 body {
     height: 100%;
-    padding: 0;
     margin: 0;
     background: url(/images/catan-bg.png) center/cover;
     backdrop-filter: blur(50px);
-    transition: all linear var(--t-slow);
-    font-family: var(--font-main), sans-serif;
+    font-family: var(--font-body), sans-serif;
     font-size: 1rem;
 }
 
+/* Page: the card alone, shrinking only when the screen is short */
 #waiting-room {
     display: flex;
-    flex-wrap: wrap;
-    align-content: flex-start;
-    font-family: var(--font-main), sans-serif;
+    flex-direction: column;
+    box-sizing: border-box;
+    height: 100vh;
+    height: 100dvh;
+    padding: var(--space-6) 0 var(--space-4);
 
     &.hide {
         opacity: 0;
         transition: opacity var(--t-slow) 1.5s linear;
     }
 
-    .title {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        text-align: center;
-        cursor: default;
-
-        .colored {
-            border-bottom: 2px solid var(--sand-color-dark);
-            background-color: var(--sand-color);
-        }
-
-        .name {
-            font-family: var(--font-body), sans-serif;
-            font-size: 1em;
-            color: #0006;
-        }
-
-        .text {
-            margin-bottom: 10px;
-            margin-top: -5px;
-            font-size: 2em;
-            text-align: center;
-            position: relative;
-            color: var(--sand-color-text-dark);
-            cursor: copy;
-            transition: all var(--t-fast) ease;
-
-            svg {
-                transform: scale(1.3);
-                margin-left: 5px;
-                opacity: 0.7;
-            }
-
-            &:hover {
-                filter: drop-shadow(0 0 5px #fff) drop-shadow(0 0 2px #fff);
-
-                &::after {
-                    content: 'Copy';
-                    position: absolute;
-                    bottom: -20px;
-                    left: calc(50% - 30px);
-                    text-align: center;
-                    font-size: 1rem;
-                    font-family: var(--font-ui), sans-serif;
-                    background-color: #000c;
-                    color: #fff;
-                    padding: 3px 10px;
-                    border-radius: 3px;
-                }
-            }
-
-            &.copied:hover {
-                cursor: default;
-                filter: drop-shadow(0 0 5px #fff0) drop-shadow(0 0 2px #0000) contrast(0.5);
-
-                &::after {
-                    content: 'Copied!';
-                }
-            }
-        }
-    }
-
     > .container {
-        width: var(--box-width);
-        margin: 120px auto 30px;
+        display: contents;
     }
+}
 
-    .wait-box {
-        background: #fff3;
-        box-shadow: 0 0 40px #0009;
-        border-radius: 10px;
-        backdrop-filter: blur(6px);
-        padding: 20px;
-        box-sizing: border-box;
+/* Narrow screens: the card starts below the options gear */
+@media (max-width: 480px) {
+    #waiting-room {
+        padding-top: 4.5rem;
     }
+}
 
-    .box-header {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
+/* Game key: the card's red header, like the login's Host / Join switch. The key is a button that
+   shares (phones) or copies the invite link; the caption above confirms */
+#waiting-room .title {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) 0;
+    padding: var(--space-2) var(--space-4) var(--space-3);
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    background: var(--player-1-color-dark);
+    color: var(--surface-sand);
+
+    .text {
+        display: inline-flex;
         align-items: center;
-        justify-content: center;
-        font-family: var(--font-ui), sans-serif;
-        color: #fff;
-        filter: drop-shadow(0 0 5px #000);
-        margin-bottom: 10px;
+        gap: var(--space-3);
+        min-height: 44px;
+        padding: 0 var(--space-2) 0 var(--space-5);
+        border: 0.0625rem solid color-mix(in srgb, var(--surface-sand) 45%, transparent);
+        border-radius: var(--radius-pill);
+        background: color-mix(in srgb, #000 12%, transparent);
+        font-family: var(--font-display), serif;
+        font-size: var(--text-xl);
+        transition: background-color var(--t-fast) linear;
+
+        &:hover {
+            background: color-mix(in srgb, #000 25%, transparent);
+        }
+
+        &:focus-visible {
+            outline: 0.125rem solid var(--surface-sand);
+            outline-offset: 0.125rem;
+        }
     }
 
-    .box-header .info-item {
-        background: #0008;
-        padding: 6px 10px;
-        border-radius: 6px;
+    /* Copy mark in a sand chip; turns into a tick once the link is copied */
+    .copy-mark {
+        display: grid;
+        place-items: center;
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 50%;
+        background: var(--surface-sand);
+        color: var(--player-1-color-dark);
+
+        svg {
+            width: 1.25rem;
+            height: 1.25rem;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
     }
 
-    .box-header .label {
-        opacity: .8;
-        margin-right: 6px;
-    }
-
-    .box-header .value {
-        font-weight: 700;
-    }
-
-    .box-header .value-select {
-        background: #fff2;
-        color: #fff;
-        border: 1px solid #fff4;
-        border-radius: 4px;
-        padding: 2px 4px;
-        font-family: var(--font-ui), sans-serif;
-        font-weight: 700;
-        font-size: 0.9em;
-        outline: none;
-        cursor: pointer;
-    }
-
-    .box-header .value-select option {
-        background: #333;
-    }
-
-    .box-header .hide {
+    .check, .copied .copy {
         display: none;
     }
 
-    .slots {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
+    .copied .check {
+        display: block;
+    }
+}
+
+#waiting-room .wait-box {
+    flex: 0 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    box-sizing: border-box;
+    width: var(--box-width);
+    margin: 0 auto;
+    padding: var(--space-4);
+    background: var(--surface-card);
+    backdrop-filter: blur(6px);
+    border-radius: var(--radius-md);
+    box-shadow: 0 0 2.5rem #0009;
+    color: var(--surface-ink);
+}
+
+/* Settings: the login's label / control grid, two pairs per row */
+#waiting-room .box-header {
+    flex: none;
+    display: grid;
+    grid-template-columns: repeat(2, max-content minmax(0, 1fr));
+    grid-auto-flow: row dense;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+
+    .info-item {
+        display: contents;
     }
 
-    .spectators {
-        margin-top: 15px;
-        padding: 5px 10px;
-        border-radius: 6px;
-        background: #0004;
-        color: #fff;
-        font-family: var(--font-ui), sans-serif;
-        text-align: center;
-        font-size: 0.9em;
-
-        &.hide {
-            display: none;
-        }
-
-        span {
-            font-weight: 700;
-        }
-    }
-
-    .slot {
+    /* Read-only values sit in the same box as the host's selects */
+    .value {
         display: flex;
         align-items: center;
-        min-height: 44px;
-        background: var(--sand-color);
-        color: #fff;
-        border: 3px solid var(--sand-color-dark);
-        border-radius: 6px;
+        box-sizing: border-box;
+        height: 2.5rem;
+        padding: 0 var(--space-3);
+        border: 0.0625rem solid var(--sand-color-dark);
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+        white-space: nowrap;
+
+        @media screen and (max-width: 768px) {
+            min-height: 44px;
+        }
+    }
+
+    .leave-lobby {
+        grid-column: 1 / 3;
+        justify-self: start;
+    }
+
+    .start-game {
+        grid-column: 3 / 5;
+        justify-self: end;
+    }
+
+    .hide {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    #waiting-room .box-header {
+        grid-template-columns: max-content minmax(0, 1fr);
+
+        .leave-lobby { grid-column: 1; }
+        .start-game { grid-column: 2; }
+    }
+}
+
+/* Short screens (phone landscape): the page scrolls, the slots keep their size */
+@media (max-height: 480px) {
+    #waiting-room {
+        height: auto;
+    }
+}
+
+/* Slots: full size, shrinking toward 1.75rem when the seats do not fit; your own keeps 3rem */
+#waiting-room .slots {
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+#waiting-room .slot {
+    flex: 0 1 3rem;
+    min-height: 1.75rem;
+    display: flex;
+    align-items: stretch;
+    box-sizing: border-box;
+    width: 100%;
+    background: var(--p-color-light);
+    border: 0.125rem solid var(--p-color-dark, var(--sand-color-dark));
+    border-left: 0.5rem solid var(--p-color, var(--sand-color-dark));
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    font: inherit;
+    text-align: left;
+
+    &.me {
+        flex: none;
+        height: max(3rem, 44px);
+        cursor: pointer;
+
+        &:hover {
+            box-shadow: var(--shadow-2);
+        }
+
+        &:focus-visible {
+            outline: 0.125rem solid var(--surface-ink);
+            outline-offset: 0.125rem;
+        }
+    }
+
+    /* The piece sits on the light tint, where every colour reads; empty slots keep its place */
+    .city-icon, &.empty::before {
+        flex: 0 0 2.5rem;
+    }
+
+    .city-icon {
+        margin: 0.25rem 0 0.25rem 0.25rem;
+        background: center / contain no-repeat;
+        filter: drop-shadow(1px 1px 2px #0006);
+    }
+
+    .name, .empty-label {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        padding: 0 var(--space-3) 0 var(--space-2);
+        white-space: nowrap;
         overflow: hidden;
     }
 
-    .slot .name, .slot .empty-label {
-        width: 100%;
-        padding: 8px 12px;
-        box-sizing: border-box;
-        display: flex;
-        align-items: center;
-        align-self: stretch;
+    .name {
+        color: #000;
+        font-family: var(--font-display), serif;
+        font-size: var(--text-lg);
     }
 
-    .slot.filled .name {
-        background: var(--sand-color-dark);
-    }
+    /* Empty: the slot's shape, pressed into the card, no piece */
+    &.empty {
+        background: color-mix(in srgb, var(--sand-color-dark) 15%, transparent);
+        border-color: color-mix(in srgb, var(--sand-color-dark) 50%, transparent);
+        border-left-color: var(--sand-color-dark);
+        box-shadow: inset 0 0.125rem 0.25rem #0003;
 
-    .slot.empty {
-        filter: grayscale(1) contrast(0.7) brightness(0.9);
-    }
-
-    /* Player colours. See the player theme table in constants.css. */
-
-    .slot.filled {
-        background: var(--p-color-light, var(--sand-color));
-        border-color: var(--p-color-dark, var(--sand-color-dark));
-
-        .name {
-            background: var(--p-color, var(--sand-color-dark));
+        &::before {
+            content: '';
         }
     }
 }
 
+#waiting-room .spectators {
+    flex: none;
+    text-align: center;
 
-/* --- Color selection UI --- */
-#waiting-room .slot {
-    position: relative;
+    &.hide {
+        display: none;
+    }
+
+    span {
+        font-weight: 700;
+    }
 }
 
-#waiting-room .slot .city-icon {
-    width: 32px;
-    height: 32px;
-    flex: 0 0 50px;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    margin-left: 6px;
-    filter: drop-shadow(1px 1px 2px #0006);
-}
-
-#waiting-room .slot .city-icon.clickable {
-    cursor: pointer;
-}
-
-#waiting-room .slot .name {
-    flex: 1;
-    width: auto;
-}
-
+/* Colour picker: a sand panel holding the grid of city pieces */
 .color-picker-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, .55);
+    background: var(--overlay-bg);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: var(--z-modal);
+
+    .picker {
+        padding: var(--space-4);
+        color: var(--surface-ink);
+    }
+
+    .title {
+        margin-bottom: var(--space-3);
+        font-family: var(--font-heading), serif;
+        font-size: var(--text-lg);
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(4, 4.375rem);
+        gap: var(--space-3);
+        justify-content: center;
+        margin-bottom: var(--space-3);
+    }
+
+    .color-option {
+        width: 3.75rem;
+        height: 3.75rem;
+        border-radius: var(--radius-sm);
+        background: center / contain no-repeat;
+        border: 0.125rem solid transparent;
+        transition: transform .12s ease, border-color .12s ease;
+        cursor: pointer;
+
+        &:hover {
+            transform: scale(1.06);
+            border-color: var(--surface-ink);
+        }
+
+        &.taken {
+            opacity: .3;
+            pointer-events: none;
+        }
+    }
+
+    .close {
+        display: flex;
+        margin: 0 auto;
+    }
 }
 
-.color-picker-overlay .picker {
-    background: #fff;
-    color: #333;
-    padding: 16px;
-    border-radius: 8px;
-    min-width: 280px;
-    box-shadow: 0 10px 30px #000a;
-    font-family: var(--font-ui), sans-serif;
-}
-
-.color-picker-overlay .picker .title {
-    font-weight: 700;
-    margin-bottom: 10px;
-    text-align: center;
-}
-
-.color-picker-overlay .picker .grid {
-    display: grid;
-    grid-template-columns: repeat(4, 70px);
-    gap: 12px;
-    justify-content: center;
-    margin: 10px 0 6px;
-}
-
-.color-picker-overlay .picker .color-option {
-    width: 60px;
-    height: 60px;
-    border-radius: 8px;
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-    border: 2px solid #fff0;
-    transition: transform .12s ease, border-color .12s ease;
-}
-
-.color-picker-overlay .picker .color-option:hover {
-    transform: scale(1.06);
-    border-color: #fff;
-}
-
-.color-picker-overlay .picker .color-option.taken {
-    opacity: .3;
-    pointer-events: none;
-}
-
-.color-picker-overlay .picker .close {
-    margin: 0 auto;
-    display: flex;
-}
-
-/* Start Game / Leave: skins from ui/primitives.css */
-#waiting-room .box-header .start-game {
-    margin-left: auto;
-}
-
-#waiting-room .box-header .start-game.hide + .leave-lobby {
-    margin-left: auto;
-}
-
-#waiting-room .box-header .start-game.hide {
-    display: none;
-}
-
-@media screen and (max-width: 768px) {
-    #waiting-room .box-header .start-game,
-    #waiting-room .box-header .start-game.hide + .leave-lobby {
-        margin-left: 0;
+@media (prefers-reduced-motion: reduce) {
+    .color-picker-overlay .color-option {
+        transition: none;
     }
 }

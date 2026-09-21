@@ -27,9 +27,14 @@ export default class Player {
   longest_road = false
   longest_road_list = []
 
+  /** Markup characters removed, trimmed, capped at 24: safe in `innerHTML` and in `textContent`. */
+  static cleanName(name) {
+    return String(name ?? '').replace(/[<>&"'`\\]/g, '').trim().slice(0, 24)
+  }
+
   constructor(id, name, { onChange, onVpChange }) {
     this.id = id
-    this.name = name || Player.#names[this.id - 1]
+    this.name = Player.cleanName(name) || Player.#names[this.id - 1]
     this.color_id = id // default: same as id; can be customized later
     this.#onChange = onChange
     this.#onVpChange = onVpChange

@@ -8,6 +8,7 @@ import mustacheExpress from 'mustache-express'
 import cookieParser from 'cookie-parser'
 import { generate as generateRandomWords } from "random-words"
 import Game from "./models/game.js"
+import Player from "./models/player.js"
 import * as CONST from "./public/js/const.js"
 import BoardShuffler from "./public/js/board/board_shuffler.js"
 import Board from "./public/js/board/board.js"
@@ -36,6 +37,9 @@ function apiAuthorized(req) { return !!API_SALT && req.query.salt === API_SALT }
 /** @todo Move to a db for game state maintenance? */
 /** @type {Object.<string, Game>} */
 const GAME_SESSIONS = {}
+
+/** JSON for a `<script>` block: no `<`, so a value can never close the block. */
+const toScript = v => JSON.stringify(v).replace(/</g, '\\u003c')
 
 function onGameEnd(id) {
   delete GAME_SESSIONS[id]
@@ -132,16 +136,17 @@ app.get('/game/:id', function(req, res) {
     const map_size = game.config.map_size || CONST.mapName(game.config.mapkey)
 
     res.render('waiting_room', {
-      players: JSON.stringify(game.players),
-      player_count: pc,
-      game_id: game_id || null,
-      win_points: game.config.win_points,
-      map_size: map_size || null,
-      mapkey: JSON.stringify(game.config.mapkey || null),
-      dice_mode: game.config.dice_mode || 'random',
-      my_pid: +req.cookies.player_id,
-      host_pid: game.host_pid,
-      spectators_count: game.spectators_count,
+      players: toScript(game.players),
+      player_count: +pc || 0,
+      game_key: game_id,
+      game_id: toScript(game_id || null),
+      win_points: +game.config.win_points || 0,
+      map_size: toScript(map_size || null),
+      mapkey: toScript(game.config.mapkey || null),
+      dice_mode: toScript(game.config.dice_mode || 'random'),
+      my_pid: toScript(+req.cookies.player_id),
+      host_pid: toScript(game.host_pid ?? null),
+      spectators_count: +game.spectators_count || 0,
     })
     return
   }
@@ -151,16 +156,16 @@ app.get('/game/:id', function(req, res) {
       res.cookie('spectator_id', specId, { maxAge: SESSION_EXPIRE_HOURS * 60 * 60 * 1000, httpOnly: true })
     }
     return res.render('index', {
-      game: JSON.stringify(game),
-      player: JSON.stringify({ id: 0, name: 'Spectator', spectator: true }),
-      opponents: JSON.stringify(game.players.filter(p => p && !p.removed).map(_ => _.toJSON())),
+      game: toScript(game),
+      player: toScript({ id: 0, name: 'Spectator', spectator: true }),
+      opponents: toScript(game.players.filter(p => p && !p.removed).map(_ => _.toJSON())),
     })
   }
   const player = game.getPlayer(player_id)
   res.render('index', {
-    game: JSON.stringify(game),
-    player: JSON.stringify(player.toJSON(1)),
-    opponents: JSON.stringify(game.getOpponents(player.id).map(_ => _.toJSON())),
+    game: toScript(game),
+    player: toScript(player.toJSON(1)),
+    opponents: toScript(game.getOpponents(player.id).map(_ => _.toJSON())),
   })
 })
 
@@ -190,7 +195,7 @@ app.get('/login', function (req, res) {
   }
 
   // Require a non-empty name to join; otherwise show the login page (Join tab UI will guide the user)
-  const trimmedName = (name || '').trim()
+  const trimmedName = Player.cleanName(name)
   if (!trimmedName) {
     return res.render('login')
   }

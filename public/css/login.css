@@ -9,337 +9,195 @@
     --box-width: 500px;
 }
 
-html {
-    font-size: 16px;
-}
-
-@media screen and (max-width: 768px) {
-    html {
-        font-size: 14px;
-    }
-}
-
-@media screen and (max-width: 480px) {
-    html {
-        font-size: 12px;
-    }
-}
-
 html,
 body {
     height: 100%;
     margin: 0;
-    font-family: var(--font-main), sans-serif;
-    font-size: 1rem;
+    font-family: var(--font-body), sans-serif;
 }
 
-.button-group {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    width: 100%;
-}
-
-/* Responsive design */
 @media (max-width: 850px) {
     :root {
         --box-width: 90%;
     }
-
-    #login > .container .action-container .host-section .content-wrapper {
-        flex-direction: column;
-    }
-}
-
-@media (max-width: 500px) {
-    .button-group {
-        grid-template-columns: 1fr;
-    }
 }
 
 #login {
-    height: 100%;
-    width: 100%;
-    overflow: auto;
+    box-sizing: border-box;
+    min-height: 100%;
+    padding: var(--space-6) 0;
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
+    flex-direction: column;
+    align-items: center;
     background: url(/images/catan-bg.png) center/cover;
 
-    > .notice {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        overflow: hidden;
-        max-height: 100px;
-        color: var(--sand-color-text-dark);
-        background: var(--sand-color);
-        border-bottom: 1px solid var(--sand-color-dark);
-        padding: 10px 30px;
+    .game-title {
+        margin: 0 0 var(--space-5);
+        font-family: var(--font-display), serif;
+        font-size: var(--text-xl);
+        font-weight: normal;
+        color: var(--surface-sand);
+        text-shadow: 0 0.125rem 0.5rem var(--surface-ink);
         text-align: center;
-        box-sizing: border-box;
-
-        &.hide {
-            max-height: 0;
-            padding: 0;
-            transition: all var(--t-slow) ease-out;
-        }
     }
 
     > .container {
         width: var(--box-width);
-        margin-top: 100px;
+        border-radius: var(--radius-md);
+        box-shadow: 0 0 2.5rem #0009;
+    }
 
-        .action-types {
-            display: flex;
-            margin: 0 40px;
-            color: var(--sand-color);
-            background-color: #c41f26;
-            border-radius: 5px;
-            overflow: hidden;
-            border: 1px solid var(--sand-color);
-            text-transform: uppercase;
+    /* Host / Join switch: the card's header */
+    .action-types {
+        display: flex;
+        color: var(--surface-sand);
+        border-radius: var(--radius-md) var(--radius-md) 0 0;
+        overflow: hidden;
+        font-family: var(--font-display), serif;
+        text-transform: uppercase;
 
-            > label {
-                width: 50%;
-                padding: 5px 10px 5px;
-                text-align: center;
-                cursor: pointer;
-                border-left: 1px solid var(--sand-color);
-                transition: all var(--t-base) ease;
+        > label {
+            flex: 1;
+            padding: var(--space-3);
+            text-align: center;
+            cursor: pointer;
+            background: var(--player-1-color-dark);
+            transition: background-color var(--t-base) ease;
 
-                &:first-child {
-                    border: none;
-                }
-
-                &:has(input:checked) {
-                    background-color: var(--sand-color);
-                    color: var(--sand-color-text-dark);
-                }
-
-                &:hover:has(input:not(:checked)) {
-                    background-color: color-mix(in srgb, var(--sand-color) 20%, transparent);
-                }
-
-                input[type="radio"] {
-                    opacity: 0;
-                    position: absolute;
-                    cursor: pointer;
-                }
+            /* Selected tab is cut from the card itself: same surface, no seam */
+            &:has(input:checked) {
+                background: var(--surface-card);
+                backdrop-filter: blur(6px);
+                color: var(--surface-ink);
             }
 
-            &:has(input:is(:focus, :active)) {
-                box-shadow: 0 0 10px 0 #000c;
+            &:hover:has(input:not(:checked)) {
+                background: color-mix(in srgb, var(--player-1-color-dark), #000 20%);
             }
+
+            &:has(input:focus-visible) {
+                outline: 0.125rem solid var(--surface-sand);
+                outline-offset: -0.3125rem;
+            }
+
+            &:has(input:checked:focus-visible) {
+                outline-color: var(--surface-ink);
+            }
+
+            input[type="radio"] {
+                opacity: 0;
+                position: absolute;
+            }
+        }
+    }
+
+    .action-container {
+        padding: var(--space-5);
+        background: var(--surface-card);
+        backdrop-filter: blur(6px);
+        border-radius: 0 0 var(--radius-md) var(--radius-md);
+        color: var(--surface-ink);
+    }
+
+    .section {
+        display: none;
+        flex-direction: column;
+        gap: var(--space-4);
+    }
+
+    .action-types:has(input[value="host"]:checked) + .action-container .host-section,
+    .action-types:has(input[value="join"]:checked) + .action-container .join-section {
+        display: flex;
+    }
+
+    /* Player name: display face, the size the title may not exceed */
+    input.name {
+        height: 3.25rem;
+        font-family: var(--font-display), serif;
+        font-size: var(--text-xl);
+        text-align: center;
+    }
+
+    /* Labels in one column, controls in the other, equal by construction */
+    .content-wrapper {
+        display: grid;
+        grid-template-columns: max-content minmax(0, 1fr);
+        align-items: center;
+        gap: var(--space-3) var(--space-4);
+
+        .section-group {
+            display: contents;
+        }
+
+        .host {
+            grid-column: 1 / -1;
+            margin-top: var(--space-2);
+        }
+    }
+
+    .section-label {
+        font-size: var(--text-lg);
+    }
+
+    .map-editor-link {
+        display: flex;
+        justify-content: center;
+    }
+
+    .notice {
+        margin-bottom: var(--space-4);
+        padding: var(--space-3) var(--space-4);
+        background: color-mix(in srgb, var(--surface-sand) 30%, #fff);
+        border-left: 0.3125rem solid var(--player-1-color-dark);
+        border-radius: var(--radius-sm);
+        font-size: var(--text-lg);
+        color: var(--surface-ink);
+    }
+
+    .full-game-section .actions {
+        display: flex;
+        justify-content: center;
+        gap: var(--space-4);
+    }
+}
+
+/* Narrow screens: the title starts below the options gear */
+@media (max-width: 480px) {
+    #login {
+        padding-top: 3.5rem;
+    }
+}
+
+/* Short screens (phone landscape): tighter, two select pairs per row */
+@media (max-height: 480px) {
+    #login {
+        padding: var(--space-3) 0;
+
+        .game-title {
+            margin-bottom: var(--space-2);
+        }
+
+        .action-types > label {
+            padding: var(--space-2);
         }
 
         .action-container {
-            background: #fff3;
-            box-shadow: 0 0 40px #0009;
-            margin: 50px 0 50px;
-            border-radius: 10px;
-            backdrop-filter: blur(6px);
-            display: flex;
-            overflow: hidden;
-
-            .section {
-                flex: 0 0 100%;
-                max-width: var(--box-width);
-                padding: 40px;
-                box-sizing: border-box;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                /* transition: all var(--t-slow) cubic-bezier(.68, -0.55, .27, 1.55); */
-                transition: all var(--t-base) cubic-bezier(0.65, 0.05, 0.36, 1);
-
-                input[type="text"] {
-                    background: #fffc;
-                    text-align: center;
-                    border: 1px solid #fff6;
-                    border-radius: 5px;
-                    padding: 10px 20px;
-                    margin-bottom: 20px;
-                    box-shadow: 0 0 1px 0 #000;
-                    backdrop-filter: blur(6px);
-                    text-shadow: 0 0 5px #fff, 0 0 10px #fff;
-                    font-family: inherit;
-                    font-size: 1.5em;
-                    color: var(--sand-color-text-dark);
-                    width: 100%;
-                    box-sizing: border-box;
-                    transition: all var(--t-base) ease;
-
-                    &::placeholder {
-                        color: #0006;
-                        text-shadow: none;
-                    }
-
-                    &:focus {
-                        box-shadow: 0 0 10px 0 #000;
-                        background: #fff;
-                        outline: none;
-                    }
-                }
-            }
-
-            .host-section {
-                display: flex;
-                flex-direction: column;
-
-                input.name {
-                    width: 100%;
-                    margin-bottom: 30px;
-                }
-
-                .content-wrapper {
-                    display: flex;
-                    flex-direction: column;
-                    flex-wrap: nowrap;
-                    justify-content: flex-start;
-                    width: 100%;
-                    gap: 16px;
-                }
-
-                /* Inline rows for label + select */
-
-                .section-group {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                }
-
-                .section-group .section-label {
-                    font-family: var(--font-body), sans-serif;
-                    font-size: 1.1em;
-                    color: #333;
-                    white-space: nowrap;
-                }
-
-                .section-group select.select {
-                    flex: 1 1 auto;
-                    background: #fffc;
-                    border: 1px solid #fff6;
-                    border-radius: 5px;
-                    padding: 10px 20px;
-                    box-shadow: 0 0 1px 0 #000;
-                    backdrop-filter: blur(6px);
-                    font-family: var(--font-body), sans-serif;
-                    font-size: 1em;
-                    color: var(--sand-color-text-dark);
-                    text-shadow: 0 0 5px #fff, 0 0 10px #fff;
-                    transition: all var(--t-base) ease;
-                }
-
-                .map-editor-link {
-                    display: flex;
-                    justify-content: center;
-                    width: 100%;
-                    margin-top: 20px;
-                }
-            }
-
-            .join-section {
-                /* justify-content: center; max-height: 400px; */
-
-                input.game-key {
-                    font-size: 1em;
-                }
-
-                .full-game-section {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    width: 100%;
-
-                    .notice {
-                        color: #333;
-                        font-size: 1.5em;
-                        margin-bottom: 20px;
-                        text-align: center;
-                        position: static;
-                        background: none;
-                        border: none;
-                        padding: 0;
-                        max-height: none;
-                    }
-
-                    .actions {
-                        display: flex;
-                        gap: 20px;
-                        align-items: center;
-                    }
-                }
-            }
+            padding: var(--space-3) var(--space-4);
         }
 
-        .action-container {
-            display: block;
+        .section {
+            gap: var(--space-2);
         }
 
-        .action-container .section {
-            display: none;
+        .notice {
+            margin-bottom: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            font-size: var(--text-md);
         }
 
-        .action-types:has(input[value="host"]:checked) + .action-container .host-section {
-            display: flex;
+        .content-wrapper {
+            grid-template-columns: repeat(2, max-content minmax(0, 1fr));
+            gap: var(--space-2) var(--space-3);
         }
-
-        .action-types:has(input[value="join"]:checked) + .action-container .join-section {
-            display: flex;
-        }
-    }
-}
-
-
-:root {
-    --box-width: 500px;
-}
-
-#login {
-    min-height: 100svh;
-}
-
-@media (max-width: 850px) {
-    #login > .container {
-        margin-top: 60px;
-    }
-
-    #login > .container .action-types {
-        margin: 0 10px;
-    }
-
-    #login > .container .action-container .section {
-        padding: 20px;
-    }
-}
-
-@media (max-width: 400px) {
-    #login > .container {
-        margin-top: 40px;
-    }
-
-    #login > .container .action-container .section input[type="text"] {
-        font-size: 1.1em;
-    }
-
-    .button-group {
-        grid-template-columns: 1fr;
-    }
-}
-
-
-/* Match select focus style to name input */
-#login > .container .action-container .section .section-group select.select:focus {
-    box-shadow: 0 0 10px 0 #000;
-    background: #fff;
-    outline: none;
-}
-
-/* Small-screen font size for selects, similar to inputs */
-@media (max-width: 400px) {
-    #login > .container .action-container .section select.select {
-        font-size: 1.1em;
     }
 }

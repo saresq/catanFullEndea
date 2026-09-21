@@ -83,11 +83,11 @@
 }
 
 .btn--danger {
-    background: var(--trade-negative);
+    background: var(--player-1-color-dark);
     color: #fff;
 
     &:hover {
-        box-shadow: 0 0 0.625rem 0 var(--trade-negative);
+        box-shadow: 0 0 0.625rem 0 var(--player-1-color-dark);
     }
 }
 
@@ -114,4 +114,51 @@
     border: 0;
     border-bottom: 0.3125rem solid var(--sand-color-dark);
     border-radius: 0;
+}
+
+/* Form control: text inputs and selects (login, waiting room). Skin and box; the grid places it. */
+input.field, select.field {
+    box-sizing: border-box;
+    width: 100%;
+    height: 2.5rem;
+    margin: 0;
+    padding: 0 var(--space-3);
+    border: 0.0625rem solid var(--sand-color-dark);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--surface-sand) 30%, #fff);
+    color: var(--surface-ink);
+    font-family: var(--font-body), sans-serif;
+    font-size: var(--text-md);
+
+    &::placeholder {
+        color: var(--sand-color-dark);
+        opacity: 1;
+    }
+
+    &:focus-visible {
+        outline: 0.125rem solid var(--surface-ink);
+        outline-offset: 0.125rem;
+    }
+
+    &:disabled {
+        opacity: .6;
+        cursor: not-allowed;
+    }
+
+    @media screen and (max-width: 768px) {
+        min-height: 44px;
+    }
+}
+
+/* Selects draw their own chevron so every browser gives the same box */
+select.field {
+    appearance: none;
+    padding-right: var(--space-6);
+    background-image:
+        linear-gradient(45deg, transparent 50%, var(--surface-ink) 50%),
+        linear-gradient(135deg, var(--surface-ink) 50%, transparent 50%);
+    background-position: right 1rem center, right 0.7rem center;
+    background-size: 0.3rem 0.3rem;
+    background-repeat: no-repeat;
+    cursor: pointer;
 }

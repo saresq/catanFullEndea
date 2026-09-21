@@ -9,37 +9,37 @@
 </head>
 <div id="game"><div class="hud-top"><div class="accessibility-zone"></div></div></div>
 <div id="waiting-room">
-  <div class="title">
-    <div class="colored">
-      <div class="name">Game Key</div>
-      <div class="text">
-        <span>{{ game_id }}</span>
-          <svg width="24" height="24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 9h3a3 3 0 013 3v6a3 3 0 01-3 3h-6a3 3 0 01-3-3v-3m6-6h-3a3 3 0 00-3 3v3m6-6V6a3 3 0 00-3-3H6a3 3 0 00-3 3v6a3 3 0 003 3h3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
-    </div>
-  </div>
-
   <div class="container">
     <div class="wait-box">
+      <div class="title">
+        <div class="name" id="game-key-caption" role="status">Game Key</div>
+        <button type="button" class="text" aria-label="Game key {{ game_key }}: copy invite link" title="Copy invite link">
+          <span>{{ game_key }}</span>
+          <span class="copy-mark" aria-hidden="true">
+            <svg class="copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg>
+            <svg class="check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7"/></svg>
+          </span>
+        </button>
+      </div>
       <div class="box-header">
         <div class="info-item" title="Map">
-          <span class="label">Map:</span>
-          <select id="map-size-select" class="value-select hide" disabled></select>
+          <label class="label" for="map-size-select">Map Size</label>
+          <select id="map-size-select" class="field value-select hide" disabled></select>
           <span class="value" id="map-size">-</span>
         </div>
         <div class="info-item" title="Victory Points Goal">
-          <span class="label">🏆</span>
-          <select id="win-points-select" class="value-select hide" disabled></select>
+          <label class="label" for="win-points-select">Victory Points</label>
+          <select id="win-points-select" class="field value-select hide" disabled></select>
           <span class="value" id="win-points">-</span>
         </div>
         <div class="info-item" title="Maximum Players">
-          <span class="label">Players:</span>
-          <select id="max-players-select" class="value-select hide" disabled></select>
+          <label class="label" for="max-players-select">Players</label>
+          <select id="max-players-select" class="field value-select hide" disabled></select>
           <span class="value" id="max-players-val">-</span>
         </div>
         <div class="info-item" title="Dice Mode">
-          <span class="label">Dice:</span>
-          <select id="dice-mode-select" class="value-select hide" disabled>
+          <label class="label" for="dice-mode-select">Dice Mode</label>
+          <select id="dice-mode-select" class="field value-select hide" disabled>
             <option value="random">Random</option>
             <option value="balanced">Balanced</option>
           </select>
@@ -55,15 +55,15 @@
 </div>
 
 <script>
-  window.game_id = "{{ game_id }}";
+  window.game_id = {{{ game_id }}};
   window.players = {{{ players }}};
   window.player_count = {{ player_count }};
   window.win_points = {{ win_points }};
-  window.map_size = "{{ map_size }}";
+  window.map_size = {{{ map_size }}};
   window.mapkey = {{{ mapkey }}};
-  window.dice_mode = "{{ dice_mode }}";
-  window.my_pid = "{{ my_pid }}";
-  window.host_pid = "{{ host_pid }}";
+  window.dice_mode = {{{ dice_mode }}};
+  window.my_pid = {{{ my_pid }}};
+  window.host_pid = {{{ host_pid }}};
   window.spectators_count = {{ spectators_count }};
 </script>
 <script src="/socket.io/socket.io.min.js"></script>

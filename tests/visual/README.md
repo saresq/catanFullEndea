@@ -74,6 +74,7 @@ returns the hook names and installs `window.VISUAL`; after that one hook per cal
 | `VISUAL.drawer(sel)` | one resource drawer: rect and viewport share, on screen, alert shown, page/drawer overflow, overlap with the dock, dock and timer on screen, smallest hit box, resources on screen, title, counter, guide and the submit button's label, state and visibility |
 | `VISUAL.dock()` | dock geometry: height and viewport share, hand cards above the dock top, tap size (grown `::after` included) / label / accessible name per action, dock height with an empty vs a full hand |
 | `VISUAL.editor()` | the map editor (`/map-editor`, no game): dock and rail boxes, whether they overlap or scroll the page, the board's share of the viewport, smallest tap size, the brushes and numbers on the dock, the four rim phantoms, the coastline (per tile, land-owned against sea-owned, double-drawn edges, variants in use), the port popover opened on a real port tile, the Map info sheet (terrain bars and the dice-number bars) and the game-setup modal. Takes an optional mapkey to render first |
+| `VISUAL.lobby()` | `/login` or the waiting room (no game needed): contrast of every visible text in the card, the tabs and the game-key header (`failing` lists those under 4.5:1, or 3:1 from 24px; the translucent card is composited over black and over white, the artwork's two worst cases; disabled controls are listed, not gated), page scroll, and per page: the tab, notices and whether they sit in the card, the four selects' boxes, title size against the name input, "Start Game" inside the viewport; or each slot's height (`me` marks your own), whether the list scrolls, Start / Leave inside the viewport and the settings' boxes |
 | `VISUAL.reset()` | reload, back to server state |
 
 `army`, `road` and `end` return promises - `browser_evaluate` awaits them, so the call returns when
@@ -82,6 +83,24 @@ the thing is on screen and the screenshot that follows catches it.
 The state hooks call `window.game.*Soc()`, the same methods `socket_manager.js` calls, so the UI
 goes through its real code path. They are **client-side only**: the server does not learn about
 them, and a reload undoes everything.
+
+### The lobby
+
+`VISUAL.lobby()` runs on the login page and the waiting room. Entry URLs, all without form filling:
+
+```
+/login                                   Host form
+/login?notice=That%20map%20only%20fits%204%20players.
+/login?game_id=<id>&name=Bob             joins <id> as Bob (another cookie jar per player)
+/login?game_id=<id>                      Join tab, key prefilled
+/login?game_id=<id>&full=1               game-full message with Back / Spectate
+/game/new?name=Alice&players=10          ten-seat waiting room, you are the host
+```
+
+Gate on `failing` being empty at all five viewports, the four selects sharing `x`, `w` and `h`,
+`title.px <= nameInputPx`, `primary.inView` at 360x640 and 640x360, and in a ten-seat room at
+1280x650 every slot `inView`, the `me` slot taller than the rest and at least 44px, `start` and
+`leave` in view.
 
 ## 4. What to capture, at both widths
 

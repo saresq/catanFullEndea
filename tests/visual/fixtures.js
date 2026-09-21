@@ -16,9 +16,11 @@
  */
 () => {
   const game = window.game
-  // `editor()` runs on /map-editor, which has no game; every other hook needs one.
+  // `editor()` runs on /map-editor, which has no game; `lobby()` on /login and the waiting room;
+  // every other hook needs one.
   const editor = window.map_editor
-  if (!game && !editor) { return 'no window.game or window.map_editor - open /game/<id> or /map-editor first' }
+  const lobby = document.querySelector('#login, #waiting-room')
+  if (!game && !editor && !lobby) { return 'no window.game, window.map_editor, #login or #waiting-room - open a game, /map-editor or /login first' }
 
   const $$ = sel => [...document.querySelectorAll(sel)]
   const free = sel => $$(sel).filter($_ => !$_.classList.contains('taken')).map($_ => $_.dataset.id)
@@ -687,6 +689,95 @@
           editor.closeModal()
           return out
         })(),
+      }
+    },
+
+    /**
+     * Login or waiting room. Contrast for every visible text in the card: its colour against the
+     * first background behind it; a translucent one (the card surface) is composited over black and
+     * over white, the two worst cases the artwork can give. `min` is the lower ratio, `need` 4.5
+     * (3 from 24px). Disabled controls are listed but exempt. Then the geometry the spec names.
+     */
+    lobby() {
+      const rgba = str => {
+        const n = (str.match(/[\d.]+/g) || []).map(Number)
+        // `color(srgb r g b / a)` from color-mix comes in 0..1; `rgb()` in 0..255
+        return str.startsWith('color(') ? [n[0] * 255, n[1] * 255, n[2] * 255, n[3] ?? 1] : [n[0], n[1], n[2], n[3] ?? 1]
+      }
+      const over = ([r, g, b, a], [R, G, B]) => [r * a + R * (1 - a), g * a + G * (1 - a), b * a + B * (1 - a), 1]
+      const lum = c => c.slice(0, 3).map(v => v / 255).map(v => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
+        .reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0)
+      const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return +((x + 0.05) / (y + 0.05)).toFixed(2) }
+      const hex = c => '#' + c.slice(0, 3).map(v => Math.round(v).toString(16).padStart(2, '0')).join('')
+      /** Backgrounds from the element up to the first opaque one, innermost first. */
+      const layers = $el => {
+        const out = []
+        for (let $_ = $el; $_ && $_ !== document.documentElement; $_ = $_.parentElement) {
+          const c = rgba(getComputedStyle($_).backgroundColor)
+          if (c[3] > 0) { out.push(c); if (c[3] === 1) break }
+        }
+        return out
+      }
+      const behind = ($el, base) => layers($el).reduceRight((acc, c) => over(c, acc), [...base, 1])
+      const measure = ($el, colour, label) => {
+        const fs = parseFloat(getComputedStyle($el).fontSize)
+        const text = rgba(colour)
+        const [dark, light] = [[0, 0, 0], [255, 255, 255]].map(base => behind($el, base))
+        const opaque = layers($el).some(c => c[3] === 1)
+        const r = [ratio(over(text, dark), dark), ratio(over(text, light), light)]
+        return {
+          text: label.slice(0, 30), colour: hex(text), surface: opaque ? hex(dark) : [hex(dark), hex(light)],
+          ratios: opaque ? r[0] : r, min: Math.min(...r), need: fs >= 24 ? 3 : 4.5, px: fs,
+          ...($el.disabled ? { disabled: true } : {}),
+        }
+      }
+      const shown = $el => $el.getClientRects().length && getComputedStyle($el).visibility !== 'hidden'
+      const $card = document.querySelector('#login .action-container, #waiting-room .wait-box')
+      const $scope = [$card, document.querySelector('#login .action-types'), document.querySelector('#waiting-room .title')].filter(Boolean)
+      const texts = []
+      $scope.forEach($root => [$root, ...$root.querySelectorAll('*')].forEach($el => {
+        if (!shown($el)) return
+        const own = [...$el.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent.trim()).join(' ').trim()
+        if (own && !['SELECT', 'OPTION'].includes($el.tagName)) texts.push(measure($el, getComputedStyle($el).color, own))
+        if ($el.matches('input[type="text"], select')) {
+          const value = $el.tagName === 'SELECT' ? $el.selectedOptions[0]?.textContent || '' : $el.value
+          if (value) texts.push(measure($el, getComputedStyle($el).color, `[${$el.className}] ${value}`))
+          if ($el.placeholder) texts.push(measure($el, getComputedStyle($el, '::placeholder').color, `[placeholder] ${$el.placeholder}`))
+        }
+      }))
+      const box = $_ => { if (!$_) return null; const r = $_.getBoundingClientRect(); return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) } }
+      const inView = $_ => { const r = $_?.getBoundingClientRect(); return !!r && r.width > 0 && r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight && r.right <= innerWidth }
+      const $scroller = document.scrollingElement
+      const common = {
+        viewport: `${innerWidth}x${innerHeight}`,
+        pageScrolls: $scroller.scrollHeight > innerHeight || [...document.querySelectorAll('#login, #waiting-room')].some($_ => $_.scrollHeight > $_.clientHeight),
+        failing: texts.filter(t => !t.disabled && t.min < t.need),
+        texts,
+      }
+      if (document.querySelector('#login')) {
+        const $name = [...document.querySelectorAll('#login input.name')].find(shown)
+        const $primary = [...document.querySelectorAll('#login .section .btn--primary')].find(shown)
+        return {
+          page: 'login', ...common,
+          tab: document.querySelector('#login .action-types input:checked')?.value,
+          notice: [...document.querySelectorAll('#login .notice')].filter(shown).map($_ => ({ text: $_.textContent.trim(), box: box($_), inCard: $card.contains($_) })),
+          selects: [...document.querySelectorAll('#login .host-section select')].filter(shown).map($_ => ({ id: $_.id, ...box($_) })),
+          title: { text: document.querySelector('.game-title')?.textContent, px: parseFloat(getComputedStyle(document.querySelector('.game-title')).fontSize), inView: inView(document.querySelector('.game-title')) },
+          nameInputPx: $name ? parseFloat(getComputedStyle($name).fontSize) : null,
+          primary: $primary && { text: $primary.textContent.trim(), inView: inView($primary) },
+        }
+      }
+      const $slots = [...document.querySelectorAll('#slots-list .slot')]
+      return {
+        page: 'waiting-room', ...common,
+        slots: $slots.map($_ => ({ h: Math.round($_.getBoundingClientRect().height), me: $_.classList.contains('me'), tag: $_.tagName.toLowerCase(), empty: $_.classList.contains('empty'), inView: inView($_) })),
+        slotsScroll: (() => { const $l = document.querySelector('#slots-list'); return $l.scrollHeight > $l.clientHeight })(),
+        start: { text: document.querySelector('#start-game-btn').textContent, disabled: document.querySelector('#start-game-btn').disabled, hidden: !shown(document.querySelector('#start-game-btn')), inView: inView(document.querySelector('#start-game-btn')) },
+        leave: { inView: inView(document.querySelector('.leave-lobby')) },
+        settings: [...document.querySelectorAll('.box-header .info-item')].map($_ => {
+          const $v = [...$_.querySelectorAll('select, .value')].find(shown)
+          return { label: $_.querySelector('.label').textContent.trim(), control: $v?.tagName.toLowerCase(), ...box($v) }
+        }),
       }
     },
 

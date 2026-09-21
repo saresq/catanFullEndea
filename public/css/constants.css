@@ -107,6 +107,8 @@
     /* Surfaces */
     --surface-sand: var(--sand-color);
     --surface-sand-text: var(--sand-color-text-dark);
+    /* Lobby card (login, waiting room): near-opaque so its text contrast holds over any artwork */
+    --surface-card: color-mix(in srgb, var(--surface-sand) 90%, transparent);
     --surface-drawer: color-mix(in srgb, var(--sand-color-dark) 85%, transparent);
     --surface-drawer-text: #fff;
     --surface-ink: #333;

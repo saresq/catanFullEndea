@@ -760,13 +760,13 @@ export default class Game {
       this.#first_round_roll_pids.delete(pid)
       if (!this.#first_round_roll_pids.size) this.#first_round_roll_pids = null
     }
-    // In Waiting Room
+    // In Waiting Room: the seat frees up, so anyone who left can join again. The lobby only closes
+    // once it is empty; a host who leaves hands the room to the next player in seat order.
     if (!this.state) {
       delete this.players[pid - 1]
       const joined_players = this.players.filter(p => p?.id)
-      if (pid === this.host_pid || !joined_players.length) {
-        this.#onGameEnd(this.id)
-      }
+      if (!joined_players.length) { return this.#onGameEnd(this.id) }
+      if (pid === this.host_pid) { this.host_pid = joined_players[0].id }
       return
     }
     // Initial Build Phase - End Game

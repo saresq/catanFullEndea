@@ -6,7 +6,7 @@ const $ = document.querySelector.bind(document)
 class WaitingRoomUI {
   player_count = window.player_count
   $joined_count = document.querySelector('.box-header .p-count')
-  $game_key = $('.title .text')
+  $game_key = $('#waiting-room .title .text')
   escCloser = e => { if (e.key === 'Escape') this.closeColorPicker() }
 
   constructor() {
@@ -51,6 +51,11 @@ class WaitingRoomUI {
       })
     }
 
+    // Own slot opens the colour picker; bound once, survives every re-render
+    $('#slots-list').addEventListener('click', e => {
+      if (e.target.closest('.slot.me')) this.openColorPicker(this.getTakenColors())
+    })
+
     // Initialize from existing players array
     window.players.forEach(p => p && this.addPlayer(p))
     this.renderSlots()
@@ -75,16 +80,14 @@ class WaitingRoomUI {
 
     /** @event Player-Quit */
     this.socket.on(CONST.SOCKET_EVENTS.PLAYER_QUIT, pid => {
+      // The host left: the room passed to someone else, and the page is rendered per host
+      if (pid === this.host_pid) { window.location.reload(); return }
       this.removePlayer(pid)
       this.renderSlots()
       this.updateStartBtnState()
     })
 
-    this.$game_key.addEventListener('click', e => {
-      window.navigator.clipboard.writeText(window.location.href)
-      this.$game_key.classList.add('copied')
-    })
-    this.$game_key.addEventListener('mouseout', e => this.$game_key.classList.remove('copied'))
+    this.$game_key.addEventListener('click', () => this.shareInvite())
 
     $('.leave-lobby')?.addEventListener('click', e => window.location.href = '/logout')
 
@@ -115,6 +118,27 @@ class WaitingRoomUI {
 
   }
 
+  /** Phones get the share sheet; everything else copies the link and says so in the caption. */
+  async shareInvite() {
+    const url = window.location.href
+    if (navigator.share && matchMedia('(pointer: coarse)').matches) {
+      try { await navigator.share({ title: 'Catan Full Endea', text: 'Join my game', url }); return } catch (e) {
+        if (e.name === 'AbortError') return
+      }
+    }
+    const $caption = $('#game-key-caption')
+    let copied = true
+    try { await navigator.clipboard.writeText(url) } catch (e) { copied = false }
+    if (!copied) { getSelection().selectAllChildren(this.$game_key.firstElementChild) }
+    $caption.textContent = copied ? 'Invite link copied' : 'Key selected, copy it to share'
+    this.$game_key.classList.toggle('copied', copied)
+    clearTimeout(this.copy_timer)
+    this.copy_timer = setTimeout(() => {
+      $caption.textContent = 'Game Key'
+      this.$game_key.classList.remove('copied')
+    }, 2500)
+  }
+
   closeColorPicker() {
     document.querySelector('.color-picker-overlay')?.remove()
     document.removeEventListener('keydown', this.escCloser)
@@ -124,7 +148,7 @@ class WaitingRoomUI {
     const overlay = document.createElement('div')
     overlay.className = 'color-picker-overlay'
     overlay.innerHTML = `
-      <div class="picker">
+      <div class="picker panel">
         <div class="title">Choose your color</div>
         <div class="grid">
           ${CONST.COLOR_IDS.map(i=>`
@@ -295,24 +319,16 @@ class WaitingRoomUI {
       const p = (window.players || [])[i]
       if (p && p.name) {
         const cid = p.color_id || p.id
-        const clickable = (this.my_pid && this.my_pid === p.id)
-        return `<div class="slot filled p${p.id} pc${p.color_id || p.id}" data-pid="${p.id}">
-          <div class="city-icon ${clickable ? 'clickable' : ''}" data-pid="${p.id}"
-               style="background-image:url('/images/pieces/city-${cid}.png')" title="${clickable ? 'Choose color' : 'Player color'}"></div>
-          <div class="name">${p.name}</div>
-        </div>`
+        const me = this.my_pid && this.my_pid === p.id
+        const tag = me ? 'button type="button" title="Choose color"' : 'div'
+        return `<${tag} class="slot filled ${me ? 'me' : ''} p${p.id} pc${cid}" data-pid="${p.id}">
+          <span class="city-icon" style="background-image:url('/images/pieces/city-${cid}.png')"></span>
+          <span class="name">${p.name}</span>
+        </${me ? 'button' : 'div'}>`
       }
-      return `<div class="slot empty"><div class="empty-label">Empty slot</div></div>`
+      return `<div class="slot empty"><span class="empty-label">Empty slot</span></div>`
     }).join('')
     $list.innerHTML = items
-
-    // Attach click handlers for color picking (only self)
-    $list.querySelectorAll('.city-icon.clickable').forEach(el => {
-      el.addEventListener('click', () => {
-        const taken = this.getTakenColors()
-        this.openColorPicker(taken)
-      })
-    })
 
     // Update remaining count after rerender (in case of initial render)
     this.updateJoinedCount()
