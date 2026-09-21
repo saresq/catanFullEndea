@@ -347,8 +347,9 @@
 
     /**
      * The trade drawer, for the gates in the trade-drawer change: where it lands, whether it
-     * covers a scoreboard row, whether it scrolls the page sideways, the smallest stepper hit box
-     * and the bank rates on show. Opens the way the dock does (`onTradeClick` ->
+     * covers a scoreboard row, whether it scrolls the page sideways, the smallest stepper hit box,
+     * and the hand (the give row): per resource stack its cards, rate, glow, disabled and focus,
+     * plus the smallest stack hit box. Stake from the hand by clicking a stack's `.card`. Opens the way the dock does (`onTradeClick` ->
      * `renderTradeSelection()`), with the Trade button's turn gate lifted so it opens off-turn
      * too, then switches mode. Leaves the drawer open for the screenshot that follows.
      */
@@ -382,7 +383,18 @@
           const r = $_.getBoundingClientRect(); return Math.min(r.width, r.height)
         }))) : null,
         taps: taps.length,
-        rates: $$('#game .trade-card-selection .palette.give .rate').map($_ => $_.textContent.trim()),
+        hand: (() => {
+          const groups = $$('.hand .resources-row .card-group')
+          return {
+            stacks: Object.fromEntries(groups.map($g => [$g.dataset.type, {
+              cards: +$g.dataset.count, rate: $g.dataset.rate || null, active: $g.classList.contains('active'),
+              disabled: $g.classList.contains('disabled'), tabIndex: $g.tabIndex,
+            }])),
+            minHit: groups.length ? px(Math.min(...groups.map($_ => {
+              const r = $_.getBoundingClientRect(); return Math.min(r.width, r.height)
+            }))) : null,
+          }
+        })(),
         staked: $$('#game .trade-card-selection .chip').map($_ => $_.dataset.row + ':' + $_.dataset.type + ':' + parseInt($_.textContent, 10)),
         guide: $drawer.querySelector('.foot .guide')?.textContent.trim() || null,
         submit: $submit && { label: $submit.textContent.trim(), disabled: $submit.disabled },

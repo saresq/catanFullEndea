@@ -157,6 +157,30 @@
                 }
             }
 
+            /* A glowing stack takes keyboard focus (player_ui.js) */
+            &:focus-visible {
+                outline: 0.125rem solid #fff;
+                outline-offset: 0.1875rem;
+            }
+
+            /* Bank rate while trading: a ribbon across the foot of the top card. --top-card (inline)
+               is its index in the stack; the stack steps 4px across and 2px up per card. */
+            &[data-rate]::after {
+                content: attr(data-rate);
+                position: absolute;
+                left: calc(var(--top-card, 0) * 4px);
+                bottom: calc(var(--top-card, 0) * 2px);
+                z-index: 10;
+                width: var(--hand-card-w);
+                padding: 0.0625rem 0;
+                border-radius: 0 0 calc(var(--hand-card-w) * .075) calc(var(--hand-card-w) * .075);
+                background: color-mix(in srgb, var(--card-border) 88%, transparent);
+                color: var(--card-face);
+                font-size: var(--text-xs);
+                font-variant-numeric: tabular-nums;
+                text-align: center;
+            }
+
             /* Face and ratio: ui/card.css. Size: --hand-card-w above. */
             .card {
                 --card-w: var(--hand-card-w);

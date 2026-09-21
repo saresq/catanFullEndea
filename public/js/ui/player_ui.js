@@ -8,6 +8,9 @@ export default class PlayerUI {
   #onEndTurnClick; #onCardClick; #getPossibleLocations; #toggleBoardBlur; #onDevCardActivate
   #canPlayDevCard
   #is_dev_row_open = false
+  /** What the trade drawer has staked, shown on the hand: `null` or `{ [res]: { left, rate, disabled } }` */
+  #stakes = null
+  #onHandUpdated
   #is_end_cooldown = false
   #end_cooldown_timer = null
   player; has_timer; timer; auto_roll; hand
@@ -22,7 +25,7 @@ export default class PlayerUI {
 
   constructor(player, has_timer, auto_roll, { onDiceClick, onPieceClick, onBuyDevCardClick,
     onTradeClick, onExitTrade, onEndTurnClick, onCardClick, getPossibleLocations,
-    toggleBoardBlur, onDevCardActivate, canPlayDevCard }) {
+    toggleBoardBlur, onDevCardActivate, canPlayDevCard, onHandUpdated }) {
     this.player = player
     this.has_timer = has_timer
     this.auto_roll = auto_roll
@@ -37,6 +40,7 @@ export default class PlayerUI {
     this.#canPlayDevCard = canPlayDevCard
     this.#getPossibleLocations = getPossibleLocations
     this.#toggleBoardBlur = toggleBoardBlur
+    this.#onHandUpdated = onHandUpdated
     this.hand = this.#cleanHandData(this.player.closed_cards)
   }
 
@@ -44,6 +48,14 @@ export default class PlayerUI {
     this.renderActionBar()
     this.renderHand()
     this.#setupCardPreviewEvents()
+    // A glowing stack is focusable (renderHand, activateResourceCards): Enter / Space taps it.
+    // Stopped here so Space does not also reach the roll / end-turn shortcut.
+    this.$hand.addEventListener('keydown', e => {
+      const $group = e.target.closest?.('.card-group.active')
+      if (!$group || !['Enter', 'Space'].includes(e.code)) return
+      e.preventDefault(); e.stopPropagation()
+      $group.querySelector('.card')?.click()
+    })
   }
 
   toggleShow(bool) { this.$el.classList[bool ? 'add' : 'remove']('show') }
@@ -402,11 +414,17 @@ export default class PlayerUI {
       return a[0].length - b[0].length || a[0].localeCompare(b[0])
     })
 
-    const groupToHtml = ([type, count]) => {
+    // While trading, a resource stack shows what staking leaves; every other group is disabled.
+    const stakes = this.#stakes
+    const groupToHtml = ([type, held]) => {
+      const stake = stakes?.[type]
+      const count = stake ? stake.left : held
       const visualCount = Math.min(count, this.maxVisualCards)
       return `
         <div
-          class="card-group ${type}" data-type="${type}" data-count="${count}"
+          class="card-group ${type} ${stake ? 'active' : ''} ${stakes && (!stake || stake.disabled) ? 'disabled' : ''}"
+          data-type="${type}" data-count="${count}"
+          ${stake ? 'tabindex="0"' : ''} ${stake?.rate ? `data-rate="${stake.rate}:1" style="--top-card: ${Math.max(0, visualCount - 1)}"` : ''}
           ${type === 'dK' ? ' title="Knight (k)" ' : ''}
         >
         <div class="card-count ${count < 2 ? 'hide' : ''}"
@@ -428,6 +446,8 @@ export default class PlayerUI {
     const resource_groups = hand_groups.filter(([t]) => res_order.includes(t))
     const dev_card_groups = hand_groups.filter(([t]) => !res_order.includes(t))
 
+    // The markup is rebuilt, so keep keyboard focus on the stack that had it.
+    const focused = this.$hand.contains(document.activeElement) && document.activeElement.dataset.type
     this.$hand.innerHTML = `
       <div class="resources-row">${resource_groups.map(groupToHtml).join('')}</div>
       <div class="dev-cards-row ${this.#is_dev_row_open ? '' : 'hide'}">${dev_card_groups.map(groupToHtml).join('')}</div>
@@ -439,11 +459,20 @@ export default class PlayerUI {
       this.$dev_toggle.setAttribute('aria-label', `Development cards: ${dev_count}`)
       this.$dev_toggle.classList[this.#is_dev_row_open ? 'add' : 'remove']('open')
     }
+    focused && this.$hand.querySelector(`.card-group[data-type="${focused}"][tabindex]`)?.focus()
     this.#setupHandEvents()
   }
+
+  /** Show the trade drawer's stakes on the hand (`null`: the normal hand). Kept across re-renders. */
+  setHandStakes(stakes) {
+    this.#stakes = stakes
+    this.renderHand()
+  }
+
   #setupHandEvents() {
     this.$hand.querySelectorAll('.card, .card-count').forEach($el => $el.addEventListener('click', e => {
       const $card_group = e.target.closest('.card-group')
+      if ($card_group.classList.contains('disabled')) return
       const type = $card_group.dataset.type
       const is_active = $card_group.classList.contains('active')
       // Development cards: preview. Victory points are never played, so no Activate and no play rules
@@ -518,12 +547,13 @@ export default class PlayerUI {
     this.hand = this.#cleanHandData(player.closed_cards)
     this.renderHand()
     oKeys(CONST.COST).forEach(key => this.canIBuy(key))
+    this.#onHandUpdated?.()
   }
 
   activateResourceCards() {
     this.renderHand()
     const res_selector = oKeys(CONST.RESOURCES).map(k => `.card-group[data-type="${k}"]`).join(',')
-    this.$hand.querySelectorAll(res_selector).forEach($el => $el.classList.add('active'))
+    this.$hand.querySelectorAll(res_selector).forEach($el => { $el.classList.add('active'); $el.tabIndex = 0 })
     const dev_selector = oKeys(CONST.DEVELOPMENT_CARDS).map(k => `.card-group[data-type="${k}"]`).join(',')
     this.$hand.querySelectorAll(dev_selector).forEach($el => $el.classList.add('disabled'))
   }

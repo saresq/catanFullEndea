@@ -3,24 +3,25 @@ import { resToText } from "../const_messages.js";
 import { newObject } from "../utils.js";
 
 /**
- * The trade drawer: one Players | Bank switch, a row of cards to give, a row to get, and the deal
- * between them. Tap a card to stake it, tap the staked bundle in the deal to take it back - there
- * is no separate decrease control. Bank mode picks the best rate the player owns per resource and
+ * The trade drawer: one Players | Bank switch, a row of cards to get, and the deal. The glowing
+ * hand is the row to give (`showHandStakes`, `stakeGive`). Tap a card to stake it, tap the staked
+ * bundle in the deal to take it back - there is no separate decrease control. Bank mode picks the best rate the player owns per resource and
  * sends one existing bank request per given resource.
  */
 export default class TradeUI {
   #giving_res; #taking_res; #mode = 'players'; #max_trade_requests
-  #player; #onTradeProposal; #onTradeResponse
+  #player; #onTradeProposal; #onTradeResponse; #showHandStakes
   $submit; $guide; $deal;
   $el = document.querySelector('#game .current-player > .trade-zone')
   $requests = this.$el.querySelector('.trade-requests')
   $card_selection = this.$el.querySelector('.trade-card-selection')
 
-  constructor(player, max_trade_requests, { onTradeProposal, onTradeResponse }) {
+  constructor(player, max_trade_requests, { onTradeProposal, onTradeResponse, showHandStakes }) {
     this.#player = player
     this.#max_trade_requests = max_trade_requests
     this.#onTradeProposal = onTradeProposal
     this.#onTradeResponse = onTradeResponse
+    this.#showHandStakes = showHandStakes
     this.#giving_res = newObject(CONST.RESOURCES, 0)
     this.#taking_res = newObject(CONST.RESOURCES, 0)
   }
@@ -34,12 +35,10 @@ export default class TradeUI {
   }
 
   render() {
-    // The row names are CSS `::before` content (trade.css), so a palette is exactly its five cards.
-    // Your own cards sit at the bottom, next to the hand in the dock they come from; what you want
-    // goes on top, and the deal between the two.
+    // The row name is CSS `::before` content (trade.css), so the palette is exactly its five cards.
+    // What you give comes straight from the hand in the dock, right below the deal.
     const cards = row => Object.keys(CONST.RESOURCES).map(res => `
-      <button class="card pick" data-type="${res}" data-row="${row}" title="${CONST.RESOURCES[res]}"
-        >${row === 'give' ? '<span class="count"></span><span class="rate"></span>' : ''}</button>`).join('')
+      <button class="card pick" data-type="${res}" data-row="${row}" title="${CONST.RESOURCES[res]}"></button>`).join('')
     this.$card_selection.innerHTML = `
       <div class="head">
         <button class="btn btn--sm mode" data-mode="players" aria-pressed="true">Players</button>
@@ -51,9 +50,8 @@ export default class TradeUI {
         <div class="side give"></div>
         <span class="pivot">for</span>
         <div class="side get"></div>
-        <span class="hint">Tap cards to stake them. Tap them here to take them back.</span>
+        <span class="hint">Tap your glowing cards to give. Tap cards here for what you want. Tap a staked card to take it back.</span>
       </div>
-      <div class="palette give"><div class="cards">${cards('give')}</div></div>
       <div class="foot">
         <span class="guide"></span>
         <button class="btn btn--quiet btn--sm reset" type="button" title="Clear the trade" aria-label="Clear the trade"></button>
@@ -98,9 +96,14 @@ export default class TradeUI {
     this.#update()
   }
 
-  /** Counts, rates, the deal, every `disabled`, the guide and the submit label, after every change. */
+  /** The hand's stakes, the deal, every `disabled`, the guide and the submit label, after every change. */
   #update() {
     const bank = this.#mode === 'bank'
+    // The hand may have shrunk under a stake (an offer accepted): keep whole bundles still held.
+    Object.keys(CONST.RESOURCES).forEach(res => {
+      const held = this.#player.closed_cards[res] || 0
+      this.#giving_res[res] = Math.min(this.#giving_res[res], held - held % this.#rate(res))
+    })
     const total = obj => Object.values(obj).reduce((m, v) => m + v, 0)
     const give_total = total(this.#giving_res), get_total = total(this.#taking_res)
     // What the staked cards buy. Every give amount is a whole number of bundles, so this one is too.
@@ -108,17 +111,16 @@ export default class TradeUI {
     const over_limit = this.$requests.querySelectorAll('.ongoing[data-id="-1"] .og-request:not(.deleted)')
       .length >= this.#max_trade_requests
 
+    const stakes = {}
     Object.keys(CONST.RESOURCES).forEach(res => {
       const held = this.#player.closed_cards[res] || 0
       const rate = this.#rate(res), give = this.#giving_res[res], get = this.#taking_res[res]
-      const $give = this.$card_selection.querySelector(`.palette.give .pick[data-type="${res}"]`)
       const $get = this.$card_selection.querySelector(`.palette.get .pick[data-type="${res}"]`)
-      // What staking again would leave you with: the reason a card greys out, before you read it.
-      $give.querySelector('.count').textContent = held - give
-      $give.querySelector('.rate').textContent = bank ? `${rate}:1` : ''
-      $give.disabled = get > 0 || held - give < rate
+      // What staking again would leave you with: the reason a stack greys out, before you read it.
+      stakes[res] = { left: held - give, rate: bank ? rate : null, disabled: get > 0 || held - give < rate }
       $get.disabled = give > 0 || (bank && get_total >= buys)
     })
+    this.#showHandStakes(stakes)
 
     this.#paintSide('give', this.#giving_res)
     this.#paintSide('get', this.#taking_res)
@@ -187,7 +189,23 @@ export default class TradeUI {
     this.#setMode('players')
   }
 
-  clearSelections() { this.$card_selection.classList.add('hide') }
+  /** Closes the drawer; the hand goes back to normal only if the drawer was the one showing on it. */
+  clearSelections() {
+    if (!this.isOpen()) { return }
+    this.$card_selection.classList.add('hide')
+    this.#showHandStakes(null)
+  }
+
+  isOpen() { return !this.$card_selection.classList.contains('hide') }
+
+  /** A tap on a glowing hand stack: one bundle at that resource's rate. Disabled stacks never get here. */
+  stakeGive(res) {
+    this.#giving_res[res] += this.#rate(res)
+    this.#update()
+  }
+
+  /** The hand changed: repaint, if open. */
+  refresh() { this.isOpen() && this.#update() }
 
   renderNewRequest(player, { giving={}, asking={}, id, ...params } = {}) {
     if (player.id === this.#player.id) {
@@ -261,7 +279,7 @@ export default class TradeUI {
       if ($confirm) { $confirm.disabled = !can_trade }
     }
     // The open-offer limit and the held amounts both live in the drawer's summary and buttons.
-    if (!this.$card_selection.classList.contains('hide')) { this.#update() }
+    this.refresh()
   }
 
   clearRequests() { this.$requests.innerHTML = '' }

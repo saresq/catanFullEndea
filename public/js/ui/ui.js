@@ -56,7 +56,8 @@ export default class UI {
       onTradeClick: _ => this.trade_ui.renderTradeSelection(),
       onExitTrade: _ => this.trade_ui.clearSelections(),
       onEndTurnClick: _ => game.onEndTurn(),
-      onCardClick: type => game.onCardClick(type),
+      // While the trade drawer is open the hand is its give row.
+      onCardClick: type => this.trade_ui.isOpen() ? this.trade_ui.stakeGive(type) : game.onCardClick(type),
       canPlayDevCard: type => game.canPlayDevCard(type),
       onDevCardActivate: type => {
         this.animation_ui.animateDevelopmentCard(type, true)
@@ -64,6 +65,7 @@ export default class UI {
       },
       getPossibleLocations: p => game.getPossibleLocations(p),
       toggleBoardBlur: hide => { this.board_ui.toggleBlur(hide); this.all_players_ui.toggleBlur(hide) },
+      onHandUpdated: _ => this.trade_ui.refresh(),
     })
 
     this.robber_drop_ui = new RobberDropUI({
@@ -73,9 +75,7 @@ export default class UI {
     })
 
     this.trade_ui = new TradeUI(player, game.config.max_trade_requests, {
-      toggleHandRes: type => this.player_ui.toggleHandResource(type),
-      resetHand: _ => this.player_ui.renderHand(),
-      toggleBoardBlur: hide => { this.board_ui.toggleBlur(hide); this.all_players_ui.toggleBlur(hide) },
+      showHandStakes: stakes => this.player_ui.setHandStakes(stakes),
       onTradeProposal: (...params) => game.onTradeProposal(...params),
       onTradeResponse: (id, resp) => game.onTradeResponse(id, resp),
     })

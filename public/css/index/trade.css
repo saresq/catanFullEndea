@@ -7,7 +7,7 @@
  * (it is an in-flow strip at the top), so there the zone spans the full width.
  *
  * Skins come from elsewhere: ui/primitives.css (.btn, .panel--drawer), ui/card.css (.card),
- * resources.css (.res-icon). --card-w is the only size knob of the two card palettes.
+ * resources.css (.res-icon). --card-w is the only size knob of the card palette.
  */
 /* The dock sits at --z-hud (20) and so does everything inside it, including this zone - but the
    scoreboard and the gear are at 50 and would paint over a drawer that reaches the top of a phone
@@ -224,9 +224,9 @@
     /* ==============================================================
        THE DRAWER
 
-       Tap a card to stake it, tap the staked bundle in the deal to take it back. The deal sits
-       between the two palettes: shortest reach from either, and literally between what you give
-       and what you get. --card-w is the only size knob of the palettes.
+       Tap a card to stake it, tap the staked bundle in the deal to take it back. What you give
+       comes from the glowing hand right below the deal (current-player.css), so the drawer has
+       one palette: what you want. --card-w is the only size knob of the palette.
        ============================================================== */
 
     :is(.trade-card-selection, .robber-drop-zone, .resource-selection-zone) {
@@ -288,7 +288,6 @@
                 opacity: 0.75;
             }
 
-            &.give::before { content: 'From your hand'; }
             &.get::before { content: 'You want'; }
 
             .cards {
@@ -318,47 +317,6 @@
             &:disabled {
                 cursor: not-allowed;
                 filter: grayscale(1) brightness(0.55);
-            }
-        }
-
-        /* How many you would be left with, in the badge the dock puts over a hand stack. */
-        .count {
-            position: absolute;
-            top: -0.625rem;
-            left: 50%;
-            translate: -50% 0;
-            width: 1.5625rem;
-            height: 1.5625rem;
-            box-sizing: border-box;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: var(--radius-pill);
-            border: 0.0625rem solid var(--card-face);
-            background: var(--card-border);
-            color: var(--card-face);
-            font-size: var(--text-sm);
-            font-variant-numeric: tabular-nums;
-        }
-
-        .pick:disabled .count { opacity: 0.6; }
-
-        /* Bank rate: a ribbon across the foot of the card. Empty in Players mode, so it goes away. */
-        .rate {
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            padding: 0.0625rem 0;
-            border-radius: 0 0 calc(var(--card-w) * .075) calc(var(--card-w) * .075);
-            background: color-mix(in srgb, var(--card-border) 88%, transparent);
-            color: var(--card-face);
-            font-size: var(--text-xs);
-            font-variant-numeric: tabular-nums;
-            text-align: center;
-
-            &:empty {
-                display: none;
             }
         }
 
@@ -504,17 +462,16 @@
             }
         }
 
-        /* Landscape phones are short: the palettes face each other, the switch and the guide share
-           the top line, and the deal spans underneath - so nothing falls below the fold. */
+        /* Landscape phones are short: the switch and the guide share the top line, the palette and
+           the deal the second - so nothing falls below the fold. */
         @media screen and (orientation: landscape) and (max-height: 500px) {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            grid-template-areas: "head foot" "give get" "deal deal";
+            grid-template-areas: "head foot" "get deal";
             align-content: start;
 
             .head { grid-area: head; }
             .foot { grid-area: foot; }
-            .palette.give { grid-area: give; }
             .palette.get { grid-area: get; }
             .deal { grid-area: deal; }
         }
