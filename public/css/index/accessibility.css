@@ -61,7 +61,13 @@
     flex-direction: column;
     margin: 10px 0 0 10px;
     z-index: var(--z-accessibility);
-    pointer-events: auto;
+    /* The zone box is wider than its buttons - on phones it is a full-width band - so only the
+       controls take clicks; the rest goes through to the board and the history sheet below. */
+    pointer-events: none;
+
+    > * {
+        pointer-events: auto;
+    }
 
     /* The way into everything else, so it is the one control at full tap size.
        The glyph is an SVG mask painted in currentColor: it stays crisp at any size and
@@ -319,10 +325,10 @@
     flex-direction: column;
     margin: 10px 10px 0 0;
     z-index: var(--z-accessibility);
-    pointer-events: auto;
+    pointer-events: none;
 
-    .status-bar-history::before {
-        content: '⌛️';
+    > * {
+        pointer-events: auto;
     }
 
     .show-end-game {

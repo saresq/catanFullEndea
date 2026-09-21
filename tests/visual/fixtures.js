@@ -278,6 +278,62 @@
     },
 
     /**
+     * Status history, for the gates in the status-history-sheet change. Fills the history through
+     * the same `*Soc` methods the socket calls (a Setup build, two turns with rolls, a trade and
+     * one long status), opens the sheet and reports where it lands: its rect and share of the
+     * viewport, whether it overlaps the scoreboard or covers the dock, whether the status text
+     * stays on one line, the History control's hit size and the turn headers in DOM order with
+     * the entries under each. Runs on the old markup too, so a "before" capture is comparable.
+     * Leaves the sheet open for the screenshot that follows; reload to undo the history.
+     */
+    history() {
+      const $sheet = document.querySelector('.status-history-zone')
+      if (!$sheet) return 'no .status-history-zone'
+      const px = n => +n.toFixed(1)
+      const rect = $_ => { const r = $_.getBoundingClientRect(); return { x: px(r.x), y: px(r.y), w: px(r.width), h: px(r.height) } }
+      const overlaps = (a, b) => !!a && !!b && a.right > b.left && a.left < b.right && a.bottom > b.top && a.top < b.bottom
+      const state = game.state, pid = game.active_pid
+      const me = self(), them = game.opponents?.[0]
+      // Setup, then two turns: each starts with the roll state (the separator) and rolls the dice.
+      const corners = free('.corner'), edges = free('.edge')
+      game.updateBuildSoc(me?.id || 1, 'S', corners[3])
+      ;[them, me].filter(Boolean).forEach((p, i) => {
+        game.updateStateChangeSoc('player_roll', p.id)
+        game.updateDiceValueSoc([4, i + 3], p.id)
+        game.updateBuildSoc(p.id, 'R', edges[i * 4 + 2])
+      })
+      // One long status: a full trade reads as the longest line the bar ever shows.
+      game.updateTradedInfoSoc(them?.id || 2, { S: 3, L: 2, B: 1 }, { O: 2, W: 3 }, me?.id)
+      game.updateStateChangeSoc(state, pid)
+
+      $sheet.classList.add('show')
+      const $text = document.querySelector('#game .current-player .status-text')
+        || document.querySelector('#game .current-player .status-bar')
+      const $toggle = document.querySelector('#game .history-toggle, #game .status-bar-history')
+      const $list = $sheet.querySelector('.container')
+      const box = $sheet.getBoundingClientRect()
+      const $dock = document.querySelector('#game > .current-player')
+      // Headers and entries in DOM order: a header has to come out above the entries it labels.
+      const order = [...$list.children].map($_ => $_.classList.contains('turn-separator')
+        ? { header: $_.textContent.trim() || '(unlabelled)' } : { entry: $_.textContent.trim().slice(0, 40) })
+      return {
+        viewport: `${innerWidth}x${innerHeight}`,
+        sheet: rect($sheet),
+        heightShare: +(box.height / innerHeight).toFixed(3),
+        widthShare: +(box.width / innerWidth).toFixed(3),
+        overlapsScoreboard: overlaps(box, document.querySelector('.all-players')?.getBoundingClientRect()),
+        overlapsDock: overlaps(box, $dock?.getBoundingClientRect()),
+        statusOneLine: !!$text && $text.getClientRects().length === 1 && $text.scrollWidth <= $text.clientWidth + 1,
+        statusTruncated: !!$text && $text.scrollWidth > $text.clientWidth + 1,
+        toggle: $toggle ? { label: $toggle.textContent.trim(), ...rect($toggle), expanded: $toggle.getAttribute('aria-expanded') } : null,
+        titleTop: px($sheet.querySelector('.title').getBoundingClientRect().top),
+        listScrolls: $list.scrollHeight > $list.clientHeight,
+        headers: order.filter(o => o.header).map(o => o.header),
+        order,
+      }
+    },
+
+    /**
      * Options menu, for the gates in the options-menu change: one entry per item (label, state
      * text, key hint, tap size), how many items carry no label, and whether recenter is reachable
      * with the menu closed. Works on any page that renders the zone (game, login, waiting room,

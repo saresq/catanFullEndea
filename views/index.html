@@ -26,7 +26,15 @@
   <div class="current-player">
     <div class="hand"></div>
     <div class="actions"></div>
-    <div class="status-bar"></div>
+    <div class="status-bar">
+      <span class="status-text"></span>
+      <button class="btn btn--quiet btn--sm history-toggle" aria-expanded="false">History</button>
+    </div>
+    <div class="status-history-zone panel">
+      <div class="title">History<button class="close" title="H">X</button></div>
+      <div class="now"></div>
+      <div class="container"></div>
+    </div>
   </div>
   <div class="trade-zone">
     <div class="trade-requests"></div>
@@ -42,10 +50,6 @@
     </div>
   </div>
   <div class="resource-selection-zone panel panel--drawer hide"></div>
-  <div class="status-history-zone panel">
-    <div class="title">History<button class="close" title="H">X</button></div>
-    <div class="container"></div>
-  </div>
   <div class="card-preview-zone hide">
     <button class="close" title="Esc">𝖷</button>
     <div class="card-container">
@@ -67,9 +71,7 @@
   <div class="hud-top">
     <div class="all-players"></div>
     <div class="accessibility-zone"></div>
-    <div class="status-history-icon-zone">
-      <button class="icon status-bar-history right" title="Status History (h)"></button>
-    </div>
+    <div class="status-history-icon-zone"></div>
   </div>
 </div>
 <svg style="width: 0;height: 0;">

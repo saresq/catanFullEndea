@@ -1,5 +1,5 @@
 import { default as MSG, getName } from "../const_messages.js"
-import { STORAGE_KEYS as KEYS, REMATCH_SECONDS } from "../const.js"
+import { STORAGE_KEYS as KEYS, REMATCH_SECONDS, GAME_STATES as ST } from "../const.js"
 const $ = document.querySelector.bind(document)
 const TURN_SEP = '<<<TURN_SEPARATOR>>>'
 
@@ -7,10 +7,11 @@ export default class AlertUI {
   #player; #alert_time; #alert_timer;
   #onStatusUpdate; #showCard
   #status_history = []
-  $status_history = $('#game > .status-history-zone')
-  $status_history_container = $('#game > .status-history-zone > .container')
+  $status_history = $('#game .current-player .status-history-zone')
+  $status_history_container = $('#game .current-player .status-history-zone > .container')
+  $status_now = $('#game .current-player .status-history-zone > .now')
   $alert = $('#game > .alert')
-  $status_bar = $('#game > .current-player .status-bar')
+  $status_bar = $('#game > .current-player .status-bar .status-text')
 
   constructor(player, alert_time = 3, { onStatusUpdate, showCard }){
     this.#player = player
@@ -32,6 +33,10 @@ export default class AlertUI {
       this.#status_history = JSON.parse(localStorage.getItem(KEYS.STATUS_HISTORY))
       if (!(this.#status_history instanceof Array)) { this.#status_history = [] }
     } catch (e) {}
+    // Setup builds land before the first roll, so nothing else would label them.
+    if (!this.#status_history.length && window.game_obj?.state === ST.INITIAL_SETUP) {
+      this.#status_history.unshift(TURN_SEP + 'Setup')
+    }
   }
 
   render() {
@@ -39,30 +44,44 @@ export default class AlertUI {
     this.$status_history.classList.add(pcClass)
     this.$alert.classList.add(pcClass)
     this.$status_bar.innerHTML = this.#player.last_status || '...'
-    this.$status_history_container.innerHTML = this.#status_history.map(s => {
-      if (s.startsWith(TURN_SEP)) return '<hr class="turn-separator">'
-      return `<div class="status">${s}</div>`
-    }).join('')
+    this.#mirror()
+    // Stored newest first, but a turn's label has to sit above its entries: buffer until its
+    // separator shows up. Entries with no separator left (an old save) come last, unlabelled.
+    let html = '', buffer = ''
+    this.#status_history.forEach(s => {
+      if (!s.startsWith(TURN_SEP)) return void (buffer += `<div class="status">${s}</div>`)
+      html += `<div class="turn-separator">${s.slice(TURN_SEP.length)}</div>` + buffer
+      buffer = ''
+    })
+    this.$status_history_container.innerHTML = html + buffer
     this.$alert.querySelector('.close').addEventListener('click', e => this.closeBigAlert())
     this.$status_history.querySelector('.close').addEventListener('click', e => this.toggleStatusHistory(false))
-    $('#game .status-bar-history').addEventListener('click', e => this.toggleStatusHistory())
+    // The whole bar is the entry point; a link inside a status keeps its own click.
+    $('#game > .current-player .status-bar').addEventListener('click', e => {
+      e.target.closest('a') || this.toggleStatusHistory()
+    })
     document.addEventListener('keydown', e => {
       e.code === 'Escape' && (this.closeBigAlert(), this.toggleStatusHistory(false))
       e.code === 'KeyH' && this.toggleStatusHistory()
-    })
-
-    // Close History when clicking outside of it (same behavior as About/Shortcuts)
-    document.addEventListener('click', e => {
-      if (!this.$status_history?.classList.contains('show')) return
-      const toggleBtn = $('#game .status-bar-history')
-      if (!this.$status_history.contains(e.target) && e.target !== toggleBtn) {
-        this.toggleStatusHistory(false)
-      }
     })
   }
 
   toggleStatusHistory(show = !this.$status_history.classList.contains('show')) {
     this.$status_history.classList[show ? 'add' : 'remove']('show')
+    $('#game .history-toggle')?.setAttribute('aria-expanded', show)
+  }
+
+  /** The bar truncates, the sheet does not: it opens with the full current status on top. */
+  #mirror() { this.$status_now && (this.$status_now.innerHTML = this.$status_bar.innerHTML) }
+
+  /** A new entry belongs under the newest turn header, not above it. */
+  #prependEntry(html) {
+    const $entry = document.createElement('div')
+    $entry.className = 'status'
+    $entry.innerHTML = html
+    const $first = this.$status_history_container.firstElementChild
+    if ($first?.classList.contains('turn-separator')) $first.after($entry)
+    else this.$status_history_container.prepend($entry)
   }
 
   showEndGameButton(onClick) {
@@ -81,9 +100,10 @@ export default class AlertUI {
     if (this.#status_history.find(s => s.startsWith(TURN_SEP)) === TURN_SEP + label) return
     this.#status_history.unshift(TURN_SEP + label)
     try { localStorage.setItem(KEYS.STATUS_HISTORY, JSON.stringify(this.#status_history)) } catch (e) {}
-    const hr = document.createElement('hr')
-    hr.className = 'turn-separator'
-    this.$status_history_container.prepend(hr)
+    const $sep = document.createElement('div')
+    $sep.className = 'turn-separator'
+    $sep.innerHTML = label
+    this.$status_history_container.prepend($sep)
   }
 
   closeBigAlert() {
@@ -103,40 +123,33 @@ export default class AlertUI {
   setStatus(message = '...') {
     const msg = message.replace(/<br\/?>/g, '. ')
     this.$status_bar.innerHTML = msg
+    this.#mirror()
     this.#status_history.unshift(msg)
     localStorage.setItem(KEYS.STATUS_HISTORY, JSON.stringify(this.#status_history))
-    this.$status_history_container.innerHTML = `<div class="status">${msg}</div>` + this.$status_history_container.innerHTML
+    this.#prependEntry(msg)
     this.#onStatusUpdate(msg)
   }
 
   setStatusBarOnly(message = '...') {
     const msg = message.replace(/<br\/?>/g, '. ')
     this.$status_bar.innerHTML = msg
+    this.#mirror()
     this.#onStatusUpdate(msg)
   }
 
   appendStatus(message = '...') {
     const add = message.replace(/<br\/?>/g, '. ')
     this.$status_bar.innerHTML += add
-    // Determine index of the latest status (skip leading separator if present)
-    let idx = 0
-    if (this.#status_history[0]?.startsWith(TURN_SEP)) idx = 1
-    if (typeof this.#status_history[idx] === 'string' && !this.#status_history[idx].startsWith(TURN_SEP)) {
-      this.#status_history[idx] = this.$status_bar.innerHTML
-      try { localStorage.setItem(KEYS.STATUS_HISTORY, JSON.stringify(this.#status_history)) } catch (e) {}
-      const firstStatusEl = this.$status_history_container.querySelector('.status')
-      if (firstStatusEl) {
-        firstStatusEl.innerHTML = this.$status_bar.innerHTML
-      } else {
-        this.$status_history_container.innerHTML = `<div class="status">${this.$status_bar.innerHTML}</div>` + this.$status_history_container.innerHTML
-      }
-    } else {
-      // No existing status to append to; create a new one at head
-      this.#status_history.unshift(this.$status_bar.innerHTML)
-      try { localStorage.setItem(KEYS.STATUS_HISTORY, JSON.stringify(this.#status_history)) } catch (e) {}
-      this.$status_history_container.innerHTML = `<div class="status">${this.$status_bar.innerHTML}</div>` + this.$status_history_container.innerHTML
-    }
-    this.#onStatusUpdate(this.$status_bar.innerHTML)
+    this.#mirror()
+    const html = this.$status_bar.innerHTML
+    // The newest entry is this turn's only while no separator sits above it. After a turn start
+    // the append opens a new entry instead of growing the previous player's line.
+    const $entry = this.#status_history[0]?.startsWith(TURN_SEP)
+      ? null : this.$status_history_container.querySelector('.status')
+    if ($entry) { this.#status_history[0] = html; $entry.innerHTML = html }
+    else { this.#status_history.unshift(html); this.#prependEntry(html) }
+    try { localStorage.setItem(KEYS.STATUS_HISTORY, JSON.stringify(this.#status_history)) } catch (e) {}
+    this.#onStatusUpdate(html)
   }
 
   alertStrategy(t) { this.setStatusBarOnly(MSG.STRATEGIZE.all(t)) }

@@ -88,11 +88,13 @@
 
         .resources-row, .dev-cards-row {
             display: flex;
-            /* Grow to fill the hand cell (so the groups spread), but never below their content */
+            /* Grow to fill the hand cell, but never below their content */
             flex: 1 1 auto;
             align-items: flex-end;
-            justify-content: space-between;
-            gap: var(--space-2);
+            /* Packed and centred in the hand cell, not spread: a hand of two resources should
+               not read as two lost cards at opposite ends of the dock. */
+            justify-content: center;
+            gap: var(--space-3);
         }
 
         /* Development cards open in a row above the whole dock, over the board, while toggled */
@@ -735,17 +737,40 @@
         }
     }
 
+    /* The whole bar is the History control, so the bar itself is the tap target. */
     .status-bar {
         grid-area: status;
-        font-family: var(--font-ui), sans-serif;
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        font-family: var(--font-body), sans-serif;
         background: var(--sand-color);
         color: var(--sand-color-text-dark);
         border-top: 0.0625rem solid #aa8456;
         position: relative;
-        text-align: center;
+        text-align: left;
         padding: 0.1875rem 0.625rem;
         font-size: 1.5em;
+        cursor: pointer;
         z-index: 3;
+
+        /* One line, ellipsis, never wrapping over the dock */
+        .status-text {
+            flex: 1 1 auto;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* The whole bar toggles the sheet, so the button never needs a box of its own: it keeps
+           the dock inside the height budget action-bar-dock set (27% / 30% / 32%). */
+        .history-toggle {
+            flex: none;
+            min-width: 0;
+            min-height: 0;
+            padding-block: 0;
+        }
 
         @media screen and (max-width: 768px), screen and (orientation: landscape) and (max-height: 500px) {
             font-size: 1.2em;

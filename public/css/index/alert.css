@@ -306,87 +306,107 @@
     }
 }
 
-#game > .status-history-zone {
-    position: fixed;
-    top: 5vh;
-    left: 50%;
-    transform: translateX(-50%);
-    width: clamp(300px, 30vw, 600px);
-    height: 60vh;
-    overflow: auto;
-    margin: 0 auto;
-    padding-top: 0;
-    text-align: center;
+/*
+ * History sheet. It hangs above the dock inside it, so the board stays visible and playable:
+ * on an absolutely positioned box a percentage height resolves against the containing block -
+ * the dock - so `100dvh - 100%` is exactly the free height above it, with no JS and no resize
+ * listener. Skin: ui/primitives.css (.panel)
+ */
+#game .current-player .status-history-zone {
+    position: absolute;
+    /* `100%` is the dock's padding box, so the extra 0.3125rem clears its top border. */
+    bottom: calc(100% + 0.3125rem);
+    /* Right of the gear column (the gear is 44px wide at 10px from the edge) */
+    left: 3.75rem;
+    z-index: 4;
+    width: clamp(18rem, 26vw, 24rem);
+    height: calc(100vh - 100% - 0.3125rem);
+    height: calc(100dvh - 100% - 0.3125rem);
     box-sizing: border-box;
-    /* Skin: ui/primitives.css (.panel) */
-    opacity: 0;
-    z-index: -10;
-    visibility: hidden;
-    pointer-events: none;
-    transition: opacity var(--t-base) linear, visibility var(--t-base) linear;
+    display: none;
+    flex-direction: column;
+    text-align: left;
+    font-family: var(--font-body), sans-serif;
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
 
     &.show {
-        z-index: var(--z-panel);
-        opacity: 1;
-        visibility: visible;
-        pointer-events: auto;
+        display: flex;
     }
 
-    @media screen and (max-width: 768px) {
+    /* Portrait phones: a bottom sheet, under the 50% the board needs to stay readable */
+    @media screen and (max-width: 768px) and (orientation: portrait) {
+        left: 0;
         width: 100%;
-        height: 100%;
-        top: 0;
-        left: 0;
-        transform: none;
-        margin: 0;
-        border-bottom: 0;
-        border-radius: 0;
+        height: 40dvh;
     }
 
+    /* Landscape phones: the side sheet again, below the scoreboard strip, which is a
+       `position: relative` band at the top of at most 30dvh (all-players.css). */
+    @media screen and (orientation: landscape) and (max-height: 500px) {
+        height: calc(70vh - 100% - 0.3125rem);
+        height: calc(70dvh - 100% - 0.3125rem);
+    }
+
+    /* Header and the current status stay put; the list below them is the only scroller.
+       The close control is the title row's last child, so it spaces itself off the corner. */
     .title {
-        position: sticky;
-        top: 0;
-        left: 0;
+        flex: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
         font-family: var(--font-heading), serif;
-        font-size: 1.5rem;
-        text-align: center;
-        padding: 0.3rem;
-        box-shadow: 0 0 0.6rem 0;
-        background: var(--sand-color);
-        z-index: 1;
+        font-size: var(--text-lg);
+        padding: var(--space-1) var(--space-3);
+        border-bottom: 0.0625rem solid var(--sand-color-dark);
     }
 
     .close {
-        position: absolute;
-        right: 0.3rem;
-        top: 0.3rem;
-        z-index: 2;
-        font-family: var(--font-heading), sans-serif;
-        font-size: 1.5rem;
-        margin: 0.1rem 0.6rem 0 0;
+        flex: none;
+        font-family: var(--font-mono), sans-serif;
+        font-size: var(--text-md);
+        line-height: 1;
+        padding: var(--space-1);
         color: #666;
         cursor: pointer;
 
         &:hover, &:focus {
             color: var(--trade-negative);
-            text-shadow: 0 0 5px #fff;
         }
     }
 
+    /* The bar truncates to one line; here the current status is shown in full. */
+    .now {
+        flex: none;
+        padding: var(--space-2) var(--space-3);
+        border-bottom: 0.0625rem solid var(--sand-color-dark);
+        font-weight: 600;
+    }
+
     .container {
-        border-top: 1px solid #fff;
-        font-family: var(--font-ui), sans-serif;
+        flex: 1 1 auto;
+        overflow-y: auto;
     }
 
     .turn-separator {
-        border: 0;
-        border-top: 3px solid #000;
-        margin: 0.4rem 0
+        padding: var(--space-2) var(--space-3) var(--space-1);
+        border-top: 0.0625rem solid var(--sand-color-dark);
+        font-size: var(--text-xs);
+        text-transform: uppercase;
+        letter-spacing: 0.0625rem;
+
+        &:first-child {
+            border-top: 0;
+        }
     }
 
     .status {
-        padding: 0.4rem 0.6rem;
-        border-bottom: 1px solid #fff;
+        padding: var(--space-1) var(--space-3);
+
+        & + .status {
+            border-top: 0.0625rem solid color-mix(in srgb, var(--sand-color-dark) 30%, transparent);
+        }
 
         b {
             color: #77450b;
@@ -395,6 +415,11 @@
         small {
             opacity: 0.7;
         }
+    }
+
+    /* The sheet carries the viewer's own colour class, so "You" gets a marker here too. */
+    .p-name.me::before {
+        content: '⬢';
     }
 }
 
