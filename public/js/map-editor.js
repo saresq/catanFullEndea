@@ -123,6 +123,7 @@ class MapEditor {
 
     this.accessibility_ui = new AccessibilityUI({
       toggleBoardZoom: out => this.board_ui.toggleZoom(out),
+      back: { label: 'Back to the game', href: '/login' },
       icons: {
         fullscreen: false, bgm: false, notifcation_sounds: false,
         shorcuts: false, quit: false,
@@ -191,10 +192,6 @@ class MapEditor {
     `
 
     this.$rail.innerHTML = `
-      <a class="rail-btn btn btn--quiet editor-back" href="/login" title="Back to the game">
-        <span class="rail-icon" aria-hidden="true">←</span>
-        <span class="rail-text">Back</span>
-      </a>
       ${RAIL.map(item => `
         <button class="rail-btn btn btn--quiet" data-popover="${item.id}"
           aria-expanded="false" aria-controls="popover-${item.id}" title="${item.label}">

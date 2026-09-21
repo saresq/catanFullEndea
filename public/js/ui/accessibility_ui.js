@@ -2,7 +2,7 @@ import { STORAGE_KEYS as KEYS } from "../const.js"
 const _dummyFn = _ => _
 export default class AccessibilityUI {
   #shown_icons
-  #spectator_link; #quit_label; #quit_armed = false
+  #spectator_link; #quit_label; #quit_armed = false; #back
   muted = true
   // muted = !!+localStorage.getItem('mute')
   muted_notif = (localStorage.getItem(KEYS.MUTE_NOTIFICATIONS) === null)
@@ -37,6 +37,8 @@ export default class AccessibilityUI {
 
   constructor({ toggleBoardZoom = _dummyFn, recenterMap = null, toggleBgm = _dummyFn, toggleNotificationsAudio = _dummyFn,
     spectator_link = false, quit_label = 'Quit game',
+    /** `{ label, href }`: a last row that leaves without the quit arming, for pages with no game to lose. */
+    back = null,
     icons: { fullscreen = true, zoom = true, bgm = true, notifcation_sounds = true,
       shorcuts = true, info = true, quit = true } = {}} = {}) {
     this.#shown_icons = {
@@ -46,6 +48,7 @@ export default class AccessibilityUI {
     }
     this.#spectator_link = spectator_link
     this.#quit_label = quit_label
+    this.#back = back
     this.#toggleBoardZoom = toggleBoardZoom
     this.#recenterMap = recenterMap
     this.#toggleBgm = toggleBgm
@@ -75,6 +78,7 @@ export default class AccessibilityUI {
         ${this.#spectator_link ? item('spectator-link', '🔗', 'Copy spectator link') : ''}
         ${shown.info ? item('info', 'ℹ︎', 'About') : ''}
         ${shown.quit ? `<div class="sep"></div>` + item('quit danger', '⏻', this.#quit_label) : ''}
+        ${this.#back ? `<div class="sep"></div>` + item('back', '←', this.#back.label) : ''}
       </div>
       ${shown.shorcuts ? `
         <div class="keyboard-shortcuts panel hide">${this.keyboard_shortcuts.map(group =>
@@ -207,6 +211,7 @@ export default class AccessibilityUI {
     })
     this.$el.querySelector('.item.spectator-link')?.addEventListener('click', e => this.#copySpectatorLink(e.currentTarget))
     this.$el.querySelector('.item.quit')?.addEventListener('click', e => this.#onQuit())
+    this.$el.querySelector('.item.back')?.addEventListener('click', e => { window.location.href = this.#back.href })
     this.$el.querySelector('.keyboard-shortcuts .close')?.addEventListener('click', e => this.showHideKeyboardShortcuts(false))
     this.$el.querySelector('.info-zone .close')?.addEventListener('click', e => this.showHideInfo(false))
 
