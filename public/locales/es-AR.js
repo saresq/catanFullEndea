@@ -146,7 +146,7 @@ export default {
     full_screen: 'Pantalla completa',
     zoom_in: 'Acercar zoom',
     zoom_out: 'Alejar zoom',
-    notification_sounds: 'Sonidos de aviso',
+    notification_sounds: 'Notificaciones',
     music: 'Música',
     keyboard_shortcuts: 'Atajos de teclado',
     copy_spectator_link: 'Copiar link de espectador',
@@ -163,8 +163,8 @@ export default {
 
   about: {
     title: 'Catan Full Endea',
-    credit: 'Built by Saresq, based on',
-    credit_link: "BigOmega's Catan",
+    credit: 'Hecho por Saresq, basado en',
+    credit_link: "el Catan de BigOmega",
     rules: 'Reglas del juego',
   },
 
@@ -183,7 +183,7 @@ export default {
     zoom_out: 'Alejar el tablero',
     recenter: 'Centrar mapa',
     toggle_music: 'Música de fondo',
-    toggle_sounds: 'Sonidos de aviso',
+    toggle_sounds: 'Notificaciones',
     history: 'Ver historial',
     this_panel: 'Ver este panel',
     players_panel: 'Panel de jugadores',
@@ -289,7 +289,7 @@ export default {
     join: 'Unirse',
     your_name: 'Tu nombre',
     game_key: 'Código',
-    join_game: 'Unirse a la partida',
+    join_game: 'Unirse',
     full_notice: 'La partida a la que querés unirte está llena',
     go_back: 'Volver',
     spectate: 'Mirar',
@@ -297,8 +297,8 @@ export default {
     map_size: 'Mapa',
     victory_points: 'Puntos de victoria',
     dice_mode: 'Dados',
-    start_game: 'Empezar partida',
-    map_editor: 'Ir al editor de mapas',
+    start_game: 'Crear sala',
+    map_editor: 'Editor de mapas',
   },
 
   lobby: {

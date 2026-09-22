@@ -844,18 +844,15 @@
             padding-left: 0.1875rem;
 
             @media screen and (max-width: 768px) {
-                /* Only the name goes - `font-size: 0` here would leave the hexagon's
-                   `vertical-align: middle` centring on a zero x-height, i.e. on the baseline,
-                   which drops it half a glyph below the line. */
+                /* Only the name goes: `font-size: 0` on `.p-name` would take the marker's
+                   metrics with it, and the `::before` is sized and aligned in em. */
                 &:not(.me) .p-name-text {
                     display: none;
                 }
 
+                /* The name's word space is the whole gap once the name is gone */
                 &::before {
-                    font-size: 1.5rem;
                     margin-right: 0;
-                    vertical-align: middle;
-                    line-height: 1;
                 }
             }
         }

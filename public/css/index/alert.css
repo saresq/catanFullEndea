@@ -620,9 +620,12 @@
     &::before {
         content: '⬢';
         display: inline-block;
-        font-size: 1.25em;
+        /* Sized and set like a capital of the surrounding text: the glyph's ink is a touch
+           over a cap tall at 1.05em, and it carries ~0.05em of descent, which the nudge takes
+           back so it sits on the baseline instead of hanging under it. */
+        font-size: 1.05em;
         line-height: 1;
-        vertical-align: -0.125em;
+        vertical-align: 0.05em;
         margin-right: 0.125rem;
         /* Player colour. See the player theme table in constants.css. */
         color: var(--p-color);
