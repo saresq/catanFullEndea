@@ -13,7 +13,7 @@ import esAR from '../locales/es-AR.js'
 export const LOCALES = { en, 'es-AR': esAR }
 
 /** The locale every page renders in. Fixed per page load; a switch is a change here plus a reload. */
-export const LOCALE = 'en'
+export const LOCALE = 'es-AR'
 
 /** `lookup(dict, 'names.pieces.S.name')` walks the nested objects; `undefined` when any step is missing. */
 const lookup = (dict, key) => key.split('.').reduce(

@@ -72,6 +72,7 @@ default 0.9–1.8s jittered), `bot_trades` (may bots open player trades, default
 | `config/bot_names.json` | Editable list of bot names. |
 | `scripts/bot_sim.js` | Headless bot-vs-bot runner (`npm run sim`). |
 | `public/js/const.js` | `GAME_CONFIG` defaults and the canonical `SOCKET_EVENTS` table. |
+| `public/js/i18n.js`, `public/locales/` | `t(key, vars)` and one dictionary per language; see Languages below. |
 | `public/js/game.js` | Client controller. Renders from broadcasts; never mutates state on its own. |
 | `public/js/socket_manager.js` | Client socket listeners and emitters. |
 | `public/js/board/` | Board, tile, corner, edge, shuffler. |
@@ -83,6 +84,19 @@ default 0.9–1.8s jittered), `bot_trades` (may bots open player trades, default
 
 The server is authoritative for everything. Clients send intent, the server validates it, mutates
 state and broadcasts the result — see `WEBSOCKET_ARCHITECTURE.md` before adding an event.
+
+## Languages
+
+Every string a player reads comes from a dictionary in `public/locales/` through `t(key, vars)` /
+`t.plural(key, n)` in `public/js/i18n.js`, on the client and on the server (views, redirect
+notices). `LOCALE` in `i18n.js` picks the language for every page; the game ships in `es-AR`, with
+`en.js` as the fallback and the record of the original text. To add a language, copy `en.js` to
+`public/locales/<tag>.js`, translate the values (keys, `{placeholders}` and `{ one, other }` plural
+entries stay as they are), register it in `LOCALES` and point `LOCALE` at it; `tests/i18n_test.js`
+fails on any key missing from a locale, and `node scripts/i18n_length.js <tag>` lists the strings
+that grew the most, for a fit check at phone width. A few lines stay identical in every language
+(the BURRITO discard line, the rematch lines, the credit, both page titles), and common loanwords
+are not translated (`Cheat`, `bot`, `Tryhard`, `link`, `zoom`, key names such as `Esc`).
 
 ## Game states
 

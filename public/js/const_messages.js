@@ -13,6 +13,9 @@ export const resToIcons = obj => Object.keys(obj).filter(k => obj[k])
 
 const resIcon = res => `<div class="res-icon ${res}"></div>`
 
+/** `log.<key>` for another player, `log.<key>_self` when `p` is null (the viewer), with `{name}` filled. */
+const line = (key, p, vars) => t(p ? `log.${key}` : `log.${key}_self`, { name: getName(p), ...vars })
+
 // Every line is a whole sentence in the dictionary (`log.*`); the functions only fill the names,
 // numbers and icons in. Word order, plurals and articles are the locale's business.
 const GAME_MESSAGES = {
@@ -30,8 +33,8 @@ const GAME_MESSAGES = {
     other: p => t('log.roll_turn_other', { name: getName(p) }),
   },
   DICE_VALUE: {
-    all: (n, m, p, res) => t('log.dice_value', {
-      name: getName(p), total: n + m, d1: n, d2: m,
+    all: (n, m, p, res) => line('dice_value', p, {
+      total: n + m, d1: n, d2: m,
       blocking: res ? t('log.dice_blocking', { icon: resIcon(res) }) : '',
     }),
   },
@@ -41,10 +44,10 @@ const GAME_MESSAGES = {
       return t('log.res_taken', { res: resToText(res_obj) })
     }
   },
-  BUILDING: { all: (piece, p) => t('log.building', { name: getName(p), piece: t(`names.pieces.${piece}.with_article`) }) },
+  BUILDING: { all: (piece, p) => line('building', p, { piece: t(`names.pieces.${piece}.with_article`) }) },
   DEVELOPMENT_CARD_BUY: {
-    all: (p, c) => t('log.dev_card_buy', {
-      name: getName(p), card: c ? t('log.dev_card_buy_card', { card: CONST.DEVELOPMENT_CARDS[c] }) : '',
+    all: (p, c) => line('dev_card_buy', p, {
+      card: c ? t('log.dev_card_buy_card', { card: CONST.DEVELOPMENT_CARDS[c] }) : '',
     }),
   },
   DEVELOPMENT_CARD_USE: {
@@ -66,44 +69,45 @@ const GAME_MESSAGES = {
   ROBBER_MOVED_TILE: {
     all: (tile, num, p) => {
       const icon = CONST.TILE_RES[tile] ? resIcon(CONST.TILE_RES[tile]) : CONST.TILE_EMOJIS[tile]
-      return t('log.robber_moved_tile', { name: getName(p), icon, tile: CONST.TILES[tile], num })
+      return line('robber_moved_tile', p, { icon, tile: CONST.TILES[tile], num })
     },
   },
+  /** `p1` stole from `p2`; the viewer always learns what they stole themselves */
   PLAYER_STOLE_RES: {
-    all: (p2, res) => res
-      ? t('log.stole_res_known', { icon: resIcon(res), name: getName(p2) })
+    all: (p1, p2, res) => res
+      ? t(p1 ? 'log.stole_res_known' : 'log.stole_res_known_self', { icon: resIcon(res), name: getName(p2) })
       : t('log.stole_res_unknown', { name: getName(p2) }),
   },
   PLAYER_TRADE_INFO: {
-    all: ({ p1, p2, board }, given, taken) => t('log.trade_info', {
+    all: ({ p1, p2, board }, given, taken) => t(p1 ? 'log.trade_info' : 'log.trade_info_self', {
       p1: getName(p1), p2: board ? t('log.the_board') : getName(p2),
       given: resToText(given), taken: resToText(taken),
     }),
   },
   KNIGHT_USED_APPEND: { all: _ => t('log.knight_used_append') },
-  ROAD_BUILDING_USED: { all: p => t('log.road_building_used', { name: getName(p) }) },
+  ROAD_BUILDING_USED: { all: p => line('road_building_used', p) },
   MONOPOLY_USED: {
     all: (p, res, total, self_c) => total
-      ? t('log.monopoly_used', {
-        name: getName(p), res: resToText({ [res]: total }),
+      ? line('monopoly_used', p, {
+        res: resToText({ [res]: total }),
         from_you: p ? t('log.monopoly_from_you', { n: self_c }) : '',
       })
-      : t('log.monopoly_used_nothing', { name: getName(p) }),
+      : line('monopoly_used_nothing', p),
   },
   YEAR_OF_PLENTY_USED: {
     all: (p, res_obj) => p
       ? t('log.year_of_plenty_used_other', { name: getName(p) })
       : t('log.year_of_plenty_used_self', { name: getName(p), res: resToText(res_obj) }),
   },
-  LARGEST_ARMY: { all: (p, c) => t('log.largest_army', { name: getName(p), n: c }) },
-  LONGEST_ROAD: { all: (p, l) => t('log.longest_road', { name: getName(p), n: l }) },
+  LARGEST_ARMY: { all: (p, c) => line('largest_army', p, { n: c }) },
+  LONGEST_ROAD: { all: (p, l) => line('longest_road', p, { n: l }) },
   PLAYER_QUIT: {
     all: (p, replace_pid) => t('log.player_quit', { name: getName(p) })
       + (replace_pid ? `<div class="quit-actions"><button type="button" class="btn btn--primary btn--sm replace-bot" data-pid="${replace_pid}">${t('log.replace_with_bot')}</button></div>` : ''),
   },
   SEAT_TAKEN_OVER: { all: (p, was) => t('log.seat_taken_over', { name: getName(p), was }) },
   HOST_CHANGED: { all: (p, me) => me ? t('log.host_changed_self') : t('log.host_changed_other', { name: getName(p) }) },
-  END_STATUS: { all: (p, pt) => t('log.end_status', { name: getName(p), points: pt }) },
+  END_STATUS: { all: (p, pt) => line('end_status', p, { points: pt }) },
 }
 
 export default GAME_MESSAGES

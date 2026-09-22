@@ -189,7 +189,7 @@ export default class AlertUI {
     else this.setStatus(MSG.ROBBER_MOVE.other(p))
   }
   alertRobberMoveDone(p, tile, num) { this.setStatus(MSG.ROBBER_MOVED_TILE.all(tile, num, this.#isNotMe(p))) }
-  alertStolenInfo(p, res) { this.appendStatus(MSG.PLAYER_STOLE_RES.all(this.#isNotMe(p), res)) }
+  alertStolenInfo(p1, p2, res) { this.appendStatus(MSG.PLAYER_STOLE_RES.all(this.#isNotMe(p1), this.#isNotMe(p2), res)) }
   alertTradedInfo(p1, p2, given, taken) {
     this.setStatus(MSG.PLAYER_TRADE_INFO.all({
       p1: this.#isNotMe(p1), p2: this.#isNotMe(p2), board: !p2
@@ -230,20 +230,21 @@ export default class AlertUI {
     }).sort((a, b) => !!a.pl.removed - !!b.pl.removed || (b.pl.id === pid) - (a.pl.id === pid) || b.total - a.total)
     // Main number is the VP the column gives; the count sits under it where it differs.
     const cell = ([vp, count = vp]) => `<td>${vp || '–'}${count !== vp ? `<small>${count}</small>` : ''}</td>`
-    const icon = '<div class="pts-icon"></div>'
+    // `pts`, not `icon`: that name is the Lucide helper used for the trophy below
+    const pts = '<div class="pts-icon"></div>'
     const head = [
-      [t('end.player'), 'name'], [t('end.vp'), 'total', '<div class="vp-icon"></div>'], [t('end.settlements'), 'S', icon], [t('end.cities'), 'C', icon],
+      [t('end.player'), 'name'], [t('end.vp'), 'total', '<div class="vp-icon"></div>'], [t('end.settlements'), 'S', pts], [t('end.cities'), 'C', pts],
       [t('end.vp_cards'), 'dVp', '<div class="card card--xs" data-card="dVp"></div>', 'dVp'],
-      [t('end.largest_army'), 'army', icon, 'lArmy'], [t('end.longest_road'), 'road', icon, 'lRoad'],
+      [t('end.largest_army'), 'army', pts, 'lArmy'], [t('end.longest_road'), 'road', pts, 'lRoad'],
     ]
     this.$alert.querySelector('.text').innerHTML = `
       <div class="game-ended pc${cid}">
         <div class="title-emoji">${icon('trophy')}</div>
-        <div class="player-name">${t('end.won', { name: getName(p) })}</div>
+        <div class="player-name">${t(p ? 'end.won' : 'end.won_self', { name: getName(p) })}</div>
         <div class="end-overview">
           <table class="end-table">
-            <thead><tr>${head.map(([label, cls, icon = '', type]) =>
-              `<th class="${cls}"${type ? ` data-type="${type}"` : ''}>${icon}<span class="label">${label}</span></th>`).join('')}</tr></thead>
+            <thead><tr>${head.map(([label, cls, glyph = '', type]) =>
+              `<th class="${cls}"${type ? ` data-type="${type}"` : ''}>${glyph}<span class="label">${label}</span></th>`).join('')}</tr></thead>
             <tbody>${rows.map(({ pl, total, cells }) => `
               <tr class="pc${pl.color_id || pl.id}${pl.id === pid ? ' winner' : ''}${pl.removed ? ' left' : ''}">
                 <td class="name"><div><span class="p-name">${this.#isMe(pl) ? t('end.you') : pl.name}</span>${pl.removed ? `<small>${t('end.left')}</small>` : pl.is_bot ? `<small>${t('end.bot_tag', { level: t(`names.bot_levels.${pl.bot_level}.short`) })}</small>` : ''}</div></td>

@@ -18,7 +18,7 @@ const lookup = (dict, key) => key.split('.').reduce((o, k) => o?.[k], dict)
 /** Lines that stay byte-identical in every language. */
 const EXEMPT = [
   'log.robber_self', 'end.not_voted', 'end.non_voters', 'page.title', 'page.editor_title',
-  'about.title', 'about.credit', 'about.credit_link', 'notice.spectator',
+  'about.title', 'about.credit', 'about.credit_link',
 ]
 
 test('t fills placeholders and leaves unknown ones as written', () => {

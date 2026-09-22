@@ -257,7 +257,7 @@ export default class Game {
   }
 
   // SOC_P - Stolen info Notification
-  updateStoleInfoSoc(p1_id, p2_id, res) { this.#ui.alert_ui.alertStolenInfo(this.getPlayer(p2_id), res) }
+  updateStoleInfoSoc(p1_id, p2_id, res) { this.#ui.alert_ui.alertStolenInfo(this.getPlayer(p1_id), this.getPlayer(p2_id), res) }
 
   // SOC - Trade Success data
   updateTradedInfoSoc(p1_id, given, taken, p2_id) {
