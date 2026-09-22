@@ -1,4 +1,5 @@
 import * as CONST from "./const.js"
+import { t } from "./i18n.js"
 import Board from "./board/board.js"
 // import Opponents from "./player/opponents.js"
 import Player from "./player/player.js"
@@ -340,7 +341,7 @@ export default class Game {
     if ($btn) {
       $btn.addEventListener('click', () => {
         $btn.disabled = true
-        $btn.textContent = 'Voted'
+        $btn.textContent = t('end.voted')
         this.#socket_manager.sendRematchVote()
       }, { once: true })
     }
@@ -357,7 +358,7 @@ export default class Game {
         // Optionally disable button if still present
         if ($btn && !$btn.disabled) {
           $btn.disabled = true
-          $btn.textContent = 'Time\'s Up'
+          $btn.textContent = t('end.times_up')
         }
       }
     }, DELAYS.REMATCH_TICK)
@@ -376,12 +377,12 @@ export default class Game {
     // Names are all the server sends; the players they belong to give the chip its colour.
     const list = nonVoterNames.map(n => {
       const p = [this.#player, ...this.opponents].find(_ => _.name === n)
-      if (p === this.#player) return '<li class="me">No votaste</li>'
+      if (p === this.#player) return `<li class="me">${t('end.not_voted')}</li>`
       return `<li${p ? ` class="pc${p.color_id || p.id}"` : ''}>${n}</li>`
     }).join('')
     $status.innerHTML = `
       <div class="burritos">🫏</div>
-      <div class="rematch-text">Estos burritos todavia no votaron:</div>
+      <div class="rematch-text">${t('end.non_voters')}</div>
       <ul class="rematch-list">${list}</ul>
     `
   }
@@ -441,8 +442,8 @@ export default class Game {
     try {
       document.documentElement.classList.add('godmode')
     } catch (e) {}
-    const title = '<div class="alert-title">The matrix is glitching</div>'
-    const sub = '<div class="alert-sub">God mode is on</div>'
+    const title = `<div class="alert-title">${t('cheat.godmode_title')}</div>`
+    const sub = `<div class="alert-sub">${t('cheat.godmode_sub')}</div>`
     this.#ui.alert_ui.bigAlert(`${title}${sub}`, true)
     // Ensure immediate recolor in case player update arrives slightly later
     if (pid) {
@@ -466,8 +467,8 @@ export default class Game {
   }
 
   updateGodModeFreeResSoc(pid) {
-    const title = '<div class="alert-title">Cheat code activated</div>'
-    const sub = '<div class="alert-sub">Free resources: everyone gets 2 of each, every round</div>'
+    const title = `<div class="alert-title">${t('cheat.free_res_title')}</div>`
+    const sub = `<div class="alert-sub">${t('cheat.free_res_sub')}</div>`
     this.#ui.alert_ui.bigAlert(`${title}${sub}`, true)
   }
 

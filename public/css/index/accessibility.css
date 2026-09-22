@@ -234,7 +234,7 @@
         flex-wrap: wrap;
 
         &::before {
-            content: 'Keyboard Shortcuts';
+            content: attr(data-caption);
             font-family: var(--font-heading), serif;
             font-size: var(--text-xl);
             position: absolute;

@@ -1,23 +1,19 @@
 import {
   DEFAULT_MAPKEY, DEFAULT_MAPKEY_5_6, DEFAULT_MAPKEY_7_8, DEFAULT_MAPKEY_9_10, ARGENTUM_MAPKEY,
 } from './const_maps.js'
+import { t } from './i18n.js'
 
 export * from './const_maps.js'
+
+/** `{ key: t('names.<table>.<key>') }` - a noun table whose labels come from the dictionary. */
+const named = (table, keys) => Object.fromEntries(keys.map(k => [k, t(`names.${table}.${k}`)]))
 
 /** Inclusive integer range. `range(2, 4)` -> [2, 3, 4] */
 const range = (min, max) => Array.from({ length: max - min + 1 }, (_, i) => min + i)
 
-export const TILES = {
-  G: 'Grassland',
-  J: 'Jungle',
-  C: 'Clay Pit',
-  M: 'Mountain',
-  F: 'Fields',
-  D: 'Desert',
-  S: 'Sea',
-}
+export const TILES = named('tiles', ['G', 'J', 'C', 'M', 'F', 'D', 'S'])
 
-export const RESOURCES = {S: 'Sheep', L: 'Lumber', B: 'Brick', O: 'Ore', W: 'Wheat'}
+export const RESOURCES = named('resources', ['S', 'L', 'B', 'O', 'W'])
 
 export const TILE_EMOJIS = {G: '🐑', J: '🪵', C: '🧱', M: '🏔', F: '🌾', S: '🌊', D: '🌵'}
 
@@ -33,10 +29,7 @@ export const ROBBER_ROLL = 7
 /** The red numbers - treated as one value when spacing numbers out on the board. */
 export const RED_NUMBERS = [6, 8]
 
-export const DEVELOPMENT_CARDS = {
-  dK: 'Knight', dVp: 'Victory Point',
-  dR: 'Road building', dY: 'Year of plenty', dM: 'Monopoly',
-}
+export const DEVELOPMENT_CARDS = named('cards', ['dK', 'dVp', 'dR', 'dY', 'dM'])
 
 /** @param {{knights:number, powers:number, vps:number}} counts */
 const buildDeck = ({ knights, powers, vps }) => [
@@ -69,7 +62,7 @@ export const PC_CLASSES = [0, ...COLOR_IDS].map(id => 'pc' + id)
 
 export const LOCS = {CORNER: 'C', EDGE: 'E', TILE: 'T'}
 
-export const PIECES = {S: 'Settlement', C: 'City', R: 'Road'}
+export const PIECES = Object.fromEntries(['S', 'C', 'R'].map(k => [k, t(`names.pieces.${k}.name`)]))
 export const PIECES_COUNT = {S: 5, C: 4, R: 15}
 
 export const COST = {
@@ -79,16 +72,7 @@ export const COST = {
   DEV_C: {W: 1, S: 1, O: 1},
 }
 
-export const TRADE_OFFERS = {
-  S2: 'Sheep 2:1',
-  L2: 'Lumber 2:1',
-  B2: 'Brick 2:1',
-  O2: 'Ore 2:1',
-  W2: 'Wheat 2:1',
-  '*3': 'Any 3:1',
-  '*4': 'Any 4:1',
-  Px: 'Player Trade',
-}
+export const TRADE_OFFERS = named('ports', ['S2', 'L2', 'B2', 'O2', 'W2', '*3', '*4', 'Px'])
 
 /** The 2:1 port offers - `['S2', 'L2', ...]`. */
 export const PORTS_2_1 = Object.keys(TRADE_OFFERS).filter(t => t.endsWith('2'))
@@ -112,13 +96,14 @@ export const DIR_HELPER = {
 /**
  * Map presets, ordered smallest first. `max_players` gates which presets a game
  * of a given size may use; the first entry that fits is the default for that size.
+ * The label is `t('names.maps.<id>')`, looked up where it is shown.
  */
 export const MAPS = {
-  standard: { name: 'Standard', mapkey: DEFAULT_MAPKEY, max_players: 4 },
-  extended: { name: 'Extended', mapkey: DEFAULT_MAPKEY_5_6, max_players: 6 },
-  large: { name: 'Large', mapkey: DEFAULT_MAPKEY_7_8, max_players: 8 },
-  xlarge: { name: 'Extra Large', mapkey: DEFAULT_MAPKEY_9_10, max_players: 10 },
-  argentum: { name: 'Argentum', mapkey: ARGENTUM_MAPKEY, max_players: 10 },
+  standard: { mapkey: DEFAULT_MAPKEY, max_players: 4 },
+  extended: { mapkey: DEFAULT_MAPKEY_5_6, max_players: 6 },
+  large: { mapkey: DEFAULT_MAPKEY_7_8, max_players: 8 },
+  xlarge: { mapkey: DEFAULT_MAPKEY_9_10, max_players: 10 },
+  argentum: { mapkey: ARGENTUM_MAPKEY, max_players: 10 },
 }
 
 export const MAP_LIST = Object.entries(MAPS).map(([id, map]) => ({ id, ...map }))
@@ -126,8 +111,8 @@ export const MAP_LIST = Object.entries(MAPS).map(([id, map]) => ({ id, ...map })
 /** Preset matching a mapkey, or undefined for hand-made maps. */
 export const mapOf = mapkey => MAP_LIST.find(m => m.mapkey === mapkey)
 
-/** Display label for any mapkey. */
-export const mapName = mapkey => mapOf(mapkey)?.name || 'Custom'
+/** Preset id for any mapkey, `'custom'` for a hand-made one. What `config.map_size` carries. */
+export const mapId = mapkey => mapOf(mapkey)?.id || 'custom'
 
 /** Smallest preset that seats `player_count`. */
 export const mapForPlayers = player_count =>
@@ -178,10 +163,10 @@ export const DEFAULT_BOT_LEVEL = 'medium'
  * server refuses it too (`BOT_LEVELS` in models/game.js).
  */
 export const BOT_LEVELS = [
-  { id: 'easy', name: 'Easy', blurb: 'Plays at random and builds whatever it can afford.', available: true },
-  { id: 'medium', name: 'Medium', blurb: 'Settles by the dice, builds toward a goal, trades with the bank.', available: true },
-  { id: 'tryhard', name: 'Tryhard', blurb: 'Plans the whole turn, counts cards, proposes trades.', available: true },
-]
+  { id: 'easy', available: true },
+  { id: 'medium', available: true },
+  { id: 'tryhard', available: true },
+].map(l => ({ ...l, name: t(`names.bot_levels.${l.id}.name`), blurb: t(`names.bot_levels.${l.id}.blurb`) }))
 
 /** Robot glyph (Lucide `bot`, MIT): marks a bot seat wherever colour alone would not. `aria-hidden`; pair with text. */
 export const BOT_ICON = `<svg class="bot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>`

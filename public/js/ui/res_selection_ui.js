@@ -1,4 +1,5 @@
 import * as CONST from "../const.js"
+import { t } from "../i18n.js"
 
 /**
  * Year of Plenty and Monopoly: the trade drawer with only a "You get" row. Year of Plenty stakes
@@ -18,15 +19,15 @@ export default class ResSelectionUI {
   render() {
     this.$el.innerHTML = `
       <div class="head">
-        <button class="card dev-card" type="button" title="See the card"></button>
+        <button class="card dev-card" type="button" title="${t('picker.see_card')}"></button>
         <div class="title"></div>
-        <button class="btn btn--quiet btn--sm close" type="button" title="Close (Esc)">✕</button>
+        <button class="btn btn--quiet btn--sm close" type="button" title="${t('picker.close_title')}">✕</button>
       </div>
       <div class="deal empty">
         <div class="side get"></div>
         <span class="hint"></span>
       </div>
-      <div class="palette get"><div class="cards">${Object.keys(CONST.RESOURCES).map(k => `
+      <div class="palette get" data-caption="${t('picker.you_get')}"><div class="cards">${Object.keys(CONST.RESOURCES).map(k => `
         <button class="card pick" type="button" data-type="${k}" title="${CONST.RESOURCES[k]}"></button>`).join('')}
       </div></div>
       <div class="foot">
@@ -64,12 +65,12 @@ export default class ResSelectionUI {
     this.$el.querySelector('.deal').classList.toggle('empty', !this.selected.length)
     this.$el.querySelector('.deal .side.get').innerHTML = Object.keys(CONST.RESOURCES)
       .map(k => [k, this.selected.filter(s => s === k).length]).filter(([k, n]) => n).map(([k, n]) => `
-        <button class="chip get" type="button" data-type="${k}" title="Take back ${CONST.RESOURCES[k]}"
+        <button class="chip get" type="button" data-type="${k}" title="${t('picker.take_back', { res: CONST.RESOURCES[k] })}"
           >${n}<span class="res-icon ${k}"></span><span class="x">✕</span></button>`).join('')
     const left = this.#max() - this.selected.length
     this.$el.querySelector('.foot .guide').textContent = this.type === 'dM'
-      ? (left ? 'Choose the resource to collect from everyone' : '')
-      : (left ? `Choose ${left} ${left > 1 ? 'cards' : 'card'}` : '')
+      ? (left ? t('picker.monopoly_guide') : '')
+      : (left ? t.plural('picker.choose_cards', left) : '')
     this.$el.querySelector('.foot .submit').disabled = left !== 0
   }
 
@@ -79,10 +80,8 @@ export default class ResSelectionUI {
     this.selected = []
     this.$el.querySelector('.head .title').textContent = CONST.DEVELOPMENT_CARDS[type]
     this.$el.querySelector('.head .dev-card').dataset.type = type
-    this.$el.querySelector('.deal .hint').textContent = type === 'dM'
-      ? 'Tap a resource to choose it. Tap another to change.'
-      : 'Tap cards to take them. Tap them here to put them back.'
-    this.$el.querySelector('.foot .submit').textContent = type === 'dM' ? 'Take all' : 'Take'
+    this.$el.querySelector('.deal .hint').textContent = t(type === 'dM' ? 'picker.monopoly_hint' : 'picker.plenty_hint')
+    this.$el.querySelector('.foot .submit').textContent = t(type === 'dM' ? 'picker.take_all' : 'picker.take')
     this.#update()
     this.$el.classList.remove('hide')
   }

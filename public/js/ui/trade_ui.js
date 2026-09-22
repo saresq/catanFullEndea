@@ -1,4 +1,5 @@
 import * as CONST from "../const.js"
+import { t } from "../i18n.js"
 import { resToText } from "../const_messages.js";
 import { newObject } from "../utils.js";
 
@@ -35,26 +36,26 @@ export default class TradeUI {
   }
 
   render() {
-    // The row name is CSS `::before` content (trade.css), so the palette is exactly its five cards.
-    // What you give comes straight from the hand in the dock, right below the deal.
+    // The row name is CSS `::before` content from `data-caption` (trade.css), so the palette is
+    // exactly its five cards. What you give comes straight from the hand in the dock, right below the deal.
     const cards = row => Object.keys(CONST.RESOURCES).map(res => `
       <button class="card pick" data-type="${res}" data-row="${row}" title="${CONST.RESOURCES[res]}"></button>`).join('')
     this.$card_selection.innerHTML = `
       <div class="head">
-        <button class="btn btn--sm mode" data-mode="players" aria-pressed="true">Players</button>
-        <button class="btn btn--sm mode" data-mode="bank" aria-pressed="false">Bank</button>
-        <button class="btn btn--quiet btn--sm close" title="Close (Esc)">✕</button>
+        <button class="btn btn--sm mode" data-mode="players" aria-pressed="true">${t('trade.players')}</button>
+        <button class="btn btn--sm mode" data-mode="bank" aria-pressed="false">${t('trade.bank')}</button>
+        <button class="btn btn--quiet btn--sm close" title="${t('trade.close_title')}">✕</button>
       </div>
-      <div class="palette get"><div class="cards">${cards('get')}</div></div>
+      <div class="palette get" data-caption="${t('trade.you_want')}"><div class="cards">${cards('get')}</div></div>
       <div class="deal empty">
         <div class="side give"></div>
-        <span class="pivot">for</span>
+        <span class="pivot">${t('trade.for')}</span>
         <div class="side get"></div>
-        <span class="hint">Tap your glowing cards to give. Tap cards here for what you want. Tap a staked card to take it back.</span>
+        <span class="hint">${t('trade.hint')}</span>
       </div>
       <div class="foot">
         <span class="guide"></span>
-        <button class="btn btn--quiet btn--sm reset" type="button" title="Clear the trade" aria-label="Clear the trade"></button>
+        <button class="btn btn--quiet btn--sm reset" type="button" title="${t('trade.clear')}" aria-label="${t('trade.clear')}"></button>
         <button class="btn btn--primary submit" type="button"></button>
       </div>
     `
@@ -126,7 +127,7 @@ export default class TradeUI {
     this.#paintSide('get', this.#taking_res)
     this.$deal.classList.toggle('empty', !give_total && !get_total)
 
-    this.$submit.textContent = bank ? 'Trade' : 'Send offer'
+    this.$submit.textContent = t(bank ? 'trade.trade' : 'trade.send_offer')
     this.$submit.disabled = bank
       ? !(buys > 0 && get_total === buys)
       : !(give_total > 0 && get_total > 0 && !over_limit)
@@ -141,18 +142,17 @@ export default class TradeUI {
     $side.dataset.key = key
     $side.innerHTML = Object.keys(CONST.RESOURCES).filter(res => res_obj[res]).map(res => `
       <button class="chip ${row}" type="button" data-type="${res}" data-row="${row}"
-        title="Take back ${CONST.RESOURCES[res]}"
+        title="${t('trade.take_back', { res: CONST.RESOURCES[res] })}"
         >${res_obj[res]}<span class="res-icon ${res}"></span><span class="x">✕</span></button>`).join('')
   }
 
   /** Only what is missing, in the imperative. The chips already say what the trade is. */
   #guideText(bank, buys, get_total, give_total, over_limit) {
-    const cards = n => `${n} card${n > 1 ? 's' : ''}`
-    if (!bank && over_limit) { return `Max ${this.#max_trade_requests} open offers` }
-    if (bank && buys > get_total) { return `Choose ${buys - get_total} more ${buys - get_total > 1 ? 'cards' : 'card'}` }
-    if (bank && get_total > buys) { return `Take ${cards(get_total - buys)} back` }
-    if (!bank && give_total && !get_total) { return 'Pick what you want in return' }
-    if (!bank && !give_total && get_total) { return 'Pick what you are offering' }
+    if (!bank && over_limit) { return t('trade.max_open_offers', { n: this.#max_trade_requests }) }
+    if (bank && buys > get_total) { return t.plural('trade.choose_more', buys - get_total) }
+    if (bank && get_total > buys) { return t.plural('trade.take_back_cards', get_total - buys) }
+    if (!bank && give_total && !get_total) { return t('trade.pick_want') }
+    if (!bank && !give_total && get_total) { return t('trade.pick_offer') }
     return ''
   }
 
@@ -216,11 +216,11 @@ export default class TradeUI {
     this.$requests.insertAdjacentHTML('beforeend', `
       <div class="request p${player.id} pc${player.color_id || player.id}" data-id="${id}">
         <span class="name">${player.name}</span>
-        <span class="giving">gives ${resToText(giving)}</span>
-        <span class="asking">wants ${resToText(asking)}</span>
+        <span class="giving">${t('trade.gives', { res: resToText(giving) })}</span>
+        <span class="asking">${t('trade.wants', { res: resToText(asking) })}</span>
         <div class="actions">
-          <button class="btn btn--primary btn--sm confirm" type="button" data-id="${id}">Accept</button>
-          <button class="btn btn--quiet btn--sm ignore" type="button" data-id="${id}">Ignore</button>
+          <button class="btn btn--primary btn--sm confirm" type="button" data-id="${id}">${t('trade.accept')}</button>
+          <button class="btn btn--quiet btn--sm ignore" type="button" data-id="${id}">${t('trade.ignore')}</button>
         </div>
       </div>
     `)
@@ -243,9 +243,9 @@ export default class TradeUI {
     const $og_req = `
       <div class="og-request" data-id="${id}">
         <span class="giving">→${resToText(giving)}</span>
-        <span class="for">for</span>
+        <span class="for">${t('trade.for')}</span>
         <span class="asking">←${resToText(asking)}</span>
-        <button class="btn btn--quiet btn--sm cancel" type="button">Withdraw</button>
+        <button class="btn btn--quiet btn--sm cancel" type="button">${t('trade.withdraw')}</button>
       </div>
     `
     if ($all_req) {
@@ -253,7 +253,7 @@ export default class TradeUI {
     } else {
       this.$requests.insertAdjacentHTML('afterbegin', `
         <div class="ongoing" data-id="-1">
-          <span class="text">Max ${this.#max_trade_requests} Requests: </span>${$og_req}
+          <span class="text">${t('trade.max_requests', { n: this.#max_trade_requests })}</span>${$og_req}
         </div>
       `)
     }
@@ -267,7 +267,11 @@ export default class TradeUI {
   /** @param {{status:('open'|'closed'|'success'|'failed'|'deleted')}} */
   updateOngoing({ id, status, rejected, asking }) {
     const $ongoing = this.$requests.querySelector(`.ongoing[data-id="-1"] .og-request[data-id="${id}"]`)
-    if ($ongoing) { $ongoing.className = 'og-request ' + status }
+    if ($ongoing) {
+      $ongoing.className = 'og-request ' + status
+      // The status word is CSS `::after` content, read from this attribute (trade.css)
+      $ongoing.dataset.statusLabel = t.has(`trade.status.${status}`) ? t(`trade.status.${status}`) : ''
+    }
     // Request list
     const $req = this.$requests.querySelector(`.request[data-id="${id}"]`)
     const show_req = status === 'open' && !rejected.includes(this.#player.id)

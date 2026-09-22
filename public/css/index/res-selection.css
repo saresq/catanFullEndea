@@ -24,7 +24,7 @@
         }
     }
 
-    .palette.get::before { content: 'You get'; }
+    .palette.get::before { content: attr(data-caption); }
 
     /* Phones: 44px to hit, px because the root font size drops (see trade.css). */
     @media screen and (max-width: 768px), screen and (orientation: landscape) and (max-height: 500px) {

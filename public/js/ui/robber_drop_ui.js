@@ -1,4 +1,5 @@
 import * as CONST from "../const.js"
+import { t } from "../i18n.js"
 import { default as MSG } from "../const_messages.js"
 
 /**
@@ -47,19 +48,19 @@ export default class RobberDropUI {
     this.#goal = count
     this.$el.innerHTML = `
       <div class="head">
-        <button class="robber" type="button" title="Robber">🥷</button>
+        <button class="robber" type="button" title="${t('robber.robber')}">🥷</button>
         <div class="title">${MSG.ROBBER.self(count)}</div>
         <span class="counter"></span>
       </div>
       <div class="deal empty">
         <div class="side give"></div>
-        <span class="hint">Tap the glowing cards in your hand to discard them. Tap them here to take them back.</span>
+        <span class="hint">${t('robber.hint')}</span>
       </div>
       <div class="foot">
         <span class="guide"></span>
-        <button class="btn btn--primary submit" type="button">Discard</button>
+        <button class="btn btn--primary submit" type="button">${t('robber.discard')}</button>
       </div>
-      <div class="waiting">Waiting for other players to discard...</div>
+      <div class="waiting">${t('robber.waiting')}</div>
     `
     this.setWaiting(false)
     this.$el.classList.remove('hide')
@@ -75,14 +76,14 @@ export default class RobberDropUI {
     if ($side.dataset.key !== key) {
       $side.dataset.key = key
       $side.innerHTML = Object.keys(CONST.RESOURCES).filter(k => this.#res[k]).map(k => `
-        <button class="chip give" type="button" data-type="${k}" title="Take back ${CONST.RESOURCES[k]}"
+        <button class="chip give" type="button" data-type="${k}" title="${t('robber.take_back', { res: CONST.RESOURCES[k] })}"
           >${this.#res[k]}<span class="res-icon ${k}"></span><span class="x">✕</span></button>`).join('')
     }
     const $counter = this.$el.querySelector('.head .counter')
     $counter.textContent = `${this.#total} / ${this.#goal}`
     $counter.classList.toggle('done', done)
     const left = this.#goal - this.#total
-    this.$el.querySelector('.foot .guide').textContent = left > 0 ? `Choose ${left} more` : ''
+    this.$el.querySelector('.foot .guide').textContent = left > 0 ? t('robber.choose_more', { n: left }) : ''
     this.$el.querySelector('.foot .submit').disabled = this.#total !== this.#goal
     // `left` is absolute, so a hand update that lands while waiting renders the same numbers.
     this.#onStakes(Object.fromEntries(Object.keys(CONST.RESOURCES).map(k => {

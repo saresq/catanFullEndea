@@ -1,5 +1,6 @@
 import { default as MSG, getName } from "../const_messages.js"
 import { STORAGE_KEYS as KEYS, REMATCH_SECONDS, GAME_STATES as ST, icon } from "../const.js"
+import { t } from "../i18n.js"
 const $ = document.querySelector.bind(document)
 const TURN_SEP = '<<<TURN_SEPARATOR>>>'
 
@@ -36,7 +37,7 @@ export default class AlertUI {
     } catch (e) {}
     // Setup builds land before the first roll, so nothing else would label them.
     if (!this.#status_history.length && window.game_obj?.state === ST.INITIAL_SETUP) {
-      this.#status_history.unshift(TURN_SEP + 'Setup')
+      this.#status_history.unshift(TURN_SEP + t('end.setup'))
     }
   }
 
@@ -57,11 +58,11 @@ export default class AlertUI {
     this.$status_history_container.innerHTML = html + buffer
     const $close = this.$alert.querySelector('.close')
     $close.innerHTML = icon('x')
-    $close.setAttribute('aria-label', 'Close')
+    $close.setAttribute('aria-label', t('end.close'))
     $close.addEventListener('click', e => this.closeBigAlert())
     const $hclose = this.$status_history.querySelector('.close')
     $hclose.innerHTML = icon('x')
-    $hclose.setAttribute('aria-label', 'Close history')
+    $hclose.setAttribute('aria-label', t('dock.close_history'))
     $hclose.addEventListener('click', e => this.toggleStatusHistory(false))
     // The whole bar is the entry point; a link inside a status keeps its own click.
     $('#game > .current-player .status-bar').addEventListener('click', e => {
@@ -96,7 +97,7 @@ export default class AlertUI {
     if ($('#game .show-end-game')) return
     const $btn = document.createElement('button')
     $btn.className = 'btn btn--quiet btn--sm show-end-game'
-    $btn.textContent = 'Results'
+    $btn.textContent = t('end.results')
     $btn.addEventListener('click', () => this.$alert.classList.add('show'))
     $('#game > .current-player .status-bar').append($btn)
   }
@@ -231,21 +232,21 @@ export default class AlertUI {
     const cell = ([vp, count = vp]) => `<td>${vp || '–'}${count !== vp ? `<small>${count}</small>` : ''}</td>`
     const icon = '<div class="pts-icon"></div>'
     const head = [
-      ['Player', 'name'], ['VP', 'total', '<div class="vp-icon"></div>'], ['Settlements', 'S', icon], ['Cities', 'C', icon],
-      ['VP cards', 'dVp', '<div class="card card--xs" data-card="dVp"></div>', 'dVp'],
-      ['Largest Army', 'army', icon, 'lArmy'], ['Longest Road', 'road', icon, 'lRoad'],
+      [t('end.player'), 'name'], [t('end.vp'), 'total', '<div class="vp-icon"></div>'], [t('end.settlements'), 'S', icon], [t('end.cities'), 'C', icon],
+      [t('end.vp_cards'), 'dVp', '<div class="card card--xs" data-card="dVp"></div>', 'dVp'],
+      [t('end.largest_army'), 'army', icon, 'lArmy'], [t('end.longest_road'), 'road', icon, 'lRoad'],
     ]
     this.$alert.querySelector('.text').innerHTML = `
       <div class="game-ended pc${cid}">
         <div class="title-emoji">${icon('trophy')}</div>
-        <div class="player-name">${getName(p)} Won</div>
+        <div class="player-name">${t('end.won', { name: getName(p) })}</div>
         <div class="end-overview">
           <table class="end-table">
             <thead><tr>${head.map(([label, cls, icon = '', type]) =>
               `<th class="${cls}"${type ? ` data-type="${type}"` : ''}>${icon}<span class="label">${label}</span></th>`).join('')}</tr></thead>
             <tbody>${rows.map(({ pl, total, cells }) => `
               <tr class="pc${pl.color_id || pl.id}${pl.id === pid ? ' winner' : ''}${pl.removed ? ' left' : ''}">
-                <td class="name"><div><span class="p-name">${this.#isMe(pl) ? 'You' : pl.name}</span>${pl.removed ? '<small>left</small>' : pl.is_bot ? `<small>bot · ${pl.bot_level}</small>` : ''}</div></td>
+                <td class="name"><div><span class="p-name">${this.#isMe(pl) ? t('end.you') : pl.name}</span>${pl.removed ? `<small>${t('end.left')}</small>` : pl.is_bot ? `<small>${t('end.bot_tag', { level: t(`names.bot_levels.${pl.bot_level}.short`) })}</small>` : ''}</div></td>
                 <td class="total"><span>${total}</span></td>${cells.map(cell).join('')}
               </tr>`).join('')}
             </tbody>
@@ -253,7 +254,7 @@ export default class AlertUI {
         </div>
         <div class="rematch-section">
           <div class="rematch-vote-row">
-            <button class="btn btn--primary vote-rematch">Vote Rematch</button>
+            <button class="btn btn--primary vote-rematch">${t('end.vote_rematch')}</button>
             <div class="rematch-timer">⏳ <span class="time-left">${REMATCH_SECONDS}</span>s</div>
           </div>
           <div class="rematch-status"></div>

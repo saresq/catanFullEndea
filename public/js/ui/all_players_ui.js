@@ -1,5 +1,9 @@
 import * as CONST from "../const.js"
+import { t } from "../i18n.js"
 const $ = document.querySelector.bind(document)
+
+/** `easy bot` beside a name; empty for a human. */
+const botTag = level => level ? t('score.bot_tag', { level: t(`names.bot_levels.${level}.short`) }) : ''
 
 export default class AllPlayersUI {
   player; opponents
@@ -30,25 +34,25 @@ export default class AllPlayersUI {
     const win_points = (window.game_obj && window.game_obj.config && window.game_obj.config.win_points) || CONST.GAME_CONFIG.win_points
     const spec_count = (window.game_obj && window.game_obj.spectators_count) || 0
     const header = `<div class="players-header">
-      <span class="spectators-count ${spec_count ? '' : 'hide'}">Spec: <span>${spec_count}</span></span>
-      <span class="victory-target" title="Victory points needed to win the game">${CONST.icon('trophy')} ${win_points} · Turn: <span class="dot">⬢</span></span>
-      <button class="toggle-players" title="Toggle players panel (Shift)">▼</button>
+      <span class="spectators-count ${spec_count ? '' : 'hide'}">${t('score.spec')} <span>${spec_count}</span></span>
+      <span class="victory-target" title="${t('score.victory_target_title')}">${CONST.icon('trophy')} ${win_points} · ${t('score.turn')} <span class="dot">⬢</span></span>
+      <button class="toggle-players" title="${t('score.toggle_players')}">▼</button>
     </div>`
     this.$el.innerHTML = header + all_players.map(player => `
       <div class="player p${player.id} pc${player.color_id || player.id} ${player.removed ? 'deactivated' : ''} ${player.is_bot ? 'bot' : ''}" data-id="${player.id}" data-level="${player.bot_level || ''}">
         <div class="seat">
           <div class="name" title="${player.name}">${player.name}</div>
-          <span class="bot-mark" title="${player.bot_level} bot">${CONST.BOT_ICON}<small>${player.bot_level || ''} bot</small></span>
+          <span class="bot-mark" title="${botTag(player.bot_level)}">${CONST.BOT_ICON}<small>${botTag(player.bot_level)}</small></span>
         </div>
-        <button type="button" class="btn btn--secondary btn--sm replace-bot" title="Replace with a bot" aria-label="Replace ${player.name} with a bot">Bot?</button>
-        <div class="victory-points" title="Victory Points"><span>${player.public_vps + (player.private_vps || 0)}</span></div>
+        <button type="button" class="btn btn--secondary btn--sm replace-bot" title="${t('score.replace_with_bot')}" aria-label="${t('score.replace_with_bot_aria', { name: player.name })}">${t('score.bot_q')}</button>
+        <div class="victory-points" title="${t('score.victory_points')}"><span>${player.public_vps + (player.private_vps || 0)}</span></div>
         <div class="cards-container">
-          <div class="resources card card--xs" data-card="res-back" data-count="${player.resource_count}" title="Resources in hand"
+          <div class="resources card card--xs" data-card="res-back" data-count="${player.resource_count}" title="${t('score.resources_in_hand')}"
             data-robbable="${player.resource_count > window.game_obj.config.robber_hand_limit}"><span class="robber-mark" aria-hidden="true">🥷</span></div>
-          <div class="development-cards card card--xs" data-card="dev-back" title="Development Cards in hand" data-count="${player.dev_card_count}"></div>
-          <div class="largest-army" title="Largest Army" data-id="${player.id}"
+          <div class="development-cards card card--xs" data-card="dev-back" title="${t('score.dev_cards_in_hand')}" data-count="${player.dev_card_count}"></div>
+          <div class="largest-army" title="${t('score.largest_army')}" data-id="${player.id}"
             data-count="${player.open_dev_cards.dK}"></div>
-          <div class="longest-road" title="Longest Road" data-id="${player.id}"
+          <div class="longest-road" title="${t('score.longest_road')}" data-id="${player.id}"
             data-count="${player.longest_road_list.length}"></div>
         </div>
       </div>
@@ -148,7 +152,7 @@ export default class AllPlayersUI {
     const $name = $p.querySelector('.name')
     if ($name) { $name.textContent = player.name; $name.title = player.name }
     const $mark = $p.querySelector('.bot-mark')
-    if ($mark) { $mark.title = `${player.bot_level} bot`; $mark.querySelector('small').textContent = `${player.bot_level} bot` }
+    if ($mark) { $mark.title = botTag(player.bot_level); $mark.querySelector('small').textContent = botTag(player.bot_level) }
   }
 
   /** The host alone sees "Bot?" on quit seats (`.host` on the list gates it in CSS) */

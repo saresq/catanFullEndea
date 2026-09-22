@@ -1,4 +1,5 @@
 import * as CONST from "./const.js"
+import { t } from "./i18n.js"
 import AudioManager from "./audio_manager.js"
 import AccessibilityUI from "./ui/accessibility_ui.js"
 const $ = document.querySelector.bind(document)
@@ -14,7 +15,7 @@ class WaitingRoomUI {
     this.audio_manager = new AudioManager()
     this.accessibility_ui = new AccessibilityUI({
       toggleBgm: allow => this.audio_manager.toggleBgm(allow),
-      quit_label: 'Leave',
+      quit_label: t('menu.leave'),
       icons: { zoom: false, notifcation_sounds: false, shorcuts: false }
     })
     this.accessibility_ui.render()
@@ -22,7 +23,7 @@ class WaitingRoomUI {
     // Set room info
     const $ms = document.getElementById('map-size')
     const $vp = document.getElementById('win-points')
-    $ms && ( $ms.textContent = window.map_size )
+    $ms && ( $ms.textContent = t('names.maps.' + window.map_size) )
     $vp && ( $vp.textContent = window.win_points )
 
     // Determine my player id (prefer injected value; fallback to cookie parsing)
@@ -46,7 +47,7 @@ class WaitingRoomUI {
         if (this.is_host && !this.$start_btn.disabled) {
           this.socket.emit(CONST.SOCKET_EVENTS.START_GAME)
           this.$start_btn.disabled = true
-          this.$start_btn.textContent = 'Starting…'
+          this.$start_btn.textContent = t('lobby.starting')
         }
       })
     }
@@ -134,7 +135,7 @@ class WaitingRoomUI {
   async shareInvite() {
     const url = window.location.href
     if (navigator.share && matchMedia('(pointer: coarse)').matches) {
-      try { await navigator.share({ title: 'Catan Full Endea', text: 'Join my game', url }); return } catch (e) {
+      try { await navigator.share({ title: t('page.title'), text: t('lobby.share_text'), url }); return } catch (e) {
         if (e.name === 'AbortError') return
       }
     }
@@ -142,11 +143,11 @@ class WaitingRoomUI {
     let copied = true
     try { await navigator.clipboard.writeText(url) } catch (e) { copied = false }
     if (!copied) { getSelection().selectAllChildren(this.$game_key.firstElementChild) }
-    $caption.textContent = copied ? 'Invite link copied' : 'Key selected, copy it to share'
+    $caption.textContent = copied ? t('lobby.link_copied') : t('lobby.key_selected')
     this.$game_key.classList.toggle('copied', copied)
     clearTimeout(this.copy_timer)
     this.copy_timer = setTimeout(() => {
-      $caption.textContent = 'Game Key'
+      $caption.textContent = t('lobby.game_key')
       this.$game_key.classList.remove('copied')
     }, 2500)
   }
@@ -175,14 +176,14 @@ class WaitingRoomUI {
 
   openColorPicker(takenColors = new Set()) {
     const overlay = this.#openOverlay(`
-        <div class="title">Choose your color</div>
+        <div class="title">${t('lobby.choose_color')}</div>
         <div class="grid">
           ${CONST.COLOR_IDS.map(i=>`
             <div class="color-option ${takenColors.has(i) ? 'taken' : ''}" data-id="${i}"
-                 style="background-image:url('/images/pieces/city-${i}.png')" title="Color ${i}"></div>
+                 style="background-image:url('/images/pieces/city-${i}.png')" title="${t('lobby.color_n', { n: i })}"></div>
           `).join('')}
         </div>
-        <button class="btn btn--secondary btn--sm close">Cancel</button>`)
+        <button class="btn btn--secondary btn--sm close">${t('lobby.cancel')}</button>`)
     overlay.querySelectorAll('.color-option:not(.taken)')
       .forEach(el => el.addEventListener('click', e => {
         const cid = +e.currentTarget.dataset.id
@@ -209,12 +210,10 @@ class WaitingRoomUI {
     const $maxPlayersSelect = $('#max-players-select')
     const $diceModeSelect = $('#dice-mode-select')
 
-    const mapKeyByName = {}
     CONST.MAP_LIST.forEach(map => {
-      mapKeyByName[map.name] = map.mapkey
       const option = document.createElement('option')
       option.value = map.mapkey
-      option.textContent = map.name
+      option.textContent = t('names.maps.' + map.id)
       $mapSelect.appendChild(option)
     })
 
@@ -248,7 +247,7 @@ class WaitingRoomUI {
       $('#max-players-val').classList.add('hide')
       $('#dice-mode-val').classList.add('hide')
 
-      $mapSelect.value = mapKeyByName[window.map_size] || window.mapkey || CONST.DEFAULT_MAPKEY
+      $mapSelect.value = CONST.MAPS[window.map_size]?.mapkey || window.mapkey || CONST.DEFAULT_MAPKEY
       $winPointsSelect.value = window.win_points
       this.updateMaxPlayersSelect()
       $maxPlayersSelect.value = window.player_count
@@ -257,7 +256,7 @@ class WaitingRoomUI {
       const emitConfig = () => {
         this.socket.emit(CONST.SOCKET_EVENTS.CHANGE_CONFIG, {
           mapkey: $mapSelect.value,
-          map_size: CONST.mapName($mapSelect.value),
+          map_size: CONST.mapId($mapSelect.value),
           win_points: +$winPointsSelect.value,
           player_count: +$maxPlayersSelect.value,
           dice_mode: $diceModeSelect.value,
@@ -271,10 +270,10 @@ class WaitingRoomUI {
     }
 
     // Set initial values
-    $("#map-size").textContent = window.map_size
+    $("#map-size").textContent = t('names.maps.' + window.map_size)
     $('#win-points').textContent = window.win_points
     $('#max-players-val').textContent = window.player_count
-    $('#dice-mode-val').textContent = (window.dice_mode || 'random').charAt(0).toUpperCase() + (window.dice_mode || 'random').slice(1)
+    $('#dice-mode-val').textContent = t('names.dice_modes.' + (window.dice_mode || 'random'))
 
     this.socket.on(CONST.SOCKET_EVENTS.CHANGE_CONFIG, config => {
       const { player_count, win_points, mapkey, map_size, dice_mode } = config
@@ -284,17 +283,17 @@ class WaitingRoomUI {
       window.map_size = map_size
 
       if (this.is_host) {
-        $mapSelect.value = mapKeyByName[map_size] || mapkey
+        $mapSelect.value = CONST.MAPS[map_size]?.mapkey || mapkey
         $winPointsSelect.value = win_points
         this.updateMaxPlayersSelect()
         $maxPlayersSelect.value = player_count
         $diceModeSelect.value = dice_mode
       }
 
-      $('#map-size').textContent = map_size
+      $('#map-size').textContent = t('names.maps.' + map_size)
       $('#win-points').textContent = win_points
       $('#max-players-val').textContent = player_count
-      $('#dice-mode-val').textContent = dice_mode.charAt(0).toUpperCase() + dice_mode.slice(1)
+      $('#dice-mode-val').textContent = t('names.dice_modes.' + dice_mode)
 
       this.updateJoinedCount()
 
@@ -329,7 +328,7 @@ class WaitingRoomUI {
     }
     this.$start_btn.classList.remove('hide')
     this.$start_btn.disabled = !full
-    this.$start_btn.textContent = full ? 'Start Game' : `Waiting… (${this.player_count - joined})`
+    this.$start_btn.textContent = full ? t('lobby.start_game') : t('lobby.waiting', { n: this.player_count - joined })
   }
 
   /**
@@ -343,11 +342,11 @@ class WaitingRoomUI {
     const dots = levels.map((l, i) => {
       const cls = `dot${i <= current ? ' filled' : ''}${l.available ? '' : ' unavailable'}`
       if (!this.is_host) return `<span class="${cls}"></span>`
-      const label = l.available ? `${l.name} bot` : `${l.name} bot (not ready)`
+      const label = t(l.available ? 'lobby.bot_level' : 'lobby.bot_level_not_ready', { name: l.name })
       return `<button type="button" class="${cls}" data-level="${l.id}" aria-label="${label}" title="${label}"
         aria-pressed="${l.id === p.bot_level}" ${l.available ? '' : 'disabled'}></button>`
     }).join('')
-    return `<span class="level-dots" data-pid="${p.id}" role="${this.is_host ? 'group' : 'img'}" aria-label="${name} bot">${dots}</span>`
+    return `<span class="level-dots" data-pid="${p.id}" role="${this.is_host ? 'group' : 'img'}" aria-label="${t('lobby.bot_level', { name })}">${dots}</span>`
   }
 
   /**
@@ -356,9 +355,9 @@ class WaitingRoomUI {
    */
   levelSelect(p) {
     const options = CONST.BOT_LEVELS.map(l =>
-      `<option value="${l.id}" ${l.id === p.bot_level ? 'selected' : ''} ${l.available ? '' : 'disabled'}>${l.name}${l.available ? '' : ' (not ready)'}</option>`
+      `<option value="${l.id}" ${l.id === p.bot_level ? 'selected' : ''} ${l.available ? '' : 'disabled'}>${l.available ? l.name : t('lobby.not_ready', { name: l.name })}</option>`
     ).join('')
-    return `<select class="field level-select" data-pid="${p.id}" aria-label="Level of bot ${p.name}">${options}</select>`
+    return `<select class="field level-select" data-pid="${p.id}" aria-label="${t('lobby.level_of_bot', { name: p.name })}">${options}</select>`
   }
 
   renderSlots() {
@@ -369,12 +368,12 @@ class WaitingRoomUI {
       if (p && p.name) {
         const cid = p.color_id || p.id
         const me = this.my_pid && this.my_pid === p.id
-        const tag = me ? 'button type="button" title="Choose color"' : 'div'
+        const tag = me ? `button type="button" title="${t('lobby.choose_color_title')}"` : 'div'
         // A bot is marked by the robot and its level as filled dots, not by its colour; the host
         // sets the level on the dots and can send the bot away
         const bot = p.is_bot ? `${CONST.BOT_ICON}${this.levelDots(p)}${this.is_host ? this.levelSelect(p) : ''}` : ''
         const remove = p.is_bot && this.is_host
-          ? `<button type="button" class="btn btn--quiet btn--sm remove-bot" data-pid="${p.id}" aria-label="Remove bot ${p.name}" title="Remove bot">${CONST.CLOSE_ICON}</button>`
+          ? `<button type="button" class="btn btn--quiet btn--sm remove-bot" data-pid="${p.id}" aria-label="${t('lobby.remove_bot_aria', { name: p.name })}" title="${t('lobby.remove_bot')}">${CONST.CLOSE_ICON}</button>`
           : ''
         return `<${tag} class="slot filled ${me ? 'me' : ''} ${p.is_bot ? 'bot' : ''} p${p.id} pc${cid}" data-pid="${p.id}">
           <span class="city-icon" style="background-image:url('/images/pieces/city-${cid}.png')"></span>
@@ -383,9 +382,9 @@ class WaitingRoomUI {
       }
       // The host fills an empty seat with a bot; its level is set on the slot afterwards
       const add = this.is_host
-        ? `<button type="button" class="btn btn--secondary btn--sm add-bot">${CONST.BOT_ICON}Add a bot</button>`
+        ? `<button type="button" class="btn btn--secondary btn--sm add-bot">${CONST.BOT_ICON}${t('lobby.add_bot')}</button>`
         : ''
-      return `<div class="slot empty"><span class="empty-label">Empty slot</span>${add}</div>`
+      return `<div class="slot empty"><span class="empty-label">${t('lobby.empty_slot')}</span>${add}</div>`
     }).join('')
     $list.innerHTML = items
 

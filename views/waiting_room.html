@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+<html lang="{{lang}}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Catan Full Endea</title>
+  <title>{{t.page.title}}</title>
   {{> meta}}
   <link rel="stylesheet" href="/css/waiting_room.css">
   <link rel="shortcut icon" type="image/jpg" href="/images/favicon.png" />
@@ -12,8 +13,8 @@
   <div class="container">
     <div class="wait-box">
       <div class="title">
-        <div class="name" id="game-key-caption" role="status">Game Key</div>
-        <button type="button" class="text" aria-label="Game key {{ game_key }}: copy invite link" title="Copy invite link">
+        <div class="name" id="game-key-caption" role="status">{{t.lobby.game_key}}</div>
+        <button type="button" class="text" aria-label="{{copy_invite_aria}}" title="{{t.lobby.copy_invite}}">
           <span>{{ game_key }}</span>
           <span class="copy-mark" aria-hidden="true">
             <svg class="copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg>
@@ -22,34 +23,34 @@
         </button>
       </div>
       <div class="box-header">
-        <div class="info-item" title="Map">
-          <label class="label" for="map-size-select">Map Size</label>
+        <div class="info-item" title="{{t.lobby.map}}">
+          <label class="label" for="map-size-select">{{t.lobby.map_size}}</label>
           <select id="map-size-select" class="field value-select hide" disabled></select>
           <span class="value" id="map-size">-</span>
         </div>
-        <div class="info-item" title="Victory Points Goal">
-          <label class="label" for="win-points-select">Victory Points</label>
+        <div class="info-item" title="{{t.lobby.vp_goal}}">
+          <label class="label" for="win-points-select">{{t.lobby.victory_points}}</label>
           <select id="win-points-select" class="field value-select hide" disabled></select>
           <span class="value" id="win-points">-</span>
         </div>
-        <div class="info-item" title="Maximum Players">
-          <label class="label" for="max-players-select">Players</label>
+        <div class="info-item" title="{{t.lobby.max_players}}">
+          <label class="label" for="max-players-select">{{t.lobby.players}}</label>
           <select id="max-players-select" class="field value-select hide" disabled></select>
           <span class="value" id="max-players-val">-</span>
         </div>
-        <div class="info-item" title="Dice Mode">
-          <label class="label" for="dice-mode-select">Dice Mode</label>
+        <div class="info-item" title="{{t.lobby.dice_mode}}">
+          <label class="label" for="dice-mode-select">{{t.lobby.dice_mode}}</label>
           <select id="dice-mode-select" class="field value-select hide" disabled>
-            <option value="random">Random</option>
-            <option value="balanced">Balanced</option>
+            <option value="random">{{t.names.dice_modes.random}}</option>
+            <option value="balanced">{{t.names.dice_modes.balanced}}</option>
           </select>
-          <span class="value" id="dice-mode-val">Random</span>
+          <span class="value" id="dice-mode-val">{{t.names.dice_modes.random}}</span>
         </div>
-        <button id="start-game-btn" class="btn btn--primary btn--sm start-game" title="Start the game (host only)" disabled>Start Game</button>
-        <button class="btn btn--danger btn--sm leave-lobby" title="Leave Lobby">Leave</button>
+        <button id="start-game-btn" class="btn btn--primary btn--sm start-game" title="{{t.lobby.start_title}}" disabled>{{t.lobby.start_game}}</button>
+        <button class="btn btn--danger btn--sm leave-lobby" title="{{t.lobby.leave_title}}">{{t.lobby.leave}}</button>
       </div>
       <div id="slots-list" class="slots"></div>
-      <div id="spectator-list" class="spectators hide">Spectators: <span>0</span></div>
+      <div id="spectator-list" class="spectators hide">{{t.lobby.spectators}} <span>0</span></div>
     </div>
   </div>
 </div>
@@ -68,3 +69,4 @@
 </script>
 <script src="/socket.io/socket.io.min.js"></script>
 <script src="/js/waiting_room.js" type="module"></script>
+</html>

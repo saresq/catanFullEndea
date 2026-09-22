@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+<html lang="{{lang}}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Catan Full Endea</title>
+  <title>{{t.page.title}}</title>
   {{> meta}}
   <link rel="preload" as="font" type="font/woff2" href="/css/fonts/AlegreyaSans-Regular.woff2" crossorigin>
   <link rel="preload" as="font" type="font/woff2" href="/css/fonts/AlegreyaSans-Bold.woff2" crossorigin>
@@ -28,10 +29,10 @@
     <div class="actions"></div>
     <div class="status-bar">
       <span class="status-text"></span>
-      <button class="btn btn--quiet btn--sm history-toggle" aria-expanded="false">History</button>
+      <button class="btn btn--quiet btn--sm history-toggle" aria-expanded="false">{{t.dock.history}}</button>
     </div>
     <div class="status-history-zone panel">
-      <div class="title">History<button class="close" title="H">X</button></div>
+      <div class="title">{{t.dock.history}}<button class="close" title="{{t.keys.h}}">X</button></div>
       <div class="now"></div>
       <div class="container"></div>
     </div>
@@ -43,16 +44,16 @@
     </div>
   </div>
   <div class="card-preview-zone hide">
-    <button class="close" title="Esc">𝖷</button>
+    <button class="close" title="{{t.keys.esc}}">𝖷</button>
     <div class="card-container">
       <div class="card card--xl card--flip">
         <div class="card-front"></div>
         <div class="card-back"></div>
       </div>
     </div>
-    <button class="btn btn--primary activate hide">Activate</button>
-    <div class="info hide">→ You can only activate one Development card per turn.
-      <br>→ You can not play the card you just bought this turn.
+    <button class="btn btn--primary activate hide">{{t.dock.activate}}</button>
+    <div class="info hide">{{t.dock.dev_info_1}}
+      <br>{{t.dock.dev_info_2}}
     </div>
   </div>
   <div class="animation-zone"></div>
@@ -79,3 +80,4 @@
 </script>
 <script src="/socket.io/socket.io.min.js"></script>
 <script src="/js/index.js" type="module"></script>
+</html>

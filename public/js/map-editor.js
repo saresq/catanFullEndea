@@ -1,4 +1,5 @@
 import * as CONST from "./const.js"
+import { t } from "./i18n.js"
 import Board from "./board/board.js"
 import BoardShuffler from "./board/board_shuffler.js"
 import MapBuilderBoardUI from "./ui/map_builder_board_ui.js"
@@ -20,23 +21,20 @@ const EDGES = Object.values(CONST.DIR_HELPER.KEYS)
 const TERRAINS = ['S', 'G', 'J', 'C', 'M', 'F', 'D']
 
 const GROW = { top: growTop, right: growRight, bottom: growBottom, left: growLeft }
-const GROW_LABEL = {
-  top: 'Add a row of sea above', right: 'Add a column of sea on the right',
-  bottom: 'Add a row of sea below', left: 'Add a column of sea on the left',
-}
+const GROW_LABEL = Object.fromEntries(Object.keys(GROW).map(side => [side, t(`editor.grow.${side}`)]))
 
 const RAIL = [
-  { id: 'randomize', icon: '🎲', label: 'Randomize' },
-  { id: 'balance', icon: '⚖️', label: 'Balance' },
-  { id: 'info', icon: '🧭', label: 'Map info' },
-  { id: 'share', icon: '🔗', label: 'Share map' },
+  { id: 'randomize', icon: '🎲', label: t('editor.randomize') },
+  { id: 'balance', icon: '⚖️', label: t('editor.balance') },
+  { id: 'info', icon: '🧭', label: t('editor.map_info') },
+  { id: 'share', icon: '🔗', label: t('editor.share_map') },
 ]
 
 /** What `Shuffle` may move around, as chips rather than three sentences starting with the same word. */
 const SHUFFLE_OPTIONS = [
-  { id: 'tile', label: 'Locations' },
-  { id: 'number', label: 'Numbers' },
-  { id: 'port', label: 'Ports' },
+  { id: 'tile', label: t('editor.locations') },
+  { id: 'number', label: t('editor.numbers') },
+  { id: 'port', label: t('editor.ports') },
 ]
 
 /** The number the brush writes: a real one, a fresh roll per tile, or nothing at all. */
@@ -123,7 +121,7 @@ class MapEditor {
 
     this.accessibility_ui = new AccessibilityUI({
       toggleBoardZoom: out => this.board_ui.toggleZoom(out),
-      back: { label: 'Back to the game', href: '/login' },
+      back: { label: t('menu.back_to_game'), href: '/login' },
       icons: {
         fullscreen: false, bgm: false, notifcation_sounds: false,
         shorcuts: false, quit: false,
@@ -151,28 +149,28 @@ class MapEditor {
   render() {
     this.$dock.innerHTML = `
       <div class="dock-row dock-row--brushes">
-        <div class="brush-strip" role="group" aria-label="Brush">
+        <div class="brush-strip" role="group" aria-label="${t('editor.brush')}">
           <button class="brush btn btn--quiet active" data-brush="none" aria-pressed="true"
-            title="Move the map. Hold Space to pan without putting the brush down.">
+            title="${t('editor.pan_title')}">
             <span class="brush-icon">✥</span>
-            <span class="brush-label">Pan</span>
+            <span class="brush-label">${t('editor.pan')}</span>
           </button>
           ${TERRAINS.map(type => `
             <button class="brush btn btn--quiet" data-brush="${type}" aria-pressed="false">
               ${tileHtml(type)}
-              <span class="brush-label">${type === 'S' ? 'Erase' : CONST.TILES[type]}</span>
+              <span class="brush-label">${type === 'S' ? t('editor.erase') : CONST.TILES[type]}</span>
             </button>
           `).join('')}
           <button class="brush btn btn--quiet" data-brush="port" aria-pressed="false">
             ${tileHtml('S', '<span class="port-mark"></span>')}
-            <span class="brush-label">Port</span>
+            <span class="brush-label">${t('editor.port')}</span>
           </button>
         </div>
       </div>
       <div class="dock-row dock-row--numbers">
-        <div class="number-strip" role="group" aria-label="Number to paint">
+        <div class="number-strip" role="group" aria-label="${t('editor.number_to_paint')}">
           <button class="num-chip btn btn--quiet btn--sm active" data-number="${RANDOM}"
-            aria-pressed="true">Random</button>
+            aria-pressed="true">${t('editor.random')}</button>
           ${NUMBERS.map(n => `
             <button class="num-chip num-chip--token btn btn--quiet" data-number="${n}"
               aria-pressed="false" aria-label="${n}">${tokenHtml(n, 'dock-token')}</button>
@@ -183,10 +181,10 @@ class MapEditor {
     `
 
     this.$float.innerHTML = `
-      <button class="btn btn--quiet icon-btn editor-undo" title="Undo" aria-label="Undo">
+      <button class="btn btn--quiet icon-btn editor-undo" title="${t('editor.undo')}" aria-label="${t('editor.undo')}">
         <span class="btn-icon" style="--icon: var(--icon-undo)"></span>
       </button>
-      <button class="btn btn--quiet icon-btn editor-redo" title="Redo" aria-label="Redo">
+      <button class="btn btn--quiet icon-btn editor-redo" title="${t('editor.redo')}" aria-label="${t('editor.redo')}">
         <span class="btn-icon" style="--icon: var(--icon-redo)"></span>
       </button>
     `
@@ -199,52 +197,52 @@ class MapEditor {
           <span class="rail-text">${item.label}</span>
         </button>
       `).join('')}
-      <button class="rail-btn btn btn--quiet editor-play" title="Play this map">
+      <button class="rail-btn btn btn--quiet editor-play" title="${t('editor.play_this_map')}">
         <span class="rail-icon" aria-hidden="true">▶</span>
-        <span class="rail-text">Play this map</span>
+        <span class="rail-text">${t('editor.play_this_map')}</span>
       </button>
     `
 
     this.$popovers.innerHTML = `
-      ${this.#popover('randomize', 'Randomize', `
-        <p class="popover-note">Moves what is already on the map. Nothing is added or taken away.</p>
-        <div class="chip-group" role="group" aria-label="What to move">
+      ${this.#popover('randomize', t('editor.randomize'), `
+        <p class="popover-note">${t('editor.randomize_note')}</p>
+        <div class="chip-group" role="group" aria-label="${t('editor.what_to_move')}">
           ${SHUFFLE_OPTIONS.map(o => chipHtml('shuffle', o.id, o.label, true)).join('')}
         </div>
-        <p class="popover-hint">The 6 and the 8 never end up side by side.</p>
+        <p class="popover-hint">${t('editor.red_hint')}</p>
         <div class="popover-actions">
-          <button class="btn btn--secondary btn--sm editor-shuffle">Shuffle</button>
-          <button class="btn btn--quiet btn--sm editor-reset">Start over</button>
+          <button class="btn btn--secondary btn--sm editor-shuffle">${t('editor.shuffle')}</button>
+          <button class="btn btn--quiet btn--sm editor-reset">${t('editor.start_over')}</button>
         </div>
       `)}
-      ${this.#popover('balance', 'Balance', `
+      ${this.#popover('balance', t('editor.balance'), `
         <button class="action-row editor-balance-numbers">
-          <b>Even out the numbers</b>
-          <span>Deals a fresh set of dice numbers over the land you already have.</span>
+          <b>${t('editor.even_numbers')}</b>
+          <span>${t('editor.even_numbers_note')}</span>
         </button>
         <button class="action-row editor-balance-resources">
-          <b>Even out the resources</b>
-          <span>Keeps the numbers where they are and evens out the five terrains under them.</span>
+          <b>${t('editor.even_resources')}</b>
+          <span>${t('editor.even_resources_note')}</span>
         </button>
       `)}
-      ${this.#popover('info', 'Map info', '<div id="map-report"></div>')}
-      ${this.#popover('share', 'Share map', `
-        <p class="popover-note">The link carries the whole map. Anyone who opens it gets what is on screen.</p>
+      ${this.#popover('info', t('editor.map_info'), '<div id="map-report"></div>')}
+      ${this.#popover('share', t('editor.share_map'), `
+        <p class="popover-note">${t('editor.share_note')}</p>
         <div class="popover-actions">
-          <button class="btn btn--secondary btn--sm editor-copy">Copy link</button>
+          <button class="btn btn--secondary btn--sm editor-copy">${t('editor.copy_link')}</button>
         </div>
         <div class="popover-split">
-          <h3>Map key</h3>
-          <p class="popover-hint">The map written out. Paste one you were sent, or copy this to keep.</p>
+          <h3>${t('editor.map_key')}</h3>
+          <p class="popover-hint">${t('editor.map_key_hint')}</p>
           <textarea name="mapkey" id="mapkey" rows="6" aria-describedby="mapkey-error"></textarea>
           <p class="mapkey-error" id="mapkey-error" role="alert" hidden></p>
           <div class="popover-actions">
-            <button class="btn btn--secondary btn--sm editor-render">Render</button>
+            <button class="btn btn--secondary btn--sm editor-render">${t('editor.render')}</button>
           </div>
         </div>
       `)}
-      ${this.#popover('port', 'Port', `
-        <div class="port-types" role="group" aria-label="Port type">
+      ${this.#popover('port', t('editor.port'), `
+        <div class="port-types" role="group" aria-label="${t('editor.port_type')}">
           ${PORT_OFFERS.map(key => `
             <button class="port-type btn btn--quiet btn--sm" data-type="${key}">
               <span class="trade-type ${key.replace('*', '_')}"></span>
@@ -252,17 +250,17 @@ class MapEditor {
             </button>
           `).join('')}
         </div>
-        <p class="popover-hint">Pick the edge the dock faces.</p>
+        <p class="popover-hint">${t('editor.pick_edge')}</p>
         <div class="port-dial">
           ${tileHtml('S', EDGES.map(dir => `
             <button class="port-edge" data-edge="${dir}" aria-pressed="false"
-              title="Face ${dir.replace('_', ' ')}">
-              <span class="port-edge-label">${dir.replace('_', ' ')}</span>
+              title="${t('editor.face', { dir: t(`names.directions.${dir}`) })}">
+              <span class="port-edge-label">${t(`names.directions.${dir}`)}</span>
             </button>
           `).join(''))}
         </div>
         <div class="popover-actions">
-          <button class="btn btn--quiet btn--sm port-clear">Remove port</button>
+          <button class="btn btn--quiet btn--sm port-clear">${t('editor.remove_port')}</button>
         </div>
       `)}
     `
@@ -272,12 +270,12 @@ class MapEditor {
         <section class="editor-modal panel" id="modal-game" role="dialog" aria-modal="true"
           aria-labelledby="modal-game-title">
           <header class="popover-head">
-            <h2 id="modal-game-title">Play this map</h2>
-            <button class="btn btn--quiet btn--sm modal-close" aria-label="Close">✕</button>
+            <h2 id="modal-game-title">${t('editor.play_this_map')}</h2>
+            <button class="btn btn--quiet btn--sm modal-close" aria-label="${t('editor.close')}">✕</button>
           </header>
           <div class="popover-body">
             <div class="field">
-              <label for="players-select">Players</label>
+              <label for="players-select">${t('editor.players')}</label>
               <select id="players-select" class="select">
                 ${[...Array(7).keys()].map(i => {
                   const v = i + 2
@@ -287,24 +285,23 @@ class MapEditor {
             </div>
             <p class="seat-note" id="seat-note"></p>
             <div class="field">
-              <label for="winpoints-select">Points to win</label>
+              <label for="winpoints-select">${t('editor.points_to_win')}</label>
               <select id="winpoints-select" class="select">
                 ${Array.from({ length: 16 }, (_, i) => i + 5).map(v =>
                   `<option value="${v}" ${v === 10 ? 'selected' : ''}>${v}</option>`).join('')}
               </select>
             </div>
             <div class="field-group">
-              <h3>Keep my layout</h3>
-              <p class="popover-hint">A new game reshuffles the map before it deals it out. Tick these
-                to start on exactly what you built.</p>
+              <h3>${t('editor.keep_layout')}</h3>
+              <p class="popover-hint">${t('editor.keep_hint')}</p>
               <div class="chip-group">
-                ${chipHtml('keep', 'resources', 'Resources', false)}
-                ${chipHtml('keep', 'numbers', 'Numbers', false)}
+                ${chipHtml('keep', 'resources', t('editor.resources'), false)}
+                ${chipHtml('keep', 'numbers', t('editor.numbers'), false)}
               </div>
             </div>
             <div class="popover-actions popover-actions--end">
-              <button class="btn btn--quiet btn--sm modal-close">Cancel</button>
-              <button class="btn btn--primary editor-start">Start game</button>
+              <button class="btn btn--quiet btn--sm modal-close">${t('editor.cancel')}</button>
+              <button class="btn btn--primary editor-start">${t('editor.start_game')}</button>
             </div>
           </div>
         </section>
@@ -330,7 +327,7 @@ class MapEditor {
         role="dialog" aria-modal="false" aria-label="${title}">
         <header class="popover-head">
           <h2>${title}</h2>
-          <button class="btn btn--quiet btn--sm popover-close" aria-label="Close ${title}">✕</button>
+          <button class="btn btn--quiet btn--sm popover-close" aria-label="${t('editor.close_x', { title })}">✕</button>
         </header>
         <div class="popover-body">${body}</div>
       </section>`
@@ -536,10 +533,10 @@ class MapEditor {
   copyLink($button) {
     window.navigator.clipboard?.writeText(window.location.href)
     $button.classList.add('copied')
-    $button.textContent = 'Link copied'
+    $button.textContent = t('editor.link_copied')
     setTimeout(() => {
       $button.classList.remove('copied')
-      $button.textContent = 'Copy link'
+      $button.textContent = t('editor.copy_link')
     }, 1500)
   }
 
@@ -920,14 +917,12 @@ class MapEditor {
     const seats = Board.maxPlayers(this.mapkey)
     $select.querySelectorAll('option').forEach($option => {
       $option.disabled = +$option.value > seats
-      $option.textContent = $option.disabled ? `${$option.value} (map too small)` : $option.value
+      $option.textContent = $option.disabled ? t('editor.map_too_small', { n: $option.value }) : $option.value
     })
     if (+$select.value > seats) { $select.value = String(Math.max(2, seats)) }
     // Stated outside the selector too: a greyed-out option says nothing about why.
     const $note = $('#seat-note')
-    $note.textContent = seats < 2
-      ? 'This map cannot seat a game yet - it needs more land.'
-      : `This map seats ${seats} player${seats === 1 ? '' : 's'}.`
+    $note.textContent = seats < 2 ? t('editor.no_seats') : t.plural('editor.seats', seats)
     $note.classList.toggle('warn', seats < +$select.value)
   }
 
@@ -941,12 +936,12 @@ class MapEditor {
     const flag = (tile, text) => flags.set(tile.id, text)
 
     tiles.forEach(tile => {
-      if (tile.type !== 'S' && tile.type !== 'D' && !tile.num) { flag(tile, 'No number') }
+      if (tile.type !== 'S' && tile.type !== 'D' && !tile.num) { flag(tile, t('editor.no_number')) }
     })
     const red = tile => tile && CONST.RED_NUMBERS.includes(+tile.num)
     tiles.filter(red).forEach(tile => EDGES.forEach(dir => {
       const neighbor = tile.adjacent_tiles[dir]
-      if (red(neighbor)) { flag(tile, 'Next to another 6 or 8'); flag(neighbor, 'Next to another 6 or 8') }
+      if (red(neighbor)) { flag(tile, t('editor.red_adjacent')); flag(neighbor, t('editor.red_adjacent')) }
     }))
     return flags
   }
@@ -960,7 +955,7 @@ class MapEditor {
     })
     const $issues = this.$dock.querySelector('.dock-issues')
     $issues.hidden = !flags.size
-    $issues.textContent = `⚠ ${flags.size} tile${flags.size === 1 ? '' : 's'} to fix`
+    $issues.textContent = t.plural('editor.tiles_to_fix', flags.size)
   }
 
   /**
@@ -983,7 +978,7 @@ class MapEditor {
     const most = Math.max(1, ...Object.values(counts))
     const tallest = Math.max(1, ...Object.values(numbers))
     const order = [...TERRAINS.filter(t => t !== 'S' && t !== 'D'), 'D'].filter(t => counts[t])
-    const plural = (n, one, many = one + 's') => `${n} ${n === 1 ? one : many}`
+    const tileCount = n => t.plural('editor.tiles_n', n)
 
     const flags = this.#problems()
     const grouped = {}
@@ -991,27 +986,27 @@ class MapEditor {
 
     $('#map-report').innerHTML = `
       <dl class="info-facts">
-        <dt>Seats</dt><dd>${seats < 2 ? 'nobody yet' : plural(seats, 'player')}</dd>
-        <dt>Land</dt><dd>${plural(land, 'tile')}</dd>
+        <dt>${t('editor.seats_label')}</dt><dd>${seats < 2 ? t('editor.nobody_yet') : t.plural('editor.players_n', seats)}</dd>
+        <dt>${t('editor.land')}</dt><dd>${tileCount(land)}</dd>
       </dl>
 
       ${flags.size ? `
         <div class="info-problems">
-          <h3>${plural(flags.size, 'tile')} to fix</h3>
+          <h3>${t.plural('editor.tiles_to_fix_heading', flags.size)}</h3>
           <ul>
             ${Object.entries(grouped).map(([text, count]) =>
-              `<li>${text} &mdash; ${plural(count, 'tile')}</li>`).join('')}
+              `<li>${t('editor.problem_count', { text, tiles: tileCount(count) })}</li>`).join('')}
           </ul>
         </div>
       ` : ''}
 
       ${land ? `
         <section class="info-block">
-          <h3>Terrain</h3>
+          <h3>${t('editor.terrain')}</h3>
           <ul class="res-list">
             ${order.map(type => `
               <li class="res-row" style="--fill: ${counts[type] / most * 100}%; --hue: ${TERRAIN_HUE[type]}">
-                <span class="res-name"><span class="res-icon" aria-hidden="true">${CONST.TILE_EMOJIS[type]}</span><span>${type === 'D' ? 'Desert' : CONST.RESOURCES[CONST.TILE_RES[type]]}</span></span>
+                <span class="res-name"><span class="res-icon" aria-hidden="true">${CONST.TILE_EMOJIS[type]}</span><span>${type === 'D' ? CONST.TILES.D : CONST.RESOURCES[CONST.TILE_RES[type]]}</span></span>
                 <span class="res-bar"></span>
                 <span class="res-count">${counts[type]}</span>
               </li>
@@ -1020,23 +1015,22 @@ class MapEditor {
         </section>
 
         <section class="info-block">
-          <h3>Dice numbers</h3>
+          <h3>${t('editor.dice_numbers')}</h3>
           <div class="dice-strip">
             ${NUMBERS.map(n => {
               const count = numbers[n] || 0
               return `
               <div class="dice-col${count ? '' : ' empty'}" role="img"
-                aria-label="${n}: ${plural(count, 'tile')}">
+                aria-label="${t('editor.dice_col_aria', { n, tiles: tileCount(count) })}">
                 <span class="dice-count">${count || ''}</span>
                 <span class="dice-bar" style="--fill: ${count / tallest * 100}%"></span>
                 ${tokenHtml(n, 'dice-token')}
               </div>`
             }).join('')}
           </div>
-          <p class="popover-hint">How many tiles carry each number. A map plays evenly when the
-            bars in the middle are the tallest.</p>
+          <p class="popover-hint">${t('editor.dice_hint')}</p>
         </section>
-      ` : '<p class="popover-note">Nothing on the map yet. Pick a terrain below and paint some land.</p>'}
+      ` : `<p class="popover-note">${t('editor.empty_map')}</p>`}
     `
   }
 
@@ -1046,13 +1040,14 @@ class MapEditor {
     const mapkey = this.$mapkey_textarea.value
     // Checked before it is committed, so a bad key leaves the board that is on screen alone. The
     // message goes beside the field: no blocking dialog, nothing to dismiss before fixing it.
-    let problem = validateMapkey(mapkey)
+    const found = validateMapkey(mapkey)
+    let problem = found ? t(`editor.mapkey_problem.${found.code}`, found) : null
     if (!problem) {
       try { new Board(mapkey) }
       catch (e) { problem = e.message }
     }
     this.$mapkey_error.hidden = !problem
-    this.$mapkey_error.textContent = problem ? `That map key could not be read: ${problem}.` : ''
+    this.$mapkey_error.textContent = problem ? t('editor.mapkey_error', { problem }) : ''
     if (!problem) { this.#commit(mapkey) }
   }
 

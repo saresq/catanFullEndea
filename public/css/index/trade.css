@@ -162,8 +162,9 @@
                 opacity: 0.7;
             }
 
-            /* The status word, one per state. Skin: ui/primitives.css (.btn--quiet) */
+            /* The status word, set by trade_ui.js with the class. Skin: ui/primitives.css (.btn--quiet) */
             &::after {
+                content: attr(data-status-label);
                 font-size: var(--text-xs);
                 text-transform: uppercase;
                 letter-spacing: 0.0625rem;
@@ -182,10 +183,6 @@
             &.open {
                 border-color: var(--p-color, var(--sand-color-dark));
 
-                &::after {
-                    content: 'open';
-                }
-
                 .cancel {
                     display: inline-flex;
                 }
@@ -194,28 +191,16 @@
             &.closed {
                 border-color: #999;
                 opacity: 0.6;
-
-                &::after {
-                    content: 'closed';
-                }
             }
 
             &.success {
                 border-color: var(--trade-positive);
                 background: color-mix(in srgb, var(--trade-positive) 25%, transparent);
-
-                &::after {
-                    content: 'traded';
-                }
             }
 
             &.failed {
                 border-color: var(--trade-negative);
                 background: color-mix(in srgb, var(--trade-negative) 25%, transparent);
-
-                &::after {
-                    content: 'failed';
-                }
             }
         }
     }
@@ -288,7 +273,7 @@
                 opacity: 0.75;
             }
 
-            &.get::before { content: 'You want'; }
+            &.get::before { content: attr(data-caption); }
 
             .cards {
                 display: grid;

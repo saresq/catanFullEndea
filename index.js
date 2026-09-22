@@ -12,6 +12,7 @@ import Player from "./models/player.js"
 import { attachBots } from "./models/bots/controller.js"
 import { rematchNonVoters, createRematch } from "./models/rematch.js"
 import * as CONST from "./public/js/const.js"
+import { t, DICT, LOCALE } from "./public/js/i18n.js"
 import BoardShuffler from "./public/js/board/board_shuffler.js"
 import Board from "./public/js/board/board.js"
 
@@ -37,8 +38,11 @@ app.engine('html', mustacheExpress())
 app.set('view engine', 'html')
 app.set('views', __dirname + '/views')
 
+/** Every view gets the dictionary and the document language. */
+const render = (res, view, locals = {}) => res.render(view, { t: DICT, lang: LOCALE, ...locals })
+
 app.get('/map-editor', (req, res) => {
-  res.render('map-editor')
+  render(res, 'map-editor')
 })
 
 const SESSION_EXPIRE_HOURS = 5
@@ -70,7 +74,7 @@ app.get('/game/new', function (req, res) {
   let id
   do { id = generateRandomWords({ min: 2, max: 2, join: '-' }) } while (GAME_SESSIONS[id])
   const { name, players = CONST.GAME_CONFIG.player_count, config: query_config } = req.query
-  if (+players < 2 || +players > 10) { return res.redirect('/login?notice=Player count must be between 2 and 10.') }
+  if (+players < 2 || +players > 10) { return res.redirect('/login?notice=' + encodeURIComponent(t('notice.player_count'))) }
   let config = Object.assign({}, CONST.GAME_CONFIG, { player_count: +players || 2 })
   try { config = Object.assign(config, JSON.parse(decodeURIComponent(query_config))) } catch(e){}
   
@@ -79,13 +83,13 @@ app.get('/game/new', function (req, res) {
   config.mapkey = provided_config.mapkey && CONST.mapFitsPlayers(provided_config.mapkey, config.player_count)
     ? provided_config.mapkey
     : CONST.mapForPlayers(config.player_count).mapkey
-  config.map_size = CONST.mapName(config.mapkey)
+  config.map_size = CONST.mapId(config.mapkey)
 
   // A hand-made map can be too small to seat everyone. Say so here instead of letting the
   // initial placement run out of corners mid-game.
   const seats = Board.maxPlayers(config.mapkey)
   if (config.player_count > seats) {
-    return res.redirect(`/login?notice=${encodeURIComponent(`That map only fits ${seats} player${seats === 1 ? '' : 's'}.`)}`)
+    return res.redirect(`/login?notice=${encodeURIComponent(t.plural('notice.map_seats', seats))}`)
   }
 
   // Shuffle after determining the base map and storing the label
@@ -145,13 +149,14 @@ app.get('/game/:id', function(req, res) {
   }
   if (!game.state) {
     const pc = game.player_count
-    // Label is computed before shuffling; shuffled keys no longer match a preset
-    const map_size = game.config.map_size || CONST.mapName(game.config.mapkey)
+    // The preset id is fixed before shuffling; shuffled keys no longer match a preset
+    const map_size = game.config.map_size || CONST.mapId(game.config.mapkey)
 
-    res.render('waiting_room', {
+    render(res, 'waiting_room', {
       players: toScript(game.players),
       player_count: +pc || 0,
       game_key: game_id,
+      copy_invite_aria: t('lobby.copy_invite_aria', { key: game_id }),
       game_id: toScript(game_id || null),
       win_points: +game.config.win_points || 0,
       map_size: toScript(map_size || null),
@@ -168,14 +173,14 @@ app.get('/game/:id', function(req, res) {
       const specId = Math.random().toString(36).substring(2)
       res.cookie('spectator_id', specId, { maxAge: SESSION_EXPIRE_HOURS * 60 * 60 * 1000, httpOnly: true })
     }
-    return res.render('index', {
+    return render(res, 'index', {
       game: toScript(game),
-      player: toScript({ id: 0, name: 'Spectator', spectator: true }),
+      player: toScript({ id: 0, name: t('notice.spectator'), spectator: true }),
       opponents: toScript(game.players.filter(p => p && !p.removed).map(_ => _.toJSON())),
     })
   }
   const player = game.getPlayer(player_id)
-  res.render('index', {
+  render(res, 'index', {
     game: toScript(game),
     player: toScript(player.toJSON(1)),
     opponents: toScript(game.getOpponents(player.id).map(_ => _.toJSON())),
@@ -187,12 +192,12 @@ app.get('/login', function (req, res) {
   const game_id = (req.query.game_id || '').toLowerCase()
   res.clearCookie('game_id')
   res.clearCookie('player_id')
-  if (notice) { return res.render('login', { notice }) }
-  if (!game_id) { return res.render('login') }
+  if (notice) { return render(res, 'login', { notice }) }
+  if (!game_id) { return render(res, 'login') }
   if (!GAME_SESSIONS[game_id]) {
     // If a game_id is present but the session is not found (e.g., direct link, server restart),
     // show the login page without an error so the user can enter a name or a different key.
-    return res.render('login')
+    return render(res, 'login')
   }
 
   // Joining a game (or reclaiming an existing slot by name)
@@ -210,7 +215,7 @@ app.get('/login', function (req, res) {
   // Require a non-empty name to join; otherwise show the login page (Join tab UI will guide the user)
   const trimmedName = Player.cleanName(name)
   if (!trimmedName) {
-    return res.render('login')
+    return render(res, 'login')
   }
 
   // A bot's seat is never handed over by name

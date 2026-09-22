@@ -106,7 +106,7 @@ Object.assign(console, quiet)
 const finished = results.filter(r => r.winner_level)
 const sum = key => results.reduce((m, r) => m + r.stats[key], 0)
 const seat_share = level => opts.seats.filter(l => l === level).length / opts.seats.length
-console.log(`${results.length} games, ${opts.player_count} seats (${opts.seats.join(',')}), ${CONST.mapName(opts.mapkey)} map, ${((Date.now() - started) / 1000).toFixed(1)}s`)
+console.log(`${results.length} games, ${opts.player_count} seats (${opts.seats.join(',')}), ${CONST.mapId(opts.mapkey)} map, ${((Date.now() - started) / 1000).toFixed(1)}s`)
 ;[...new Set(opts.seats)].forEach(level => {
   const wins = finished.filter(r => r.winner_level === level).length
   const pct = finished.length ? (100 * wins / finished.length).toFixed(1) : '0.0'

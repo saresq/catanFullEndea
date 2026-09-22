@@ -1,4 +1,5 @@
 import * as CONST from "../const.js"
+import { t } from "../i18n.js"
 import { resToText, resToIcons } from "../const_messages.js"
 const $ = document.querySelector.bind(document)
 const oKeys = Object.keys
@@ -80,7 +81,7 @@ export default class PlayerUI {
       this.$action_bar.innerHTML = `
         <div class="row-1">
           <div class="timer disabled ${this.has_timer ? '' : 'hide'}">0:00</div>
-          <div class="spectating-label">Spectating</div>
+          <div class="spectating-label">${t('dock.spectating')}</div>
         </div>
       `
       this.$timer = this.$action_bar.querySelector('.timer')
@@ -90,49 +91,49 @@ export default class PlayerUI {
     this.$action_bar.innerHTML = `
       <div class="row-1">
         <div class="timer disabled ${this.has_timer ? '' : 'hide'}">0:00</div>
-        <button class="trade btn btn--secondary btn--sm disabled" title="Trade (t)" aria-label="Trade">Trade</button>
-        <button class="dev-toggle hide" title="Development cards" aria-label="Development cards">
-          <span class="text">dev cards</span>
+        <button class="trade btn btn--secondary btn--sm disabled" title="${t('dock.trade_title')}" aria-label="${t('dock.trade')}">${t('dock.trade')}</button>
+        <button class="dev-toggle hide" title="${t('dock.dev_cards_title')}" aria-label="${t('dock.dev_cards_title')}">
+          <span class="text">${t('dock.dev_cards')}</span>
           <span class="dev-count"></span>
           <span class="caret"></span>
         </button>
-        <button class="roll-dice disabled" data-mode="roll" title="Roll Dice (Space)" aria-label="Roll Dice"><span class="label">${CONST.icon('dices')}</span></button>
+        <button class="roll-dice disabled" data-mode="roll" title="${t('dock.roll_dice_title')}" aria-label="${t('dock.roll_dice')}"><span class="label">${CONST.icon('dices')}</span></button>
       </div>
       <div class="row-2">
-        <button class="build-road disabled" title="Build Road (r)" aria-label="Build Road" data-count="${CONST.PIECES_COUNT.R}">
+        <button class="build-road disabled" title="${t('dock.build_road_title')}" aria-label="${t('dock.build_road')}" data-count="${CONST.PIECES_COUNT.R}">
           <div class="cost-tooltip">${resToIcons(CONST.COST.R)}</div>
           <div class="image"></div>
-          <span class="label">Road</span>
+          <span class="label">${t('dock.road')}</span>
           <div class="count">${CONST.PIECES_COUNT.R}</div>
         </button>
-        <button class="build-settlement disabled" title="Build Settlement (s)" aria-label="Build Settlement" data-count="${CONST.PIECES_COUNT.S}">
+        <button class="build-settlement disabled" title="${t('dock.build_settlement_title')}" aria-label="${t('dock.build_settlement')}" data-count="${CONST.PIECES_COUNT.S}">
           <div class="cost-tooltip">${resToIcons(CONST.COST.S)}</div>
           <div class="image"></div>
-          <span class="label">Settlement</span>
+          <span class="label">${t('dock.settlement')}</span>
           <div class="count">${CONST.PIECES_COUNT.S}</div>
         </button>
-        <button class="build-city disabled" title="Build City (c)" aria-label="Build City" data-count="${CONST.PIECES_COUNT.C}">
+        <button class="build-city disabled" title="${t('dock.build_city_title')}" aria-label="${t('dock.build_city')}" data-count="${CONST.PIECES_COUNT.C}">
           <div class="cost-tooltip">${resToIcons(CONST.COST.C)}</div>
           <div class="image"></div>
-          <span class="label">City</span>
+          <span class="label">${t('dock.city')}</span>
           <div class="count">${CONST.PIECES_COUNT.C}</div>
         </button>
-        <button class="dev-card disabled" title="Buy Development Card (d)" aria-label="Buy Development Card" data-count="-">
+        <button class="dev-card disabled" title="${t('dock.buy_dev_card_title')}" aria-label="${t('dock.buy_dev_card')}" data-count="-">
           <div class="cost-tooltip">${resToIcons(CONST.COST.DEV_C)}</div>
           <div class="card card--xs" data-card="dev-back"></div>
-          <span class="label">Dev card</span>
+          <span class="label">${t('dock.dev_card')}</span>
           <div class="count">-</div>
         </button>
-        <button class="costs" title="Building costs" aria-label="Building costs" aria-expanded="false">
+        <button class="costs" title="${t('dock.costs_title')}" aria-label="${t('dock.costs_title')}" aria-expanded="false">
           <span class="icon" aria-hidden="true">i</span>
-          <span class="label">Costs</span>
+          <span class="label">${t('dock.costs')}</span>
         </button>
       </div>
       <div class="costs-panel panel hide">
-        <span>Road</span>${cost('R')}
-        <span>Settlement</span>${cost('S')}
-        <span>City</span>${cost('C')}
-        <span>Development card</span>${cost('DEV_C')}
+        <span>${t('dock.road')}</span>${cost('R')}
+        <span>${t('dock.settlement')}</span>${cost('S')}
+        <span>${t('dock.city')}</span>${cost('C')}
+        <span>${t('dock.development_card')}</span>${cost('DEV_C')}
       </div>
     `
     this.#setRefs()
@@ -356,8 +357,8 @@ export default class PlayerUI {
     if (!this.$dice) return
     this.$dice.dataset.mode = 'roll'
     this.$dice.classList.remove('end-turn')
-    this.$dice.title = 'Roll Dice (Space)'
-    this.$dice.setAttribute('aria-label', 'Roll Dice')
+    this.$dice.title = t('dock.roll_dice_title')
+    this.$dice.setAttribute('aria-label', t('dock.roll_dice'))
     const label = this.$dice.querySelector('.label') || this.#ensureDiceLabel()
     label.innerHTML = CONST.icon('dices')
     this.toggleAction(this.$dice, enabled)
@@ -367,8 +368,8 @@ export default class PlayerUI {
     if (!this.$dice) return
     this.$dice.dataset.mode = 'end'
     this.$dice.classList.add('end-turn')
-    this.$dice.title = 'End Turn (e / Space)'
-    this.$dice.setAttribute('aria-label', 'End Turn')
+    this.$dice.title = t('dock.end_turn_title')
+    this.$dice.setAttribute('aria-label', t('dock.end_turn'))
     const label = this.$dice.querySelector('.label') || this.#ensureDiceLabel()
     label.innerHTML = CONST.icon('skip-forward')
     const effective = !!enabled && !this.#is_end_cooldown
@@ -425,7 +426,7 @@ export default class PlayerUI {
           class="card-group ${type} ${stake ? 'active' : ''} ${stakes && (!stake || stake.disabled) ? 'disabled' : ''}"
           data-type="${type}" data-count="${count}"
           ${stake ? 'tabindex="0"' : ''} ${stake?.rate ? `data-rate="${stake.rate}:1" style="--top-card: ${Math.max(0, visualCount - 1)}"` : ''}
-          ${type === 'dK' ? ' title="Knight (k)" ' : ''}
+          ${type === 'dK' ? ` title="${t('dock.knight_title')}" ` : ''}
         >
         <div class="card-count ${count < 2 ? 'hide' : ''}"
           style="left: calc(var(--hand-card-w) / 2 - 0.78125rem + ${Math.max(0, visualCount - 1) * 4}px);
@@ -456,7 +457,7 @@ export default class PlayerUI {
       this.$dev_toggle.classList[dev_card_groups.length ? 'remove' : 'add']('hide')
       const dev_count = dev_card_groups.reduce((sum, [, count]) => sum + count, 0)
       this.$dev_toggle.querySelector('.dev-count').textContent = dev_count
-      this.$dev_toggle.setAttribute('aria-label', `Development cards: ${dev_count}`)
+      this.$dev_toggle.setAttribute('aria-label', t('dock.dev_cards_count', { n: dev_count }))
       this.$dev_toggle.classList[this.#is_dev_row_open ? 'add' : 'remove']('open')
     }
     focused && this.$hand.querySelector(`.card-group[data-type="${focused}"][tabindex]`)?.focus()

@@ -232,19 +232,20 @@ export function gridShift(before, after) {
 /**
  * Why a mapkey cannot be used, or `null` if it can. `Board` is deliberately forgiving - it falls
  * back to sea for anything it does not recognise - so a typo would otherwise render as a board
- * full of water instead of an error.
+ * full of water instead of an error. The problem is a code, worded by whoever shows it
+ * (`editor.mapkey_problem.<code>` in the map editor).
  *
- * @returns {string | null}
+ * @returns {{ code: 'empty' | 'row_prefix' | 'unknown_tile', row?: number, bad?: string } | null}
  */
 export function validateMapkey(mapkey) {
-  if (!mapkey || !mapkey.trim()) { return 'it is empty' }
+  if (!mapkey || !mapkey.trim()) { return { code: 'empty' } }
   const rows = parseRows(mapkey)
   for (let i = 0; i < rows.length; i++) {
     if (i && rows[i].sign !== '+' && rows[i].sign !== '-') {
-      return `row ${i + 1} does not start with a + or a -`
+      return { code: 'row_prefix', row: i + 1 }
     }
     const bad = rows[i].tokens.find(token => !TOKEN_RE.test(token.trim()))
-    if (bad !== undefined) { return `row ${i + 1} has a tile it does not recognise: "${bad}"` }
+    if (bad !== undefined) { return { code: 'unknown_tile', row: i + 1, bad } }
   }
   return null
 }

@@ -1,4 +1,5 @@
 import { STORAGE_KEYS as KEYS, icon } from "../const.js"
+import { t } from "../i18n.js"
 const _dummyFn = _ => _
 export default class AccessibilityUI {
   #shown_icons
@@ -11,32 +12,33 @@ export default class AccessibilityUI {
   #toggleBoardZoom; #recenterMap; #toggleBgm; #toggleNotificationsAudio
   $el = document.querySelector('#game .accessibility-zone')
 
+  // The keys are physical and fixed; only the labels are translated.
   keyboard_shortcuts = [
     [
-      ['Roll Dice', 'SPACE'],
-      ['Build Road', 'r'],
-      ['Build Settlement', 's'],
-      ['Build City', 'c'],
-      ['Buy Development Card', 'd'],
-      ['Trade options', 't'],
-      ['Play Knight Card', 'k'],
-      ['End Turn', 'e (or) SPACE'],
+      [t('shortcuts.roll_dice'), t('keys.space')],
+      [t('shortcuts.build_road'), 'r'],
+      [t('shortcuts.build_settlement'), 's'],
+      [t('shortcuts.build_city'), 'c'],
+      [t('shortcuts.buy_dev_card'), 'd'],
+      [t('shortcuts.trade_options'), 't'],
+      [t('shortcuts.play_knight'), 'k'],
+      [t('shortcuts.end_turn'), t('keys.e_or_space')],
     ], [
-      ['Full Screen', 'f'],
-      ['Board Zoom In', '='],
-      ['Board Zoom Out', '-'],
-      ['Recenter Map', 'Home'],
-      ['Toggle Background Music', 'm'],
-      ['Toggle Notification Sounds', 'n'],
-      ['Show Status History', 'h'],
-      ['Show this section', '?'],
-      ['Toggle players panel', 'Shift'],
-      ['Cancel action / Close stuff', 'Esc'],
+      [t('shortcuts.full_screen'), 'f'],
+      [t('shortcuts.zoom_in'), '='],
+      [t('shortcuts.zoom_out'), '-'],
+      [t('shortcuts.recenter'), t('keys.home')],
+      [t('shortcuts.toggle_music'), 'm'],
+      [t('shortcuts.toggle_sounds'), 'n'],
+      [t('shortcuts.history'), 'h'],
+      [t('shortcuts.this_panel'), '?'],
+      [t('shortcuts.players_panel'), t('keys.shift')],
+      [t('shortcuts.cancel'), t('keys.esc')],
     ]
   ]
 
   constructor({ toggleBoardZoom = _dummyFn, recenterMap = null, toggleBgm = _dummyFn, toggleNotificationsAudio = _dummyFn,
-    spectator_link = false, quit_label = 'Quit game',
+    spectator_link = false, quit_label = t('menu.quit_game'),
     /** `{ label, href }`: a last row that leaves without the quit arming, for pages with no game to lose. */
     back = null,
     icons: { fullscreen = true, zoom = true, bgm = true, notifcation_sounds = true,
@@ -65,41 +67,41 @@ export default class AccessibilityUI {
       </button>`
 
     this.$el.innerHTML = `
-      <button class="icon settings-gear" title="Options" aria-label="Options"
+      <button class="icon settings-gear" title="${t('menu.options')}" aria-label="${t('menu.options')}"
         aria-expanded="false" aria-controls="options-menu"></button>
-      ${this.#recenterMap ? `<button class="icon recenter" title="Recenter Map (Home)" aria-label="Recenter map">${icon('map-pin')}</button>` : ''}
+      ${this.#recenterMap ? `<button class="icon recenter" title="${t('menu.recenter_title')}" aria-label="${t('menu.recenter')}">${icon('map-pin')}</button>` : ''}
       <div class="menu-backdrop hide"></div>
       <div class="options-menu hide" id="options-menu">
-        ${shown.fullscreen ? item('full-screen', icon('maximize'), 'Full screen', 'f', true) : ''}
-        ${shown.zoom ? item('zoom-in', icon('zoom-in'), 'Zoom in', '=') + item('zoom-out', icon('zoom-out'), 'Zoom out', '-') : ''}
-        ${shown.notifcation_sounds ? item('notifications', icon('volume-2'), 'Notification sounds', 'n', true) : ''}
-        ${shown.bgm ? item('bgm', icon('music'), 'Music', 'm', true) : ''}
-        ${shown.shorcuts ? item('question-mark', icon('keyboard'), 'Keyboard shortcuts', '?') : ''}
-        ${this.#spectator_link ? item('spectator-link', icon('link'), 'Copy spectator link') : ''}
-        ${shown.info ? item('info', icon('info'), 'About') : ''}
+        ${shown.fullscreen ? item('full-screen', icon('maximize'), t('menu.full_screen'), 'f', true) : ''}
+        ${shown.zoom ? item('zoom-in', icon('zoom-in'), t('menu.zoom_in'), '=') + item('zoom-out', icon('zoom-out'), t('menu.zoom_out'), '-') : ''}
+        ${shown.notifcation_sounds ? item('notifications', icon('volume-2'), t('menu.notification_sounds'), 'n', true) : ''}
+        ${shown.bgm ? item('bgm', icon('music'), t('menu.music'), 'm', true) : ''}
+        ${shown.shorcuts ? item('question-mark', icon('keyboard'), t('menu.keyboard_shortcuts'), '?') : ''}
+        ${this.#spectator_link ? item('spectator-link', icon('link'), t('menu.copy_spectator_link')) : ''}
+        ${shown.info ? item('info', icon('info'), t('menu.about')) : ''}
         ${shown.quit ? `<div class="sep"></div>` + item('quit danger', icon('power'), this.#quit_label) : ''}
         ${this.#back ? `<div class="sep"></div>` + item('back', icon('arrow-left'), this.#back.label) : ''}
       </div>
       ${shown.shorcuts ? `
-        <div class="keyboard-shortcuts panel hide">${this.keyboard_shortcuts.map(group =>
+        <div class="keyboard-shortcuts panel hide" data-caption="${t('shortcuts.title')}">${this.keyboard_shortcuts.map(group =>
           `<div class="shortcuts-container">${group.map(([title, shortcut]) =>
             `<div class="shortcut">
               <div class="title">${title}</div>
               <div class="key">${shortcut}</div>
             </div>`).join('')}
           </div>`).join('')}
-          <button class="close" aria-label="Close">${icon('x')}</button>
+          <button class="close" aria-label="${t('menu.close')}">${icon('x')}</button>
         </div>
       `: ''}
       ${shown.info ? `
         <div class="info-zone panel hide">
-          <div class="title">Catan Full Endea</div>
+          <div class="title">${t('about.title')}</div>
           <p class="credit">
-            Built by Saresq, based on
-            <a href="https://github.com/bigomega/catan" target="_blank" rel="noopener">BigOmega's Catan</a>
+            ${t('about.credit')}
+            <a href="https://github.com/bigomega/catan" target="_blank" rel="noopener">${t('about.credit_link')}</a>
           </p>
-          <a class="rules" href="https://www.catan.com/sites/default/files/2021-06/catan_base_rules_2020_200707.pdf" target="_blank" rel="noopener">Game rules</a>
-          <button class="close" aria-label="Close">${icon('x')}</button>
+          <a class="rules" href="https://www.catan.com/sites/default/files/2021-06/catan_base_rules_2020_200707.pdf" target="_blank" rel="noopener">${t('about.rules')}</a>
+          <button class="close" aria-label="${t('menu.close')}">${icon('x')}</button>
         </div>
       ` : ''}
     `
@@ -127,7 +129,7 @@ export default class AccessibilityUI {
       const $item = this.$el.querySelector(sel)
       if (!$item) return
       $item.setAttribute('aria-pressed', on)
-      $item.querySelector('.state').textContent = on ? 'on' : 'off'
+      $item.querySelector('.state').textContent = t(on ? 'menu.on' : 'menu.off')
       if (ico) $item.querySelector('.ico').innerHTML = ico
     }
     const full = !!document.fullscreenElement
@@ -150,7 +152,7 @@ export default class AccessibilityUI {
     this.#quit_armed = true
     const $quit = this.$el.querySelector('.item.quit')
     $quit.classList.add('armed')
-    $quit.querySelector('.label').textContent = `${this.#quit_label}? Tap again`
+    $quit.querySelector('.label').textContent = t('menu.quit_confirm', { label: this.#quit_label })
   }
 
   #copySpectatorLink($item) {
@@ -168,9 +170,9 @@ export default class AccessibilityUI {
     if (!copying) return fallback()
     copying.then(() => {
       const $label = $item.querySelector('.label')
-      $label.textContent = 'Link copied'
+      $label.textContent = t('menu.link_copied')
       setTimeout(() => {
-        $label.textContent = 'Copy spectator link'
+        $label.textContent = t('menu.copy_spectator_link')
         this.#showMenu(false)
       }, 1500)
     }).catch(fallback)
