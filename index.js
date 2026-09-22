@@ -21,7 +21,17 @@ const server = http.createServer(app)
 const io = new Server(server)
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-app.use(express.static(path.join(__dirname, 'public')))
+// Static files: always revalidate (cheap 304s on the ETag), so a deploy reaches every phone the
+// next time it opens the page. Cloudflare's Browser Cache TTL overrides `max-age=0` but honours
+// `no-cache`; images and sounds never change under the same name, so they may be kept.
+app.use(express.static(path.join(__dirname, 'public'), {
+  etag: true, lastModified: true,
+  setHeaders: (res, file) => {
+    res.set('Cache-Control', /\.(png|webp|jpg|mp3|woff2?)$/.test(file) ? 'public, max-age=86400' : 'no-cache')
+  },
+}))
+// Rendered pages carry game state: never cached, never restored from a stale copy
+app.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next() })
 app.use(cookieParser())
 app.engine('html', mustacheExpress())
 app.set('view engine', 'html')
