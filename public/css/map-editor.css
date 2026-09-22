@@ -22,10 +22,10 @@
 
     /*
      * The dock and the rail are the table the board is laid on: dark, warm, stained with the same
-     * sand the tiles are made of. The shared `--surface-drawer` is that sand at half black, which
-     * over bright water comes out a flat olive and leaves the sand chips sitting on their own
-     * colour. This is out of the same pigment but taken much further down, so a parchment popover
-     * reads as paper on wood and a number token has something to sit on.
+     * sand the tiles are made of. The shared `--surface-drawer` is umber at 88%, still light enough
+     * over bright water to leave the sand chips sitting on their own colour. This is out of the
+     * same pigment but taken much further down, so a parchment popover reads as paper on wood and
+     * a number token has something to sit on.
      */
     --editor-chrome: color-mix(in srgb, var(--sand-color) 16%, #14100a);
     --editor-chrome-surface: color-mix(in srgb, var(--editor-chrome) 94%, transparent);

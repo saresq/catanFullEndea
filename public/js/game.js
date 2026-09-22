@@ -441,8 +441,8 @@ export default class Game {
     try {
       document.documentElement.classList.add('godmode')
     } catch (e) {}
-    const title = '<div style="font-size:1.6em;font-weight:900;">The matrix is glitching</div>'
-    const sub = '<div style="opacity:.85;margin-top:6px;">GodMode has been activated</div>'
+    const title = '<div class="alert-title">The matrix is glitching</div>'
+    const sub = '<div class="alert-sub">God mode is on</div>'
     this.#ui.alert_ui.bigAlert(`${title}${sub}`, true)
     // Ensure immediate recolor in case player update arrives slightly later
     if (pid) {
@@ -466,8 +466,8 @@ export default class Game {
   }
 
   updateGodModeFreeResSoc(pid) {
-    const title = '<div style="font-size:1.6em;font-weight:900;">Cheat code unlocked</div>'
-    const sub = '<div style="opacity:.85;margin-top:6px;">Free Resources mode is ON — everyone receives 10 extra resources each round (2 of each)</div>'
+    const title = '<div class="alert-title">Cheat code activated</div>'
+    const sub = '<div class="alert-sub">Free resources: everyone gets 2 of each, every round</div>'
     this.#ui.alert_ui.bigAlert(`${title}${sub}`, true)
   }
 

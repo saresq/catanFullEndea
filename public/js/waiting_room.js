@@ -63,6 +63,10 @@ class WaitingRoomUI {
       if ($dot) { this.socket.emit(CONST.SOCKET_EVENTS.SET_BOT_LEVEL, +$dot.closest('.level-dots').dataset.pid, $dot.dataset.level); return }
       if (e.target.closest('.slot.me')) this.openColorPicker(this.getTakenColors())
     })
+    $('#slots-list').addEventListener('change', e => {
+      const $select = e.target.closest('.level-select')
+      if ($select && this.is_host) this.socket.emit(CONST.SOCKET_EVENTS.SET_BOT_LEVEL, +$select.dataset.pid, $select.value)
+    })
 
     // Initialize from existing players array
     window.players.forEach(p => p && this.addPlayer(p))
@@ -346,6 +350,17 @@ class WaitingRoomUI {
     return `<span class="level-dots" data-pid="${p.id}" role="${this.is_host ? 'group' : 'img'}" aria-label="${name} bot">${dots}</span>`
   }
 
+  /**
+   * The host's level picker on touch screens: a native select, since three dots are too small a
+   * target for a thumb. CSS swaps it with the dots below the tablet breakpoint.
+   */
+  levelSelect(p) {
+    const options = CONST.BOT_LEVELS.map(l =>
+      `<option value="${l.id}" ${l.id === p.bot_level ? 'selected' : ''} ${l.available ? '' : 'disabled'}>${l.name}${l.available ? '' : ' (not ready)'}</option>`
+    ).join('')
+    return `<select class="field level-select" data-pid="${p.id}" aria-label="Level of bot ${p.name}">${options}</select>`
+  }
+
   renderSlots() {
     const $list = document.getElementById('slots-list')
     if (!$list) return
@@ -357,9 +372,9 @@ class WaitingRoomUI {
         const tag = me ? 'button type="button" title="Choose color"' : 'div'
         // A bot is marked by the robot and its level as filled dots, not by its colour; the host
         // sets the level on the dots and can send the bot away
-        const bot = p.is_bot ? `${CONST.BOT_ICON}${this.levelDots(p)}` : ''
+        const bot = p.is_bot ? `${CONST.BOT_ICON}${this.levelDots(p)}${this.is_host ? this.levelSelect(p) : ''}` : ''
         const remove = p.is_bot && this.is_host
-          ? `<button type="button" class="btn btn--quiet btn--sm remove-bot" data-pid="${p.id}" aria-label="Remove bot ${p.name}">Remove</button>`
+          ? `<button type="button" class="btn btn--quiet btn--sm remove-bot" data-pid="${p.id}" aria-label="Remove bot ${p.name}" title="Remove bot">${CONST.CLOSE_ICON}</button>`
           : ''
         return `<${tag} class="slot filled ${me ? 'me' : ''} ${p.is_bot ? 'bot' : ''} p${p.id} pc${cid}" data-pid="${p.id}">
           <span class="city-icon" style="background-image:url('/images/pieces/city-${cid}.png')"></span>

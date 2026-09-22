@@ -16,10 +16,10 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background: var(--sand-color-dark);
+        background: var(--surface-umber);
         color: #fff;
         padding: 2px var(--space-1);
-        border-left: 3px solid var(--sand-color-dark);
+        border-left: 3px solid var(--surface-umber);
         position: relative;
         gap: var(--space-1);
 
@@ -38,6 +38,11 @@
             text-align: center;
             font-size: 0.85em;
             white-space: nowrap;
+
+            .lucide-trophy {
+                font-size: 1.4em;
+                vertical-align: -0.2em;
+            }
 
             .dot {
                 font-size: 1.6em;
@@ -90,24 +95,34 @@
             }
         }
 
+        /* The coloured block: name plus bot mark. It takes the row's spare width, so every row's
+           block is the same width whatever the name's length; a long name gets the ellipsis. */
+        .seat {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: var(--space-1);
+            padding: var(--space-1) var(--space-2);
+            background: var(--p-color, var(--sand-color-dark));
+            color: #fff;
+        }
+
         .name {
             flex: 1;
             min-width: 0;
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
-            padding: var(--space-1) var(--space-2);
-            background: var(--p-color, var(--sand-color-dark));
-            color: #fff;
         }
 
-        /* Bot seats: a word beside the name, never the colour alone; the level sits under it */
-        /* The robot beside the name, so it costs the name almost nothing; the level is text for
+        /* Bot seats: the robot inside the block, never the colour alone; the level is text for
            readers and on hover */
         .bot-mark {
             display: none;
             flex: none;
-            color: var(--surface-ink);
+            color: #fff;
+            opacity: 0.85;
 
             .bot-icon {
                 display: block;
@@ -177,19 +192,31 @@
                 filter: grayscale(1) brightness(1.5) contrast(0.5);
             }
 
+            /* Over the hand limit: the robber stands on the card, the count badge turns red. One
+               red element only; the robber sits on the art with a shadow, no chip of his own. */
+            .robber-mark {
+                display: none;
+                position: absolute;
+                top: 0.125rem;
+                left: 0;
+                width: 100%;
+                text-align: center;
+                font-size: 0.875rem;
+                line-height: 1;
+                filter: drop-shadow(0 0.0625rem 0.125rem #000c);
+            }
+
             &[data-robbable="true"] {
                 box-shadow: 0 0 5px 2px var(--trade-negative);
 
+                .robber-mark {
+                    display: block;
+                }
+
                 &::after {
-                    content: '🥷' attr(data-count);
-                    width: 100%;
-                    text-align: center;
-                    box-sizing: border-box;
-                    border-right: 0;
-                    border-radius: 0;
-                    padding: 0;
                     background: var(--trade-negative);
                     color: #fff;
+                    border-color: var(--trade-negative);
                 }
             }
         }
@@ -319,8 +346,8 @@
                 display: none;
             }
 
-            /* The chip is already the player colour, so the name drops its own box. */
-            .name {
+            /* The chip is already the player colour, so the seat drops its own box. */
+            .seat {
                 flex: 0 1 auto;
                 max-width: 7rem;
                 padding: 0;
@@ -369,7 +396,7 @@
             background: color-mix(in srgb, var(--p-color, var(--sand-color)), transparent 15%);
             color: #fff;
 
-            .name {
+            .seat {
                 padding: 0 2px;
                 background: none;
                 font-size: 0.85rem;

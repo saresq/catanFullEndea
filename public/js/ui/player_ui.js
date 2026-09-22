@@ -96,7 +96,7 @@ export default class PlayerUI {
           <span class="dev-count"></span>
           <span class="caret"></span>
         </button>
-        <button class="roll-dice disabled" data-mode="roll" title="Roll Dice (Space)" aria-label="Roll Dice"><span class="label">🎲</span></button>
+        <button class="roll-dice disabled" data-mode="roll" title="Roll Dice (Space)" aria-label="Roll Dice"><span class="label">${CONST.icon('dices')}</span></button>
       </div>
       <div class="row-2">
         <button class="build-road disabled" title="Build Road (r)" aria-label="Build Road" data-count="${CONST.PIECES_COUNT.R}">
@@ -359,7 +359,7 @@ export default class PlayerUI {
     this.$dice.title = 'Roll Dice (Space)'
     this.$dice.setAttribute('aria-label', 'Roll Dice')
     const label = this.$dice.querySelector('.label') || this.#ensureDiceLabel()
-    label.textContent = '🎲'
+    label.innerHTML = CONST.icon('dices')
     this.toggleAction(this.$dice, enabled)
     this.toggleAction(this.$dev_toggle, true)
   }
@@ -370,7 +370,7 @@ export default class PlayerUI {
     this.$dice.title = 'End Turn (e / Space)'
     this.$dice.setAttribute('aria-label', 'End Turn')
     const label = this.$dice.querySelector('.label') || this.#ensureDiceLabel()
-    label.textContent = '⏭️'
+    label.innerHTML = CONST.icon('skip-forward')
     const effective = !!enabled && !this.#is_end_cooldown
     this.toggleAction(this.$dice, effective)
   }
@@ -429,7 +429,7 @@ export default class PlayerUI {
         >
         <div class="card-count ${count < 2 ? 'hide' : ''}"
           style="left: calc(var(--hand-card-w) / 2 - 0.78125rem + ${Math.max(0, visualCount - 1) * 4}px);
-                 top: calc(-0.75rem - ${Math.max(0, visualCount - 1) * 2}px);"
+                 top: calc(0.3125rem - ${Math.max(0, visualCount - 1) * 2}px);"
         >${count}</div>
         ${[...Array(visualCount)].map((_, j) => {
         return `

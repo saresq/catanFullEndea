@@ -88,8 +88,10 @@
 
         .resources-row, .dev-cards-row {
             display: flex;
-            /* Grow to fill the hand cell, but never below their content */
+            /* Grow to fill the hand cell; when the cell is narrower than five stacks the groups
+               shrink and the stacks fan over each other, never under the actions. */
             flex: 1 1 auto;
+            min-width: 0;
             align-items: flex-end;
             /* Packed and centred in the hand cell, not spread: a hand of two resources should
                not read as two lost cards at opposite ends of the dock. */
@@ -129,9 +131,15 @@
             cursor: pointer;
             position: relative;
             bottom: 0;
-            flex-shrink: 0;
+            flex-shrink: 1;
+            min-width: calc(var(--hand-card-w) * 0.5);
             /* card + the stack's inline offsets (4px across, 2px up per card) */
             width: calc(var(--hand-card-w) + 16px);
+
+            /* The last stack has nothing to hide under: it keeps its full box */
+            &:last-child {
+                flex-shrink: 0;
+            }
             height: calc(var(--hand-card-w) * 873 / 586 + 8px);
             transition: bottom .1s linear;
 
@@ -196,8 +204,8 @@
             .card-count {
                 cursor: inherit;
                 position: absolute;
-                top: -0.75rem;
-                /* Centred over the top card of the stack; the inline style adds the stack offset */
+                /* Inside the top card, just under its edge; the inline style adds the stack offset */
+                top: 0.3125rem;
                 left: calc(var(--hand-card-w) / 2 - 0.78125rem);
                 z-index: 10;
                 background: var(--card-border);
@@ -382,27 +390,28 @@
             }
         }
 
-        /* DICE / UNIFIED BUTTON: the arch rising out of the bar */
+        /* DICE / UNIFIED BUTTON: a solid key in the player's bright colour, standing on the
+           status bar (the negative margin eats the cell's padding, so its flat foot always
+           touches it). It rises by growing taller when it is the move, and sinks, dimmed,
+           when it is not. */
 
         .roll-dice {
             align-self: flex-end;
+            margin-bottom: calc(-1 * var(--space-2));
             padding: 0.5rem 0.625rem;
             width: 6rem;
             box-sizing: border-box;
             text-align: center;
             position: relative;
-            top: 1.75rem;
             font-size: 2em;
-            background: var(--p-color-dark, var(--sand-color-dark));
+            color: #fff;
+            background: var(--p-color-on-dark, var(--sand-color));
             border-radius: 1.875rem 1.875rem 0 0;
             border: 0.1875rem solid var(--p-color-on-dark, #000);
-            padding-bottom: 0.5rem;
-            line-height: 4rem;
-            transition: all var(--t-base) linear;
-
-            &:not(.disabled) {
-                top: -0.625rem;
-            }
+            border-bottom: 0;
+            line-height: 4.5rem;
+            box-shadow: 0 -0.125rem 0.5rem #0006;
+            transition: line-height var(--t-base) ease, filter var(--t-base) ease, box-shadow var(--t-base) ease;
 
             &.hide {
                 display: none;
@@ -410,22 +419,36 @@
 
             &.disabled {
                 cursor: not-allowed;
-                line-height: 3rem;
+                line-height: 2.75rem;
+                filter: saturate(0.4) brightness(0.8);
+                box-shadow: none;
+            }
+
+            .label {
+                display: inline-block;
+                filter: drop-shadow(0 0.0625rem 0.125rem #0006);
             }
 
             &.disabled .label {
-                filter: grayscale(1) contrast(0.5);
+                opacity: 0.6;
+                filter: none;
             }
 
-            &:not(.disabled):is(:hover, :focus) {
-                filter: brightness(1.2);
+            &:not(.disabled):is(:hover, :focus-visible) {
+                filter: brightness(1.1);
+                box-shadow: 0 -0.25rem 0.75rem #0008;
+            }
+
+            &:not(.disabled):active {
+                line-height: 4rem;
+                box-shadow: inset 0 0.125rem 0.25rem #0004;
             }
 
             /* Phones: no room for the arch, a plain button */
             @media screen and (max-width: 768px), screen and (orientation: landscape) and (max-height: 500px) {
                 &, &:not(.disabled), &.disabled {
                     align-self: center;
-                    top: 0;
+                    margin-bottom: 0;
                     width: auto;
                     min-width: 44px;
                     min-height: 44px;
@@ -433,6 +456,11 @@
                     font-size: 1.5rem;
                     line-height: 1;
                     border-radius: var(--radius-md);
+                }
+
+                &:not(.disabled):active {
+                    line-height: 1;
+                    transform: translateY(0.0625rem);
                 }
             }
 
@@ -638,20 +666,22 @@
             }
 
             /* Desktop only: hover / focus shows the cost, missing resources greyed by canIBuy() */
+            /* Skin: the costs panel's (.panel tokens). The icons are pixel-sized sprites, so the
+               whole box scales up rather than each icon. */
             .cost-tooltip {
                 position: absolute;
                 bottom: calc(100% + var(--space-2));
                 left: 50%;
-                transform: translateX(-50%) scale(2);
+                transform: translateX(-50%) scale(1.5);
                 transform-origin: 50% 100%;
-                font-family: var(--font-ui), sans-serif;
                 display: none;
-                background: var(--sand-color);
-                color: #0009;
-                padding: 1em;
                 width: max-content;
-                border-radius: 6.25rem;
-                border: 0.0625rem solid #000;
+                padding: var(--space-2) var(--space-3);
+                background: var(--surface-sand);
+                color: var(--surface-sand-text);
+                border: 0.0625rem solid var(--sand-color-dark);
+                border-radius: var(--radius-md);
+                box-shadow: var(--shadow-1);
                 z-index: 10;
                 pointer-events: none;
 
@@ -692,10 +722,8 @@
         }
 
         .end-turn {
-            color: var(--p-color-on-dark);
-
             &:not(.disabled):is(:hover) {
-                box-shadow: 0 0 0.625rem 0 #fff;
+                box-shadow: 0 0 0.75rem 0 #fff8;
             }
 
             &.disabled {
@@ -816,8 +844,11 @@
             padding-left: 0.1875rem;
 
             @media screen and (max-width: 768px) {
-                &:not(.me) {
-                    font-size: 0;
+                /* Only the name goes - `font-size: 0` here would leave the hexagon's
+                   `vertical-align: middle` centring on a zero x-height, i.e. on the baseline,
+                   which drops it half a glyph below the line. */
+                &:not(.me) .p-name-text {
+                    display: none;
                 }
 
                 &::before {

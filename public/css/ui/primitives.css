@@ -50,8 +50,8 @@
     }
 
     &:disabled, &.disabled, &.btn--gated:not(.active) {
-        background: #ccc;
-        color: #999;
+        background: var(--surface-disabled);
+        color: var(--surface-disabled-text);
         border-color: transparent;
         box-shadow: none;
         transform: none;
@@ -114,9 +114,9 @@
 }
 
 .btn--danger {
-    --btn-bg: var(--player-1-color-dark);
-    --btn-fg: #fff;
-    --btn-shadow: color-mix(in srgb, var(--player-1-color-dark) 50%, transparent);
+    --btn-bg: var(--surface-danger);
+    --btn-fg: var(--surface-danger-text);
+    --btn-shadow: color-mix(in srgb, var(--surface-danger) 50%, transparent);
 }
 
 /* White ring + ink halo: reads on the sand panel and on the dark drawer. After the variants so the
@@ -129,7 +129,7 @@
 
 /* Disabled wins over any variant's hover */
 .btn:is(:disabled, .disabled, .btn--gated:not(.active)):hover {
-    background: #ccc;
+    background: var(--surface-disabled);
     box-shadow: none;
     transform: none;
     text-decoration: none;
@@ -150,7 +150,7 @@
     background: var(--surface-drawer);
     color: var(--surface-drawer-text);
     border: 0;
-    border-bottom: 0.3125rem solid var(--sand-color-dark);
+    border-bottom: 0.3125rem solid var(--surface-umber);
     border-radius: 0;
 }
 

@@ -111,13 +111,30 @@
     --surface-sand-text: var(--sand-color-text-dark);
     /* Lobby card (login, waiting room): near-opaque so its text contrast holds over any artwork */
     --surface-card: color-mix(in srgb, var(--surface-sand) 90%, transparent);
-    --surface-drawer: color-mix(in srgb, var(--sand-color-dark) 85%, transparent);
+    /* Dark warm neutral for fills: drawers, scoreboard header, menu hover. Sand mixed with black
+       lands on a khaki (mid lightness, half the chroma), so fills take this umber instead; the mix
+       stays for hairline borders, where a khaki line is fine. oklch(36% 0.06 70) */
+    --surface-umber: #513716;
+    --surface-umber-text: var(--surface-sand);
+    --surface-drawer: color-mix(in srgb, var(--surface-umber) 88%, transparent);
     --surface-drawer-text: #fff;
     --surface-ink: #333;
     /* Primary call to action. Ink stays for the chalkboard-style buttons (btn--ink) */
     --surface-forest: #154f15;
     /* Secondary button: a shade deeper than the sand panel so the pill reads on it */
     --surface-parchment: #d5b782;
+    /* Disabled control: sand with the chroma drained, so it recedes into the panel instead of
+       sitting on it as a foreign grey. oklch(78% 0.035 88) / oklch(55% 0.035 80) */
+    --surface-disabled: #c1b79f;
+    --surface-disabled-text: #7c705b;
+    /* Leave / quit. Oxblood at the forest button's lightness and chroma, so it sits beside it as a
+       sibling instead of shouting; player 1's red darkened read as that player's button.
+       oklch(38% 0.09 30) */
+    --surface-danger: #6a2d24;
+    --surface-danger-text: var(--surface-sand);
+    /* Danger as text on the sand panel (menu items). The oxblood is too dark to read as a warning
+       at 14px, so a step up in lightness and chroma; 4.8:1 on sand. oklch(48% 0.14 30) */
+    --danger-on-sand: #9d3629;
 
     /* Icons, as masks so they take currentColor and stay crisp at any size. Drawn on a 24x24 box
        and centred in it, so a button can centre them by centring the box. */

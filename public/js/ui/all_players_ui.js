@@ -31,18 +31,20 @@ export default class AllPlayersUI {
     const spec_count = (window.game_obj && window.game_obj.spectators_count) || 0
     const header = `<div class="players-header">
       <span class="spectators-count ${spec_count ? '' : 'hide'}">Spec: <span>${spec_count}</span></span>
-      <span class="victory-target" title="Victory points needed to win the game">🏆: ${win_points} · Turn: <span class="dot">⬢</span></span>
+      <span class="victory-target" title="Victory points needed to win the game">${CONST.icon('trophy')} ${win_points} · Turn: <span class="dot">⬢</span></span>
       <button class="toggle-players" title="Toggle players panel (Shift)">▼</button>
     </div>`
     this.$el.innerHTML = header + all_players.map(player => `
       <div class="player p${player.id} pc${player.color_id || player.id} ${player.removed ? 'deactivated' : ''} ${player.is_bot ? 'bot' : ''}" data-id="${player.id}" data-level="${player.bot_level || ''}">
-        <div class="name" title="${player.name}">${player.name}</div>
-        <span class="bot-mark" title="${player.bot_level} bot">${CONST.BOT_ICON}<small>${player.bot_level || ''} bot</small></span>
+        <div class="seat">
+          <div class="name" title="${player.name}">${player.name}</div>
+          <span class="bot-mark" title="${player.bot_level} bot">${CONST.BOT_ICON}<small>${player.bot_level || ''} bot</small></span>
+        </div>
         <button type="button" class="btn btn--secondary btn--sm replace-bot" title="Replace with a bot" aria-label="Replace ${player.name} with a bot">Bot?</button>
         <div class="victory-points" title="Victory Points"><span>${player.public_vps + (player.private_vps || 0)}</span></div>
         <div class="cards-container">
           <div class="resources card card--xs" data-card="res-back" data-count="${player.resource_count}" title="Resources in hand"
-            data-robbable="${player.resource_count > window.game_obj.config.robber_hand_limit}"></div>
+            data-robbable="${player.resource_count > window.game_obj.config.robber_hand_limit}"><span class="robber-mark" aria-hidden="true">🥷</span></div>
           <div class="development-cards card card--xs" data-card="dev-back" title="Development Cards in hand" data-count="${player.dev_card_count}"></div>
           <div class="largest-army" title="Largest Army" data-id="${player.id}"
             data-count="${player.open_dev_cards.dK}"></div>

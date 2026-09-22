@@ -1,6 +1,8 @@
 import * as CONST from "./const.js"
 
-export const getName = player => player ? `<span class="p-name pc${player.color_id || player.id}">${player.name}</span>` : `<span class="p-name me">You</span>`
+// The name sits in its own span so the status bar can hide it on phones without zeroing the
+// font size of `.p-name` - the hexagon `::before` aligns against those metrics.
+export const getName = player => player ? `<span class="p-name pc${player.color_id || player.id}"><span class="p-name-text">${player.name}</span></span>` : `<span class="p-name me">You</span>`
 
 export const resToText = obj => Object.keys(obj).filter(k => obj[k])
   .map(k => `<span class="res-count" data-count="${obj[k]}">${obj[k]}</span><div class="res-icon ${k}"></div>`).join('')

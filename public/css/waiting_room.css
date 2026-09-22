@@ -343,6 +343,23 @@ body {
         }
     }
 
+    /* The host's touch-screen level picker: hidden behind the dots until the tablet breakpoint */
+    .level-select {
+        display: none;
+        flex: none;
+        align-self: center;
+        width: auto;
+        height: auto;
+        margin-right: var(--space-2);
+        padding-block: 0;
+        border-color: #000;
+        color: #000;
+        background-color: #fff8;
+        background-image:
+            linear-gradient(45deg, transparent 50%, #000 50%),
+            linear-gradient(135deg, #000 50%, transparent 50%);
+    }
+
     /* Host controls ride inside the slot: as tall as it is on desktop, 44px on touch screens */
     .remove-bot, .add-bot {
         flex: none;
@@ -361,8 +378,16 @@ body {
         }
     }
 
+    /* A bare cross, square, sized to the slot's controls */
     .remove-bot {
+        width: 1.5rem;
+        padding-inline: 0;
         color: #000;
+
+        .close-icon {
+            width: 1rem;
+            height: 1rem;
+        }
     }
 
     @media screen and (max-width: 768px) {
@@ -370,17 +395,31 @@ body {
             min-height: 44px;
         }
 
+        .remove-bot {
+            width: 44px;
+
+            .close-icon {
+                width: 1.25rem;
+                height: 1.25rem;
+            }
+        }
+
         .level-dots .dot {
             width: 1rem;
             height: 1rem;
         }
 
-        button.dot::before {
-            inset: -0.75rem -0.25rem;
+        /* The host picks the level on a select; the dots stay for everyone else */
+        .level-select {
+            display: block;
+        }
+
+        .level-dots:has(+ .level-select) {
+            display: none;
         }
 
         /* The controls keep 44px and the slot grows around them; the list scrolls */
-        &:has(.remove-bot, .add-bot) {
+        &:has(.remove-bot, .add-bot, .level-select) {
             min-height: calc(44px + 0.5rem);
         }
     }

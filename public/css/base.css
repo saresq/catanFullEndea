@@ -13,6 +13,15 @@ button, .button {
     padding-inline: 0;
 }
 
+/* Inline Lucide glyphs (const.js `icon()`): sized by the font, painted in the text colour */
+.lucide {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.125em;
+    flex: none;
+}
+
 /* Counts and timers keep their width as digits change (body face has the features) */
 body {
     font-variant-numeric: lining-nums tabular-nums;

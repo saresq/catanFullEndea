@@ -22,12 +22,14 @@
 }
 
 /*
- * The face. Exports are cropped to the art (586x873, same ratio as the box), so 100% fits exactly.
+ * The face. Exports are cropped to the art (586x873, same ratio as the box). Sized to both edges,
+ * not the width alone: with a fractional box the height rounds on its own and a width-only size
+ * left a hairline of --card-face at the top or bottom of the small cards.
  */
 .card:not(.card--under, .card--flip),
 .card--under::before,
 .card--flip .card-front::before {
-    background: var(--card-face) var(--card-img) var(--card-pos) / 100% no-repeat;
+    background: var(--card-face) var(--card-img) var(--card-pos) / 100% 100% no-repeat;
 }
 
 /* Sizes */

@@ -1,5 +1,5 @@
 import { default as MSG, getName } from "../const_messages.js"
-import { STORAGE_KEYS as KEYS, REMATCH_SECONDS, GAME_STATES as ST } from "../const.js"
+import { STORAGE_KEYS as KEYS, REMATCH_SECONDS, GAME_STATES as ST, icon } from "../const.js"
 const $ = document.querySelector.bind(document)
 const TURN_SEP = '<<<TURN_SEPARATOR>>>'
 
@@ -55,8 +55,14 @@ export default class AlertUI {
       buffer = ''
     })
     this.$status_history_container.innerHTML = html + buffer
-    this.$alert.querySelector('.close').addEventListener('click', e => this.closeBigAlert())
-    this.$status_history.querySelector('.close').addEventListener('click', e => this.toggleStatusHistory(false))
+    const $close = this.$alert.querySelector('.close')
+    $close.innerHTML = icon('x')
+    $close.setAttribute('aria-label', 'Close')
+    $close.addEventListener('click', e => this.closeBigAlert())
+    const $hclose = this.$status_history.querySelector('.close')
+    $hclose.innerHTML = icon('x')
+    $hclose.setAttribute('aria-label', 'Close history')
+    $hclose.addEventListener('click', e => this.toggleStatusHistory(false))
     // The whole bar is the entry point; a link inside a status keeps its own click.
     $('#game > .current-player .status-bar').addEventListener('click', e => {
       e.target.closest('a, .show-end-game') || this.toggleStatusHistory()
@@ -231,8 +237,8 @@ export default class AlertUI {
     ]
     this.$alert.querySelector('.text').innerHTML = `
       <div class="game-ended pc${cid}">
-        <div class="title-emoji">🏆</div>
-        <div class="player-name">🎖 ${getName(p)} Won 🎖</div>
+        <div class="title-emoji">${icon('trophy')}</div>
+        <div class="player-name">${getName(p)} Won</div>
         <div class="end-overview">
           <table class="end-table">
             <thead><tr>${head.map(([label, cls, icon = '', type]) =>

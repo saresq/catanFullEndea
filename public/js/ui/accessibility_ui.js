@@ -1,4 +1,4 @@
-import { STORAGE_KEYS as KEYS } from "../const.js"
+import { STORAGE_KEYS as KEYS, icon } from "../const.js"
 const _dummyFn = _ => _
 export default class AccessibilityUI {
   #shown_icons
@@ -20,7 +20,7 @@ export default class AccessibilityUI {
       ['Buy Development Card', 'd'],
       ['Trade options', 't'],
       ['Play Knight Card', 'k'],
-      ['End Turn ⏭️', 'e (or) SPACE'],
+      ['End Turn', 'e (or) SPACE'],
     ], [
       ['Full Screen', 'f'],
       ['Board Zoom In', '='],
@@ -67,18 +67,18 @@ export default class AccessibilityUI {
     this.$el.innerHTML = `
       <button class="icon settings-gear" title="Options" aria-label="Options"
         aria-expanded="false" aria-controls="options-menu"></button>
-      ${this.#recenterMap ? `<button class="icon recenter" title="Recenter Map (Home)" aria-label="Recenter map">🏠</button>` : ''}
+      ${this.#recenterMap ? `<button class="icon recenter" title="Recenter Map (Home)" aria-label="Recenter map">${icon('map-pin')}</button>` : ''}
       <div class="menu-backdrop hide"></div>
       <div class="options-menu hide" id="options-menu">
-        ${shown.fullscreen ? item('full-screen', '⇱', 'Full screen', 'f', true) : ''}
-        ${shown.zoom ? item('zoom-in', '✚', 'Zoom in', '=') + item('zoom-out', '−', 'Zoom out', '-') : ''}
-        ${shown.notifcation_sounds ? item('notifications', '🔊', 'Notification sounds', 'n', true) : ''}
-        ${shown.bgm ? item('bgm', '♫', 'Music', 'm', true) : ''}
-        ${shown.shorcuts ? item('question-mark', '?', 'Keyboard shortcuts', '?') : ''}
-        ${this.#spectator_link ? item('spectator-link', '🔗', 'Copy spectator link') : ''}
-        ${shown.info ? item('info', 'ℹ︎', 'About') : ''}
-        ${shown.quit ? `<div class="sep"></div>` + item('quit danger', '⏻', this.#quit_label) : ''}
-        ${this.#back ? `<div class="sep"></div>` + item('back', '←', this.#back.label) : ''}
+        ${shown.fullscreen ? item('full-screen', icon('maximize'), 'Full screen', 'f', true) : ''}
+        ${shown.zoom ? item('zoom-in', icon('zoom-in'), 'Zoom in', '=') + item('zoom-out', icon('zoom-out'), 'Zoom out', '-') : ''}
+        ${shown.notifcation_sounds ? item('notifications', icon('volume-2'), 'Notification sounds', 'n', true) : ''}
+        ${shown.bgm ? item('bgm', icon('music'), 'Music', 'm', true) : ''}
+        ${shown.shorcuts ? item('question-mark', icon('keyboard'), 'Keyboard shortcuts', '?') : ''}
+        ${this.#spectator_link ? item('spectator-link', icon('link'), 'Copy spectator link') : ''}
+        ${shown.info ? item('info', icon('info'), 'About') : ''}
+        ${shown.quit ? `<div class="sep"></div>` + item('quit danger', icon('power'), this.#quit_label) : ''}
+        ${this.#back ? `<div class="sep"></div>` + item('back', icon('arrow-left'), this.#back.label) : ''}
       </div>
       ${shown.shorcuts ? `
         <div class="keyboard-shortcuts panel hide">${this.keyboard_shortcuts.map(group =>
@@ -88,29 +88,18 @@ export default class AccessibilityUI {
               <div class="key">${shortcut}</div>
             </div>`).join('')}
           </div>`).join('')}
-          <button class="close">X</button>
+          <button class="close" aria-label="Close">${icon('x')}</button>
         </div>
       `: ''}
       ${shown.info ? `
         <div class="info-zone panel hide">
-          <div class="container">
-            <div class="text-container">
-              <div class="title">
-                Catan Full Endea
-                <br>
-                <small>
-                  Based on <a href="https://github.com/bigomega/catan" target="_blank">BigOmega's Catan</a>
-                </small>
-              </div>
-              <p>
-                Full endea development by Saresq
-                <br>
-                <br>
-                <a class="rules" href="https://www.catan.com/sites/default/files/2021-06/catan_base_rules_2020_200707.pdf" target="_blank">Game Rules</a>
-              </p>
-            </div>
-          </div>
-          <button class="close">X</button>
+          <div class="title">Catan Full Endea</div>
+          <p class="credit">
+            Built by Saresq, based on
+            <a href="https://github.com/bigomega/catan" target="_blank" rel="noopener">BigOmega's Catan</a>
+          </p>
+          <a class="rules" href="https://www.catan.com/sites/default/files/2021-06/catan_base_rules_2020_200707.pdf" target="_blank" rel="noopener">Game rules</a>
+          <button class="close" aria-label="Close">${icon('x')}</button>
         </div>
       ` : ''}
     `
@@ -139,11 +128,11 @@ export default class AccessibilityUI {
       if (!$item) return
       $item.setAttribute('aria-pressed', on)
       $item.querySelector('.state').textContent = on ? 'on' : 'off'
-      if (ico) $item.querySelector('.ico').textContent = ico
+      if (ico) $item.querySelector('.ico').innerHTML = ico
     }
     const full = !!document.fullscreenElement
-    set('.item.full-screen', full, full ? '⇲' : '⇱')
-    set('.item.notifications', !this.muted_notif, this.muted_notif ? '🔇' : '🔊')
+    set('.item.full-screen', full, icon(full ? 'minimize' : 'maximize'))
+    set('.item.notifications', !this.muted_notif, icon(this.muted_notif ? 'volume-x' : 'volume-2'))
     set('.item.bgm', !this.muted)
   }
 
