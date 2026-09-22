@@ -7,7 +7,7 @@ class WaitingRoomUI {
   player_count = window.player_count
   $joined_count = document.querySelector('.box-header .p-count')
   $game_key = $('#waiting-room .title .text')
-  escCloser = e => { if (e.key === 'Escape') this.closeColorPicker() }
+  escCloser = e => { if (e.key === 'Escape') this.closePicker() }
 
   constructor() {
     this.socket = window.io()
@@ -51,8 +51,16 @@ class WaitingRoomUI {
       })
     }
 
-    // Own slot opens the colour picker; bound once, survives every re-render
+    // Own slot opens the colour picker; the host's bot controls live on empty and bot slots.
+    // Bound once, survives every re-render
     $('#slots-list').addEventListener('click', e => {
+      const $add = e.target.closest('.add-bot')
+      const $remove = e.target.closest('.remove-bot')
+      const $dot = e.target.closest('.level-dots button')
+      if (!this.is_host && ($add || $remove || $dot)) return
+      if ($add) { this.socket.emit(CONST.SOCKET_EVENTS.ADD_BOT, CONST.DEFAULT_BOT_LEVEL); return }
+      if ($remove) { this.socket.emit(CONST.SOCKET_EVENTS.REMOVE_BOT, +$remove.dataset.pid); return }
+      if ($dot) { this.socket.emit(CONST.SOCKET_EVENTS.SET_BOT_LEVEL, +$dot.closest('.level-dots').dataset.pid, $dot.dataset.level); return }
       if (e.target.closest('.slot.me')) this.openColorPicker(this.getTakenColors())
     })
 
@@ -139,16 +147,30 @@ class WaitingRoomUI {
     }, 2500)
   }
 
-  closeColorPicker() {
-    document.querySelector('.color-picker-overlay')?.remove()
+  closePicker() {
+    document.querySelector('.picker-overlay')?.remove()
     document.removeEventListener('keydown', this.escCloser)
+  }
+  closeColorPicker() { this.closePicker() }
+
+  /** Sand panel over the room, closed by its Cancel, a click outside or Escape. */
+  #openOverlay(html) {
+    this.closePicker()
+    const overlay = document.createElement('div')
+    overlay.className = 'picker-overlay'
+    overlay.innerHTML = `<div class="picker panel" role="dialog" aria-modal="true" tabindex="-1">${html}</div>`
+    document.body.appendChild(overlay)
+    overlay.addEventListener('click', (e) => {
+      if (e.target.classList.contains('close') || e.target === overlay) this.closePicker()
+    })
+    document.addEventListener('keydown', this.escCloser)
+    // Focus the panel, not an option: a focused option reads as already chosen
+    overlay.querySelector('.picker').focus({ preventScroll: true })
+    return overlay
   }
 
   openColorPicker(takenColors = new Set()) {
-    const overlay = document.createElement('div')
-    overlay.className = 'color-picker-overlay'
-    overlay.innerHTML = `
-      <div class="picker panel">
+    const overlay = this.#openOverlay(`
         <div class="title">Choose your color</div>
         <div class="grid">
           ${CONST.COLOR_IDS.map(i=>`
@@ -156,19 +178,13 @@ class WaitingRoomUI {
                  style="background-image:url('/images/pieces/city-${i}.png')" title="Color ${i}"></div>
           `).join('')}
         </div>
-        <button class="btn btn--secondary btn--sm close">Cancel</button>
-      </div>`
-    document.body.appendChild(overlay)
-    overlay.addEventListener('click', (e) => {
-      if (e.target.classList.contains('close') || e.target === overlay) this.closeColorPicker()
-    })
+        <button class="btn btn--secondary btn--sm close">Cancel</button>`)
     overlay.querySelectorAll('.color-option:not(.taken)')
       .forEach(el => el.addEventListener('click', e => {
         const cid = +e.currentTarget.dataset.id
         this.socket.emit(CONST.SOCKET_EVENTS.PLAYER_COLOR_CHANGE, cid)
-        this.closeColorPicker()
+        this.closePicker()
       }))
-    document.addEventListener('keydown', this.escCloser)
   }
 
   getTakenColors() {
@@ -283,10 +299,10 @@ class WaitingRoomUI {
     })
   }
 
-  addPlayer({ id, name, color_id }) {
+  addPlayer({ id, name, color_id, is_bot, bot_level }) {
     // Keep global list updated for rendering
     window.players = window.players || []
-    window.players[id - 1] = { id, name, color_id }
+    window.players[id - 1] = { id, name, color_id, is_bot: !!is_bot, bot_level: bot_level || null }
     this.updateJoinedCount()
     this.updateMaxPlayersSelect?.()
   }
@@ -312,6 +328,24 @@ class WaitingRoomUI {
     this.$start_btn.textContent = full ? 'Start Game' : `Waiting… (${this.player_count - joined})`
   }
 
+  /**
+   * A bot's level as dots: one filled per step up to its level. The host's dots are buttons (the
+   * n-th sets the n-th level); a level that does not exist yet is shown, but cannot be chosen.
+   */
+  levelDots(p) {
+    const levels = CONST.BOT_LEVELS
+    const current = Math.max(0, levels.findIndex(l => l.id === p.bot_level))
+    const name = levels[current]?.name || p.bot_level
+    const dots = levels.map((l, i) => {
+      const cls = `dot${i <= current ? ' filled' : ''}${l.available ? '' : ' unavailable'}`
+      if (!this.is_host) return `<span class="${cls}"></span>`
+      const label = l.available ? `${l.name} bot` : `${l.name} bot (not ready)`
+      return `<button type="button" class="${cls}" data-level="${l.id}" aria-label="${label}" title="${label}"
+        aria-pressed="${l.id === p.bot_level}" ${l.available ? '' : 'disabled'}></button>`
+    }).join('')
+    return `<span class="level-dots" data-pid="${p.id}" role="${this.is_host ? 'group' : 'img'}" aria-label="${name} bot">${dots}</span>`
+  }
+
   renderSlots() {
     const $list = document.getElementById('slots-list')
     if (!$list) return
@@ -321,12 +355,22 @@ class WaitingRoomUI {
         const cid = p.color_id || p.id
         const me = this.my_pid && this.my_pid === p.id
         const tag = me ? 'button type="button" title="Choose color"' : 'div'
-        return `<${tag} class="slot filled ${me ? 'me' : ''} p${p.id} pc${cid}" data-pid="${p.id}">
+        // A bot is marked by the robot and its level as filled dots, not by its colour; the host
+        // sets the level on the dots and can send the bot away
+        const bot = p.is_bot ? `${CONST.BOT_ICON}${this.levelDots(p)}` : ''
+        const remove = p.is_bot && this.is_host
+          ? `<button type="button" class="btn btn--quiet btn--sm remove-bot" data-pid="${p.id}" aria-label="Remove bot ${p.name}">Remove</button>`
+          : ''
+        return `<${tag} class="slot filled ${me ? 'me' : ''} ${p.is_bot ? 'bot' : ''} p${p.id} pc${cid}" data-pid="${p.id}">
           <span class="city-icon" style="background-image:url('/images/pieces/city-${cid}.png')"></span>
-          <span class="name">${p.name}</span>
+          <span class="name">${p.name}</span>${bot}${remove}
         </${me ? 'button' : 'div'}>`
       }
-      return `<div class="slot empty"><span class="empty-label">Empty slot</span></div>`
+      // The host fills an empty seat with a bot; its level is set on the slot afterwards
+      const add = this.is_host
+        ? `<button type="button" class="btn btn--secondary btn--sm add-bot">${CONST.BOT_ICON}Add a bot</button>`
+        : ''
+      return `<div class="slot empty"><span class="empty-label">Empty slot</span>${add}</div>`
     }).join('')
     $list.innerHTML = items
 

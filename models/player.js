@@ -8,6 +8,8 @@ export default class Player {
   online = false
   ready = false
   removed = false
+  is_bot = false
+  /** @type {null|'easy'|'medium'} */ bot_level = null
   color_id = 1
   resource_count = 0
   dev_card_count = 0
@@ -187,6 +189,14 @@ export default class Player {
 
   removePlayer() { this.removed = true }
 
+  /** A bot sits down in this quit seat: only the identity changes, the position is kept. */
+  takeOverAsBot(name, level) {
+    this.removed = false
+    this.is_bot = true
+    this.bot_level = level
+    this.name = Player.cleanName(name) || this.name
+  }
+
   toJSON(get_private) {
     const playerJSON = {
       id: this.id,
@@ -204,6 +214,8 @@ export default class Player {
       longest_road: this.longest_road,
       longest_road_list: this.longest_road_list,
       removed: this.removed,
+      is_bot: this.is_bot,
+      bot_level: this.bot_level,
       ...(get_private ? {
         turn_bought_dc: this.turn_bought_dc,
         private_vps: this.private_vps,

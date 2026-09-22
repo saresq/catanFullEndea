@@ -31,6 +31,7 @@ export default class UI {
     this.alert_ui = new AlertUI(player, game.config.alert_time, {
       onStatusUpdate: st => game.saveStatus(st),
       showCard: type => this.player_ui.showCardPreview(type),
+      onReplaceWithBot: pid => game.replaceWithBot(pid),
     })
 
     this.accessibility_ui = new AccessibilityUI({
@@ -47,6 +48,8 @@ export default class UI {
       showLongestRoad: _ => this.player_ui.showCardPreview('lRoad'),
       showPlayerLongestRoad: pid => this.board_ui.showLongestEdges(game.getPlayer(pid)?.longest_road_list),
       hidePlayerLongestRoad: _ => this.board_ui.hideLongestRoads(),
+      onReplaceWithBot: pid => game.replaceWithBot(pid),
+      host_pid: game.host_pid,
     })
 
     this.player_ui = new PlayerUI(player, game.config.timer, game.config.auto_roll, {

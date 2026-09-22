@@ -39,10 +39,21 @@ Tips:
 npm i
 npm start     # http://localhost:3000
 npm test      # node --test tests/
+npm run sim   # headless bot-vs-bot games, no server or port
 ```
 > `.nvmrc` points at node `v20.10`. Use at least `v18`.
 
 Hosting it for other people is in [`DEPLOY.md`](DEPLOY.md).
+
+### Bot simulation
+`scripts/bot_sim.js` plays whole games between bots to compare levels and to shake bugs out of the
+engine. It exits non-zero on an exception, a bot error, a game that never finishes, or an evaluator
+that changes the board.
+```bash
+npm run sim -- --games 200 --seats medium,medium,easy,easy
+npm run sim -- --games 50 --players 6 --mapkey "<key from the map editor>"
+```
+Bot names come from `config/bot_names.json`, a plain JSON array you can edit.
 
 ## Repository map
 
@@ -53,6 +64,10 @@ Hosting it for other people is in [`DEPLOY.md`](DEPLOY.md).
 | `models/player.js` | Hand, dev cards, pieces, victory points. |
 | `models/io_manager.js` | Binds socket events to `Game` methods; broadcast + private emit helpers. |
 | `models/dice.js` | `createDice(mode)` — random or balanced. |
+| `models/bots/` | Server-side bots: controller, player view, legal moves, `easy` and `medium` evaluators. |
+| `models/rematch.js` | Rematch votes and the next game, bots re-seated. |
+| `config/bot_names.json` | Editable list of bot names. |
+| `scripts/bot_sim.js` | Headless bot-vs-bot runner (`npm run sim`). |
 | `public/js/const.js` | `GAME_CONFIG` defaults and the canonical `SOCKET_EVENTS` table. |
 | `public/js/game.js` | Client controller. Renders from broadcasts; never mutates state on its own. |
 | `public/js/socket_manager.js` | Client socket listeners and emitters. |

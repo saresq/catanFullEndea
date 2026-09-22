@@ -164,6 +164,22 @@ export const GAME_CONFIG = {
   dice_mode: 'random',
 }
 
+/** Level a bot gets when added; the host adjusts it on the slot. */
+export const DEFAULT_BOT_LEVEL = 'medium'
+
+/**
+ * Bot levels the lobby offers, in order (the lobby shows them as that many filled dots). `available: false` is shown but cannot be picked, and the
+ * server refuses it too (`BOT_LEVELS` in models/game.js).
+ */
+export const BOT_LEVELS = [
+  { id: 'easy', name: 'Easy', blurb: 'Plays at random and builds whatever it can afford.', available: true },
+  { id: 'medium', name: 'Medium', blurb: 'Settles by the dice, builds toward a goal, trades with the bank.', available: true },
+  { id: 'tryhard', name: 'Tryhard', blurb: 'Counts cards and trades with players.', available: false },
+]
+
+/** Robot glyph (Lucide `bot`, MIT): marks a bot seat wherever colour alone would not. `aria-hidden`; pair with text. */
+export const BOT_ICON = `<svg class="bot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>`
+
 export const GAME_STATES = {
   INITIAL_SETUP: 'INITIAL_SETUP',
   PLAYER_ROLL: 'player_roll',
@@ -187,6 +203,10 @@ export const SOCKET_EVENTS = {
   GODMODE_ACTIVATE: 'godmode_activate',
   GODMODE_FREE_RES_ACTIVATE: 'godmode_free_resources_activate',
   CHANGE_CONFIG: 'change_game_config',
+  ADD_BOT: 'waiting_room_add_bot',
+  REMOVE_BOT: 'waiting_room_remove_bot',
+  SET_BOT_LEVEL: 'waiting_room_set_bot_level',
+  REPLACE_WITH_BOT: 'replace_quit_player_with_bot',
   // Both Sends…
   INITIAL_SETUP: 'ask/return_initial_setup',
   ROBBER_DROP: 'resources_dropped_to_robber/ack', // Private
@@ -220,6 +240,8 @@ export const SOCKET_EVENTS = {
   GODMODE_FREE_RES: 'godmode_free_resources_activated',
   ROLL_DISTRIBUTION: 'dice_roll_distribution',
   SPECTATOR_COUNT: 'spectator_count',
+  SEAT_TAKEN_OVER: 'seat_taken_over_by_bot',
+  HOST_CHANGED: 'host_changed',
 }
 
 export const AUDIO_FILES = {

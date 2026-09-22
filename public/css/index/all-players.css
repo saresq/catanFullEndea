@@ -81,9 +81,13 @@
         gap: var(--space-1);
         padding: 2px var(--space-1);
 
+        /* Greyed part by part, so the host's "Bot?" button stays in colour */
         &.deactivated {
-            filter: grayscale(1) contrast(0.5) brightness(0.7);
             cursor: not-allowed;
+
+            > :not(.replace-bot) {
+                filter: grayscale(1) contrast(0.5) brightness(0.7);
+            }
         }
 
         .name {
@@ -95,6 +99,41 @@
             padding: var(--space-1) var(--space-2);
             background: var(--p-color, var(--sand-color-dark));
             color: #fff;
+        }
+
+        /* Bot seats: a word beside the name, never the colour alone; the level sits under it */
+        /* The robot beside the name, so it costs the name almost nothing; the level is text for
+           readers and on hover */
+        .bot-mark {
+            display: none;
+            flex: none;
+            color: var(--surface-ink);
+
+            .bot-icon {
+                display: block;
+                width: 1.125rem;
+                height: 1.125rem;
+            }
+
+            small {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                overflow: hidden;
+                clip-path: inset(50%);
+            }
+        }
+
+        &.bot .bot-mark {
+            display: block;
+        }
+
+        /* The host's way to hand a quit seat to a bot; only on quit seats, only for the host */
+        .replace-bot {
+            display: none;
+            flex: none;
+            min-height: 1.75rem;
+            padding-block: 0;
         }
 
         .victory-points {
@@ -251,6 +290,12 @@
 
     /* Collapsed: one chip per player (colour, name, VP), same elements so they stay live. Only the
        card stats go; who is who and the score stay readable. */
+    &.host .player.deactivated .replace-bot {
+        display: inline-flex;
+        filter: none;
+        cursor: pointer;
+    }
+
     &.compact {
         display: flex;
         flex-wrap: wrap;
@@ -284,6 +329,10 @@
 
             .victory-points {
                 width: auto;
+            }
+
+            .bot-mark {
+                color: inherit;
             }
         }
     }
@@ -324,6 +373,10 @@
                 padding: 0 2px;
                 background: none;
                 font-size: 0.85rem;
+            }
+
+            .bot-mark {
+                color: inherit;
             }
 
             .victory-points {

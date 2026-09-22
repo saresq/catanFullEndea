@@ -73,6 +73,14 @@ export default class IOManager {
     /** @event Waiting-Room Config Change */
     socket.on(SOC.CHANGE_CONFIG, config => game.waitingRoomChangeConfigIO(pid, config))
 
+    /** @event Waiting-Room Add / Remove Bot */
+    socket.on(SOC.ADD_BOT, level => game.addBotIO(pid, level))
+    socket.on(SOC.REMOVE_BOT, bot_pid => game.removeBotIO(pid, +bot_pid))
+    socket.on(SOC.SET_BOT_LEVEL, (bot_pid, level) => game.setBotLevelIO(pid, +bot_pid, level))
+
+    /** @event Replace a quit player with a bot */
+    socket.on(SOC.REPLACE_WITH_BOT, quit_pid => game.replaceWithBotIO(pid, +quit_pid))
+
     /** @event GodMode Activate */
     socket.on(SOC.GODMODE_ACTIVATE, () => game.godModeActivateIO(pid))
 
@@ -150,6 +158,10 @@ export default class IOManager {
   updateGameEnd(context) { this.emit(SOC.GAME_END, context) }
 
   updatePlayerQuit(pid) { this.emit(SOC.PLAYER_QUIT, pid) }
+
+  updateSeatTakenOver(p_json) { this.emit(SOC.SEAT_TAKEN_OVER, p_json) }
+
+  updateHost(pid) { this.emit(SOC.HOST_CHANGED, pid) }
 
   updateGodMode(pid) { this.emit(SOC.GODMODE, pid) }
 

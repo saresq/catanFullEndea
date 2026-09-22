@@ -9,6 +9,8 @@ import cookieParser from 'cookie-parser'
 import { generate as generateRandomWords } from "random-words"
 import Game from "./models/game.js"
 import Player from "./models/player.js"
+import { attachBots } from "./models/bots/controller.js"
+import { rematchNonVoters, createRematch } from "./models/rematch.js"
 import * as CONST from "./public/js/const.js"
 import BoardShuffler from "./public/js/board/board_shuffler.js"
 import Board from "./public/js/board/board.js"
@@ -111,6 +113,7 @@ app.get('/game/new', function (req, res) {
     config,
     onGameEnd: _id => onGameEnd(_id),
   })
+  attachBots(game)
   res.cookie('game_id', id, { maxAge: SESSION_EXPIRE_HOURS * 60 * 60 * 1000, httpOnly: true })
   res.cookie('player_id', pid, { maxAge: SESSION_EXPIRE_HOURS * 60 * 60 * 1000, httpOnly: true })
   GAME_SESSIONS[id] = game
@@ -200,7 +203,8 @@ app.get('/login', function (req, res) {
     return res.render('login')
   }
 
-  let player = game.players.find(p => p?.name === trimmedName && !p.removed)
+  // A bot's seat is never handed over by name
+  let player = game.findSeatByName(trimmedName)
   if (!player) {
     player = game.join(trimmedName)
   }
@@ -271,33 +275,18 @@ io.on('connection', (socket) => {
 
     REMATCH_INFO[gid].votes.add(pid)
 
-    // Compute non-voters from active players at end of game
-    const players = game.players.filter(p => p && !p.removed)
-    const nonVoters = players.filter(p => !REMATCH_INFO[gid].votes.has(p.id))
+    // Bots count as voted; quit seats have no vote
+    const nonVoters = rematchNonVoters(game, REMATCH_INFO[gid].votes)
 
     if (nonVoters.length === 0) {
-      // Unanimous: create a new game with the same configuration and same host
+      // Unanimous: a new game with the same configuration, host and bots
       let newId
       do { newId = generateRandomWords({ min: 2, max: 2, join: '-' }) } while (GAME_SESSIONS[newId])
 
-      const clonedConfig = JSON.parse(JSON.stringify(game.config || {}))
-      const hostPid = game.host_pid
-      const hostPlayer = game.getPlayer(hostPid)
-
-      const newGame = new Game({
-        id: newId,
-        io,
-        host: { name: hostPlayer?.name, id: hostPid },
-        config: clonedConfig,
-        onGameEnd: _id => onGameEnd(_id),
+      const { game: newGame, redirects: redirectMap } = createRematch(game, {
+        id: newId, io, onGameEnd: _id => onGameEnd(_id),
       })
       GAME_SESSIONS[newId] = newGame
-
-      // Build per-player redirect map based on names
-      const redirectMap = players.reduce((map, p) => {
-        map[p.id] = `/login?game_id=${encodeURIComponent(newId)}&name=${encodeURIComponent(p.name)}`
-        return map
-      }, {})
 
       io.to(gid).emit(CONST.SOCKET_EVENTS.REMATCH_NEW_GAME, redirectMap)
 

@@ -7,11 +7,14 @@ export default class AllPlayersUI {
   $el = $('#game .all-players')
   player_refs = []
   #compact = false
+  #onReplaceWithBot; host_pid
 
   constructor(player, opponents, { showLargestArmy, showLongestRoad,
-    showPlayerLongestRoad, hidePlayerLongestRoad }) {
+    showPlayerLongestRoad, hidePlayerLongestRoad, onReplaceWithBot, host_pid }) {
     this.player = player
     this.opponents = opponents
+    this.#onReplaceWithBot = onReplaceWithBot
+    this.host_pid = host_pid
     this.#showLargestArmy = showLargestArmy
     this.#showLongestRoad = showLongestRoad
     this.#showPlayerLongestRoad = showPlayerLongestRoad
@@ -32,8 +35,10 @@ export default class AllPlayersUI {
       <button class="toggle-players" title="Toggle players panel (Shift)">▼</button>
     </div>`
     this.$el.innerHTML = header + all_players.map(player => `
-      <div class="player p${player.id} pc${player.color_id || player.id} ${player.removed ? 'deactivated' : ''}" data-id="${player.id}">
+      <div class="player p${player.id} pc${player.color_id || player.id} ${player.removed ? 'deactivated' : ''} ${player.is_bot ? 'bot' : ''}" data-id="${player.id}" data-level="${player.bot_level || ''}">
         <div class="name" title="${player.name}">${player.name}</div>
+        <span class="bot-mark" title="${player.bot_level} bot">${CONST.BOT_ICON}<small>${player.bot_level || ''} bot</small></span>
+        <button type="button" class="btn btn--secondary btn--sm replace-bot" title="Replace with a bot" aria-label="Replace ${player.name} with a bot">Bot?</button>
         <div class="victory-points" title="Victory Points"><span>${player.public_vps + (player.private_vps || 0)}</span></div>
         <div class="cards-container">
           <div class="resources card card--xs" data-card="res-back" data-count="${player.resource_count}" title="Resources in hand"
@@ -51,6 +56,10 @@ export default class AllPlayersUI {
     this.#setRefs()
     this.#updateTurnIndicator()
     this.$el.querySelector('.toggle-players')?.addEventListener('click', _ => this.toggleCompact())
+    this.$el.querySelectorAll('.replace-bot').forEach($_ => $_.addEventListener('click', e => {
+      this.#onReplaceWithBot(+e.currentTarget.closest('.player').dataset.id)
+    }))
+    this.setHost(this.host_pid)
     this.$el.querySelectorAll('.largest-army').forEach($_ => $_.addEventListener('click', e => {
       if (this.$el.dataset.army !== e.target.dataset.id) return
       this.#showLargestArmy(+this.$el.dataset.army)
@@ -125,6 +134,25 @@ export default class AllPlayersUI {
 
   deactivatePlayer(pid) {
     this.player_refs[pid]?.$p.classList.add('deactivated')
+  }
+
+  /** A bot sat down in a quit seat: back in play, under a new name, marked as a bot */
+  reactivateAsBot(player) {
+    const $p = this.player_refs[player.id]?.$p
+    if (!$p) return
+    $p.classList.remove('deactivated')
+    $p.classList.add('bot')
+    $p.dataset.level = player.bot_level
+    const $name = $p.querySelector('.name')
+    if ($name) { $name.textContent = player.name; $name.title = player.name }
+    const $mark = $p.querySelector('.bot-mark')
+    if ($mark) { $mark.title = `${player.bot_level} bot`; $mark.querySelector('small').textContent = `${player.bot_level} bot` }
+  }
+
+  /** The host alone sees "Bot?" on quit seats (`.host` on the list gates it in CSS) */
+  setHost(host_pid) {
+    this.host_pid = host_pid
+    this.$el.classList.toggle('host', host_pid === this.player.id)
   }
 
   updateSpectatorCount(count) {

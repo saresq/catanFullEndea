@@ -5,7 +5,7 @@ const TURN_SEP = '<<<TURN_SEPARATOR>>>'
 
 export default class AlertUI {
   #player; #alert_time; #alert_timer;
-  #onStatusUpdate; #showCard
+  #onStatusUpdate; #showCard; #onReplaceWithBot
   #status_history = []
   $status_history = $('#game .current-player .status-history-zone')
   $status_history_container = $('#game .current-player .status-history-zone > .container')
@@ -13,10 +13,11 @@ export default class AlertUI {
   $alert = $('#game > .alert')
   $status_bar = $('#game > .current-player .status-bar .status-text')
 
-  constructor(player, alert_time = 3, { onStatusUpdate, showCard }){
+  constructor(player, alert_time = 3, { onStatusUpdate, showCard, onReplaceWithBot }){
     this.#player = player
     this.#onStatusUpdate = onStatusUpdate
     this.#showCard = showCard
+    this.#onReplaceWithBot = onReplaceWithBot
     this.#alert_time = alert_time
     // Ensure status history doesn't persist across games (e.g., rematch)
     try {
@@ -193,7 +194,18 @@ export default class AlertUI {
   alertYearOfPlentyUsed(p, res_obj) { this.setStatus(MSG.YEAR_OF_PLENTY_USED.all(this.#isNotMe(p), res_obj)) }
   alertLargestArmy(p, count) { this.setStatus(MSG.LARGEST_ARMY.all(this.#isNotMe(p), count)) }
   alertLongestRoad(p, len) { this.setStatus(MSG.LONGEST_ROAD.all(this.#isNotMe(p), len)) }
-  alertPlayerQuit(p, end) { this.bigAlert(MSG.PLAYER_QUIT.all(p, end)) }
+  /** `replace_pid`: the host gets a button to hand the seat to a bot; everyone else just the news */
+  alertPlayerQuit(p, replace_pid) {
+    this.bigAlert(MSG.PLAYER_QUIT.all(p, replace_pid), !!replace_pid)
+    if (!replace_pid) return
+    this.setStatusBarOnly(MSG.PLAYER_QUIT.all(p))
+    this.$alert.querySelector('.replace-bot')?.addEventListener('click', e => {
+      this.#onReplaceWithBot(+e.currentTarget.dataset.pid)
+      this.closeBigAlert()
+    })
+  }
+  alertSeatTakenOver(p, was) { this.setStatus(MSG.SEAT_TAKEN_OVER.all(p, was)) }
+  alertHostChanged(p, me) { this.setStatus(MSG.HOST_CHANGED.all(this.#isNotMe(p), me)) }
   alertGameEnd(p, context, game) {
     this.setStatus(MSG.END_STATUS.all(this.#isNotMe(p), context.vps))
     this.renderEndGameAlert(this.#isNotMe(p), context, game)
@@ -227,7 +239,7 @@ export default class AlertUI {
               `<th class="${cls}"${type ? ` data-type="${type}"` : ''}>${icon}<span class="label">${label}</span></th>`).join('')}</tr></thead>
             <tbody>${rows.map(({ pl, total, cells }) => `
               <tr class="pc${pl.color_id || pl.id}${pl.id === pid ? ' winner' : ''}${pl.removed ? ' left' : ''}">
-                <td class="name"><div><span class="p-name">${this.#isMe(pl) ? 'You' : pl.name}</span>${pl.removed ? '<small>left</small>' : ''}</div></td>
+                <td class="name"><div><span class="p-name">${this.#isMe(pl) ? 'You' : pl.name}</span>${pl.removed ? '<small>left</small>' : pl.is_bot ? `<small>bot · ${pl.bot_level}</small>` : ''}</div></td>
                 <td class="total"><span>${total}</span></td>${cells.map(cell).join('')}
               </tr>`).join('')}
             </tbody>

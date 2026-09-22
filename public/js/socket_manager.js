@@ -85,6 +85,12 @@ export default class SocketManager {
     /** @event Player-Quit */
     socket.on(SOC.PLAYER_QUIT, pid => game.updatePlayerQuitSoc(pid))
 
+    /** @event Seat-Taken-Over by a bot */
+    socket.on(SOC.SEAT_TAKEN_OVER, p_json => game.updateSeatTakenOverSoc(p_json))
+
+    /** @event Host-Changed */
+    socket.on(SOC.HOST_CHANGED, pid => game.updateHostChangedSoc(pid))
+
     /** @event GodMode Activated (broadcast) */
     socket.on(SOC.GODMODE, pid => game.updateGodModeSoc(pid))
 
@@ -124,6 +130,8 @@ export default class SocketManager {
   saveStatus(message) { this.#socket.emit(SOC.SAVE_STATUS, message) }
 
   sendRematchVote() { this.#socket.emit(SOC.REMATCH_VOTE) }
+
+  sendReplaceWithBot(pid) { this.#socket.emit(SOC.REPLACE_WITH_BOT, pid) }
 
   sendGodModeActivate() { this.#socket.emit(SOC.GODMODE_ACTIVATE) }
 

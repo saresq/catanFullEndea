@@ -69,6 +69,10 @@ Handlers registered in `models/io_manager.js setUpEvents()` (~line 11 onward). E
 | `START_GAME` | `waiting_room_start_game` | `()` | `game.waitingRoomStartGameIO()` (host only) → `game.start()` |
 | `PLAYER_COLOR_CHANGE` | `waiting_room_player_color_change` | `(color_id)` | pre-game color pick |
 | `CHANGE_CONFIG` | `change_game_config` | `(config)` | host updates player_count / win_points / dice_mode / map |
+| `ADD_BOT` | `waiting_room_add_bot` | `(level: 'easy'\|'medium')` | `game.addBotIO()` — host seats a bot in the first free seat |
+| `REMOVE_BOT` | `waiting_room_remove_bot` | `(bot_pid)` | `game.removeBotIO()` — host frees a bot's seat (lobby only) |
+| `SET_BOT_LEVEL` | `waiting_room_set_bot_level` | `(bot_pid, level)` | `game.setBotLevelIO()` — host changes a bot's level in place; rebroadcast as `JOINED_WAITING_ROOM` |
+| `REPLACE_WITH_BOT` | `replace_quit_player_with_bot` | `(quit_pid)` | `game.replaceWithBotIO()` — host hands a quit seat to a medium bot |
 | `INITIAL_SETUP` | `ask/return_initial_setup` | `(settlement_id, road_id)` | `game.initialBuildIO()` for turns 1-2 |
 | `ROLL_DICE` | `roll_the_dice` | `()` | `game.playerRollIO()` — server rolls, not client |
 | `CLICK_LOC` | `clicked_location` | `(loc_type: 'E'\|'C'\|'T', id)` | `game.clickedLocationIO()` — build road/settlement/city |
@@ -117,6 +121,8 @@ Private events are sent only to a specific player's socket (never broadcast). Ma
 | `LONGEST_ROAD` | `longest_road` | room | `(pid, [loc_ids])` | title holder changed |
 | `GAME_END` | `game_end` | room | `{winner_pid, end_reason, final_vps}` | terminal state |
 | `PLAYER_QUIT` | `player_quit` | room | `(pid)` | disconnect notice |
+| `SEAT_TAKEN_OVER` | `seat_taken_over_by_bot` | room | `(player_json)` | a bot took a quit seat: new name, `is_bot`, `removed: false` |
+| `HOST_CHANGED` | `host_changed` | room | `(pid)` | host left; the next human in seat order hosts |
 | `ROLL_DISTRIBUTION` | `dice_roll_distribution` | room | `{2..12: count}` | debug/stats, balanced-dice mode |
 | `SPECTATOR_COUNT` | `spectator_count` | room | `count` | spectator count |
 | `GODMODE` | `godmode_activated` | room | `(pid)` | dev mode flag |
@@ -265,7 +271,8 @@ When adding new events that carry secret state, use pattern (2): look up target 
 - **Timers drive transitions.** `setTimer(seconds, fn)` (`game.js:803`) fires `fn` then `#next()`. Any handler that completes a state early must let `#next()` run once — double-advance skips a player. `clearTimer()` before manual advance. With `config.timer` false, timers are no-ops and `#next()` is called directly.
 - **Private vs broadcast emits.** Broadcast = `io.to(game_id)`. Private = `io.to(player_socket_id)` (`io_manager.js:101-131`, the `*_Private` methods). Hands, drawn dev cards, steal details and resource receipts are private — putting them on a broadcast leaks the game.
 - **`INITIAL_SETUP` is one string used both directions** (`'ask/return_initial_setup'`): server asks, client answers. Same for the `*/ack` events. Register a listener on only one side per process.
-- **Host-gated** (`game.js:406-431`): `START_GAME`, `CHANGE_CONFIG`. Both re-check `pid === host_pid` and `!this.state` server-side.
+- **Host-gated** (`game.js:406-431`): `START_GAME`, `CHANGE_CONFIG`, `ADD_BOT`, `REMOVE_BOT`, `SET_BOT_LEVEL` (all `!this.state`) and `REPLACE_WITH_BOT` (running game, `removed` seat only). All re-check `pid === host_pid` server-side.
+- **Bots have no socket.** `models/bots/controller.js` calls the same `*IO(pid, …)` methods a socket handler does, from a `setTimeout` scheduled by `game.onAwaiting`. Never act inside that hook (`#next()` is not re-entrant), and never give a bot a fake socket: `#isAbandoned` counts sockets to decide the game is alive.
 - **God mode is per-session and sticky.** `GODMODE_ACTIVATE` (`game.js:772`) needs no authority check by design; `GODMODE_FREE_RES_ACTIVATE` requires god mode already active in that game (`game.js:788`). Free resources then grant on every roll (`game.js:232, 300`) until the game ends.
 - **Spectators** (`player_id === 0`) get `addSpectator` only (`index.js:248`); `setUpEvents` returns early without a `pid` (`io_manager.js:20`), so they can receive broadcasts but emit nothing. Keep it that way.
 - **Rematch lives in `index.js`** (`index.js:255-304`), not `io_manager` — it spans sessions and creates a new `Game`. Sockets and the session are kept alive after game end so voting works (`game.js:723`).

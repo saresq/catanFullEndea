@@ -43,6 +43,10 @@
         font-size: .8em;
     }
 
+    .quit-actions {
+        margin-top: var(--space-3);
+    }
+
     .close {
         position: absolute;
         right: 0;

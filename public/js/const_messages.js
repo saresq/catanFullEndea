@@ -65,7 +65,9 @@ const GAME_MESSAGES = {
   YEAR_OF_PLENTY_USED: { all: (p, res_obj) => `${getName(p)} used <b>"Year of Plenty"</b> and took ${p ? '2 resources' : resToText(res_obj)}.` },
   LARGEST_ARMY: { all: (p, c) => `⚔️ ${getName(p)} took over the <b>"Largest Army"</b> with <b>${c} Knights</b> ⚔️` },
   LONGEST_ROAD: { all: (p, l) => `👣 ${getName(p)} took over the <b>"Longest Road"</b> with <b>${l} Roads</b> 🐾` },
-  PLAYER_QUIT: { all: (p, end) => `🏃 ${getName(p)} has QUIT the game!!!${end ? ' The game has ended. <a href="/">New Game</a>' : ''}` },
+  PLAYER_QUIT: { all: (p, replace_pid) => `🏃 ${getName(p)} has QUIT the game!!!${replace_pid ? `<div class="quit-actions"><button type="button" class="btn btn--primary btn--sm replace-bot" data-pid="${replace_pid}">Replace with a bot</button></div>` : ''}` },
+  SEAT_TAKEN_OVER: { all: (p, was) => `🤖 ${getName(p)} (a bot) took over ${was}'s seat.` },
+  HOST_CHANGED: { all: (p, me) => me ? `👑 You are the host now.` : `👑 ${getName(p)} is the host now.` },
   END_STATUS: { all: (p, pt) => `🏆 ${getName(p)} won with <b>${pt} V</b>ictory <b>P</b>oints.` },
 }
 

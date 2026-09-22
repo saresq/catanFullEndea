@@ -19,7 +19,7 @@ const DELAYS = {
 }
 
 export default class Game {
-  id; config; active_pid; state; opponents
+  id; config; active_pid; state; opponents; host_pid
   /** @type {UI} */ #ui;
   #board; #player; #socket_manager; #audio_manager
   #temp = {}
@@ -31,6 +31,7 @@ export default class Game {
     this.active_pid = game_obj.active_pid
     this.state = game_obj.state
     this.end_context = game_obj.end_context
+    this.host_pid = game_obj.host_pid
     this.opponents = opponents_obj
 
     this.#board = new Board(game_obj.config.mapkey, game_obj.map_changes)
@@ -403,14 +404,36 @@ export default class Game {
     // The results table reads it to list the quitter last, as a reload would.
     const quitter = this.getPlayer(pid)
     if (quitter) quitter.removed = true
-    this.#ui.alert_ui.alertPlayerQuit(this.getPlayer(pid), this.state === ST.INITIAL_SETUP)
-    if (this.state === ST.INITIAL_SETUP) {
-      [...Array(this.config.player_count).keys()].forEach(_ => {
-        this.#ui.all_players_ui.deactivatePlayer(_ + 1)
-      })
-    } else {
-      this.#ui.all_players_ui.deactivatePlayer(pid)
-    }
+    // The game goes on without the seat (a quit during setup places for it at random); the host
+    // may hand the seat to a bot
+    this.#ui.alert_ui.alertPlayerQuit(quitter, this.isHost() && !this.#isMyPid(pid) && pid)
+    this.#ui.all_players_ui.deactivatePlayer(pid)
+  }
+
+  isHost() { return this.host_pid === this.#player.id }
+
+  /** Host: a medium bot takes over a quit seat */
+  replaceWithBot(pid) {
+    if (!this.isHost()) return
+    if (!this.getPlayer(pid)?.removed) return
+    this.#socket_manager.sendReplaceWithBot(pid)
+  }
+
+  // SOC - A bot took over a quit seat
+  updateSeatTakenOverSoc(player_json) {
+    const player = this.getPlayer(player_json.id)
+    if (!player) return
+    const was = player.name
+    Object.assign(player, player_json)
+    this.#ui.all_players_ui.reactivateAsBot(player)
+    this.#ui.alert_ui.alertSeatTakenOver(player, was)
+  }
+
+  // SOC - The host quit; the role moved on
+  updateHostChangedSoc(pid) {
+    this.host_pid = pid
+    this.#ui.all_players_ui.setHost(pid)
+    this.#ui.alert_ui.alertHostChanged(this.getPlayer(pid), this.isHost())
   }
 
   // GODMODE broadcast handler

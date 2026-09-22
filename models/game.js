@@ -5,8 +5,11 @@ import Board from "../public/js/board/board.js"
 import BoardShuffler from "../public/js/board/board_shuffler.js"
 import IOManager from "./io_manager.js"
 import { createDice } from "./dice.js"
+import { pickName } from "./bots/names.js"
 
 const ST = CONST.GAME_STATES
+/** Bot levels a seat can be given. `tryhard` is listed for the lobby but joins in slice 2. */
+export const BOT_LEVELS = CONST.BOT_LEVELS.filter(l => l.available).map(l => l.id)
 const NEXT_STATE = {
   [ST.INITIAL_SETUP]: ST.PLAYER_ROLL,
   [ST.PLAYER_ROLL]: ST.PLAYER_ACTIONS,
@@ -41,6 +44,12 @@ export default class Game {
   end_context = null
   /** Latched before the deferred end so two VP changes in one tick cannot both end the game */
   #ending = false
+  /**
+   * Optional `({ pid, kind, trade_id? })` hook: a seat has something to do. `kind` is the game
+   * state being expected, or 'TRADE_REQ' for a player trade to answer. The bot controller listens
+   * here; it must never act inside the call (`#next` is not re-entrant), only schedule.
+   */
+  onAwaiting = null
 
   get state() { return this.#state }
   set state(s) {
@@ -53,6 +62,9 @@ export default class Game {
     this.#active_pid = (pid - 1) % this.player_count
   }
   get spectators_count() { return this.#spectators.size }
+  get ending() { return this.#ending }
+  /** Milliseconds left on the running phase timer, 0 when none */
+  get timer_left_ms() { return Math.max(0, this.#timer_ends_at && (this.#timer_ends_at - Date.now())) }
 
   constructor({ id, host, config, io, onGameEnd }) {
     this.host_pid = host?.id
@@ -77,7 +89,7 @@ export default class Game {
     if (!config.hasOwnProperty('robber_hand_limit')) { this.config.robber_hand_limit = tier.robber_hand_limit }
   }
 
-  join(name) {
+  join(name, { bot_level } = {}) {
     const joined_players = this.players.filter(p => p?.id)
     if (joined_players.length >= this.player_count) { return }
     const remaining_ids = [...Array(this.player_count).keys()].map(_ => _+1)
@@ -87,6 +99,7 @@ export default class Game {
       onChange: (...params) => this.#onPlayerUpdate(...params),
       onVpChange: (pid, vp) => this.#onPlayerVpChange(pid, vp),
     })
+    if (bot_level) { player.is_bot = true; player.bot_level = bot_level }
 
     // Assign an unused color
     const taken_colors = this.players.filter(p => p?.id).map(p => p.color_id)
@@ -100,6 +113,46 @@ export default class Game {
 
     this.players[id - 1] = player
     this.#io_manager.updateWaitingRoom(player)
+    return player
+  }
+
+  /** Lobby only: seat a bot in the first free seat. `avoid_names` keeps a name free for a human. */
+  addBot(level, { avoid_names = [] } = {}) {
+    if (this.state) return
+    if (!BOT_LEVELS.includes(level)) return
+    const taken = this.players.filter(p => p?.id).map(p => p.name).concat(avoid_names)
+    return this.join(pickName(taken), { bot_level: level })
+  }
+
+  /** Lobby only, bot seats only: change the level in place, name and colour stay. */
+  setBotLevel(pid, level) {
+    if (this.state) return
+    if (!BOT_LEVELS.includes(level)) return
+    const player = this.getPlayer(pid)
+    if (!player?.is_bot) return
+    player.bot_level = level
+    this.#io_manager.updateWaitingRoom(player)
+    return player
+  }
+
+  /** Lobby only, bot seats only: the seat is free again. */
+  removeBot(pid) {
+    if (this.state) return
+    if (!this.getPlayer(pid)?.is_bot) return
+    this.removePlayer(pid)
+  }
+
+  /**
+   * A bot takes a quit player's seat in a running game: always medium, new name, everything else
+   * (colour, pieces, cards, points, achievements) stays. It plays from the seat's next turn.
+   */
+  takeOverSeat(pid) {
+    if (!this.state || this.state === ST.END || this.#ending) return
+    const player = this.getPlayer(pid)
+    if (!player?.removed) return
+    const taken = this.players.filter(p => p?.id).map(p => p.name)
+    player.takeOverAsBot(pickName(taken), 'medium')
+    this.#io_manager.updateSeatTakenOver(player.toJSON())
     return player
   }
 
@@ -120,6 +173,9 @@ export default class Game {
 
     if (this.turn < 3) {
       this.#expect({ callback: this.#expectedInitialBuild.bind(this) })
+      // A seat that quit still places (at random, by the resolution at the top of the next call),
+      // so it ends setup with a full set of pieces and a bot can take it over later.
+      if (this.getActivePlayer().removed) { return this.#next() }
       this.#io_manager.requestInitialSetup(this.active_pid, this.turn)
       this.setTimer(this.config.initial_build_time)
       return
@@ -135,10 +191,7 @@ export default class Game {
       case ST.PLAYER_ACTIONS:
         this.#expect({ callback: _ => {
           this.active_pid++
-          for (let i = 1; i < this.player_count; i++) {
-            if (this.getActivePlayer().removed) { this.active_pid++ }
-            else { break }
-          }
+          this.#skipRemovedSeats()
           this.players.forEach(p => p.resetDevCard(this.#isActive(p.id)))
           this.#gotoNextState(); this.ongoing_trades = []
         }})
@@ -209,6 +262,7 @@ export default class Game {
         this.turn++
         // Initialize first-round roll protection for all current players
         this.#first_round_roll_pids = new Set(this.players.filter(p => p?.id && !p.removed).map(p => p.id))
+        this.#skipRemovedSeats()
         this.players.forEach(p => p.resetDevCard(this.#isActive(p.id)))
         this.#gotoNextState()
       } else { this.active_pid-- }
@@ -230,7 +284,8 @@ export default class Game {
     this.#io_manager.updateDiceValue(this.dice_value, this.active_pid)
     const dice_total = d1 + d2
     if (dice_total === CONST.ROBBER_ROLL) {
-      const drop = this.players.filter(p => p.resource_count > this.config.robber_hand_limit).length
+      // Removed seats are never asked to drop, so they must not open the drop phase either
+      const drop = this.players.filter(p => !p.removed && p.resource_count > this.config.robber_hand_limit).length
       this.state = drop ? ST.ROBBER_DROP : ST.ROBBER_MOVE
     } else {
       this.#distributeTileResources(dice_total)
@@ -332,7 +387,11 @@ export default class Game {
   }
 
   /** Player Roll Click */
-  playerRollIO() { this.#next() }
+  playerRollIO(pid) {
+    // Sockets and bots always say who they are; only that seat, only while a roll is due
+    if (pid !== undefined && !(this.#isActive(pid) && this.state === ST.PLAYER_ROLL)) return
+    this.#next()
+  }
 
   /** Building - Edge & Corner click (other than initial-build) */
   clickedLocationIO(pid, loc_type, id) {
@@ -418,6 +477,14 @@ export default class Game {
     this.start()
   }
 
+  /** Waiting Room: Host adds a bot / removes one */
+  addBotIO(pid, level) { if (pid === this.host_pid) { return this.addBot(level) } }
+  removeBotIO(pid, bot_pid) { if (pid === this.host_pid) { this.removeBot(bot_pid) } }
+  setBotLevelIO(pid, bot_pid, level) { if (pid === this.host_pid) { return this.setBotLevel(bot_pid, level) } }
+
+  /** Host puts a bot in a seat whose player quit */
+  replaceWithBotIO(pid, quit_pid) { if (pid === this.host_pid) { return this.takeOverSeat(quit_pid) } }
+
   /** Waiting Room: Host changes the game config */
   waitingRoomChangeConfigIO(pid, config) {
     if (this.state) return
@@ -471,6 +538,9 @@ export default class Game {
       this.ongoing_trades.push(trade_obj)
       this.#extendTurnTimeOnFirstTrade()
       this.#io_manager.requestPlayerTrade(pid, trade_obj)
+      this.players.forEach(p => {
+        if (p.id !== pid && !p.removed) { this.#awaiting(p.id, 'TRADE_REQ', { trade_id: trade_obj.id }) }
+      })
       return
     }
     // Trade with the Board
@@ -512,8 +582,11 @@ export default class Game {
       this.ongoing_trades[id].status = 'success'
       this.#tradeResources(p1, giving, asking, p2)
     } else {
-      this.ongoing_trades[id].rejected.push(pid);
-      if (this.ongoing_trades[id].rejected.length >= (this.player_count - 1)) {
+      const rejected = this.ongoing_trades[id].rejected
+      if (!rejected.includes(pid)) { rejected.push(pid) }
+      // Everyone still in the game said no: a quit seat never answers
+      const others = this.players.filter(p => !p.removed && p.id !== trading_pid).length
+      if (rejected.length >= others) {
         this.ongoing_trades[id].status = 'failed'
       }
       this.#io_manager.updateOngoingTrades(this.ongoing_trades)
@@ -596,7 +669,10 @@ export default class Game {
     })
   }
 
-  endTurnIO() { this.#next() }
+  endTurnIO(pid) {
+    if (pid !== undefined && !this.#canAct(pid)) return
+    this.#next()
+  }
   saveStatusIO(pid, text) { this.getPlayer(pid).setLastStatus(text) }
   //#endregion
 
@@ -766,18 +842,28 @@ export default class Game {
     // once it is empty; a host who leaves hands the room to the next player in seat order.
     if (!this.state) {
       delete this.players[pid - 1]
-      const joined_players = this.players.filter(p => p?.id)
-      if (!joined_players.length) { return this.#onGameEnd(this.id) }
-      if (pid === this.host_pid) { this.host_pid = joined_players[0].id }
+      // Bots neither keep a room open nor host it
+      const humans = this.players.filter(p => p?.id && !p.is_bot)
+      if (!humans.length) { return this.#onGameEnd(this.id) }
+      if (pid === this.host_pid) {
+        this.host_pid = humans[0].id
+        this.#io_manager.updateHost(this.host_pid)
+      }
       return
     }
-    // Initial Build Phase - End Game
-    if (this.state === ST.INITIAL_SETUP) {
-      this.players.forEach(p => this.removePlayerSocket(p.id))
+    if (this.state === ST.END) return
+    const remaining_players = this.players.filter(p => !p.removed)
+    // No human left - bots do not play on among themselves
+    if (!remaining_players.some(p => !p.is_bot)) {
       this.clearTimer()
       return this.#onGameEnd(this.id)
     }
-    const remaining_players = this.players.filter(p => !p.removed)
+    // The host decides on bot takeovers, so the role moves on to the next human in seat order
+    if (pid === this.host_pid) {
+      const humans = remaining_players.filter(p => !p.is_bot)
+      this.host_pid = (humans.find(p => p.id > pid) || humans[0]).id
+      this.#io_manager.updateHost(this.host_pid)
+    }
     // Everybody Quit - End Game
     if (remaining_players.length === 1) {
       return this.#onPlayerVpChange(remaining_players[0].id, this.config.win_points)
@@ -785,8 +871,9 @@ export default class Game {
     if (remaining_players.length === 0) {
       return this.#onGameEnd(this.id)
     }
-    // Otherwise - Game Continues
-    while (this.active_pid === pid) { this.#next() }
+    // Otherwise - Game Continues. In the initial placement this places for the quit seat at random.
+    // Bounded: a reaped game returns from #next without moving on.
+    for (let i = 0; i < 10 && this.active_pid === pid; i++) { this.#next() }
   }
 
   godModeActivateIO(pid) {
@@ -816,8 +903,26 @@ export default class Game {
 
   /** Queue actions expected for the current state/player */
   #expect(...elems) {
-    elems.forEach(obj => this.expected_actions.push(
-      Object.assign({ type: this.state, pid: this.active_pid }, obj)))
+    elems.forEach(obj => {
+      const expected = Object.assign({ type: this.state, pid: this.active_pid }, obj)
+      this.expected_actions.push(expected)
+      this.#awaiting(expected.pid, expected.type)
+    })
+  }
+
+  /** Tell the hook a seat has something to do. A listener's bug must not reach the game loop. */
+  #awaiting(pid, kind, extra) {
+    if (typeof this.onAwaiting !== 'function') return
+    try { this.onAwaiting({ pid, kind, ...extra }) }
+    catch (e) { console.error(`[${this.id}] onAwaiting failed`, e) }
+  }
+
+  /** Move `active_pid` on to the next seat still in the game */
+  #skipRemovedSeats() {
+    for (let i = 1; i < this.player_count; i++) {
+      if (this.getActivePlayer().removed) { this.active_pid++ }
+      else { break }
+    }
   }
 
   setTimer(time_in_seconds, fn) {
@@ -908,6 +1013,8 @@ export default class Game {
   }
 
   hasPlayer(id) { return !!this.getPlayer(id)?.id }
+  /** The seat a returning human may reclaim by name. A bot's seat is never handed over. */
+  findSeatByName(name) { return this.players.find(p => p?.name === name && !p.removed && !p.is_bot) }
   getPlayer(id) { return this.players[id - 1] }
   getOpponents(id) { return this.players.filter((_, i) => i !== (id - 1)) }
   getActivePlayer() { return this.players[this.#active_pid] || this.players[0] }
@@ -922,6 +1029,7 @@ export default class Game {
       map_changes: this.map_changes,
       config: this.config,
       active_pid: this.active_pid,
+      host_pid: this.host_pid,
       state: this.state,
       turn: this.turn,
       dev_cards_len: this.dev_cards.length,
