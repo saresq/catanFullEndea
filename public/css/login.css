@@ -7,6 +7,7 @@
 
 :root {
     --box-width: 500px;
+    --font-body: var(--font-body-playful);
 }
 
 html,
@@ -115,6 +116,11 @@ body {
         height: 3.25rem;
         font-family: var(--font-display), serif;
         font-size: var(--text-xl);
+        text-align: center;
+    }
+
+    /* Game key sits under the name, so it centers too */
+    input.game-key {
         text-align: center;
     }
 

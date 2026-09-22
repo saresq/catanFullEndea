@@ -7,6 +7,7 @@
 
 :root {
     --box-width: 500px;
+    --font-body: var(--font-body-playful);
 }
 
 @media screen and (max-width: 800px) {

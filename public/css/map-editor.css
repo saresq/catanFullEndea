@@ -84,7 +84,9 @@ html, body {
     &::before {
         display: block;
         content: attr(num) "\a " attr(dots);
-        font-family: var(--font-main), sans-serif;
+        /* Same as the board's: lining figures so every numeral sits level on the disc */
+        font-family: var(--font-body), sans-serif;
+        font-variant-numeric: lining-nums;
         font-weight: bold;
         white-space: pre;
         text-align: center;
@@ -133,6 +135,13 @@ html, body {
     height: 100vh;
     overflow: hidden;
     touch-action: none;
+}
+
+/* Editor-only asset: the original outline-only hexagon, faint, so an empty sea cell shows its
+   edges without the game board's water texture. Overrides board.css. */
+.board .tile.S .background {
+    background-image: url('/images/tiles/Sea-outline.png');
+    opacity: .4;
 }
 
 .board .tile.robbed::before {
@@ -252,7 +261,9 @@ body.port-picking .board .tile.S {
     &.M .background { background-image: url('/images/tiles/Mountain.png'); }
     &.F .background { background-image: url('/images/tiles/Fields.png'); }
     &.D .background { background-image: url('/images/tiles/Desert.png'); }
-    &.S .background { background-image: url('/images/tiles/Sea.png'); opacity: .55; }
+    /* Editor-only asset: the original outline-only hexagon, faint, so an empty sea cell still
+       shows its edges without the board's water texture */
+    &.S .background { background-image: url('/images/tiles/Sea-outline.png'); opacity: .4; }
 
     /* Flat-top hexagon of water behind the sea chip, so "erase" reads as a tile, not a blank */
     .sea-hexagon {
@@ -566,10 +577,16 @@ body.port-picking .board .tile.S {
  * -------------
 */
 
+/*
+ * Centred on the rail's height, the way the rail centres its buttons, so a popover opens level
+ * with the button that opened it and the eye does not have to climb to the top of the screen.
+ * The `translate` clamp keeps a tall one inside the strip between the top edge and the dock.
+ */
 .editor-popover {
     position: fixed;
     right: calc(var(--rail-w) + var(--space-2));
-    top: var(--space-4);
+    top: 50%;
+    translate: 0 clamp(calc(var(--space-4) - 50vh), -50%, calc(50vh - var(--dock-h) - var(--space-4) - 100%));
     z-index: var(--z-panel);
     width: 20rem;
     max-width: calc(100vw - var(--rail-w) - var(--space-4));
@@ -1189,6 +1206,7 @@ body.port-picking .board .tile.S {
         left: 0;
         right: 0;
         top: auto;
+        translate: none;
         bottom: calc(var(--dock-h) + var(--rail-h));
         width: auto;
         max-width: none;

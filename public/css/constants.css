@@ -78,6 +78,8 @@
     --font-display: 'EagleLake', Georgia, "Times New Roman", serif;
     --font-heading: 'Almendra', Georgia, "Times New Roman", serif;
     --font-body: 'Alegreya Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    /* Playful body for the pages before the game (host, lobby); they set --font-body to this */
+    --font-body-playful: 'Quintessential', 'Almendra', Georgia, "Times New Roman", serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     /* Old names, kept as aliases */
     --font-main: var(--font-display);
@@ -112,6 +114,10 @@
     --surface-drawer: color-mix(in srgb, var(--sand-color-dark) 85%, transparent);
     --surface-drawer-text: #fff;
     --surface-ink: #333;
+    /* Primary call to action. Ink stays for the chalkboard-style buttons (btn--ink) */
+    --surface-forest: #154f15;
+    /* Secondary button: a shade deeper than the sand panel so the pill reads on it */
+    --surface-parchment: #d5b782;
 
     /* Icons, as masks so they take currentColor and stay crisp at any size. Drawn on a 24x24 box
        and centred in it, so a button can centre them by centring the box. */

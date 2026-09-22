@@ -4,7 +4,7 @@ import BoardShuffler from "./board/board_shuffler.js"
 import MapBuilderBoardUI from "./ui/map_builder_board_ui.js"
 import AccessibilityUI from "./ui/accessibility_ui.js"
 import {
-  expandSeaBordersAt, growBottom, growLeft, growRight, growTop,
+  expandSeaBordersAt, gridShift, growBottom, growLeft, growRight, growTop,
   parseRows, serializeRows, validateMapkey,
 } from "./board/map_grid.js"
 
@@ -414,9 +414,13 @@ class MapEditor {
     window.addEventListener('blur', () => this.#releaseSpace())
   }
 
-  /** Space belongs to whatever has focus - a button, a field - before it belongs to the board. */
+  /**
+   * Space belongs to a field the user is typing in before it belongs to the board. Buttons do not
+   * take it: a click leaves the brush button focused, and the browser's Space-activates-button would
+   * toggle that brush off for good instead of panning. Enter still activates them.
+   */
   #focusTakesSpace(e) {
-    return !!e.target?.closest?.('button, input, textarea, select, a, [contenteditable]')
+    return !!e.target?.closest?.('input, textarea, select, [contenteditable]')
   }
 
   #onKeyDown(e) {
@@ -425,9 +429,9 @@ class MapEditor {
 
     // Hold Space to pan, the way every canvas tool does: the brush is set aside, not put down,
     // and it is back in hand the moment the key comes up.
-    if (e.code === 'Space' && !e.repeat && !this.#focusTakesSpace(e)) {
+    if (e.code === 'Space' && !this.#focusTakesSpace(e)) {
       e.preventDefault()
-      if (this.#space_brush === undefined) {
+      if (this.#space_brush === undefined && !e.repeat) {
         this.#space_brush = this.brush
         this.brush = null
         this.#syncTools()
@@ -443,7 +447,11 @@ class MapEditor {
   }
 
   #onKeyUp(e) {
-    if (e.code === 'Space') { this.#releaseSpace() }
+    if (e.code !== 'Space' || this.#focusTakesSpace(e)) { return }
+    // Browsers fire a focused button's click on Space keyup; without this, the brush comes back and
+    // the button toggles it straight off again.
+    e.preventDefault()
+    this.#releaseSpace()
   }
 
   #releaseSpace() {
@@ -700,15 +708,17 @@ class MapEditor {
     if (r === -1) { return }
     const rows = parseRows(this.mapkey)
     rows[r].tokens[c] = type === 'S' ? 'S' : type === 'D' ? 'D' : type + (num || '')
-    let mapkey = serializeRows(rows)
+    const written = serializeRows(rows)
     // Land has to be ringed by sea; the grid grows where it is not, in any direction.
-    if (type !== 'S') { mapkey = expandSeaBordersAt(mapkey, r, c) }
+    const mapkey = type === 'S' ? written : expandSeaBordersAt(written, r, c)
 
+    // `written` is the grid as the user sees it, with the new tile in it: it is what the grown
+    // grid is held still against, so the first tile on an empty map anchors itself.
     if (this.#gesture) {
       this.#gesture.changed = true
-      this.#apply(mapkey)
+      this.#apply(mapkey, written)
     } else {
-      this.#commit(mapkey)
+      this.#commit(mapkey, written)
     }
   }
 
@@ -797,10 +807,10 @@ class MapEditor {
 
   /* ---------------------------------------------------------------- history */
 
-  #commit(mapkey) {
+  #commit(mapkey, before) {
     if (mapkey === this.mapkey) { return }
     this.#push(this.mapkey)
-    this.#apply(mapkey)
+    this.#apply(mapkey, before)
     this.#refresh()
   }
 
@@ -839,13 +849,46 @@ class MapEditor {
     this.#refresh()
   }
 
-  /** Put a mapkey on screen. No history entry, in-page or in the browser. */
-  #apply(mapkey) {
+  /**
+   * Put a mapkey on screen. No history entry, in-page or in the browser.
+   *
+   * The map only moves when the user pans it. A grid that grows on the left or the top lays its
+   * old tiles out further right or down, so the pan is corrected by however far one of them
+   * travelled on screen, and the new row or column appears where there was water before. The
+   * shift is read against `before` - the current mapkey, unless the caller has a grid with the
+   * same shape that names the tiles better.
+   */
+  #apply(mapkey, before = this.mapkey) {
+    const hold = this.#holdStill(before, mapkey)
     this.mapkey = mapkey
     this.board = new Board(mapkey)
     this.#renderBoard()
+    hold?.()
     this.#syncURL()
     this.#flagTiles()
+  }
+
+  /**
+   * Note where a tile both grids share is on screen; returns a function that pans it back there
+   * after the render, or `null` when the grids share nothing to hold on to. `before` has to be
+   * laid out like `this.board`, because the tile is looked up in it by row and index.
+   */
+  #holdStill(before, after) {
+    const shift = gridShift(before, after)
+    if (!shift || (!shift.rows && !shift.cols)) { return null }
+    const [r, c] = shift.anchor
+    const $tile = this.#tileElement(this.board.tile_rows[r]?.[c])
+    if (!$tile) { return null }
+    const was = $tile.getBoundingClientRect()
+    return () => {
+      const now = this.#tileElement(this.board.tile_rows[r + shift.rows]?.[c + shift.cols])?.getBoundingClientRect()
+      // `translate` is the outermost transform, so a pan moves the screen one for one.
+      if (now) { this.board_ui.panBy(was.left - now.left, was.top - now.top) }
+    }
+  }
+
+  #tileElement(tile) {
+    return tile ? this.board_ui.$el.querySelector(`.tile[data-id="${tile.id}"]`) : null
   }
 
   /**

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import Board from '../public/js/board/board.js'
 import * as CONST from '../public/js/const.js'
 import {
-  expandSeaBordersAt, growBottom, growLeft, growRight, growTop, parseRows, serializeRows,
+  expandSeaBordersAt, gridShift, growBottom, growLeft, growRight, growTop, parseRows, serializeRows,
 } from '../public/js/board/map_grid.js'
 
 /** Corners and edges cost far more than the adjacency the geometry tests read. */
@@ -178,4 +178,39 @@ test('the grid grows on every side, repeatably, without moving anything', () => 
       added.forEach(row => assert.ok(row.tokens.every(t => t === 'S'), `${name} added only sea`))
     }
   })
+})
+
+test('gridShift reads how the shared tiles moved between two grids', () => {
+  const mapkey = CONST.DEFAULT_MAPKEY
+  const same = gridShift(mapkey, mapkey)
+  assert.deepEqual([same.rows, same.cols], [0, 0], 'an unchanged grid does not move')
+
+  // Growth in each direction, one and three at a time, in both directions of time.
+  const cases = [
+    [growLeft(mapkey), 0, 1], [growLeft(mapkey, 3), 0, 3],
+    [growRight(mapkey), 0, 0], [growTop(mapkey), 1, 0], [growTop(mapkey, 3), 3, 0],
+    [growBottom(mapkey), 0, 0], [growTop(growLeft(mapkey)), 1, 1],
+  ]
+  cases.forEach(([grown, rows, cols], i) => {
+    const there = gridShift(mapkey, grown)
+    assert.equal(there.rows, rows, `case ${i}: rows`)
+    assert.equal(there.cols, cols, `case ${i}: cols`)
+    const back = gridShift(grown, mapkey)
+    assert.equal(back.rows, -rows || 0, `case ${i}: rows, undone`)
+    assert.equal(back.cols, -cols || 0, `case ${i}: cols, undone`)
+  })
+
+  // The anchor is a tile that is really there on both sides, and not sea.
+  const grown = growTop(growLeft(mapkey))
+  const { rows, cols, anchor: [r, c] } = gridShift(mapkey, grown)
+  const token = parseRows(mapkey)[r].tokens[c]
+  assert.notEqual(token, 'S')
+  assert.equal(parseRows(grown)[r + rows].tokens[c + cols], token)
+})
+
+test('gridShift anchors on the tile just painted when it is the only land', () => {
+  const written = paint('S.S.S\n-S.S.S\n-S.S.S', 1, 0, 'F5')
+  const grown = expandSeaBordersAt(written, 1, 0)
+  assert.deepEqual(gridShift(written, grown), { rows: 0, cols: 1, anchor: [1, 0] })
+  assert.equal(gridShift('S.S.S\n-S.S.S', growLeft('S.S.S\n-S.S.S')), null, 'all sea anchors nothing')
 })

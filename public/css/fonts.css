@@ -19,6 +19,13 @@
     font-display: swap;
 }
 
+/* Body on the host and lobby pages. Regular only, browsers fake the bold. */
+@font-face {
+    font-family: Quintessential;
+    src: url(/css/fonts/Quintessential-Regular.woff2) format('woff2');
+    font-display: swap;
+}
+
 /* Body: status, history, counts, labels */
 @font-face {
     font-family: 'Alegreya Sans';

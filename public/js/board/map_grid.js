@@ -188,6 +188,48 @@ export function expandSeaBordersAt(mapkey, r, c) {
 }
 
 /**
+ * How the tiles two grids share moved between them: the token at row `r`, index `c` of `before`
+ * sits at row `r + rows`, index `c + cols` of `after`. Growth (and its undo) only ever adds or
+ * removes whole rows and columns of sea, so every surviving tile moves by the same amount, and
+ * it is found by trying every offset the change in size allows and keeping the one under which
+ * the most non-sea tokens coincide. Plain sea is never counted: it matches itself everywhere.
+ *
+ * `anchor` is one `[r, c]` of `before` that matched, so a caller can watch a real tile. `null`
+ * when the two grids share no non-sea token, which is nothing to hold on to anyway.
+ *
+ * @param {string} before
+ * @param {string} after
+ * @returns {{ rows: number, cols: number, anchor: [number, number] } | null}
+ */
+export function gridShift(before, after) {
+  const a = parseRows(before), b = parseRows(after)
+  const width = rows => Math.max(...rows.map(row => row.tokens.length))
+  const rows_max = Math.abs(a.length - b.length)
+  const cols_max = Math.abs(width(a) - width(b))
+
+  let best = null, best_score = 0, best_distance = Infinity
+  for (let rows = -rows_max; rows <= rows_max; rows++) {
+    for (let cols = -cols_max; cols <= cols_max; cols++) {
+      let score = 0, anchor = null
+      a.forEach((row, r) => row.tokens.forEach((token, c) => {
+        if (token === 'S' || b[r + rows]?.tokens[c + cols] !== token) { return }
+        score++
+        anchor ??= [r, c]
+      }))
+      // Ties go to the smaller move: a tile that can read as itself or as its twin next door
+      // is most likely still itself.
+      const distance = Math.abs(rows) + Math.abs(cols)
+      if (score > best_score || (score === best_score && score && distance < best_distance)) {
+        best = { rows: rows || 0, cols: cols || 0, anchor } // `|| 0` turns `-0` into `0`
+        best_score = score
+        best_distance = distance
+      }
+    }
+  }
+  return best
+}
+
+/**
  * Why a mapkey cannot be used, or `null` if it can. `Board` is deliberately forgiving - it falls
  * back to sea for anything it does not recognise - so a typo would otherwise render as a board
  * full of water instead of an error.

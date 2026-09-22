@@ -62,7 +62,11 @@
             &::before {
                 display: block;
                 content: attr(num) "\a " attr(dots);
-                font-family: var(--font-main), sans-serif;
+                /* Body font, not display: EagleLake only has old-style figures (3, 5, 9 hang
+                   below the line, 1 stops at x-height), so its numerals never sit level on the
+                   disc. Alegreya Sans has lining figures, which share one height and baseline. */
+                font-family: var(--font-body), sans-serif;
+                font-variant-numeric: lining-nums;
                 font-weight: bold;
                 white-space: pre;
                 text-align: center;
