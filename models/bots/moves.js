@@ -57,7 +57,27 @@ function devCardIntents(view) {
   return intents
 }
 
-function actionIntents(view) {
+/**
+ * Player trade asks: one card wanted, paid with one or two cards of another resource. Templates
+ * only - the evaluator decides which (if any) is worth asking; a refused pair is left out.
+ */
+function playerTradeIntents(view, refused) {
+  const { me } = view
+  const intents = []
+  if (view.ongoing_trades.some(t => t.pid === view.pid && t.status === 'open')) return intents
+  RES.forEach(take => RES.forEach(give => {
+    if (give === take) return
+    ;[1, 2].forEach(n => {
+      if (me.closed_cards[give] < n) return
+      const giving = { [give]: n }, taking = { [take]: 1 }
+      if (refused?.has(JSON.stringify([giving, taking]))) return
+      intents.push({ type: 'player_trade', giving, taking })
+    })
+  }))
+  return intents
+}
+
+function actionIntents(view, extra = {}) {
   const { me, board } = view
   const intents = []
   if (canBuy(me, 'C')) { me.pieces.S.forEach(loc => intents.push({ type: 'build', piece: 'C', loc })) }
@@ -77,6 +97,7 @@ function actionIntents(view) {
     }))
   })
   intents.push(...devCardIntents(view))
+  if (extra.can_propose) { intents.push(...playerTradeIntents(view, extra.refused)) }
   intents.push({ type: 'end_turn' })
   return intents
 }
@@ -88,7 +109,8 @@ function actionIntents(view) {
  *
  * @param {ReturnType<import('./view.js').buildView>} view
  * @param {string} kind one of KINDS
- * @param {{ trade_id?: number, drop_count?: number }} [extra]
+ * @param {{ trade_id?: number, drop_count?: number, can_propose?: boolean, refused?: Set<string> }} [extra]
+ *   `can_propose`: the bot may open a player trade this tick; `refused`: asks turned down this turn
  */
 export function legalMoves(view, kind, extra = {}) {
   const { me, board } = view
@@ -103,7 +125,7 @@ export function legalMoves(view, kind, extra = {}) {
       return [{ type: 'roll' }, ...devCardIntents(view)]
 
     case KINDS.PLAYER_ACTIONS:
-      return actionIntents(view)
+      return actionIntents(view, extra)
 
     case KINDS.ROBBER_DROP:
       return [{ type: 'discard', count: extra.drop_count ?? Math.floor(me.resource_count / 2), resources: {} }]

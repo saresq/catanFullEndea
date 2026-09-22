@@ -153,6 +153,12 @@ export const GAME_CONFIG = {
   robber_drop_time: 30,
   robber_move_time: 30,
   max_trade_requests: 4,
+  /** Bots may open player trade requests (tryhard does); they answer requests regardless */
+  bot_trades: true,
+  /** How long a bot waits for the table to answer its request before playing on, humans present */
+  bot_trade_wait_ms: 8000,
+  /** Requests a bot may open per turn (one at a time; each only when a card short of a build) */
+  bot_trade_asks: 2,
   alert_time: 3,
   largest_army_count: 3,
   longest_road_count: 5,
@@ -174,7 +180,7 @@ export const DEFAULT_BOT_LEVEL = 'medium'
 export const BOT_LEVELS = [
   { id: 'easy', name: 'Easy', blurb: 'Plays at random and builds whatever it can afford.', available: true },
   { id: 'medium', name: 'Medium', blurb: 'Settles by the dice, builds toward a goal, trades with the bank.', available: true },
-  { id: 'tryhard', name: 'Tryhard', blurb: 'Counts cards and trades with players.', available: false },
+  { id: 'tryhard', name: 'Tryhard', blurb: 'Plans the whole turn, counts cards, proposes trades.', available: true },
 ]
 
 /** Robot glyph (Lucide `bot`, MIT): marks a bot seat wherever colour alone would not. `aria-hidden`; pair with text. */

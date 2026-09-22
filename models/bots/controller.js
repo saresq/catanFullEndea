@@ -3,6 +3,9 @@ import { buildView } from './view.js'
 import { legalMoves, KINDS } from './moves.js'
 import { evaluate as easy } from './easy.js'
 import { evaluate as medium } from './medium.js'
+import { evaluate as tryhard } from './tryhard.js'
+import Tracker from './tracker.js'
+import { production } from './features.js'
 
 const ST = CONST.GAME_STATES
 /** Hard stop for a turn that never ends: past this the bot takes the fallback. */
@@ -28,7 +31,12 @@ export default class BotController {
   /** action count per `turn|state|pid`, for the cap */
   #actions = new Map()
   #errors = new Map() // pid -> errors this game
-  stats = { actions: 0, errors: 0, fallbacks: 0, demoted: 0 }
+  #trade_wait_ms
+  /** Card counter fed by the game's public events; only tryhard reads it */
+  tracker = new Tracker()
+  /** pid -> { turn, trade_id, until, refused: Set<string> } while a bot's own request is open */
+  #proposals = new Map()
+  stats = { actions: 0, errors: 0, fallbacks: 0, demoted: 0, proposed: 0, accepted: 0, refused: 0, evaluate_ms: 0, evaluations: 0 }
 
   /**
    * @param {import('../game.js').default} game
@@ -37,14 +45,18 @@ export default class BotController {
    * @param {boolean} [opts.needs_humans] stop once no human is left in the game (off in the simulator)
    * @param {Object<string, Function>} [opts.evaluators] level -> evaluate(view, moves)
    * @param {Function} [opts.onEvaluate] wraps every evaluate call: `(run, { game, pid, kind }) => intent`
+   * @param {number} [opts.trade_wait_ms] how long a bot waits for answers to its own trade request;
+   *   default `config.bot_trade_wait_ms` (8s) with a human in the game, 0 without
    */
-  constructor(game, { delay_ms, needs_humans = true, evaluators = {}, onEvaluate } = {}) {
+  constructor(game, { delay_ms, needs_humans = true, evaluators = {}, onEvaluate, trade_wait_ms } = {}) {
     this.#game = game
     this.#delay_ms = delay_ms
     this.#needs_humans = needs_humans
-    this.#evaluators = { easy, medium, ...evaluators }
+    this.#evaluators = { easy, medium, tryhard, ...evaluators }
     this.#onEvaluate = onEvaluate
+    this.#trade_wait_ms = trade_wait_ms
     game.onAwaiting = awaiting => this.#onAwaiting(awaiting)
+    game.onPublic = event => this.tracker.observe(event)
   }
 
   #isBot(pid) {
@@ -87,6 +99,9 @@ export default class BotController {
       if (!this.#isBot(job.pid)) return
       if (this.#needs_humans && !this.#hasHumans()) return
 
+      // Own trade request open: give the table time to answer before playing on
+      if (job.kind === KINDS.PLAYER_ACTIONS && this.#waitingOnProposal(job.pid)) { return this.#schedule(job) }
+
       const key = `${token.turn}|${token.state}|${job.pid}|${job.trade_id ?? ''}`
       const count = (this.#actions.get(key) || 0) + 1
       if (this.#actions.size > 64) { this.#actions.clear() }
@@ -112,6 +127,38 @@ export default class BotController {
     }
   }
 
+  /** True while the bot's own request is open and its wait has not run out; books the outcome. */
+  #waitingOnProposal(pid) {
+    const game = this.#game
+    const open = this.#proposals.get(pid)
+    if (!open || open.turn !== game.turn) return false
+    const trade = game.ongoing_trades[open.trade_id]
+    if (!trade || trade.status !== 'open') {
+      if (trade?.status === 'success') { this.stats.accepted++ }
+      else if (trade) { this.stats.refused++; open.refused.add(open.key) }
+      open.trade_id = null
+      return false
+    }
+    // Everyone still in the game has said no, or the wait is over
+    return Date.now() < open.until
+  }
+
+  /** Pairs this bot asked for and was refused this turn - it does not ask twice */
+  #refusedThisTurn(pid) {
+    const open = this.#proposals.get(pid)
+    return open?.turn === this.#game.turn ? open.refused : new Set()
+  }
+
+  #tradeWait() {
+    const game = this.#game
+    if (this.#trade_wait_ms !== undefined) return this.#trade_wait_ms
+    if (!this.#hasHumans()) return 0
+    let wait = game.config.bot_trade_wait_ms ?? CONST.GAME_CONFIG.bot_trade_wait_ms ?? 8000
+    // Never past the turn timer: leave room to play on after the answers
+    if (game.config.timer && game.timer_left_ms) { wait = Math.min(wait, game.timer_left_ms / 2) }
+    return Math.max(0, wait)
+  }
+
   #onError(pid, e) {
     const game = this.#game
     this.stats.errors++
@@ -134,13 +181,29 @@ export default class BotController {
       && game.expected_actions.find(a => a.type === ST.ROBBER_DROP && a.pid === pid)
     if (kind === KINDS.ROBBER_DROP && !expected) return
     const view = buildView(game, pid)
-    const moves = legalMoves(view, kind, { trade_id: job.trade_id, drop_count: expected?.drop_count })
+    if (player.bot_level === 'tryhard') {
+      // The count is theirs alone: built from public events, reconciled to public card counts
+      this.tracker.reconcile(view.players)
+      const prod = Object.fromEntries(view.players.map(p => [p.id, production(view.board, p)]))
+      view.counted = this.tracker.snapshot(prod)
+    }
+    const proposals = this.#proposals.get(pid)
+    const moves = legalMoves(view, kind, {
+      trade_id: job.trade_id, drop_count: expected?.drop_count,
+      can_propose: kind === KINDS.PLAYER_ACTIONS && game.config.bot_trades !== false
+        && (proposals?.turn !== game.turn || proposals.asked < (game.config.bot_trade_asks ?? 1)),
+      refused: this.#refusedThisTurn(pid),
+    })
     if (!moves.length) {
       if (kind === KINDS.TRADE_REQ) return // settled before the bot got to it
       throw new Error(`no legal move for ${kind}`)
     }
     const evaluate = this.#evaluators[player.bot_level] || this.#evaluators.easy
-    const run = () => evaluate(view, moves)
+    const run = () => {
+      const started = performance.now()
+      try { return evaluate(view, moves) }
+      finally { this.stats.evaluate_ms += performance.now() - started; this.stats.evaluations++ }
+    }
     const intent = this.#onEvaluate ? this.#onEvaluate(run, { game, pid, kind }) : run()
     if (!intent?.type) { throw new Error(`evaluator returned no intent for ${kind}`) }
     this.stats.actions++
@@ -157,6 +220,20 @@ export default class BotController {
         return game.clickedLocationIO(pid, intent.piece === 'R' ? CONST.LOCS.EDGE : CONST.LOCS.CORNER, intent.loc)
       case 'buy_dev': return game.buyDevCardIO(pid)
       case 'bank_trade': return game.tradeRequestIO(pid, intent.offer, intent.giving, intent.taking)
+      case 'player_trade': {
+        const before = game.ongoing_trades.length
+        game.tradeRequestIO(pid, 'Px', intent.giving, intent.taking)
+        if (game.ongoing_trades.length === before) return // refused by the rules: nothing to wait for
+        this.stats.proposed++
+        const open = this.#proposals.get(pid)
+        const same_turn = open?.turn === game.turn
+        this.#proposals.set(pid, {
+          turn: game.turn, asked: (same_turn ? open.asked : 0) + 1, trade_id: before,
+          refused: same_turn ? open.refused : new Set(),
+          key: tradeKey(intent.giving, intent.taking), until: Date.now() + this.#tradeWait(),
+        })
+        return
+      }
       case 'knight': return game.knightMoveIO(pid, intent.tile_id, intent.stolen_pid)
       case 'road_building': return game.roadBuildingIO(pid, intent.r1, intent.r2)
       case 'year_of_plenty': return game.yearOfPlentyIO(pid, intent.res1, intent.res2)
@@ -183,6 +260,9 @@ export default class BotController {
     }
   }
 }
+
+/** One string per `(giving, asking)` pair, so a refused ask is not repeated in the turn */
+export const tradeKey = (giving, taking) => JSON.stringify([giving, taking])
 
 /** Give a game its bots. Every `Game` the server creates goes through here. */
 export const attachBots = (game, opts) => new BotController(game, opts)

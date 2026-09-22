@@ -46,7 +46,7 @@ test('the host adds and removes bots in the lobby', () => {
 
 test('bad levels, non-hosts, full rooms and human seats are refused', () => {
   const { game } = botLobby({ humans: 2, config: { player_count: 3 } })
-  assert.equal(game.addBotIO(1, 'tryhard'), undefined)
+  assert.equal(game.addBotIO(1, 'legendary'), undefined)
   assert.equal(game.addBotIO(1, undefined), undefined)
   assert.equal(game.addBotIO(2, 'easy'), undefined, 'only the host')
   assert.equal(game.players.filter(Boolean).length, 2)
@@ -72,7 +72,7 @@ test('the host changes a bot\'s level in place', () => {
   const bot = game.getPlayer(3)
   const { name, color_id } = bot
   assert.equal(game.setBotLevelIO(2, 3, 'easy'), undefined, 'only the host')
-  assert.equal(game.setBotLevelIO(1, 3, 'tryhard'), undefined, 'not offered yet')
+  assert.equal(game.setBotLevelIO(1, 3, 'legendary'), undefined, 'not a level')
   assert.equal(game.setBotLevelIO(1, 2, 'easy'), undefined, 'not a bot')
   assert.equal(bot.bot_level, 'medium')
   assert.ok(game.setBotLevelIO(1, 3, 'easy'))
@@ -85,6 +85,21 @@ test('the host changes a bot\'s level in place', () => {
   assert.equal(game.state, ST.INITIAL_SETUP)
   assert.equal(game.setBotLevel(3, 'medium'), undefined, 'lobby only')
   assert.equal(bot.bot_level, 'easy')
+  game.clearTimer()
+})
+
+test('tryhard is a level like the others; a quit seat still gets medium', async () => {
+  const { game } = botLobby({ humans: 2, config: { player_count: 4 } })
+  const bot = game.addBotIO(1, 'tryhard')
+  assert.equal(bot.bot_level, 'tryhard')
+  assert.ok(game.setBotLevelIO(1, bot.id, 'medium'))
+  assert.ok(game.setBotLevelIO(1, bot.id, 'tryhard'))
+  assert.equal(CONST.BOT_LEVELS.find(l => l.id === 'tryhard').available, true, 'the lobby offers it')
+  game.join('Cleo')
+  game.start()
+  await playSetup(game)
+  game.removePlayer(2)
+  assert.equal(game.replaceWithBotIO(1, 2).bot_level, 'medium')
   game.clearTimer()
 })
 

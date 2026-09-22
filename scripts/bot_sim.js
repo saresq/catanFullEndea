@@ -13,7 +13,7 @@ import * as CONST from '../public/js/const.js'
 import Board from '../public/js/board/board.js'
 
 function parseArgs(argv) {
-  const args = { games: 100, seats: 'medium,medium,easy,easy', players: 0, mapkey: '', 'turn-limit': 400, parallel: 25 }
+  const args = { games: 100, seats: 'medium,medium,easy,easy', players: 0, mapkey: '', 'turn-limit': 400, parallel: 25, 'trade-wait': 0, 'bot-trades': 1 }
   for (let i = 0; i < argv.length; i++) {
     const key = argv[i].replace(/^--/, '')
     if (!(key in args)) { console.error(`unknown option ${argv[i]}`); process.exit(2) }
@@ -30,16 +30,17 @@ function parseArgs(argv) {
   if (Board.maxPlayers(mapkey) < player_count) {
     console.error(`that map only seats ${Board.maxPlayers(mapkey)}`); process.exit(2)
   }
-  return { games: +args.games || 1, seats, player_count, mapkey, turn_limit: +args['turn-limit'] || 400, parallel: +args.parallel || 25 }
+  return { games: +args.games || 1, seats, player_count, mapkey, turn_limit: +args['turn-limit'] || 400, parallel: +args.parallel || 25, trade_wait: +args['trade-wait'] || 0, bot_trades: args['bot-trades'] !== '0' && args['bot-trades'] !== 0 }
 }
 
 const io = { to: () => ({ emit: () => {} }) }
 const failures = []
 const fail = (game, what) => failures.push(`${what} - game ${game.id}, turn ${game.turn}, mapkey ${game.config.mapkey}`)
 
-/** Everything an evaluator could change on the board: tiles, robber, pieces. */
-const boardState = game => game.board.generateMapKey() + '|' + game.board.robber_loc + '|'
+/** Everything an evaluator could change on the board: tiles, robber, pieces - and the card count. */
+const boardState = (game, bots) => game.board.generateMapKey() + '|' + game.board.robber_loc + '|'
   + JSON.stringify(game.players.map(p => p.pieces)) + '|' + game.map_changes.length
+  + '|' + JSON.stringify([bots?.tracker.known, bots?.tracker.unknown])
 
 function playGame(n, opts) {
   return new Promise(resolve => {
@@ -47,16 +48,21 @@ function playGame(n, opts) {
     const seats = opts.seats.map((_, i) => opts.seats[(i + n) % opts.seats.length])
     const game = new Game({
       id: `sim-${n}`, io, host: { id: 1, name: 'Bot 1' }, onGameEnd: () => {},
-      config: { player_count: opts.player_count, mapkey: opts.mapkey, timer: false },
+      config: { player_count: opts.player_count, mapkey: opts.mapkey, timer: false, bot_trades: opts.bot_trades },
     })
     Object.assign(game.getPlayer(1), { is_bot: true, bot_level: seats[0] })
     seats.slice(1).forEach((level, i) => game.join(`Bot ${i + 2}`, { bot_level: level }))
+    /** Per level, so a run with two levels tells them apart */
+    const per_level = Object.fromEntries(seats.map(l => [l, { ms: 0, n: 0 }]))
     const bots = attachBots(game, {
-      delay_ms: 0, needs_humans: false,
-      onEvaluate: run => {
-        const before = boardState(game)
+      delay_ms: 0, needs_humans: false, trade_wait_ms: opts.trade_wait,
+      onEvaluate: (run, { pid }) => {
+        const before = boardState(game, bots)
+        const started = performance.now()
         const intent = run()
-        if (boardState(game) !== before) { fail(game, 'evaluate changed the board') }
+        const level = game.getPlayer(pid).bot_level
+        per_level[level].ms += performance.now() - started; per_level[level].n++
+        if (boardState(game, bots) !== before) { fail(game, 'evaluate changed the board or the card count') }
         return intent
       },
     })
@@ -74,7 +80,7 @@ function playGame(n, opts) {
       if (overrun) { fail(game, `no winner after ${opts.turn_limit} turns`) }
       if (stalled) { fail(game, `stalled in ${game.state} waiting on seat ${game.active_pid}`) }
       game.onAwaiting = null // stops an overrun game from playing on
-      resolve({ seats, turns: game.turn, stats: bots.stats, winner_level: done ? seats[game.end_context.pid - 1] : null })
+      resolve({ seats, turns: game.turn, stats: bots.stats, per_level, winner_level: done ? seats[game.end_context.pid - 1] : null })
     }, 5)
   })
 }
@@ -109,6 +115,14 @@ console.log(`${results.length} games, ${opts.player_count} seats (${opts.seats.j
 const avg_turns = finished.length ? finished.reduce((m, r) => m + r.turns, 0) / finished.length : 0
 console.log(`  average turns ${avg_turns.toFixed(1)}`)
 console.log(`  bot errors ${sum('errors')}, fallbacks ${sum('fallbacks')}, demoted to easy ${sum('demoted')}, log lines ${logged}`)
+console.log(`  player trades proposed ${sum('proposed')}, accepted ${sum('accepted')}, refused ${sum('refused')}`)
+const DECISION_CAP_MS = 5
+;[...new Set(opts.seats)].forEach(level => {
+  const ms = results.reduce((m, r) => m + r.per_level[level].ms, 0), n = results.reduce((m, r) => m + r.per_level[level].n, 0)
+  const avg = n ? ms / n : 0
+  console.log(`  ${level.padEnd(7)} decision ${avg.toFixed(3)} ms average over ${n}`)
+  if (level === 'tryhard' && avg > DECISION_CAP_MS) { failures.push(`tryhard decisions average ${avg.toFixed(2)} ms, cap ${DECISION_CAP_MS}`) }
+})
 failures.forEach(f => console.error(`FAILED: ${f}`))
 const bad = failures.length || sum('errors')
 process.exit(bad ? 1 : 0)

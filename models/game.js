@@ -50,6 +50,12 @@ export default class Game {
    * here; it must never act inside the call (`#next` is not re-entrant), only schedule.
    */
   onAwaiting = null
+  /**
+   * Optional `(event)` hook mirroring the public broadcasts: `{ type, ... }` for roll payouts,
+   * initial yield, bank and player trades, steals (no card), discards (count only), monopolies,
+   * purchases and year of plenty. The bots' card counter listens; nothing hidden goes through it.
+   */
+  onPublic = null
 
   get state() { return this.#state }
   set state(s) {
@@ -318,6 +324,8 @@ export default class Game {
       }
       const remaining = taking_count - taken_count
       if (remaining > 0) { player.takeRandomResources(remaining) }
+      // The chosen cards are the player's secret; only how many is public
+      this.#public({ type: 'discard', pid, count: taken_count + Math.max(0, remaining) })
     }
     const rob_pl_index = this.robbing_players.indexOf(pid)
     if (rob_pl_index >= 0) { this.robbing_players.splice(rob_pl_index, 1) }
@@ -350,6 +358,7 @@ export default class Game {
       if (!opp_c_pids.includes(stolen_pid)) { stolen_pid = this.#getRandom(opp_c_pids) }
       const [[stolen_res] = []] = this.getPlayer(stolen_pid).takeRandomResources()
       if (stolen_res) {
+        this.#public({ type: 'steal', pid, from: stolen_pid })
         player.giveCards({ [stolen_res]: 1})
         this.players.forEach(p => {
           const send_res = p.id === pid || p.id === stolen_pid
@@ -402,6 +411,7 @@ export default class Game {
       const valid_locs = this.board.getRoadLocationsFromRoads(player.pieces.R)
       if (valid_locs.includes(id) && player.canBuy('R')) {
         player.bought('R')
+        this.#public({ type: 'buy', pid, what: 'R' })
         this.build(pid, 'R', id)
         this.#updateOngoingTrades()
       }
@@ -412,12 +422,14 @@ export default class Game {
         const valid_locs = this.board.getSettlementLocationsFromRoads(player.pieces.R)
         if (valid_locs.includes(id) && player.canBuy('S')) {
           player.bought('S')
+          this.#public({ type: 'buy', pid, what: 'S' })
           this.build(pid, 'S', id)
           this.#updateOngoingTrades()
         }
       } else if (corner.piece === 'S') {
         if (player.pieces.S.includes(id) && player.canBuy('C')) {
           player.bought('C')
+          this.#public({ type: 'buy', pid, what: 'C' })
           this.build(pid, 'C', id)
           this.#updateOngoingTrades()
         }
@@ -433,6 +445,7 @@ export default class Game {
     if (!player.canBuy('DEV_C')) return
     const bought_card = this.dev_cards.pop()
     player.bought('DEV_C', bought_card)
+    this.#public({ type: 'buy', pid, what: 'DEV_C' })
     this.players.forEach(p => {
       this.#io_manager.updateDevCardTaken_Private(this.getPlayerSocId(p.id), pid, this.dev_cards.length, p.id === pid && bought_card)
     })
@@ -651,6 +664,8 @@ export default class Game {
     })
     const total_count = Object.values(res_from_player).reduce((mem, v) => mem + v, 0)
     player.giveCards({ [res]: total_count })
+    // Everyone else is left with none of `res`, so the per-player split is not needed publicly
+    this.#public({ type: 'monopoly', pid, res, total: total_count })
     this.players.forEach(p => {
       this.#io_manager.updateMonopolyUsed_Private(this.getPlayerSocId(p.id), pid, res, total_count, res_from_player[p.id])
     })
@@ -664,6 +679,7 @@ export default class Game {
     player.playedDevCard('dY')
     const res_obj = res1 === res2 ? { [res1]: 2 } : { [res1]: 1, [res2]: 1 }
     player.giveCards(res_obj)
+    this.#public({ type: 'year_of_plenty', pid, count: 2 })
     this.players.forEach(p => {
       this.#io_manager.updateYearOfPlentyUsed_Private(this.getPlayerSocId(p.id), pid, pid === p.id && res_obj)
     })
@@ -690,6 +706,7 @@ export default class Game {
       if (_res_type) { res[_res_type] = (res[_res_type] || 0) + 1 }
     })
     player.giveCards(res)
+    this.#public({ type: 'initial_yield', pid: player.id, res })
   }
 
   #distributeTileResources(num) {
@@ -708,6 +725,7 @@ export default class Game {
     // Broadcast public summary of this roll's distribution to all players
     const dist = resource_by_pid.map((res, i) => ({ pid: i + 1, res }))
     this.#io_manager.updateRollDistribution(dist)
+    this.#public({ type: 'roll', total: num, payout: dist.filter(d => !this.getPlayer(d.pid).removed) })
   }
 
   #grantFreeResourcesAll() {
@@ -788,6 +806,9 @@ export default class Game {
     p1.takeCards(giving); p1.giveCards(taking)
     if (p2) { p2.giveCards(giving); p2.takeCards(taking) }
     this.#io_manager.updateTradeInfo(p1.id, giving, taking, p2?.id)
+    this.#public(p2
+      ? { type: 'player_trade', pid: p1.id, with: p2.id, giving, taking }
+      : { type: 'bank_trade', pid: p1.id, giving, taking })
     this.#updateOngoingTrades()
   }
 
@@ -915,6 +936,13 @@ export default class Game {
     if (typeof this.onAwaiting !== 'function') return
     try { this.onAwaiting({ pid, kind, ...extra }) }
     catch (e) { console.error(`[${this.id}] onAwaiting failed`, e) }
+  }
+
+  /** A public event for the listener; a listener's bug must not reach the game loop. */
+  #public(event) {
+    if (typeof this.onPublic !== 'function') return
+    try { this.onPublic(event) }
+    catch (e) { console.error(`[${this.id}] onPublic failed`, e) }
   }
 
   /** Move `active_pid` on to the next seat still in the game */

@@ -273,5 +273,5 @@ export function evaluate(view, moves) {
   }
 }
 
-// Re-exported for tests and for the simulator's reports
-export { goals, nearestGoal, production }
+// Re-exported for tests, the simulator's reports, and tryhard, which builds on these
+export { goals, nearestGoal, production, placement, discard, tradeAnswer, robberChoice, devCardPlay, longestRoadSwing, networkCorners, edgeValue }

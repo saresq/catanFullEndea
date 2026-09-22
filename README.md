@@ -53,7 +53,10 @@ that changes the board.
 npm run sim -- --games 200 --seats medium,medium,easy,easy
 npm run sim -- --games 50 --players 6 --mapkey "<key from the map editor>"
 ```
-Bot names come from `config/bot_names.json`, a plain JSON array you can edit.
+Bot names come from `config/bot_names.json`, a plain JSON array you can edit. Server-side bot
+settings in `GAME_CONFIG` (`public/js/const.js`): `bot_delay_ms` (pause between a bot's actions,
+default 0.9–1.8s jittered), `bot_trades` (may bots open player trades, default on) and
+`bot_trade_wait_ms` (how long a bot waits for answers before playing on, default 8s).
 
 ## Repository map
 

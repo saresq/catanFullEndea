@@ -133,3 +133,53 @@ export function longestRoadWith(board, pid, roads, extra_edge) {
   })
   return longest
 }
+
+// ---------- Plan search helpers (tryhard) ----------
+
+/** Pips per resource a set of settlement / city corners would produce, robbed tiles excluded. */
+export function productionOf(board, pieces) {
+  const out = Object.fromEntries(RES.map(r => [r, 0]))
+  const add = (loc, mult) => board.findCorner(loc)?.tiles.forEach(tile => {
+    const res = CONST.TILE_RES[tile.type]
+    if (res && !tile.robbed) { out[res] += pips(+tile.num) * mult }
+  })
+  pieces.S.forEach(loc => add(loc, 1))
+  pieces.C.forEach(loc => add(loc, 2))
+  return out
+}
+
+/** Sum of pips a player's production makes, weighted by how rare each resource is on the map. */
+export function weightedPips(board, prod) {
+  return RES.reduce((m, r) => m + prod[r] * scarcity(board, r), 0)
+}
+
+/**
+ * Settlement spots reachable from a road network: free corners on the roads (distance 0) and free
+ * corners one empty edge away (distance 1). Cheap: no board mutation, nothing beyond one edge.
+ */
+export function reachableSpots(board, roads, pid) {
+  const at = new Set(), near = new Set()
+  roads.forEach(loc => {
+    const edge = board.findEdge(loc)
+    if (!edge) return
+    ;[edge.corner1, edge.corner2].forEach(corner => {
+      if (isFreeSpot(corner)) { at.add(corner.id); return }
+      if (corner.player_id && corner.player_id !== pid) return
+      corner.getEdges(-1).forEach(e => {
+        const far = e.jumpCorner(corner)
+        if (far && isFreeSpot(far)) { near.add(far.id) }
+      })
+    })
+  })
+  near.forEach(id => at.has(id) && near.delete(id))
+  return { at: [...at], near: [...near] }
+}
+
+/** Expected VP a development card buy is worth from what is left in the deck (public counts). */
+export function devCardVp(view) {
+  const tier = CONST.playerTier(view.players.length)
+  const vps_total = tier.deck.filter(c => c === 'dVp').length
+  // Only its own VP cards are known to be out of the deck; everyone else's stay hidden
+  const left = Math.max(0, vps_total - (view.me.closed_cards.dVp || 0))
+  return view.dev_cards_len ? Math.min(1, left / view.dev_cards_len) : 0
+}
