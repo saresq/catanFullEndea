@@ -21,6 +21,8 @@ const DELAYS = {
 
 export default class Game {
   id; config; active_pid; state; opponents; host_pid
+  /** Seat whose special building window is open; `active_pid` stays the turn's owner meanwhile */
+  builder_pid = null
   /** @type {UI} */ #ui;
   #board; #player; #socket_manager; #audio_manager
   #temp = {}
@@ -30,6 +32,7 @@ export default class Game {
     this.id = game_obj.id
     this.config = game_obj.config
     this.active_pid = game_obj.active_pid
+    this.builder_pid = game_obj.builder_pid ?? null
     this.state = game_obj.state
     this.end_context = game_obj.end_context
     this.host_pid = game_obj.host_pid
@@ -48,10 +51,10 @@ export default class Game {
       this.#board.build(pid, piece, loc)
       this.#ui.build(pid, piece, loc)
     })
-    this.#ui.all_players_ui.updateActive(this.active_pid)
+    this.#ui.all_players_ui.updateActive(this.acting_pid)
     this.#ui.player_ui.setDevCardCount(game_obj.dev_cards_len)
     this.#ui.player_ui.updatePiecesCount()
-    game_obj.timer && this.config.timer && this.setTimerSoc(game_obj.timer, this.active_pid)
+    game_obj.timer && this.config.timer && this.setTimerSoc(game_obj.timer, this.acting_pid)
     if (game_obj.robber_loc) {
       this.#board.moveRobber(game_obj.robber_loc)
       this.#ui.moveRobber(game_obj.robber_loc)
@@ -62,7 +65,7 @@ export default class Game {
       })
     }
     // State updates
-    this.updateStateChangeSoc(this.state, this.active_pid)
+    this.updateStateChangeSoc(this.state, this.acting_pid)
     // Do not request initial setup immediately; wait for server to emit INITIAL_SETUP after strategize time
   }
 
@@ -81,16 +84,19 @@ export default class Game {
   //   SOCKET UPDATES
   //#region -----------
 
-  updateStateChangeSoc(state, active_pid) {
+  /** `pid` is the acting seat: the builder in a special building window, else the turn's owner */
+  updateStateChangeSoc(state, pid) {
     this.state = state
-    this.active_pid = active_pid
-    this.#ui.all_players_ui.updateActive(active_pid)
+    if (state === ST.SPECIAL_BUILD) { this.builder_pid = pid }
+    else { this.builder_pid = null; this.active_pid = pid }
+    this.#ui.all_players_ui.updateActive(pid)
     switch (state) {
       case ST.INITIAL_SETUP: this.#onInitialSetup(); break
       case ST.PLAYER_ROLL: this.#onPlayerRoll(); break
       case ST.PLAYER_ACTIONS: this.#onPlayerAction(); break
       case ST.ROBBER_DROP: this.#onRobberDropCards(); break
       case ST.ROBBER_MOVE: this.#onRobberMove(); break
+      case ST.SPECIAL_BUILD: this.#onSpecialBuild(); break
       case ST.END: this.#onGameEnd(); break
     }
   }
@@ -126,6 +132,21 @@ export default class Game {
       this.#ui.player_ui.toggleShow(1)
       this.#ui.toggleActions(1)
     }
+  }
+  // STATE - Special building window: the builder may build and buy, nothing else
+  #onSpecialBuild() {
+    this.clearDevCardUsage()
+    this.#ui.hideAllShown()
+    this.#ui.trade_ui.clearRequests()
+    if (this.#isMyPid(this.builder_pid)) {
+      this.#audio_manager.playTurnNotification()
+      this.#ui.player_ui.toggleShow(1)
+      this.#ui.toggleActions(1)
+    } else {
+      this.#ui.toggleActions(0)
+      this.#ui.player_ui.toggleShow()
+    }
+    this.#ui.alert_ui.alertSpecialBuild(this.getPlayer(this.builder_pid))
   }
   // STATE - Drop for Robber
   #onRobberDropCards() {
@@ -656,9 +677,11 @@ export default class Game {
   playRobberAudio() { this.#audio_manager.playRobber() }
   #amIActing(pid = this.#player.id) {
     return this.#isMyPid(pid)
-      && pid === this.active_pid
-      && this.state === ST.PLAYER_ACTIONS
+      && (this.state === ST.SPECIAL_BUILD ? pid === this.builder_pid
+        : pid === this.active_pid && this.state === ST.PLAYER_ACTIONS)
   }
+  /** Seat the game waits on: the builder in a window, else the turn's owner */
+  get acting_pid() { return this.builder_pid ?? this.active_pid }
   saveStatus(text) { this.#socket_manager.saveStatus(text) }
   #isMyPid(pid) { return pid === this.#player.id }
 

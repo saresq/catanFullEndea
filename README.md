@@ -105,8 +105,15 @@ discards half) then `ROBBER_MOVE` (active player relocates the robber and steals
 distributes resources and goes to `PLAYER_ACTIONS` (build, buy/play dev cards, trade, end turn).
 `INITIAL_SETUP` runs first, two snake-order rounds, with the second settlement paying out.
 
-The game ends when a player reaches `config.win_points` — settlements 1, cities 2, victory-point
-cards 1 each, largest army 2, longest road 2.
+With 5 or more players, ending a turn opens `SPECIAL_BUILD` first: every other player still in the
+game, clockwise from the next seat, gets one window (`config.special_build_time`, 15 s, or until they
+Pass) to build and buy development cards. No trading and no card plays in a window. A player who
+can afford nothing is skipped. Then the next player rolls.
+
+A player wins when they reach `config.win_points` on their own turn — settlements 1, cities 2,
+victory-point cards 1 each, largest army 2, longest road 2. Points reached any other time (in a
+building window, or a Longest Road swing on someone else's turn) count when their turn starts, if
+they still hold them. The last player standing after quits wins at once.
 
 ## Game Features
 - [x] Design your own map
@@ -124,6 +131,7 @@ cards 1 each, largest army 2, longest road 2.
 - [x] Optional Balanced Dice (`config.dice_mode = 'balanced'`)
 - [x] Spectators
 - [x] Rematch voting at game end
+- [x] Special building phase (5+ players)
 
 ## 5-10 Player Support
 The game now supports up to 10 players with the following adjustments:

@@ -285,12 +285,65 @@ Not scoped, not promised.
 - Rethink ports: multiple in a single Sea tile; disallow connected edges of land being added as ports.
 - Social login (with picture and/or just a name/id).
 - Discord help (for talking).
-- Seafarers expansion (fairly easy one).
 - Trade negotiations.
 
 ---
 
-## 9. Repo weight — decided, not done
+## 9. Expansions — planned, in order
+
+Decided 2026-09-23. Step 0 is the special building phase and the own-turn win rule
+(`openspec/changes/add-special-building-phase`). Each item below becomes its own OpenSpec change,
+explored and proposed only after the previous one lands.
+
+**Ground rules for all of them:**
+
+- **Simplicity first.** Add the least logic the official rule needs, reuse the state machine and
+  `expected_actions` (the `ROBBER_DROP` pattern already waits on N players in parallel), and don't
+  build a rules engine ahead of need. Each expansion brings only the plumbing it uses.
+- **Official rules only.** Custom/house rules may come later; keep constants in one place so they
+  can become per-game config then.
+- **Bots play the base game only** (2-10 players, including the special building phase). The lobby
+  must refuse bot seats when an expansion is selected, and the server must refuse them too.
+- Every new string goes into both `en` and `es-AR`.
+
+### 9.1 `add-seafarers` — next
+
+The board already has sea tiles with corners and edges, custom mapkeys and the editor, so this is
+the natural first expansion. Scope to explore:
+
+- `config.expansion` (`'base' | 'seafarers'`), picked by the host in the lobby; bots blocked.
+- Ships: an edge piece (`Edge` today only has `road`), cost lumber + sheep, 15 per player; a ship and
+  a road meet only at a settlement or city; can't go on an edge with land on both sides. Move one
+  open-ended ship per turn, not one built that turn.
+- Longest trade route: roads and ships count together, but only through the player's own
+  settlement or city. Rewrites `findLongestPathFromRoads`.
+- Pirate: second blocker, sea tiles only, blocks building/moving ships next to it and steals like the
+  robber. On a 7 or a Knight the player chooses robber or pirate.
+- Gold fields: new tile letter (`G` is already pasture); after a roll each producing player picks
+  resources, in parallel, like the robber discard.
+- Islands: +2 VP (scenario-dependent) for the first settlement on each island away from home;
+  island = flood fill over land tiles.
+- Scenarios: fixed maps and win targets as presets (`const_maps.js`), start with "Heading for New
+  Shores"; fog/discovery scenarios later if at all.
+
+### 9.2 `add-traders-barbarians`
+
+A box of independent pieces, each can be its own small change: Friendly Robber, Harbormaster,
+event cards instead of dice (fits as a new `dice_mode`), Catan for 2, then the scenarios (Fishermen,
+Rivers, Caravans, Barbarian Attack, Traders & Barbarians). Explore which to take first when we get
+there.
+
+### 9.3 `add-cities-knights`
+
+The largest one by far: commodities (paper, cloth, coin) in hand, city improvements on three tracks
+plus metropolises, knights (corner piece, three levels, active/inactive), barbarian ship and event
+die, about 20 distinct progress-card effects, many interactive and off-turn. It replaces dev cards
+and Largest Army. It will likely need a generic card-play dispatcher and a prompt stack for off-turn
+responses. Design those only then, following the simplicity rule.
+
+---
+
+## 10. Repo weight — decided, not done
 
 ~112 MB of root PSDs and loose PNGs, about 75% of the repo. Untracking them is easy; reclaiming the
 space needs a history rewrite, and the VPS deploys by `git pull`, which a rewrite would break.

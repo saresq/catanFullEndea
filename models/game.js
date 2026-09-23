@@ -25,6 +25,8 @@ export default class Game {
   /** pids whose first regular-round roll is still pending (7 is forbidden for them) */
   #first_round_roll_pids = null
   #active_pid = 0
+  /** Seat whose special building window is open, and the seats still to get one this phase */
+  #builder_pid = null; #builders = []
   /** Turn the last connected socket was seen on; drives the abandoned-game reaper */
   #idle_from_turn = 1
   #spectators = new Map() // spectator_id -> Set(sockets)
@@ -59,10 +61,14 @@ export default class Game {
 
   get state() { return this.#state }
   set state(s) {
-    this.#io_manager.updateState(s, this.active_pid, this.turn)
     this.#state = s
+    this.#io_manager.updateState(s, this.acting_pid, this.turn)
   }
   get active_pid() { return this.#active_pid + 1 }
+  /** Seat whose building window is open, null outside the special building phase */
+  get builder_pid() { return this.#state === ST.SPECIAL_BUILD ? this.#builder_pid : null }
+  /** Seat the game is waiting on: the builder in a building window, else the turn's owner */
+  get acting_pid() { return this.builder_pid ?? this.active_pid }
   set active_pid(pid) {
     if (pid < 1 || pid > this.player_count) { this.turn++ }
     this.#active_pid = (pid - 1) % this.player_count
@@ -196,10 +202,14 @@ export default class Game {
 
       case ST.PLAYER_ACTIONS:
         this.#expect({ callback: _ => {
-          this.active_pid++
-          this.#skipRemovedSeats()
-          this.players.forEach(p => p.resetDevCard(this.#isActive(p.id)))
-          this.#gotoNextState(); this.ongoing_trades = []
+          if (this.player_count >= CONST.SPECIAL_BUILD_MIN_PLAYERS) {
+            // Every other seat still in the game, clockwise from the next one
+            this.#builders = [...Array(this.player_count - 1).keys()]
+              .map(i => (this.#active_pid + 1 + i) % this.player_count + 1)
+              .filter(pid => !this.getPlayer(pid)?.removed)
+            this.#openNextWindow()
+          } else { this.#advanceTurn() }
+          this.ongoing_trades = []
         }})
         // Reset once-per-turn trade bonus flag at the start of each actions phase
         this.turn_trade_time_added = false
@@ -231,7 +241,37 @@ export default class Game {
         this.#expect({ callback: this.#expectedRobberMove.bind(this) })
         this.setTimer(this.config.robber_move_time)
         break
+
+      case ST.SPECIAL_BUILD:
+        // Closed by a pass, the timer or the builder quitting
+        this.#expect({ pid: this.#builder_pid, callback: _ => this.#openNextWindow() })
+        this.setTimer(this.config.special_build_time)
+        break
     }
+  }
+
+  /** Next seat in the queue that can afford something gets a window; with none left the next turn starts */
+  #openNextWindow() {
+    this.#builder_pid = null
+    while (this.#builders.length && !this.#builder_pid) {
+      const player = this.getPlayer(this.#builders.shift())
+      if (player && !player.removed && this.#canAffordAny(player)) { this.#builder_pid = player.id }
+    }
+    this.#builder_pid ? (this.state = ST.SPECIAL_BUILD) : this.#advanceTurn()
+  }
+
+  /** Any piece left in the box or a development card left in the deck that `player` can pay for */
+  #canAffordAny(player) {
+    return ['R', 'S', 'C'].some(p => player.canBuy(p)) || !!(this.dev_cards.length && player.canBuy('DEV_C'))
+  }
+
+  /** The next seat still in the game starts its turn */
+  #advanceTurn() {
+    this.active_pid++
+    this.#skipRemovedSeats()
+    this.players.forEach(p => p.resetDevCard(this.#isActive(p.id)))
+    this.state = ST.PLAYER_ROLL
+    this.#checkTurnStartWin()
   }
 
   // EXPECTATIONS & RESOLUTIONS
@@ -404,8 +444,8 @@ export default class Game {
 
   /** Building - Edge & Corner click (other than initial-build) */
   clickedLocationIO(pid, loc_type, id) {
-    if (!this.#canAct(pid)) return
-    const player = this.getActivePlayer()
+    if (!this.#canBuild(pid)) return
+    const player = this.getPlayer(pid)
     // Validate & Build
     if (loc_type === CONST.LOCS.EDGE) {
       const valid_locs = this.board.getRoadLocationsFromRoads(player.pieces.R)
@@ -439,9 +479,9 @@ export default class Game {
 
   /** Development Card buying click */
   buyDevCardIO(pid) {
-    if (!this.#canAct(pid)) return
+    if (!this.#canBuild(pid)) return
     if (!this.dev_cards.length) return
-    const player = this.getActivePlayer()
+    const player = this.getPlayer(pid)
     if (!player.canBuy('DEV_C')) return
     const bought_card = this.dev_cards.pop()
     player.bought('DEV_C', bought_card)
@@ -685,8 +725,10 @@ export default class Game {
     })
   }
 
+  /** Ends the turn, or in a special building window, the builder passes */
   endTurnIO(pid) {
-    if (pid !== undefined && !this.#canAct(pid)) return
+    const allowed = this.state === ST.SPECIAL_BUILD ? pid === this.#builder_pid : this.#canAct(pid)
+    if (pid !== undefined && !allowed) return
     this.#next()
   }
   saveStatusIO(pid, text) { this.getPlayer(pid).setLastStatus(text) }
@@ -820,8 +862,21 @@ export default class Game {
     this.#io_manager.updateOngoingTrades(this.ongoing_trades)
   }
 
+  /** Only on their own turn: reached any other time, it is checked again when their turn starts */
   #onPlayerVpChange(pid, vps) {
     if (vps < this.config.win_points) return
+    if (pid !== this.active_pid) return
+    if (!this.state || this.state === ST.SPECIAL_BUILD || this.state === ST.END) return
+    this.#endGame(pid, vps)
+  }
+
+  #checkTurnStartWin() {
+    const player = this.getActivePlayer()
+    const vps = player.public_vps + player.private_vps
+    if (vps >= this.config.win_points) { this.#endGame(player.id, vps) }
+  }
+
+  #endGame(pid, vps) {
     if (this.#ending) return
     this.#ending = true
     setTimeout(_ => {
@@ -887,14 +942,20 @@ export default class Game {
     }
     // Everybody Quit - End Game
     if (remaining_players.length === 1) {
-      return this.#onPlayerVpChange(remaining_players[0].id, this.config.win_points)
+      return this.#endGame(remaining_players[0].id, this.config.win_points)
     }
     if (remaining_players.length === 0) {
       return this.#onGameEnd(this.id)
     }
-    // Otherwise - Game Continues. In the initial placement this places for the quit seat at random.
+    // Otherwise - Game Continues. A builder's window closes. The turn's owner quitting during the
+    // building phase leaves the windows open: the phase belongs to the others.
+    if (this.state === ST.SPECIAL_BUILD) {
+      if (this.#builder_pid === pid) { this.#next() }
+      return
+    }
+    // In the initial placement this places for the quit seat at random.
     // Bounded: a reaped game returns from #next without moving on.
-    for (let i = 0; i < 10 && this.active_pid === pid; i++) { this.#next() }
+    for (let i = 0; i < 10 && this.active_pid === pid && this.state !== ST.SPECIAL_BUILD; i++) { this.#next() }
   }
 
   godModeActivateIO(pid) {
@@ -956,7 +1017,7 @@ export default class Game {
   setTimer(time_in_seconds, fn) {
     this.clearTimer()
     if (!this.config.timer) { return }
-    this.#io_manager.updateTimer(time_in_seconds, this.active_pid)
+    this.#io_manager.updateTimer(time_in_seconds, this.acting_pid)
     this.#timer_ends_at = Date.now() + time_in_seconds * 1000
     this.#timer = setTimeout(_ => {
       fn && (typeof fn === 'function') && fn()
@@ -985,6 +1046,8 @@ export default class Game {
       && (this.state === ST.PLAYER_ACTIONS || this.state === ST.PLAYER_ROLL)
   }
   #canAct(pid) { return this.#isActive(pid) && this.state === ST.PLAYER_ACTIONS }
+  /** Build or buy: the active player in their actions phase, or the builder in their window */
+  #canBuild(pid) { return this.#canAct(pid) || (this.state === ST.SPECIAL_BUILD && pid === this.#builder_pid) }
   #isActive(pid) { return pid === this.active_pid }
 
   addSpectator(socket, spectator_id = socket.id) {
@@ -1057,6 +1120,7 @@ export default class Game {
       map_changes: this.map_changes,
       config: this.config,
       active_pid: this.active_pid,
+      builder_pid: this.builder_pid,
       host_pid: this.host_pid,
       state: this.state,
       turn: this.turn,

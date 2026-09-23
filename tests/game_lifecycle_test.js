@@ -48,7 +48,7 @@ test('a game with a live socket keeps playing', async () => {
   assert.equal(ended, 0, 'somebody is watching, so it was left alone')
 })
 
-test('two players crossing win_points in one tick announce one winner', async () => {
+test('crossing win_points twice in one tick announces one winner', async () => {
   const { io, events } = spyIo()
   const game = new Game({
     id: 'one-winner', io, host: { id: 1, name: 'Alice' },
@@ -59,16 +59,17 @@ test('two players crossing win_points in one tick announce one winner', async ()
   let guard = 0
   while (game.state === ST.INITIAL_SETUP && guard++ < 20) { game.initialBuildIO(game.active_pid) }
 
-  // Same tick, two different players over the line - what a settlement that breaks an opponent's
-  // Longest Road does: the road trophy moves before the builder's own piece is added.
-  game.getPlayer(2).changeVp(game.config.win_points)
-  game.getPlayer(3).changeVp(game.config.win_points)
+  // Same tick, over the line twice - a road that takes Longest Road, then the settlement it opens.
+  // Only the turn's owner can win, so it is the same player both times.
+  const active = game.getActivePlayer()
+  active.changeVp(game.config.win_points)
+  active.changeVp(1)
 
   await until(() => game.end_context, 'the game to end') // deferred by 200ms
   // A second winner would have been scheduled in the same tick, so it would land right behind
   // this one. Give it room to show up before claiming it never did.
   await tick(50)
   assert.equal(events.filter(e => e === SOC.GAME_END).length, 1, 'one end broadcast')
-  assert.equal(game.end_context.pid, 2, 'first past the post won')
+  assert.equal(game.end_context.pid, active.id)
   clearTimeout(game.end_cleanup_timer)
 })

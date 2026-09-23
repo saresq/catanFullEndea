@@ -32,6 +32,7 @@ const GAME_MESSAGES = {
     self: _ => t('log.roll_turn_self'),
     other: p => t('log.roll_turn_other', { name: getName(p) }),
   },
+  SPECIAL_BUILD: { all: p => line('special_build', p) },
   DICE_VALUE: {
     all: (n, m, p, res) => line('dice_value', p, {
       total: n + m, d1: n, d2: m,

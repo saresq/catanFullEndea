@@ -199,7 +199,9 @@ function devCardPlay(view, moves) {
 function turn(view, moves) {
   const play = devCardPlay(view, moves)
   if (play) return play
-  if (view.state !== CONST.GAME_STATES.PLAYER_ACTIONS) return moves.find(m => m.type === 'roll')
+  // A building window works like the actions phase, minus trades
+  const in_window = view.state === CONST.GAME_STATES.SPECIAL_BUILD
+  if (view.state !== CONST.GAME_STATES.PLAYER_ACTIONS && !in_window) return moves.find(m => m.type === 'roll')
 
   const cards = view.me.closed_cards
   const list = goals(view)
@@ -214,6 +216,7 @@ function turn(view, moves) {
       if (canBuy(view.me, goal.key)) return goal.intent
       continue
     }
+    if (in_window) continue
     const trade = bankTradeFor(view, goal)
     if (trade) return trade
   }

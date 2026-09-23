@@ -127,6 +127,7 @@ function steps(view, state, spots) {
   if (view.dev_cards_len > state.dev_bought && afford(CONST.COST.DEV_C)) {
     out.push({ intent: { type: 'buy_dev' }, next: { ...state, cards: pay(CONST.COST.DEV_C), dev_bought: state.dev_bought + 1 } })
   }
+  if (view.state === CONST.GAME_STATES.SPECIAL_BUILD) return out // no trading in a building window
   // Bank trades: only for a card some build is short of, paid from a pile no build in reach needs
   const wanted = new Set()
   ;[CONST.COST.C, CONST.COST.S, CONST.COST.DEV_C, CONST.COST.R].forEach(cost => {
@@ -312,7 +313,8 @@ export function evaluate(view, moves) {
   }
   const play = knightFirst(view, moves) || devCardPlay(view, moves)
   if (play) return play
-  if (view.state !== CONST.GAME_STATES.PLAYER_ACTIONS) return moves.find(m => m.type === 'roll')
+  const ST = CONST.GAME_STATES
+  if (view.state !== ST.PLAYER_ACTIONS && view.state !== ST.SPECIAL_BUILD) return moves.find(m => m.type === 'roll')
 
   const chosen = plan(view)
   if (chosen.first) {

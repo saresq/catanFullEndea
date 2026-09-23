@@ -140,6 +140,15 @@ export default class AlertUI {
     this.#onStatusUpdate(msg)
   }
 
+  /**
+   * A status for a state the page announces when it loads: a reload re-emits the state, so when the
+   * line is already the newest entry it only goes back on the bar.
+   */
+  setStateStatus(message = '...') {
+    if (this.#status_history[0] === message.replace(/<br\/?>/g, '. ')) return this.setStatusBarOnly(message)
+    this.setStatus(message)
+  }
+
   setStatusBarOnly(message = '...') {
     const msg = message.replace(/<br\/?>/g, '. ')
     this.$status_bar.innerHTML = msg
@@ -172,6 +181,7 @@ export default class AlertUI {
   alertRollTurn(p) {
     this.setStatusBarOnly(this.#isMe(p) ? MSG.ROLL_TURN.self() : MSG.ROLL_TURN.other(p))
   }
+  alertSpecialBuild(p) { this.setStateStatus(MSG.SPECIAL_BUILD.all(this.#isNotMe(p))) }
   alertTurnStart(p) { this.addTurnSeparator(getName(this.#isNotMe(p))) }
   alertDiceValue(p, d1, d2, rob_res) {
     this.setStatus(MSG.DICE_VALUE.all(d1, d2, this.#isNotMe(p), rob_res))
@@ -180,13 +190,15 @@ export default class AlertUI {
   alertResTaken(res) { this.appendStatus(MSG.RES_TAKEN.all(res)) }
   alertDevCardTaken(p, card) { this.setStatus(MSG.DEVELOPMENT_CARD_BUY.all(this.#isNotMe(p), card)) }
   alertRobberDrop(drop_count) {
-    if (drop_count) this.setStatusBarOnly(MSG.ROBBER.self(drop_count))
-    else this.appendStatus(MSG.ROBBER.other())
+    if (drop_count) return this.setStatusBarOnly(MSG.ROBBER.self(drop_count))
+    // Already appended: a reload re-emits the state
+    const msg = MSG.ROBBER.other()
+    if (!this.#status_history[0]?.endsWith(msg) && !this.$status_bar.innerHTML.endsWith(msg)) this.appendStatus(msg)
   }
   alertRobberDropDone() { this.setStatus(MSG.ROBBER.other()) }
   alertRobberMove(p) {
     if (this.#isMe(p)) this.bigAlert(MSG.ROBBER_MOVE.self())
-    else this.setStatus(MSG.ROBBER_MOVE.other(p))
+    else this.setStateStatus(MSG.ROBBER_MOVE.other(p))
   }
   alertRobberMoveDone(p, tile, num) { this.setStatus(MSG.ROBBER_MOVED_TILE.all(tile, num, this.#isNotMe(p))) }
   alertStolenInfo(p1, p2, res) { this.appendStatus(MSG.PLAYER_STOLE_RES.all(this.#isNotMe(p1), this.#isNotMe(p2), res)) }
@@ -214,7 +226,7 @@ export default class AlertUI {
   alertSeatTakenOver(p, was) { this.setStatus(MSG.SEAT_TAKEN_OVER.all(p, was)) }
   alertHostChanged(p, me) { this.setStatus(MSG.HOST_CHANGED.all(this.#isNotMe(p), me)) }
   alertGameEnd(p, context, game) {
-    this.setStatus(MSG.END_STATUS.all(this.#isNotMe(p), context.vps))
+    this.setStateStatus(MSG.END_STATUS.all(this.#isNotMe(p), context.vps))
     this.renderEndGameAlert(this.#isNotMe(p), context, game)
   }
 

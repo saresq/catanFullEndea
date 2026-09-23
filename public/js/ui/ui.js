@@ -10,6 +10,7 @@ import TradeUI from "./trade_ui.js"
 import ResSelectionUI from "./res_selection_ui.js"
 import AnimationUI from "./animations_ui.js"
 import AccessibilityUI from "./accessibility_ui.js"
+import { GAME_STATES } from "../const.js"
 const $ = document.querySelector.bind(document)
 
 export default class UI {
@@ -162,7 +163,7 @@ export default class UI {
 
   toggleActions(bool) {
     bool && this.#game.updateAllPossibleLocations()
-    this.player_ui.checkAndToggleActions(bool)
+    this.player_ui.checkAndToggleActions(bool, this.#game.state === GAME_STATES.SPECIAL_BUILD)
   }
 
   setTimer(t, pid) { this.player_ui.resetRenderTimer(t, pid) }

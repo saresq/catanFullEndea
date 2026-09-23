@@ -77,7 +77,8 @@ function playerTradeIntents(view, refused) {
   return intents
 }
 
-function actionIntents(view, extra = {}) {
+/** Builds and a development card purchase the player can pay for now */
+function buildIntents(view) {
   const { me, board } = view
   const intents = []
   if (canBuy(me, 'C')) { me.pieces.S.forEach(loc => intents.push({ type: 'build', piece: 'C', loc })) }
@@ -88,6 +89,12 @@ function actionIntents(view, extra = {}) {
     board.getRoadLocationsFromRoads(me.pieces.R).forEach(loc => intents.push({ type: 'build', piece: 'R', loc }))
   }
   if (view.dev_cards_len && canBuy(me, 'DEV_C')) { intents.push({ type: 'buy_dev' }) }
+  return intents
+}
+
+function actionIntents(view, extra = {}) {
+  const { me } = view
+  const intents = buildIntents(view)
   // Bank and port trades, one card at a time at the best rate owned
   RES.forEach(give => {
     const rate = bankRate(me, give)
@@ -126,6 +133,10 @@ export function legalMoves(view, kind, extra = {}) {
 
     case KINDS.PLAYER_ACTIONS:
       return actionIntents(view, extra)
+
+    // A building window: no trades, no card plays
+    case KINDS.SPECIAL_BUILD:
+      return [...buildIntents(view), { type: 'end_turn' }]
 
     case KINDS.ROBBER_DROP:
       return [{ type: 'discard', count: extra.drop_count ?? Math.floor(me.resource_count / 2), resources: {} }]

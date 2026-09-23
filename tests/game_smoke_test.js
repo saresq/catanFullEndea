@@ -131,8 +131,8 @@ test('full game flow', async t => {
     assert.equal(game.state, ST.PLAYER_ACTIONS)
   })
 
-  await t.test('reaching win_points ends the game', async () => {
-    const winner = game.getPlayer(1)
+  await t.test('reaching win_points on your own turn ends the game', async () => {
+    const winner = game.getActivePlayer()
     winner.changeVp(game.config.win_points - winner.public_vps)
 
     await until(() => game.state === ST.END, 'the game to end') // deferred by 200ms

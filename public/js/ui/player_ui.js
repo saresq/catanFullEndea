@@ -266,13 +266,14 @@ export default class PlayerUI {
     this.$costs.setAttribute('aria-expanded', open)
   }
 
-  checkAndToggleActions(toggle) {
+  /** `building_window`: a special building window - build and buy, Pass instead of End Turn, no trade */
+  checkAndToggleActions(toggle, building_window) {
     if (this.player.spectator) return
     this.removeActiveActions()
     if (toggle) {
       // Enable end turn on unified button during action phase
-      this.setUnifiedModeEnd(true)
-      this.toggleAction(this.$trade_btn, true)
+      this.setUnifiedModeEnd(true, building_window)
+      this.toggleAction(this.$trade_btn, !building_window)
       this.toggleAction(this.$dev_toggle, true)
       oKeys(CONST.COST).forEach(key => {
         const can_act = this.canIBuy(key)
@@ -364,12 +365,13 @@ export default class PlayerUI {
     this.toggleAction(this.$dice, enabled)
     this.toggleAction(this.$dev_toggle, true)
   }
-  setUnifiedModeEnd(enabled) {
+  /** `pass`: the same button closes a special building window */
+  setUnifiedModeEnd(enabled, pass = false) {
     if (!this.$dice) return
     this.$dice.dataset.mode = 'end'
     this.$dice.classList.add('end-turn')
-    this.$dice.title = t('dock.end_turn_title')
-    this.$dice.setAttribute('aria-label', t('dock.end_turn'))
+    this.$dice.title = t(pass ? 'dock.pass_title' : 'dock.end_turn_title')
+    this.$dice.setAttribute('aria-label', t(pass ? 'dock.pass' : 'dock.end_turn'))
     const label = this.$dice.querySelector('.label') || this.#ensureDiceLabel()
     label.innerHTML = CONST.icon('skip-forward')
     const effective = !!enabled && !this.#is_end_cooldown

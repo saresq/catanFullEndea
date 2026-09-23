@@ -137,6 +137,8 @@ export const GAME_CONFIG = {
   trade_time_bonus_seconds: 20, // Bonus seconds added on first trade of a turn
   robber_drop_time: 30,
   robber_move_time: 30,
+  /** Seconds each special building window stays open (5+ players) */
+  special_build_time: 15,
   max_trade_requests: 4,
   /** Bots may open player trade requests (tryhard does); they answer requests regardless */
   bot_trades: true,
@@ -210,8 +212,12 @@ export const GAME_STATES = {
   PLAYER_ACTIONS: 'player_actions',
   ROBBER_DROP: 'drop_resource_for_robber',
   ROBBER_MOVE: 'moving_robber',
+  SPECIAL_BUILD: 'special_build',
   END: 'end',
 }
+
+/** Games of this many seats or more get a special building phase after every turn. */
+export const SPECIAL_BUILD_MIN_PLAYERS = 5
 
 export const SOCKET_EVENTS = {
   // Client Sends…
