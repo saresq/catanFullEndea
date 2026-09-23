@@ -387,6 +387,9 @@ class WaitingRoomUI {
       return `<div class="slot empty"><span class="empty-label">${t('lobby.empty_slot')}</span>${add}</div>`
     }).join('')
     $list.innerHTML = items
+    // Only a seated player has a row to click; spectators never see the hint
+    const $hint = document.getElementById('color-hint')
+    if ($hint) { $hint.hidden = !this.my_pid }
 
     // Update remaining count after rerender (in case of initial render)
     this.updateJoinedCount()

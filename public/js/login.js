@@ -24,6 +24,7 @@ class LoginUI {
     const preGameId = (params.get('game_id') || '').toLowerCase()
     const preName = params.get('name') || ''
     const notice = params.get('notice') || ''
+    const notFound = params.get('not_found') === '1'
 
     const name = preName || localStorage.getItem(CONST.STORAGE_KEYS.PLAYER_NAME) || ''
     const joinSectionContent = isFull ? `
@@ -35,8 +36,10 @@ class LoginUI {
         </div>
       </div>
     ` : `
-      <input type="text" class="field name" name="name" placeholder="${t('login.your_name')}"/>
-      <input type="text" class="field game-key" name="game_id" placeholder="${t('login.game_key')}"/>
+      <input type="text" class="field name" name="name" placeholder="${t('login.your_name')}" aria-required="true" aria-describedby="join-name-error"/>
+      <p class="field-error" id="join-name-error" hidden></p>
+      <input type="text" class="field game-key" name="game_id" placeholder="${t('login.game_key')}" aria-required="true" aria-describedby="join-key-error"/>
+      <p class="field-error" id="join-key-error" hidden></p>
       <button class="btn btn--primary join">${t('login.join_game')}</button>
     `
 
@@ -104,7 +107,33 @@ class LoginUI {
       }
     }
     this.#setupEvents(isFull, preGameId)
+
+    // The key they tried matches no game: flag it and leave it selected to retype
+    if (notFound && $key) {
+      this.#markMissing($key, t('login.game_not_found'))
+      setTimeout(() => { $key.focus(); $key.select() }, 0)
+      // A reload shows the plain form again instead of the same error
+      params.delete('not_found')
+      history.replaceState(null, '', `${location.pathname}?${params}`)
+    }
     window.config = CONST.GAME_CONFIG
+  }
+
+  /** Join can't go ahead with this field as it is: flag it and say why under it. */
+  #markMissing($input, message) {
+    const $error = document.getElementById($input.getAttribute('aria-describedby'))
+    $input.setAttribute('aria-invalid', 'true')
+    if ($error) { $error.textContent = message; $error.hidden = false }
+    // Restart the nudge on every click, not just the first
+    $input.classList.remove('nudge')
+    void $input.offsetWidth
+    $input.classList.add('nudge')
+  }
+
+  #clearMissing($input) {
+    const $error = document.getElementById($input.getAttribute('aria-describedby'))
+    $input.removeAttribute('aria-invalid')
+    if ($error) { $error.hidden = true }
   }
 
   #setupEvents(isFull, preGameId) {
@@ -167,15 +196,23 @@ class LoginUI {
       
       // Setup join submit button
       this.$container.querySelector('.join-section .join').addEventListener('click', e => {
-        const name = (this.$container.querySelector('.join-section input.name').value || '').trim()
-        const game_key = (this.$container.querySelector('.join-section input.game-key').value || '').trim().toLowerCase()
-        if (!name) {
-          const nameInput = this.$container.querySelector('.join-section input.name')
-          nameInput && nameInput.focus()
+        const $name = this.$container.querySelector('.join-section input.name')
+        const $key = this.$container.querySelector('.join-section input.game-key')
+        const name = ($name.value || '').trim()
+        const game_key = ($key.value || '').trim().toLowerCase()
+        // Flag every empty field at once; the cursor goes to the first
+        const missing = [[$name, name, 'login.name_required'], [$key, game_key, 'login.key_required']].filter(([, v]) => !v)
+        if (missing.length) {
+          missing.forEach(([$_, , key]) => this.#markMissing($_, t(key)))
+          missing[0][0].focus()
           return
         }
         window.location.href = `/login?name=${encodeURIComponent(name)}&game_id=${encodeURIComponent(game_key)}`
       })
+
+      // An error clears as soon as its field has a value
+      this.$container.querySelectorAll('.join-section input[aria-required]').forEach($_ =>
+        $_.addEventListener('input', () => { if ($_.value.trim()) { this.#clearMissing($_) } }))
 
       // Setup game key input special handling
       this.$container.querySelector('.join-section input.game-key').addEventListener('keydown', e => {

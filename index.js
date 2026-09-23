@@ -195,8 +195,11 @@ app.get('/login', function (req, res) {
   if (notice) { return render(res, 'login', { notice }) }
   if (!game_id) { return render(res, 'login') }
   if (!GAME_SESSIONS[game_id]) {
-    // If a game_id is present but the session is not found (e.g., direct link, server restart),
-    // show the login page without an error so the user can enter a name or a different key.
+    // A join attempt (name and key) with a key that matches no game: back to the form, which says
+    // so. A bare key (old invite link, server restart) shows the form without an error.
+    if (name && req.query.not_found !== '1') {
+      return res.redirect(`/login?name=${encodeURIComponent(name)}&game_id=${encodeURIComponent(game_id)}&not_found=1`)
+    }
     return render(res, 'login')
   }
 

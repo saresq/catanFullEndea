@@ -173,9 +173,12 @@ input.field, select.field {
         opacity: 1;
     }
 
+    /* Focus thickens the border into one solid line (a spread shadow, so nothing shifts) rather
+       than drawing a second ring around it */
     &:focus-visible {
-        outline: 0.125rem solid var(--surface-ink);
-        outline-offset: 0.125rem;
+        outline: none;
+        border-color: var(--surface-ink);
+        box-shadow: 0 0 0 0.125rem var(--surface-ink);
     }
 
     &:disabled {
@@ -183,8 +186,47 @@ input.field, select.field {
         cursor: not-allowed;
     }
 
+    /* Missing or wrong value: the oxblood that reads on sand, on the border and the focus ring */
+    &[aria-invalid="true"] {
+        border: 0.125rem solid var(--danger-on-sand);
+        background: color-mix(in srgb, var(--danger-on-sand) 8%, color-mix(in srgb, var(--surface-sand) 30%, #fff));
+
+        &:focus-visible {
+            border-color: var(--danger-on-sand);
+            box-shadow: 0 0 0 0.0625rem var(--danger-on-sand);
+        }
+    }
+
+    /* A short sideways shake when a submit is refused, restarted by the script on each try */
+    &.nudge {
+        animation: field-nudge 0.3s ease-in-out;
+
+        @media (prefers-reduced-motion: reduce) {
+            animation: none;
+        }
+    }
+
     @media screen and (max-width: 768px) {
         min-height: 44px;
+    }
+}
+
+@keyframes field-nudge {
+    20%, 60% { transform: translateX(-0.25rem); }
+    40%, 80% { transform: translateX(0.25rem); }
+}
+
+/* The reason under a field that has aria-invalid; tied to it with aria-describedby */
+.field-error {
+    margin: calc(-1 * var(--space-2)) 0 0;
+    color: var(--danger-on-sand);
+    font-family: var(--font-body), sans-serif;
+    font-size: var(--text-md);
+    font-weight: 700;
+    text-align: center;
+
+    &[hidden] {
+        display: none;
     }
 }
 

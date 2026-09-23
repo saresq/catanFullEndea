@@ -437,6 +437,18 @@ body {
     }
 }
 
+#waiting-room .color-hint {
+    flex: none;
+    margin: 0;
+    text-align: center;
+    font-size: 0.875rem;
+    opacity: 0.75;
+
+    &[hidden] {
+        display: none;
+    }
+}
+
 #waiting-room .spectators {
     flex: none;
     text-align: center;

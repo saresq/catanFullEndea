@@ -4,7 +4,7 @@ import { newObject } from "../public/js/utils.js"
 export default class Player {
   #onChange; #onVpChange
   id; name; socket; last_status
-  static #names = ['Cheran(சே)', 'Cholan(ழ)', 'Paandian(பா)', 'Karikalan(க)']
+  static DEFAULT_NAME = 'Burrito'
   online = false
   ready = false
   removed = false
@@ -36,7 +36,7 @@ export default class Player {
 
   constructor(id, name, { onChange, onVpChange }) {
     this.id = id
-    this.name = Player.cleanName(name) || Player.#names[this.id - 1]
+    this.name = Player.cleanName(name) || Player.DEFAULT_NAME
     this.color_id = id // default: same as id; can be customized later
     this.#onChange = onChange
     this.#onVpChange = onVpChange

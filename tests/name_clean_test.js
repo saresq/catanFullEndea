@@ -26,7 +26,7 @@ test('names are capped at 24 characters', () => {
 
 test('a name that cleans to nothing falls back to the default name', () => {
   const game = newGame('<>')
-  assert.equal(game.getPlayer(1).name, 'Cheran(சே)')
+  assert.equal(game.getPlayer(1).name, 'Burrito')
   assert.equal(Player.cleanName(undefined), '')
 })
 
