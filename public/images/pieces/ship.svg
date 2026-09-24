@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 100">
+  <!--
+    Seafarers ship, bow to the right. Same colourless scheme as settlement.svg: see the note there.
+  -->
+  <defs>
+    <linearGradient id="hull" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7c7c7c"/>
+      <stop offset="1" stop-color="#5c5c5c"/>
+    </linearGradient>
+  </defs>
+  <!-- Sail: back leaf, mast, front leaf, front leaf's edge -->
+  <polygon fill="#5a5a5a" points="56,14 56,54 30,54"/>
+  <polygon fill="#454545" points="56,6 63,4 63,56 56,58"/>
+  <polygon fill="#9a9a9a" points="63,8 63,54 100,52"/>
+  <polygon fill="#646464" points="63,8 100,52 104,49 67,5"/>
+  <!-- Hull: deck, side, bow end -->
+  <polygon fill="#a6a6a6" points="8,62 100,62 114,52 20,52"/>
+  <polygon fill="url(#hull)" points="8,62 100,62 88,92 22,92"/>
+  <polygon fill="#565656" points="100,62 114,52 100,84 88,92"/>
+</svg>

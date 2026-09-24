@@ -291,8 +291,8 @@ Not scoped, not promised.
 
 ## 9. Expansions — planned, in order
 
-Decided 2026-09-23. Step 0 is the special building phase and the own-turn win rule
-(`openspec/changes/add-special-building-phase`). Each item below becomes its own OpenSpec change,
+Decided 2026-09-23. Step 0, the special building phase and the own-turn win rule, shipped
+2026-09-23 (`openspec/changes/archive/2026-09-23-add-special-building-phase`). Each item below becomes its own OpenSpec change,
 explored and proposed only after the previous one lands.
 
 **Ground rules for all of them:**
@@ -306,25 +306,278 @@ explored and proposed only after the previous one lands.
   must refuse bot seats when an expansion is selected, and the server must refuse them too.
 - Every new string goes into both `en` and `es-AR`.
 
-### 9.1 `add-seafarers` — next
+### 9.1 `add-seafarers` — next, spec below
 
-The board already has sea tiles with corners and edges, custom mapkeys and the editor, so this is
-the natural first expansion. Scope to explore:
+Written 2026-09-23, right after step 0 shipped. This is the input for `/opsx:propose`: it says what
+the rules are, what the code already gives us, where each rule lands, and what is left open. The
+board already has sea tiles with corners and edges, custom mapkeys and the editor, so this is the
+natural first expansion.
 
-- `config.expansion` (`'base' | 'seafarers'`), picked by the host in the lobby; bots blocked.
-- Ships: an edge piece (`Edge` today only has `road`), cost lumber + sheep, 15 per player; a ship and
-  a road meet only at a settlement or city; can't go on an edge with land on both sides. Move one
-  open-ended ship per turn, not one built that turn.
-- Longest trade route: roads and ships count together, but only through the player's own
-  settlement or city. Rewrites `findLongestPathFromRoads`.
-- Pirate: second blocker, sea tiles only, blocks building/moving ships next to it and steals like the
-  robber. On a 7 or a Knight the player chooses robber or pirate.
-- Gold fields: new tile letter (`G` is already pasture); after a roll each producing player picks
-  resources, in parallel, like the robber discard.
-- Islands: +2 VP (scenario-dependent) for the first settlement on each island away from home;
-  island = flood fill over land tiles.
-- Scenarios: fixed maps and win targets as presets (`const_maps.js`), start with "Heading for New
-  Shores"; fog/discovery scenarios later if at all.
+**Rules to check against the printed rulebook before proposing.** Everything below comes from
+the Seafarers rules as remembered, not transcribed. These points need the rulebook open: the
+New Shores tile layout, the 14 VP target, the 2 VP island bonus, and where the pirate starts.
+Nothing else depends on them being exactly right.
+
+#### Scope
+
+In: ships (build, move, Road Building), longest trade route, pirate, gold fields, island bonus,
+starting on the main island only, one scenario (Heading for New Shores, 3-4 players),
+`config.expansion` in the lobby, the bot block, editor tokens for gold and the pirate starting
+tile, `en` + `es-AR` strings.
+
+Out: every other scenario (fog, discovery, Through the Desert, and so on), the 5-6 player New
+Shores layout, bots that can sail, Harbormaster, variable island bonus per island, house rules.
+One scenario proves the plumbing; adding another later is a preset and a few constants.
+
+#### Rules, as they will be built
+
+**Ships.**
+
+- Cost lumber + wool, 15 per player (`PIECES_COUNT`).
+- An edge takes a ship when at least one of its two tiles is sea; it takes a road when at least
+  one is land. A coast edge (land on one side, sea on the other) takes either, but only one piece.
+  Sea on both sides takes ships only, land on both sides roads only.
+- Ships may use the grid border (an edge with a single sea tile). Our maps have no physical
+  frame, and on a hand-made map the outer rim can be the only sea route to an island. Decided
+  2026-09-23.
+- A new ship must touch the player's settlement or city, or continue the player's own ship at a
+  corner that holds no opponent building. **A ship never joins a road directly.** They meet only at
+  the player's own settlement or city. The same holds the other way: a road cannot grow off a ship
+  end.
+- Settlements may be built off a ship, at a corner touching at least one land tile. That is the
+  whole reason ships exist.
+- A port reached by ship works like any port. `Player.addPort` already runs on every settlement.
+
+**Moving a ship.** Once per turn, active player, `PLAYER_ACTIONS` only (never in a special
+building window, never before the roll). The ship must:
+
+- sit at the open end of a route: one of its corners holds no building of the player's and no
+  other ship of the player's. A route with both ends on the player's buildings is closed and
+  nothing in it moves;
+- not have been built this turn;
+- not lie on an edge of the pirate's tile.
+
+It moves to any edge a new ship could be built on right now, counted without the ship being moved
+and never onto the pirate's tile. It costs nothing, and the longest trade route is computed again
+after the move. That count can go **down**, the one case the current code never handles for the
+mover (see Implementation).
+
+**Longest trade route** replaces longest road. Roads and ships count together, minimum 5 as now.
+The route may switch between road and ship only at a corner with the player's own settlement or
+city. An opponent building still cuts it, as now.
+
+**Pirate.** A second blocker that only goes on sea tiles.
+
+- On a 7, or when a Knight is played, the player moves the robber **or** the pirate, to a
+  different tile. There is no mode switch: clicking a land tile moves the robber, clicking a sea
+  tile moves the pirate.
+- The pirate steals one card from a player with a ship on any edge of its tile (instead of a
+  building on its corners).
+- No ship may be built on an edge of the pirate's tile, and no ship there may move. It blocks
+  nothing else. Sea produces nothing and ports still work.
+- Its starting tile is marked in the mapkey. A map without one keeps it off the board until the
+  first 7 or Knight.
+
+**Robber on a map with no desert.** Seafarers maps often have none, so the robber starts off the
+board and enters on the first 7. Today `Board.moveRobber` calls `findTile(this.robber_loc)`, which
+throws when `robber_loc` is undefined, inside the timer. That is the same crash class as
+`Board.maxPlayers`. It has to be guarded before any desert-less map ships, base game included.
+
+**Gold fields.** A new land tile that produces the resource of the player's choice: 1 per settlement,
+2 per city, blocked by the robber like any tile.
+
+- After a roll that pays gold, every paid player picks at the same time. It is a new state,
+  `GOLD_PICK`, between the roll and `PLAYER_ACTIONS`, and it follows the `ROBBER_DROP` pattern: one
+  `#expect` per player, a `gold_pick_time` timer (20 s), random picks on timeout. A roll that pays
+  no gold skips the state.
+- Setup: a second settlement next to gold yields one card of the player's choice per gold tile.
+  That choice rides on the initial-build payload (`gold`, validated, random when missing or
+  wrong), so setup needs no new state.
+
+**Islands.** An island is a connected group of land tiles (a flood fill over `adjacent_tiles`,
+computed once in the `Board` constructor as `tile.island`). All land tiles at one corner are
+mutually adjacent, so a corner's island is well defined.
+
+- **Home islands** are the islands a player's two starting settlements are on. A player's first
+  settlement on each other island is worth the scenario's `island_bonus` VP (New Shores: 2, check;
+  custom maps: 2, decided 2026-09-23).
+  These are public points and never go away, even if that settlement later becomes a city.
+  `player.bonus_islands` lists which islands a player has claimed. The points go through
+  `changeVp`, so the own-turn win rule applies with no extra work.
+- **Setup restriction.** With `setup_island: 'largest'` (New Shores sets it), starting settlements
+  may only go on the island with the most land tiles. Custom maps default to no restriction.
+
+**Road Building** builds two roads, two ships, or one of each. The payload names the piece per
+location.
+
+**Special building phase** (5+ players, custom maps only for now, since New Shores seats 4): ships
+may be built there. Ships may not be moved there.
+
+**Victory target.** A scenario brings its own (`win_points` on the preset: 14 for New Shores,
+check). The host can still override it as today.
+
+#### Mapkey
+
+Two new tokens. `validateMapkey`, `TOKEN_RE`, `Board`, `Tile.generateMapKey`, the shuffler and the
+editor palette all need them.
+
+- `A` = gold field (Au). `G` is taken by pasture. A numbered land tile, `A5`. It has no
+  `TILE_RES` entry, so `Board.distribute` ignores it, and a new `Board.distributeGold(num)` returns
+  `{ pid, count }[]`.
+- `P` = plain sea where the pirate starts. It parses to `type: 'S'` plus `board.pirate_loc`. If
+  there are several, the last one wins, like `D` and the robber. No port on it. `generateMapKey`
+  writes it back as `P`.
+
+**Shuffle keeps tiles on their island.** A tile or number shuffle swaps only inside one island, so
+gold stays on the small islands and the main island stays a base-game-like board. Ports shuffle as
+today. On a base map (one island) the result is the same as now.
+
+#### Config, lobby, bots
+
+- `GAME_CONFIG.expansion: 'base'`. The host picks `'base' | 'seafarers'` in the lobby. It is
+  validated in `waitingRoomChangeConfigIO`, and it is carried by `io_manager` `CHANGE_CONFIG` and
+  `index.js` `toScript` the way `dice_mode` is.
+- `MAPS` entries gain `expansion`. The lobby's map list shows only the presets for the chosen
+  expansion. A mapkey containing `A` or `P` is refused unless `expansion === 'seafarers'`. The
+  first Seafarers preset is `new_shores` (`max_players: 4`, `win_points`,
+  `island_bonus`, `setup_island`).
+- **Bots are blocked on both sides.** `addBot` and `setBotLevel` refuse in a Seafarers game.
+  Switching to Seafarers while a bot is seated is refused, and the lobby disables the option and
+  says why. `takeOverSeat` refuses too, so a quit seat stays empty and is skipped, as with no
+  takeover.
+
+#### Implementation shape
+
+Most of the rules code goes in the shared `public/js/board/*`, so client highlights and server
+validation cannot disagree.
+
+- `edge.js`: `ship` beside `road`, a `buildShip(pid)`, and an `owner` getter (`road ?? ship`).
+  Also `tiles`, the tiles both corners share (one or two), set in `Board.createEdge`. With those,
+  the land/sea/border classification is one line each.
+- `corner.js`: `getEdges(-1)` means "no owner" (neither road nor ship). `getEdges(pid)` stays
+  roads-only, and a sibling `getShipEdges(pid)` covers ships. `hasBuildingOf(pid)` is a one-liner
+  both connection rules need.
+- `tile.js`: `getEdges()` (the six edges of the tile) for the pirate's block and steal, and
+  `island`.
+- `board.js`:
+  - `getShipLocations(pid, ships, buildings)`: the ship connection rule, minus edges of the
+    pirate's tile.
+  - `getRoadLocationsFromRoads` gains the "touches land" test. That also closes a gap in the base
+    game: today a road can cross a one-tile sea channel, because the check is per corner, not per
+    edge.
+  - `getSettlementLocationsFromRoads(roads, ships)` adds coastal corners off ships.
+  - `getMovableShips(pid, ships, built_this_turn)`.
+  - `movePirate(id)`, and the `robber_loc` guard.
+  - `findLongestPathFromRoads` walks both kinds, and allows a kind change only at a corner with the
+    player's own building. This is one extra condition in the existing recursion.
+  - `build()` handles `'SH'`.
+  - The islands flood fill.
+- `const.js`:
+  - `PIECES` / `PIECES_COUNT` / `COST` gain `SH` (ship). A two-letter key, like `DEV_C`, because
+    `S` is the settlement.
+  - `TILES` gains `A`.
+  - `GAME_STATES.GOLD_PICK`, `GAME_CONFIG.expansion`, `gold_pick_time`.
+  - `SOCKET_EVENTS.MOVE_SHIP` and `GOLD_PICK`.
+- `models/player.js`:
+  - `pieces.SH` and `canBuy('SH')` (generic already).
+  - `ships_built_turn` (ids, reset in `resetDevCard`'s turn-start path) and `moved_ship` (bool,
+    same reset).
+  - `bonus_islands`, and `toJSON` fields for all of them.
+- `models/game.js`:
+  - `clickedLocationIO(pid, loc_type, id, piece)`: an edge click names `'R'` or `'SH'`, and a
+    missing value keeps meaning `'R'`, so the base client is unchanged.
+  - `moveShipIO(pid, from, to)`.
+  - `goldPickIO(pid, resources)` plus `#expectedGoldPick`, and a `NEXT_STATE` detour through
+    `GOLD_PICK` only when the roll paid gold.
+  - `#expectedRobberMove` branches on the tile type (sea goes to the pirate, stealing from ship
+    owners), and `knightMoveIO` gets that for free.
+  - `roadBuildingIO` takes `{ piece, loc }` pairs.
+  - `#expectedInitialBuild` takes `road_piece` and `gold`, and applies the setup restriction.
+  - `build()`: the "breaking enemy roads" check reads `edge.owner`, not `edge.road`. The island
+    bonus lands here too.
+  - `#checkLongestRoad` gains a full recompute for the mover after a ship move. The route can
+    shrink, so it reuses the `broken_pid` branch with the mover as the broken player.
+- `models/io_manager.js`: the two new events, plus `updateBuild` / `updateShipMoved` /
+  `updatePirate` broadcasts.
+- Bots: `controller.js`, `moves.js` and the trackers need nothing beyond not being reached, since
+  the lobby block makes a bot in a Seafarers game impossible. Add a server test that proves it.
+- Client:
+  - `game.js`: `possible_locations.SH`, the move-ship mode (click an end ship, then its targets),
+    the pirate on the board and in the robber flow, and the gold picker.
+  - `ui/player_ui.js`: a build-ship button with its count, shown only in Seafarers.
+  - `ui/board_ui.js`: ship, gold tile and pirate art.
+  - `ui/res_selection_ui.js`: reused for the gold pick, as Year of Plenty does.
+  - `ui/all_players_ui.js`: island bonus in the VP breakdown.
+  - `ui/alert_ui.js`: status lines for ship built, ship moved, pirate moved and stole, gold picked,
+    and island bonus.
+  - `waiting_room.js`: the expansion picker and the filtered map list.
+- `map-editor.js`: palette entries for `A` and `P`.
+- Locales: every new string in `en` and `es-AR`, including the names of the tile, piece and state,
+  and the text of the lobby's bot-block message.
+
+#### Build order
+
+Each step leaves the base game green and can be its own commit.
+
+1. **Board model:** edge ownership, edge tiles, the per-edge "touches land" road test, the
+   `robber_loc` guard, the `A` and `P` tokens, the islands, the per-island shuffle. Base game
+   behaviour unchanged, and the existing tests prove it.
+2. **Config and lobby:** `expansion`, the preset list filter, the bot block.
+3. **Ships:** building, the settlement-off-ship rule, the two setup choices, Road Building, and the
+   longest trade route.
+4. **Ship movement.**
+5. **Pirate.**
+6. **Gold:** the state, the picker, and gold in setup.
+7. **Islands:** the bonus and the setup restriction. The New Shores preset, transcribed from the
+   rulebook.
+8. **Map editor tokens and the manual pass over strings.**
+
+#### Tests
+
+- `tests/ships_test.js`: the legality table (land/land, coast, sea/sea, border allowed), no road-to-ship
+  joint without a building, settlement off a ship, 15-piece cap, ships in a special building
+  window.
+- `tests/ship_move_test.js`: open end only, closed route frozen, not built this turn, once per
+  turn, pirate-adjacent frozen, and the route shrinking and losing the title.
+- `tests/trade_route_test.js`: mixed route through a building counts, through a bare corner does
+  not, an opponent settlement cuts it.
+- `tests/pirate_test.js`: 7 and Knight on sea move the pirate, steal from ship owners only, block
+  build and move, no-desert map does not crash.
+- `tests/gold_test.js`: parallel pick, timeout picks at random, robbed gold pays nothing, setup gold
+  choice, the state is skipped when no gold paid.
+- `tests/islands_test.js`: flood fill, home islands from setup, bonus once per island per player,
+  the setup restriction, and the own-turn win through a bonus.
+- `tests/map_grid_test.js` / `coastline_test.js`: the `A` and `P` round trip, and the per-island
+  shuffle keeping tiles in place.
+- Bot seat refusal in `tests/bot_seats_test.js`.
+
+#### Decided 2026-09-23
+
+- **Expansion maps belong to their expansion.** A preset or custom mapkey that uses Seafarers
+  features (`A` or `P`) only plays in a Seafarers game. `waitingRoomChangeConfigIO` refuses it in
+  a base game, and the lobby says why. Seafarers presets never appear in the base game's map list.
+- **Per-island shuffle** (as proposed under Mapkey), not a fixed layout.
+- **Island bonus on custom maps is 2**, the same as New Shores. There's no lobby setting for it.
+- **Ships may use the grid border.** Hand-made maps can have the outer rim as the only way to an
+  island.
+
+**Decided 2026-09-24, after checking the 2025 rulebooks (CN3083, CN3084).** These replace the
+matching points above, and the full change is in `openspec/changes/add-seafarers`.
+
+- **5+ seat Seafarers games use the 2025 paired players, not the special building phase.** After
+  each turn, the player three seats to the left takes an action phase: build, move one ship, play
+  one card, trade with the bank only. This applies at every size from 5 to 10. Base games keep the
+  special building phase.
+- **The pirate may be moved off the board** ("to the frame"), which steals nothing.
+- **The island bonus on custom maps is 1 VP**, with a 12 VP target, from the book's New World
+  variant. This replaces the earlier 2 VP. New Shores keeps 2 VP and 14 VP.
+- **Shuffle:** as in the book, the main island shuffles on its own and all the small islands shuffle
+  together as one pool. This replaces the per-island shuffle.
+- **Frame:** a new `X` token, a non-playable border tile that may carry a port. Coasts facing it
+  take no ships.
+- **Seafarers needs 3 or more seats.**
+- **New Shores ships in all three layouts:** 3 players, 4 players and 5-6 players. The 3-player map
+  starts the robber on the 12.
 
 ### 9.2 `add-traders-barbarians`
 

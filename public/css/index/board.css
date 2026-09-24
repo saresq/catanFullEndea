@@ -2,13 +2,33 @@
  * BOARD
  * -------------
 */
-@keyframes tile-blink {
-    0% {
-        filter: brightness(1.2);
-    }
-    100% {
-        filter: brightness(.8);
-    }
+/*
+ * Robber targets pulse on one beat: the board animates --glow and every candidate tile reads it,
+ * so they can never drift out of phase (a per-tile animation restarted whenever a tile was
+ * hovered). Every target only gets lighter on the beat, never darker: two things moving in
+ * opposite directions reads as out of sync and makes people dizzy.
+ */
+@property --glow {
+    syntax: '<number>';
+    inherits: true;
+    initial-value: 0;
+}
+
+@keyframes glow-pulse {
+    from { --glow: 0; }
+    to { --glow: 1; }
+}
+
+/*
+ * Shadows. Light comes from the top right (that is how the piece SVGs are shaded), so everything
+ * throws down-left: a tight contact line plus a soft falloff. None goes on .board itself: it wraps
+ * the pieces, so a filter there gives each piece a second shadow. The island's shadow comes from
+ * the beaches instead: they are its outline, and land tiles cast none, so no tile shadows another.
+ * The robber and the ports cast none.
+ */
+.board {
+    --piece-shadow: drop-shadow(-1px 1.5px .6px rgb(0 0 0 / .58)) drop-shadow(-4px 4.8px 2.75px rgb(0 0 0 / .74));
+    --chit-shadow: drop-shadow(-.5px 1px .5px rgb(0 0 0 / .39)) drop-shadow(-1.6px 2px 1.65px rgb(0 0 0 / .45));
 }
 
 .board {
@@ -16,14 +36,17 @@
     /* transform: scale(1); */
     margin: 0;
     box-sizing: border-box;
-    filter: drop-shadow(2px 2px 3px #000a);
     transition: filter var(--t-base) cubic-bezier(0.55, 0.06, 0.68, 0.19);
     user-select: none;
     touch-action: none;
     transform-origin: 0 0;
 
     &.blur {
-        filter: drop-shadow(2px 2px 3px #000a) blur(2px);
+        filter: blur(2px);
+    }
+
+    &:has(.tile.shown) {
+        animation: glow-pulse .7s ease-in-out infinite alternate;
     }
 
     .row {
@@ -58,6 +81,7 @@
             margin-top: 60px;
             background-color: var(--sand-color);
             position: relative;
+            filter: var(--chit-shadow);
 
             &::before {
                 display: block;
@@ -85,7 +109,33 @@
         &.shown .number,
         &.shown.D .background {
             cursor: pointer;
-            animation: tile-blink .7s infinite alternate ease-in-out;
+        }
+
+        /* Tokens stay sand on the beat: lighter plus a sand halo (brightness pushed them yellow).
+           The desert has no token, so it gets a see-through ghost one that pulses the same way;
+           the tile itself stays still, or it would wash the ghost out at the peak. */
+        &.shown:not(:has(.background:hover, .background~.number:hover)) {
+            --token-glow-bg: color-mix(in srgb, var(--sand-color), #fff calc(var(--glow) * 45%));
+            --token-glow-halo: 0 0 calc(3px + var(--glow) * 9px) calc(var(--glow) * 3px) color-mix(in srgb, var(--sand-color) 80%, #fff);
+
+            .number {
+                background-color: var(--token-glow-bg);
+                box-shadow: var(--token-glow-halo);
+            }
+
+            &.D::after {
+                content: '';
+                position: absolute;
+                left: 48px;
+                top: 60px;
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                z-index: 3;
+                pointer-events: none;
+                background-color: color-mix(in srgb, var(--token-glow-bg) 65%, transparent);
+                box-shadow: var(--token-glow-halo);
+            }
         }
 
         &.shown:has(.background:hover, .background~.number:hover) {
@@ -137,7 +187,11 @@
             filter: drop-shadow(0px 0 2px var(--sand-color)) drop-shadow(0px 0 2px var(--sand-color)) drop-shadow(0px 0 6px var(--sand-color));
             opacity: 1;
             background-size: cover;
+            transform-origin: 50% 90%;
             transition: opacity var(--t-base) ease-in, transform var(--t-base) ease-in, z-index 0s linear;
+            /* Plays whenever the robber lands, i.e. a tile gains .robbed. `backwards`, not `both`:
+               held end values would block the lift-off (.robber-animate) on the next 7. */
+            animation: robber-set-down .7s cubic-bezier(.25, .8, .35, 1) backwards;
         }
 
         &.robbed.robber-animate::before {
@@ -254,11 +308,42 @@
     }
 }
 
-.board.darken .tile .background, .board.darken .tile.robbed .background, .board.darken .tile .number, .board.darken .tile .beaches, .board.darken .tile .trade-post, .board.darken .tile.robbed::before
-    /* , .board.darken .tile .corner.taken */
-{
-    filter: brightness(.5);
-    transition: filter var(--t-base) ease;
+/*
+ * Awards (Longest Road, Largest Army) dim the land, never the pieces. Tokens, the coast and the
+ * robber already wear a filter: the dimming goes after it, so their shadow or halo neither vanishes
+ * on the dim nor snaps back after it. The fade only runs during an award (.award-fade, set by
+ * animations_ui): elsewhere these filters must change at once, like the robber-target hover.
+ */
+.board.award-fade .tile {
+    :is(.background, .number, .beach, .trade-post) {
+        transition: filter var(--t-slow) ease;
+    }
+
+    &.robbed::before {
+        transition: filter var(--t-slow) ease, opacity var(--t-base) ease-in, transform var(--t-base) ease-in, z-index 0s linear;
+    }
+}
+
+.board.award-dim .tile {
+    :is(.background, .trade-post) {
+        filter: brightness(.6);
+    }
+
+    &.robbed .background {
+        filter: sepia(.8) brightness(0.9) brightness(.6);
+    }
+
+    .number {
+        filter: var(--chit-shadow) brightness(.6);
+    }
+
+    .beach {
+        filter: drop-shadow(var(--beach-shadow-x, -2.4px) var(--beach-shadow-y, 3.2px) 3.3px rgb(0 0 0 / .33)) brightness(.6);
+    }
+
+    &.robbed::before {
+        filter: drop-shadow(0px 0 2px var(--sand-color)) drop-shadow(0px 0 2px var(--sand-color)) drop-shadow(0px 0 6px var(--sand-color)) brightness(.6);
+    }
 }
 
 /* --------------------------------------
@@ -277,13 +362,45 @@
     }
 }
 
-@keyframes city-show {
-    0% {
-        transform: scale(3);
-    }
-    100% {
-        transform: scale(1);
-    }
+/*
+ * Placing a piece. Settlements, cities and roads drop onto the board, squash and settle; the
+ * robber is set down by hand from the top right and wobbles to rest.
+ */
+@keyframes piece-drop {
+    0% { transform: translateY(-70px); opacity: 0; animation-timing-function: cubic-bezier(.5, 0, 1, .6); }
+    15% { opacity: 1; }
+    60% { transform: translateY(0) scale(1.18, .8); animation-timing-function: ease-out; }
+    78% { transform: translateY(-4px) scale(.95, 1.06); }
+    100% { transform: none; }
+}
+
+/* piece-drop again under another name: an upgrade only flips data-taken S -> C on the same
+   element, and an animation whose name does not change does not restart */
+@keyframes city-drop {
+    0% { transform: translateY(-70px); opacity: 0; animation-timing-function: cubic-bezier(.5, 0, 1, .6); }
+    15% { opacity: 1; }
+    60% { transform: translateY(0) scale(1.18, .8); animation-timing-function: ease-out; }
+    78% { transform: translateY(-4px) scale(.95, 1.06); }
+    100% { transform: none; }
+}
+
+/* In the road's own frame, which the board turns 0/60/120deg: --up-x/y is screen "up" there */
+@keyframes road-drop {
+    0% { transform: translate(calc(var(--up-x) * 60px), calc(var(--up-y) * 60px)); opacity: 0; animation-timing-function: cubic-bezier(.5, 0, 1, .6); }
+    15% { opacity: 1; }
+    60% { transform: none; animation-timing-function: ease-out; }
+    75% { transform: translate(calc(var(--up-x) * 3px), calc(var(--up-y) * 3px)); }
+    100% { transform: none; }
+}
+
+/* z-index: above the tile while .robber-animate (the lift-off state, z -1) is still on it */
+@keyframes robber-set-down {
+    0% { transform: translate(22px, -30px) rotate(20deg) scale(1.3); opacity: 0; z-index: 4; }
+    45% { opacity: 1; }
+    55% { transform: rotate(-7deg); animation-timing-function: ease-in-out; }
+    72% { transform: rotate(4deg); }
+    87% { transform: rotate(-1.5deg); }
+    100% { transform: none; z-index: 4; }
 }
 
 .board .tile {
@@ -322,40 +439,37 @@
             visibility: visible;
             border-radius: 0;
             background-color: transparent;
-            background-size: contain;
-            background-repeat: no-repeat;
-            filter: drop-shadow(-3px 3px 2px #000);
-            transform: scale(4);
+            filter: var(--piece-shadow);
             z-index: 4;
-            transition: all var(--t-base) ease-in;
+            transform-origin: 50% 85%;
 
-            &[data-taken=S] {
-                transition: transform var(--t-slow) cubic-bezier(0.38, -0.68, 0.67, -0.34);
-                transform: scale(1);
+            /* build() sets data-taken 200ms after .taken; the piece has no art until then. The drop
+               stays first in every animation list below: a list that drops or renames it replays
+               it, and a piece that was a click target (city upgrade, whom to rob) would fall again. */
+            --drop: piece-drop .55s backwards;
+
+            &[data-taken] {
+                animation: var(--drop);
             }
 
             &[data-taken=C] {
-                animation: city-show var(--t-slow) cubic-bezier(0.38, -0.68, 0.67, -0.34);
-                transform: scale(1);
-            }
-
-            &.longest {
-                filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 2px #fff) drop-shadow(0 0 2px #fff) drop-shadow(0 0 2px #fff) drop-shadow(0 0 2px #fff) drop-shadow(0 0 2px #fff);
+                --drop: city-drop .55s backwards;
             }
 
             &.shown {
-                animation: piece-settlement-blink 1s infinite;
+                animation: var(--drop), piece-settlement-blink 1s infinite;
                 filter: drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0px 1px 0 #fff) drop-shadow(0px -1px 0 #fff);
 
                 &:hover {
-                    animation: none;
+                    animation: var(--drop);
                     filter: brightness(1.5) drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0px 1px 0 #fff) drop-shadow(0px -1px 0 #fff);
                 }
             }
         }
 
+        /* The piece is painted on ::before (constants.css) so these filters reach it */
         &[data-taken=S] {
-            background-image: var(--p-settlement);
+            --piece: var(--piece-settlement);
         }
 
         &[data-taken=C] {
@@ -363,7 +477,7 @@
             height: 40px;
             margin-top: -5px;
             margin-left: -5px;
-            background-image: var(--p-city);
+            --piece: var(--piece-city);
         }
 
         &[data-dir="top"] {
@@ -444,10 +558,6 @@
     }
 }
 
-.board.darken .tile .corner.taken:not(.longest) {
-    filter: brightness(1);
-}
-
 /* --------------------------------------
  * EDGES
  * -------------
@@ -484,32 +594,60 @@
             }
         }
 
+        /* The road is painted on ::before (constants.css), past the edge's box: the art is 22 x 62
+           around the 50-long bar */
         &.taken {
             opacity: 1;
-            box-shadow: 2px 2px 4px 0 #000;
-            background: #999;
+            background: none;
             visibility: visible;
             cursor: default;
-            border: 1px solid;
-            width: 21px;
-            height: 150px;
-            z-index: 5;
+            width: 7px;
+            height: 50px;
+            z-index: 2;
+            filter: var(--road-shadow);
 
-            &.p1, &.p2, &.p3, &.p4, &.p5, &.p6, &.p7, &.p8, &.p9, &.p10 {
-                transition: z-index 0s var(--t-base) linear, width var(--t-base) ease-in, height var(--t-base) ease-in;
-                width: 7px;
-                height: 50px;
-                z-index: 2;
-                background: var(--p-color);
-                box-shadow: 1px 1px 0 1px color-mix(in srgb, var(--p-color-dark) 50%, #000), 4px 4px 6px 0 #000;
+            &::before {
+                inset: -12% -107.142857%;
+            }
+
+            /* build() adds the player class 100ms after .taken; the road has no colour until then */
+            &:is(.p0, .p1, .p2, .p3, .p4, .p5, .p6, .p7, .p8, .p9, .p10)::before {
+                animation: road-drop .5s backwards;
             }
 
 
+            /* The road art is on ::before, over the edge's own box: outline the art, not the box */
             &.longest {
-                box-shadow: 0 0 0 5px #fff, 0 -20px 0 5px #fff, 0 20px 0 5px #fff;
-                border-radius: 3px;
-                transition: all var(--t-base) ease-in;
+                filter: drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff) drop-shadow(0 0 3px #fff);
             }
+
+            /* Lit up by the Longest Road award, one road at a time */
+            &.award-lit {
+                filter: var(--road-shadow) drop-shadow(0 0 2px #fff) drop-shadow(0 0 6px #fff3c4);
+            }
+        }
+
+        /* Each angle has its own road art and its own shadow offsets: `filter` runs before the
+           element's rotate, so the offsets are counter-rotated to keep the shadow down-left. */
+        &:is([data-dir="right"], [data-dir="left"]) {
+            --up-x: 0;
+            --up-y: -1;
+            --piece: var(--piece-road-0);
+            --road-shadow: drop-shadow(-.5px 1px .5px rgb(0 0 0 / .42)) drop-shadow(-2.4px 3.2px 1.65px rgb(0 0 0 / .7));
+        }
+
+        &:is([data-dir="bottom-right"], [data-dir="top-left"]) {
+            --up-x: -.866;
+            --up-y: -.5;
+            --piece: var(--piece-road-60);
+            --road-shadow: drop-shadow(.62px .93px .5px rgb(0 0 0 / .42)) drop-shadow(1.57px 3.68px 1.65px rgb(0 0 0 / .7));
+        }
+
+        &:is([data-dir="bottom-left"], [data-dir="top-right"]) {
+            --up-x: -.866;
+            --up-y: .5;
+            --piece: var(--piece-road-120);
+            --road-shadow: drop-shadow(1.12px -.07px .5px rgb(0 0 0 / .42)) drop-shadow(3.97px .48px 1.65px rgb(0 0 0 / .7));
         }
 
         &[data-dir="right"] {
@@ -552,12 +690,15 @@
 
     /* The six offsets below are tuned to the tile box - `--tile-width` wide, 176px tall - and the
        box is the same whether the tile is sea or land, so one set serves both owners. */
+    /* The coast is the island's edge, so it casts the tile shadow too. Each beach is rotated and
+       `filter` runs before the rotate, so --beach-shadow-x/y are the down-left offset turned back. */
     .beach {
         width: 30px;
         z-index: -1;
         position: absolute;
         background-repeat: no-repeat;
         background-size: contain;
+        filter: drop-shadow(var(--beach-shadow-x, -2.4px) var(--beach-shadow-y, 3.2px) 3.3px rgb(0 0 0 / .33));
     }
 
     /* Sea pushes its own background to -2 so the coast sits over it. A land tile's background is
@@ -588,30 +729,40 @@
     }
 
     .beach-top_left {
+        --beach-shadow-x: 1.57px;
+        --beach-shadow-y: 3.68px;
         top: -16px;
         left: 30px;
         transform: rotate(60deg);
     }
 
     .beach-top_right {
+        --beach-shadow-x: 3.97px;
+        --beach-shadow-y: .48px;
         top: -17px;
         left: 90px;
         transform: rotate(120deg);
     }
 
     .beach-right {
+        --beach-shadow-x: 2.4px;
+        --beach-shadow-y: -3.2px;
         top: 37px;
         left: 120px;
         transform: rotate(180deg);
     }
 
     .beach-bottom_right {
+        --beach-shadow-x: -1.57px;
+        --beach-shadow-y: -3.68px;
         top: 89px;
         left: 91px;
         transform: rotate(-120deg);
     }
 
     .beach-bottom_left {
+        --beach-shadow-x: -3.97px;
+        --beach-shadow-y: -.48px;
         top: 90px;
         left: 32px;
         transform: rotate(-60deg);
@@ -642,8 +793,21 @@
 }
 
 
-/* Ensure Longest Road visual overrides color-specific road styles */
-.board .tile .edge.taken.longest {
-    box-shadow: 0 0 0 5px #fff, 0 -20px 0 5px #fff, 0 20px 0 5px #fff;
-    border-radius: 3px;
+
+@media (prefers-reduced-motion: reduce) {
+    /* Pieces just appear; robber targets hold a steady glow instead of pulsing */
+    .board:has(.tile.shown) {
+        animation: none;
+        --glow: .6;
+    }
+
+    /* !important: the rules they undo are nested deeper, so they out-rank these */
+    .board .tile .corner.taken {
+        --drop: none !important;
+    }
+
+    .board .tile .edge.taken::before,
+    .board .tile.robbed::before {
+        animation: none !important;
+    }
 }

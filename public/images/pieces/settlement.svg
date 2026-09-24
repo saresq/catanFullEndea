@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 948 912">
+  <!--
+    Settlement. Colourless on purpose: 50% grey leaves the player's colour as is, lighter greys
+    light it, darker greys shade it. CSS lays this file over the player's colour with the
+    hard-light blend and uses the same file as the mask, so one file serves every player colour.
+    Every face is opaque, so the mask is the silhouette.
+  -->
+  <defs>
+    <linearGradient id="roof" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#b4b4b4"/>
+      <stop offset="1" stop-color="#9c9c9c"/>
+    </linearGradient>
+    <linearGradient id="gable" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7a7a7a"/>
+      <stop offset="1" stop-color="#5e5e5e"/>
+    </linearGradient>
+    <linearGradient id="side" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#727272"/>
+      <stop offset="1" stop-color="#565656"/>
+    </linearGradient>
+  </defs>
+  <polygon fill="url(#gable)" points="190,60 440,335 445,895 45,700 12,240"/>
+  <polygon fill="url(#roof)" points="190,60 735,12 935,205 440,335"/>
+  <polygon fill="url(#side)" points="440,335 935,205 910,600 445,895"/>
+</svg>

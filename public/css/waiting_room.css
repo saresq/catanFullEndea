@@ -259,7 +259,7 @@ body {
 
     .city-icon {
         margin: 0.25rem 0 0.25rem 0.25rem;
-        background: center / contain no-repeat;
+        --piece: var(--piece-city);
         filter: drop-shadow(1px 1px 2px #0006);
     }
 
@@ -498,7 +498,7 @@ body {
         width: 3.75rem;
         height: 3.75rem;
         border-radius: var(--radius-sm);
-        background: center / contain no-repeat;
+        --piece: var(--piece-city);
         border: 0.125rem solid transparent;
         transition: transform .12s ease, border-color .12s ease;
         cursor: pointer;

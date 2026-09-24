@@ -332,7 +332,7 @@ export default class Game {
       this.#audio_manager.playLargestArmy()
       const player = this.getPlayer(pid)
       this.#ui.alert_ui.alertLargestArmy(player, count)
-      this.#ui.animation_ui.animateLargestArmy(pid, this.getPlayer(pid), count)
+      this.#ui.animation_ui.animateLargestArmy(pid, player, count, this.#isMyPid(pid))
     }, DELAYS.LARGEST_ARMY)
   }
 
@@ -343,7 +343,7 @@ export default class Game {
       const player = this.getPlayer(pid)
       this.#ui.alert_ui.alertLongestRoad(player, locs.length)
       const new_locs = this.#board.addTakenCornersAlongEdgePath(locs)
-      this.#ui.animation_ui.animateLongestRoad(pid, !this.#isMyPid(pid) && this.getPlayer(pid), new_locs)
+      this.#ui.animation_ui.animateLongestRoad(pid, player, new_locs, this.#isMyPid(pid))
     }, DELAYS.LONGEST_ROAD)
   }
 

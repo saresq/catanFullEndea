@@ -179,8 +179,8 @@ class WaitingRoomUI {
         <div class="title">${t('lobby.choose_color')}</div>
         <div class="grid">
           ${CONST.COLOR_IDS.map(i=>`
-            <div class="color-option ${takenColors.has(i) ? 'taken' : ''}" data-id="${i}"
-                 style="background-image:url('/images/pieces/city-${i}.png')" title="${t('lobby.color_n', { n: i })}"></div>
+            <div class="color-option pc${i} ${takenColors.has(i) ? 'taken' : ''}" data-id="${i}"
+                 title="${t('lobby.color_n', { n: i })}"></div>
           `).join('')}
         </div>
         <button class="btn btn--secondary btn--sm close">${t('lobby.cancel')}</button>`)
@@ -376,7 +376,7 @@ class WaitingRoomUI {
           ? `<button type="button" class="btn btn--quiet btn--sm remove-bot" data-pid="${p.id}" aria-label="${t('lobby.remove_bot_aria', { name: p.name })}" title="${t('lobby.remove_bot')}">${CONST.CLOSE_ICON}</button>`
           : ''
         return `<${tag} class="slot filled ${me ? 'me' : ''} ${p.is_bot ? 'bot' : ''} p${p.id} pc${cid}" data-pid="${p.id}">
-          <span class="city-icon" style="background-image:url('/images/pieces/city-${cid}.png')"></span>
+          <span class="city-icon"></span>
           <span class="name">${p.name}</span>${bot}${remove}
         </${me ? 'button' : 'div'}>`
       }

@@ -251,137 +251,132 @@
     }
 }
 
-/* Title bar shared by the largest-army and longest-road overlays */
-.animation-zone:is(.largest-army-animation, .longest-road-animation) .title {
-    color: #fff;
+/*
+ * Awards: Longest Road and Largest Army (ui/animations_ui.js). The board stays visible and
+ * clickable: the zone lets clicks through, the land dims (board.css, .award-dim), and a banner with
+ * the award's card slides down from the top. Largest Army first deals the knights into a fan.
+ */
+.animation-zone.award {
+    pointer-events: none;
+}
+
+/* The award card, from the extra-VPs sprite. --k scales the full-size card (20.4375rem wide). */
+.award-card {
+    --k: .36;
+    flex: none;
+    width: calc(20.4375rem * var(--k));
+    border: 1px solid var(--card-border);
+    border-radius: calc(.625rem * var(--k) + 2px);
+    box-shadow: 2px 3px 8px #0008;
+
+    &.road {
+        height: calc(25.125rem * var(--k));
+        background: var(--vp-card-bg) url(/images/extra-vps-sprite.png)
+            calc(-22.0625rem * var(--k)) calc(-9.5rem * var(--k)) / calc(43.75rem * var(--k)) no-repeat;
+    }
+
+    &.army {
+        height: calc(25.1875rem * var(--k));
+        background: var(--vp-card-bg) url(/images/extra-vps-sprite.png)
+            calc(-1.4375rem * var(--k)) calc(-9.125rem * var(--k)) / calc(43.75rem * var(--k)) no-repeat;
+    }
+}
+
+@keyframes award-banner-in {
+    from { transform: translate(-50%, -130%); }
+}
+
+@keyframes award-banner-out {
+    to { transform: translate(-50%, -130%); }
+}
+
+.award-banner {
+    position: absolute;
+    /* Centred over the board's area, not the window, and below the scoreboard on phones: the
+       --award-* values are set by animations_ui */
+    top: calc(var(--award-top, 0px) + 14px);
+    left: var(--award-x, 50%);
+    transform: translate(-50%, 0);
+    box-sizing: border-box;
+    /* Its own width, not the space right of `left` (which is half the screen) */
+    width: max-content;
+    max-width: calc(100% - 16px);
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    padding: .6rem 1.1rem .6rem .6rem;
+    background: var(--card-face);
     /* Player colour. See the player theme table in constants.css. */
-    background: var(--p-color, var(--sand-color-dark));
-    font-size: 1.2em;
-    width: 100%;
-    padding: 10px;
-    text-align: center;
-    border-bottom: 2px solid;
-}
+    border: 3px solid var(--p-color, var(--sand-color-dark));
+    border-radius: 12px;
+    box-shadow: 0 6px 18px #0007;
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    color: #2b2213;
+    animation: award-banner-in .45s cubic-bezier(.2, 1.3, .5, 1) both;
 
-/* Largest Army */
-.animation-zone.largest-army-animation {
-    background: var(--overlay-bg);
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
+    /* Laid out but unseen, so the knights know where the card will land */
+    &.pending {
+        visibility: hidden;
+        animation: none;
+    }
 
-    .container {
-        margin-top: 3.125rem;
-        position: relative;
+    &.out {
+        animation: award-banner-out .35s ease-in forwards;
+    }
 
-        .largest-army-card {
-            height: 13.125rem;
-            width: 20.4375rem;
-            position: relative;
-            border: 0.0625rem solid;
-            border-radius: 0.625rem;
-            background: var(--vp-card-bg) url(/images/extra-vps-sprite.png) -1.4375rem -9.125rem/43.75rem no-repeat;
-            box-shadow: 0.3125rem 0.3125rem 0.9375rem 0 #000;
-            opacity: 0;
+    .award-text {
+        text-align: center;
+    }
+
+    /* The number of roads / knights, big. Body font: the display font's figures hang. */
+    .award-count {
+        font-family: var(--font-body), sans-serif;
+        font-weight: 700;
+        font-variant-numeric: lining-nums;
+        font-size: 1.9em;
+        line-height: 0;
+        vertical-align: -.12em;
+        margin-right: .05em;
+        color: var(--p-color-dark, currentColor);
+    }
+
+    .award-vp {
+        display: block;
+        margin-top: .35rem;
+        font-family: var(--font-display);
+        font-size: 1.5rem;
+    }
+
+    @media screen and (max-width: 768px) {
+        gap: .6rem;
+        padding: .45rem .7rem .45rem .45rem;
+        font-size: 1rem;
+
+        .award-card {
+            --k: .24;
         }
 
-        /* Face and size: ui/card.css (.card--md) */
-        .knight {
-            position: absolute;
-            box-shadow: 0 0 0.3125rem 0.125rem #000;
-            opacity: 0;
-
-            &.first {
-                top: 3.375rem;
-                left: 4.5rem;
-                transform: rotate(-15deg) scale(1.1);
-            }
-
-            &.second {
-                top: 2.9375rem;
-                left: 9.25rem;
-                transform: scale(1.1);
-            }
-
-            &.third {
-                top: 3.75rem;
-                left: 14.125rem;
-                transform: rotate(15deg) scale(1.1);
-            }
+        .award-vp {
+            font-size: 1.2rem;
         }
-    }
-
-    &.start .knight.third {
-        opacity: 1;
-        transition: opacity var(--t-base) linear;
-    }
-
-    &.start .knight.second {
-        opacity: 1;
-        transition: opacity var(--t-base) var(--t-base) linear;
-    }
-
-    &.start .knight.first {
-        opacity: 1;
-        transition: opacity var(--t-base) var(--t-slow) linear;
-    }
-
-    &.finish .largest-army-card {
-        opacity: 1;
-        height: 25.1875rem;
-        transition: opacity var(--t-base) ease-in, height var(--t-base) 1s ease-in;
-    }
-
-    &.finish .knight.third {
-        opacity: 0;
-        transition: opacity var(--t-base) var(--t-base) linear;
-    }
-
-    &.finish .knight.second {
-        opacity: 0;
-        transition: opacity var(--t-base) var(--t-base) linear;
-    }
-
-    &.finish .knight.first {
-        opacity: 0;
-        transition: opacity var(--t-base) var(--t-base) linear;
-    }
-
-    &.finish {
-        opacity: 0;
-        z-index: -1;
-        transition: opacity var(--t-fast) linear 5s, z-index 0s 5.15s linear;
     }
 }
 
-/* Longest Road */
-.animation-zone.longest-road-animation {
-    background: var(--overlay-bg);
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    transition: opacity var(--t-slow) ease-out, z-index 0s linear;
+/*
+ * The knights played, dealt into a hand, in the middle of the board's area: every card sits in the same grid cell and turns about a
+ * pivot well below it, so they open into an even arch and neighbours always overlap alike.
+ */
+.award-knights {
+    position: absolute;
+    left: var(--award-x, 50%);
+    top: var(--award-y, 44%);
+    transform: translate(-50%, -50%);
+    display: grid;
 
-    .container {
-        margin-top: 3.125rem;
-        position: relative;
-
-        .longest-road-card {
-            height: 25.125rem;
-            width: 20.4375rem;
-            position: relative;
-            border: 0.0625rem solid;
-            border-radius: 0.625rem;
-            background: var(--vp-card-bg) url(/images/extra-vps-sprite.png) -22.0625rem -9.5rem/43.75rem no-repeat;
-            box-shadow: 0.3125rem 0.3125rem 0.9375rem 0 #000;
-        }
-    }
-
-    &.start {
+    .card {
+        grid-area: 1 / 1;
+        transform-origin: 50% 280%;
         opacity: 0;
-        z-index: -1;
-        transition: opacity var(--t-fast) linear 0s, z-index 0s var(--t-fast) linear;
     }
 }

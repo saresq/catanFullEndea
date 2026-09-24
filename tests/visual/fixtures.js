@@ -72,29 +72,28 @@
     },
 
     /**
-     * Largest Army animation. `game.js` defers it 2s, then `animations_ui` fades it out
-     * again 950ms later by adding `finish`. Both hooks below wait past that and strip `finish`,
-     * which parks the animation on screen so a screenshot can catch it - awaiting the returned
-     * promise is what `browser_evaluate` does anyway.
+     * Largest Army award. `game.js` defers it 2s; the knights fan out, then the banner is fully in
+     * about 2.5s later and stays ~2s. The hook resolves once the banner is in, so the screenshot
+     * that follows catches it - awaiting the returned promise is what `browser_evaluate` does anyway.
      */
     army(pid = other, count = 3) {
       game.updateLargestArmySoc(pid, count)
-      return VISUAL.hold(3400)
+      return VISUAL.hold(4700)
     },
 
-    /** Longest Road animation. Its own timeline is longer: content at 4s, `start` at 6s. */
+    /** Longest Road award: deferred 0.5s, the road lights up, the banner is in ~2.5s later for ~1.8s. */
     road(pid = other, locs) {
-      game.updateLongestRoadSoc(pid, locs || $$('.edge.taken').map($_ => ({ id: $_.dataset.id, type: 'e' })).slice(0, 5))
-      return VISUAL.hold(7000)
+      // The socket sends plain edge ids, in road order; game.js adds the corners itself
+      game.updateLongestRoadSoc(pid, locs || $$('.edge.taken').map($_ => +$_.dataset.id).slice(0, 5))
+      return VISUAL.hold(3300)
     },
 
-    /** Park whatever is in the animation zone on screen, `after` ms from now. */
+    /** What the animation zone shows `after` ms from now (the award banner, if any). */
     hold(after = 0) {
       const $z = document.querySelector('#game > .animation-zone')
       return new Promise(res => setTimeout(() => {
-        $z.classList.remove('finish')
-        $z.classList.add('start')
-        res({ zone: $z.className, title: $z.querySelector('.title')?.className })
+        const $b = $z.querySelector('.award-banner')
+        res({ zone: $z.className, banner: $b?.className, caption: $b?.querySelector('.award-text')?.textContent.trim() })
       }, after))
     },
 
@@ -186,13 +185,13 @@
       })
       $$('.corner.taken').forEach($c => {
         const pc = $c.className.match(/pc\d+/)?.[0]
-        if (pc && !out[`corner.${pc}`]) out[`corner.${pc}`] = $c.dataset.taken + ' ' + of($c, '--p-settlement', '--p-city')
+        if (pc && !out[`corner.${pc}`]) out[`corner.${pc}`] = $c.dataset.taken + ' ' + of($c, '--piece', '--p-color')
       })
       $$('.edge.taken').forEach($e => {
         const pc = $e.className.match(/pc\d+/)?.[0]
         if (pc && !out[`edge.${pc}`]) out[`edge.${pc}`] = of($e, '--p-color', 'background-color')
       })
-      out['animation.title'] = of(document.querySelector('#game > .animation-zone .title'), 'color', 'background-color')
+      out['award.banner'] = of(document.querySelector('#game > .animation-zone .award-banner'), 'border-top-color')
       out['trade.request'] = of(document.querySelector('.request .text') || document.querySelector('.request'), 'border-left-color')
       out['alert'] = of(document.querySelector('#game > .alert'), '--p-color')
       out['end.modal'] = of(document.querySelector('.game-ended .player-name'), 'color', 'background-color')

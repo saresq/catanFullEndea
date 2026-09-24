@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 634 608">
+  <!-- City. Same colourless scheme as settlement.svg: see the note there. -->
+  <defs>
+    <linearGradient id="front" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8e8e8e"/>
+      <stop offset="1" stop-color="#7c7c7c"/>
+    </linearGradient>
+  </defs>
+  <polygon fill="#5a5a5a" points="140,5 275,78 145,250 7,180"/>
+  <polygon fill="#4a4a4a" points="7,180 145,250 140,604 5,535"/>
+  <polygon fill="url(#front)" points="145,250 275,78 402,218 402,330 630,298 628,540 140,604"/>
+  <polygon fill="#646464" points="402,240 495,228 630,298 402,330"/>
+</svg>

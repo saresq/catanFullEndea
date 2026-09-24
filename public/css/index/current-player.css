@@ -571,18 +571,19 @@
             .image {
                 width: 3rem;
                 height: 2.25rem;
-                background-repeat: no-repeat;
-                background-position: center;
                 filter: drop-shadow(1px 1px 0 #fff) drop-shadow(-1px -1px 0 #fff) drop-shadow(1px -1px 0 #fff) drop-shadow(-1px 1px 0 #fff);
             }
         }
 
+        /* The piece is painted on ::before (constants.css) so the filters above and below reach it */
         .build-settlement .image {
-            background-size: 2.25rem;
+            --piece: var(--piece-settlement);
+            --piece-size: 2.25rem;
         }
 
         .build-city .image {
-            background-size: 3rem;
+            --piece: var(--piece-city);
+            --piece-size: 3rem;
         }
 
         .build-road, .build-settlement, .build-city {
@@ -734,14 +735,6 @@
         /* Player colours. See the player theme table in constants.css. */
         .build-road:not(.disabled) .image {
             background: var(--p-color-on-dark, var(--sand-color-dark));
-        }
-
-        .build-settlement .image {
-            background-image: var(--p-settlement);
-        }
-
-        .build-city .image {
-            background-image: var(--p-city);
         }
     }
 

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-11 -31 22 62">
+  <!--
+    Road. Same colourless scheme as settlement.svg: see the note there.
+    The board draws every road as a vertical bar and turns it with CSS (rotate 0, 60 or 120deg).
+    The light must not turn with it, so there is one file per angle: each is drawn already
+    counter-rotated, sides facing where the settlement's sides face once the CSS turn is applied.
+    Box is 22 x 62 around a 50-long bar; board.css grows ::before past the 7 x 50 edge to fit.
+  -->
+  <polygon fill="#5e5e5e" points="4.8,25 -4.8,25 -7.4,29.2 2.2,29.2"/>
+  <polygon fill="#5e5e5e" points="-4.8,25 -4.8,-25 -7.4,-20.8 -7.4,29.2"/>
+  <polygon fill="#888888" points="-4.8,-25 4.8,-25 4.8,25 -4.8,25"/>
+</svg>

@@ -198,7 +198,6 @@
             height: 2.7em;
             margin: 0 auto var(--space-1);
             font-size: 0.6rem;
-            background: center / contain no-repeat;
         }
 
         /* The scoreboard's own VP mark, a disc cut from the board art (all-players.css) */
@@ -213,11 +212,11 @@
         }
 
         .S .pts-icon {
-            background-image: var(--p-settlement);
+            --piece: var(--piece-settlement);
         }
 
         .C .pts-icon {
-            background-image: var(--p-city);
+            --piece: var(--piece-city);
         }
 
         :is(.army, .road) .pts-icon {
