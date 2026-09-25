@@ -812,4 +812,13 @@
     .board .tile.robbed::before {
         animation: none !important;
     }
+
+    /* Upgradable pieces keep their outline without the pulse; after a 7 the robber fades, no zoom */
+    .board .tile .corner.taken.shown {
+        animation: none !important;
+    }
+
+    .board .tile.robbed.robber-animate::before {
+        transform: none !important;
+    }
 }
