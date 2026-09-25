@@ -83,6 +83,8 @@ class LoginUI {
           </div>
           <div class="map-editor-link">
             <button class="btn btn--secondary map-editor">${t('login.map_editor')}</button>
+            <!-- TEMP: open the selected preset in the editor -->
+            <button class="btn btn--secondary edit-map">Edit selected map</button>
           </div>
         </div>
         <div class="section join-section">
@@ -231,6 +233,13 @@ class LoginUI {
     // Setup map editor button
     this.$container.querySelector('.map-editor').addEventListener('click', e => {
       window.location.href = '/map-editor'
+    })
+
+    // TEMP: open the selected preset in the editor
+    this.$container.querySelector('.edit-map').addEventListener('click', e => {
+      const map_id = this.$container.querySelector('.host-section select.map-size')?.value || 'standard'
+      const mapkey = (CONST.MAPS[map_id] || CONST.MAPS.standard).mapkey
+      window.location.href = `/map-editor?mapkey=${encodeURIComponent(mapkey)}`
     })
   }
 }

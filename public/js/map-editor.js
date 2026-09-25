@@ -8,6 +8,9 @@ import {
   expandSeaBordersAt, gridShift, growBottom, growLeft, growRight, growTop,
   parseRows, serializeRows, validateMapkey,
 } from "./board/map_grid.js"
+import { SYMMETRIES, symmetrize, symmetryReport } from "./board/symmetry.js"
+import { applyShape, tidyShapes } from "./board/shapes.js"
+import { balancePorts } from "./board/ports.js"
 
 const $ = document.querySelector.bind(document)
 const dummyFn = _ => _
@@ -26,22 +29,32 @@ const GROW_LABEL = Object.fromEntries(Object.keys(GROW).map(side => [side, t(`ed
 const RAIL = [
   { id: 'randomize', icon: '🎲', label: t('editor.randomize') },
   { id: 'balance', icon: '⚖️', label: t('editor.balance') },
+  { id: 'symmetry', icon: '🪞', label: t('editor.symmetry') },
   { id: 'info', icon: '🧭', label: t('editor.map_info') },
   { id: 'share', icon: '🔗', label: t('editor.share_map') },
 ]
 
-/** What `Shuffle` may move around, as chips rather than three sentences starting with the same word. */
+/**
+ * What `Shuffle` may move around, as chips. Land is the resources and the numbers together: the
+ * numbers are dealt around the deserts, so the two only come apart at the cost of a desert pinned.
+ */
 const SHUFFLE_OPTIONS = [
-  { id: 'tile', label: t('editor.locations') },
-  { id: 'number', label: t('editor.numbers') },
-  { id: 'port', label: t('editor.ports') },
+  { id: 'land', kind: 'tile-number', label: t('editor.land') },
+  { id: 'port', kind: 'port', label: t('editor.ports') },
 ]
 
 /** The number the brush writes: a real one, a fresh roll per tile, or nothing at all. */
 const RANDOM = 'random'
 
-/** Resource colours taken off the tile art, so a bar reads as the terrain it counts. */
-const TERRAIN_HUE = { G: '#7fae3c', J: '#2f6b35', C: '#b4602c', M: '#8d8fa6', F: '#d8a72b', D: '#c9b37e' }
+/**
+ * The rows of the terrain and ports table: each resource with its tiles and its 2:1 port, then the
+ * desert (tiles, no port) and the generic 3:1 port (no tiles).
+ */
+const LEDGER = [
+  ...TERRAINS.filter(type => type !== 'S' && type !== 'D').map(type => ({ type, res: CONST.TILE_RES[type], port: `${CONST.TILE_RES[type]}2` })),
+  { type: 'D', res: null, port: null },
+  { type: null, res: null, port: '*3' },
+]
 
 const HISTORY_DEPTH = 100
 
@@ -101,6 +114,8 @@ class MapEditor {
   #port = null
   #pointer_bound = false
   #open_popover = null
+  /** The tidy shapes on offer, worked out only while the symmetry panel is open. */
+  #shape_plans = []
   #modal_open = false
   /** The brush being held aside while Space is down. `undefined` means Space is not down. */
   #space_brush = undefined
@@ -224,6 +239,24 @@ class MapEditor {
           <b>${t('editor.even_resources')}</b>
           <span>${t('editor.even_resources_note')}</span>
         </button>
+        <button class="action-row editor-balance-ports">
+          <b>${t('editor.even_ports')}</b>
+          <span>${t('editor.even_ports_note')}</span>
+        </button>
+      `)}
+      ${this.#popover('symmetry', t('editor.symmetry'), `
+        <p class="popover-note">${t('editor.symmetry_note')}</p>
+        ${SYMMETRIES.map(kind => `
+          <button class="action-row editor-symmetry" data-symmetry="${kind}">
+            <b>${t(`editor.symmetries.${kind}`)}</b>
+            <span class="symmetry-status"></span>
+          </button>
+        `).join('')}
+        <div class="popover-split">
+          <h3>${t('editor.tidy_shape')}</h3>
+          <p class="popover-hint">${t('editor.tidy_shape_hint')}</p>
+          <div class="shape-options"></div>
+        </div>
       `)}
       ${this.#popover('info', t('editor.map_info'), '<div id="map-report"></div>')}
       ${this.#popover('share', t('editor.share_map'), `
@@ -292,14 +325,13 @@ class MapEditor {
               </select>
             </div>
             <div class="field-group">
-              <h3>${t('editor.keep_layout')}</h3>
-              <p class="popover-hint">${t('editor.keep_hint')}</p>
-              <div class="chip-group">
-                ${chipHtml('keep', 'resources', t('editor.resources'), false)}
-                ${chipHtml('keep', 'numbers', t('editor.numbers'), false)}
+              <h3>${t('editor.shuffle_on_start')}</h3>
+              <p class="popover-hint">${t('editor.shuffle_on_start_hint')}</p>
+              <div class="chip-group chip-group--center">
+                ${SHUFFLE_OPTIONS.map(o => chipHtml('mix', o.id, o.label, true)).join('')}
               </div>
             </div>
-            <div class="popover-actions popover-actions--end">
+            <div class="popover-actions popover-actions--split">
               <button class="btn btn--quiet btn--sm modal-close">${t('editor.cancel')}</button>
               <button class="btn btn--primary editor-start">${t('editor.start_game')}</button>
             </div>
@@ -386,6 +418,9 @@ class MapEditor {
     })
     $('.editor-balance-numbers').addEventListener('click', () => this.balanceNumbers())
     $('.editor-balance-resources').addEventListener('click', () => this.balanceResources())
+    $('.editor-balance-ports').addEventListener('click', () => this.balancePorts())
+    this.$popovers.querySelectorAll('.editor-symmetry').forEach($b => $b.addEventListener('click', e =>
+      this.symmetrize(e.currentTarget.dataset.symmetry)))
     $('.editor-render').addEventListener('click', () => this.renderMapkey())
     $('#players-select').addEventListener('change', () => this.#capPlayerOptions())
 
@@ -515,6 +550,7 @@ class MapEditor {
     $pop.classList.add('open')
     this.#open_popover = id
     this.$rail.querySelector(`[data-popover="${id}"]`)?.setAttribute('aria-expanded', 'true')
+    if (id === 'symmetry') { this.#syncShapes() }
     $pop.querySelector('button, textarea, select, input')?.focus()
   }
 
@@ -524,7 +560,7 @@ class MapEditor {
     $pop?.classList.remove('open')
     if ($pop) {
       $pop.hidden = true
-      $pop.style.left = $pop.style.top = $pop.style.right = ''
+      $pop.style.left = $pop.style.top = $pop.style.right = $pop.style.translate = ''
     }
     this.$rail.querySelector(`[data-popover="${this.#open_popover}"]`)?.setAttribute('aria-expanded', 'false')
     this.#open_popover = null
@@ -776,6 +812,9 @@ class MapEditor {
     const $tile = this.board_ui.$el.querySelector(`.tile[data-id="${id}"]`)
     if (!$pop || !$tile) { return }
     if (window.innerWidth < 768) { return }
+    // Placed by hand: the rail-centred `translate` every other popover rides on would shift this
+    // one by half its height again, off the top of a short screen
+    $pop.style.translate = 'none'
     const tile = $tile.getBoundingClientRect()
     const rail = this.$rail.offsetWidth
     const dock = this.$dock.offsetHeight
@@ -907,6 +946,8 @@ class MapEditor {
     this.#syncTools()
     this.#capPlayerOptions()
     this.updateInfoSection()
+    this.#syncSymmetry()
+    if (this.#open_popover === 'symmetry') { this.#syncShapes() }
     this.#flagTiles()
     this.#measureChrome()
   }
@@ -967,18 +1008,21 @@ class MapEditor {
     const tiles = this.board.tile_rows.flat()
     const counts = {}
     const numbers = {}
+    const ports = {}
     let land = 0
     tiles.forEach(tile => {
-      if (tile.type === 'S') { return }
+      if (tile.type === 'S') {
+        if (tile.trade_edge) { ports[tile.trade_type + tile.trade_ratio] = (ports[tile.trade_type + tile.trade_ratio] || 0) + 1 }
+        return
+      }
       land++
       counts[tile.type] = (counts[tile.type] || 0) + 1
       if (tile.num) { numbers[tile.num] = (numbers[tile.num] || 0) + 1 }
     })
     const seats = Board.maxPlayers(this.mapkey)
-    const most = Math.max(1, ...Object.values(counts))
     const tallest = Math.max(1, ...Object.values(numbers))
-    const order = [...TERRAINS.filter(t => t !== 'S' && t !== 'D'), 'D'].filter(t => counts[t])
     const tileCount = n => t.plural('editor.tiles_n', n)
+    const port_total = Object.values(ports).reduce((sum, n) => sum + n, 0)
 
     const flags = this.#problems()
     const grouped = {}
@@ -1002,16 +1046,40 @@ class MapEditor {
 
       ${land ? `
         <section class="info-block">
-          <h3>${t('editor.terrain')}</h3>
-          <ul class="res-list">
-            ${order.map(type => `
-              <li class="res-row" style="--fill: ${counts[type] / most * 100}%; --hue: ${TERRAIN_HUE[type]}">
-                <span class="res-name"><span class="res-icon" aria-hidden="true">${CONST.TILE_EMOJIS[type]}</span><span>${type === 'D' ? CONST.TILES.D : CONST.RESOURCES[CONST.TILE_RES[type]]}</span></span>
-                <span class="res-bar"></span>
-                <span class="res-count">${counts[type]}</span>
-              </li>
-            `).join('')}
-          </ul>
+          <h3>${t('editor.terrain_ports')}</h3>
+          <table class="ledger">
+            <thead>
+              <tr>
+                <th scope="col">${t('editor.resources')}</th>
+                <th scope="col">${t('editor.tiles')}</th>
+                <th scope="col">${t('editor.ports')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${LEDGER.map(({ type, res, port }) => {
+                const tiles = counts[type] || 0
+                const docks = ports[port] || 0
+                const name = res ? CONST.RESOURCES[res] : type === 'D' ? CONST.TILES.D : CONST.TRADE_OFFERS[port]
+                const icon = res ? `<span class="res-icon ${res}"></span>`
+                  : type === 'D' ? `<span class="ledger-emoji">${CONST.TILE_EMOJIS.D}</span>`
+                  : '<span class="ledger-ship"></span>'
+                return `
+                <tr>
+                  <th scope="row"><span class="ledger-icon" aria-hidden="true">${icon}</span>${name}</th>
+                  <td>${type ? tiles : '&ndash;'}</td>
+                  <td class="${port && !docks ? 'none' : ''}">${port ? docks : '&ndash;'}</td>
+                </tr>`
+              }).join('')}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th scope="row">${t('editor.total')}</th>
+                <td>${land}</td>
+                <td>${port_total}</td>
+              </tr>
+            </tfoot>
+          </table>
+          <p class="popover-hint">${t('editor.ledger_hint')}</p>
         </section>
 
         <section class="info-block">
@@ -1036,6 +1104,68 @@ class MapEditor {
 
   /* --------------------------------------------------------------- map tools */
 
+  /** Each symmetry says up front whether the map has it, or how much it would move to get it. */
+  #syncSymmetry() {
+    const report = symmetryReport(this.mapkey)
+    this.$popovers.querySelectorAll('.editor-symmetry').forEach($b => {
+      const n = report[$b.dataset.symmetry]
+      $b.querySelector('.symmetry-status').textContent =
+        n ? t.plural('editor.symmetry_moves', n) : t('editor.symmetric_already')
+      $b.classList.toggle('done', !n)
+    })
+  }
+
+  /**
+   * Tidy shapes, each drawn as a small outline of the island. One that changes the tile count says
+   * so on its face and names the tiles it adds or drops: picking it is the user's call.
+   */
+  #syncShapes() {
+    const $options = this.$popovers.querySelector('.shape-options')
+    this.#shape_plans = tidyShapes(this.mapkey).map(({ shape, delta }) => ({ shape, delta, ...applyShape(this.mapkey, shape) }))
+      // A shape the map already has is nothing to offer
+      .filter(plan => plan.mapkey !== this.mapkey)
+    const tileName = token => `${CONST.TILES[token[0]]}${token.length > 1 ? ' ' + token.slice(1) : ''}`
+    $options.innerHTML = this.#shape_plans.length ? this.#shape_plans.map((plan, i) => `
+      <button class="shape-option" data-shape="${i}">
+        ${this.#shapeSvg(plan)}
+        <b>${t.plural('editor.tiles_n', plan.shape.size)}</b>
+        ${plan.added.length ? `<span class="shape-change add">${t('editor.shape_adds', { tiles: plan.added.map(tileName).join(', ') })}</span>` : ''}
+        ${plan.removed.length ? `<span class="shape-change remove">${t('editor.shape_removes', { tiles: plan.removed.map(tileName).join(', ') })}</span>` : ''}
+      </button>
+    `).join('') : `<p class="popover-note">${t('editor.no_shapes')}</p>`
+    $options.querySelectorAll('.shape-option').forEach($b => $b.addEventListener('click', e =>
+      this.applyShape(+e.currentTarget.dataset.shape)))
+  }
+
+  /** The outline as hexagons; tiles the shape adds are marked apart from the ones that move. */
+  #shapeSvg(plan) {
+    const pts = [...plan.shape].map(k => k.split(',').map(Number))
+    const px = x => x * 0.866, py = y => y * 1.5
+    const xs = pts.map(([x]) => px(x)), ys = pts.map(([, y]) => py(y))
+    const [x0, x1, y0, y1] = [Math.min(...xs) - 1, Math.max(...xs) + 1, Math.min(...ys) - 1.1, Math.max(...ys) + 1.1]
+    const hex = (cx, cy) => [30, 90, 150, 210, 270, 330]
+      .map(a => `${(cx + 0.96 * Math.cos(a * Math.PI / 180)).toFixed(2)},${(cy + 0.96 * Math.sin(a * Math.PI / 180)).toFixed(2)}`).join(' ')
+    const fresh = new Set(plan.fresh)
+    return `<svg class="shape-preview" viewBox="${x0} ${y0} ${x1 - x0} ${y1 - y0}" aria-hidden="true">
+      ${pts.map(([x, y]) => `<polygon points="${hex(px(x), py(y))}" class="${fresh.has(`${x},${y}`) ? 'new' : ''}"/>`).join('')}
+    </svg>`
+  }
+
+  applyShape(i) {
+    const plan = this.#shape_plans[i]
+    if (!plan) { return }
+    this.#commit(plan.mapkey)
+    this.board_ui.recenter()
+  }
+
+  symmetrize(kind) {
+    const { mapkey, moved } = symmetrize(this.mapkey, kind)
+    if (!moved) { return }
+    this.#commit(mapkey)
+    // The grid is rebuilt around the new outline, so there is no old tile to hold still against
+    this.board_ui.recenter()
+  }
+
   renderMapkey() {
     const mapkey = this.$mapkey_textarea.value
     // Checked before it is committed, so a bad key leaves the board that is on screen alone. The
@@ -1053,7 +1183,7 @@ class MapEditor {
 
   shuffle() {
     const $popover = this.$popovers.querySelector('#popover-randomize')
-    const options = SHUFFLE_OPTIONS.filter(o => chipOn($popover, 'shuffle', o.id)).map(o => o.id)
+    const options = SHUFFLE_OPTIONS.filter(o => chipOn($popover, 'shuffle', o.id)).map(o => o.kind)
     if (!options.length) { return }
     this.#applyShuffle(options.join('-'), this.mapkey)
   }
@@ -1099,8 +1229,15 @@ class MapEditor {
     const pool = priority.flatMap((type, i) =>
       Array(each + (i < remainder ? 1 : 0)).fill(type))
     const shuffled = this.#shuffleArray(pool)
+    // Written straight back rather than through the shuffler: that one moves the deserts too, and
+    // every number after a moved desert would slide one tile over.
     tiles.forEach((tile, i) => { if (shuffled[i]) { tile.type = shuffled[i] } })
-    this.#applyShuffle('tile', this.board.generateMapKey())
+    this.#commit(this.board.generateMapKey())
+  }
+
+  /** Spread the ports round the coast, none crowding a tile or a corner: see `board/ports.js`. */
+  balancePorts() {
+    this.#commit(balancePorts(this.mapkey))
   }
 
   #shuffleArray(array) {
@@ -1118,9 +1255,8 @@ class MapEditor {
     const config = {
       mapkey: this.mapkey,
       win_points: +($('#winpoints-select').value || CONST.GAME_CONFIG.win_points),
-      map_shuffle: 'none',
-      do_not_shuffle_resources: chipOn(this.$modals, 'keep', 'resources'),
-      do_not_shuffle_numbers: chipOn(this.$modals, 'keep', 'numbers'),
+      // The same choices as the Shuffle panel: land (resources and numbers together) and ports
+      map_shuffle: SHUFFLE_OPTIONS.filter(o => chipOn(this.$modals, 'mix', o.id)).map(o => o.kind).join('-') || 'none',
     }
     const href = `/game/new?name=${encodeURIComponent(host)}&players=${encodeURIComponent(players)}`
       + `&config=${encodeURIComponent(JSON.stringify(config))}`
