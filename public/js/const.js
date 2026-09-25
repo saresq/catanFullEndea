@@ -138,16 +138,18 @@ export const mapFitsPlayers = (mapkey, player_count) => {
 
 /**
  * What a new game shuffles. A preset always shuffles everything: no game is ever tied to the
- * arrangement printed in the rulebook. A hand-made map keeps the editor's "keep my layout" options.
+ * arrangement printed in the rulebook. A hand-made map shuffles what `map_shuffle` names (`'all'`,
+ * or any of `tile`, `number` and `port` joined by `-`), less what the do-not-shuffle options keep.
  * @returns {'none'|'all'|string} a `BoardShuffler.shuffle` type
  */
 export const shuffleTypeFor = ({ mapkey, map_shuffle, do_not_shuffle_resources, do_not_shuffle_numbers }) => {
   if (mapOf(mapkey)) return 'all'
   if (!map_shuffle || map_shuffle === 'none') return 'none'
+  const names = part => map_shuffle === 'all' || map_shuffle.includes(part)
   const parts = []
-  if (!do_not_shuffle_resources) parts.push('tile')
-  if (!do_not_shuffle_numbers) parts.push('number')
-  if (map_shuffle === 'all' || map_shuffle.includes('port')) parts.push('port')
+  if (names('tile') && !do_not_shuffle_resources) parts.push('tile')
+  if (names('number') && !do_not_shuffle_numbers) parts.push('number')
+  if (names('port')) parts.push('port')
   return parts.length ? parts.join('-') : 'none'
 }
 

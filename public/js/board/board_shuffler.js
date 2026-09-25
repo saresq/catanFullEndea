@@ -14,7 +14,10 @@ export default class BoardShuffler {
   #numbers = []
   #port_tiles = []
 
+  #mapkey
+
   constructor(mapkey) {
+    this.#mapkey = mapkey
     this.#board = new Board(mapkey, null, true)
     this.#board.tile_rows.forEach(row => {
       row.forEach(tile => {
@@ -26,6 +29,12 @@ export default class BoardShuffler {
         tile.type !== 'D' && this.#numbers.push(tile.num)
       })
     })
+  }
+
+  /** The tile types with the resources shuffled among themselves and every desert where it was */
+  #shuffleResourcesOnly() {
+    const resources = arrayShuffle(this.#tiles.filter(type => type !== 'D'))
+    return this.#tiles.map(type => type === 'D' ? 'D' : resources.pop())
   }
 
   /** Numbers of the tiles adjacent to `tile`, with 6 and 8 counted as equivalent (red numbers) */
@@ -41,15 +50,50 @@ export default class BoardShuffler {
     return nums
   }
 
-  /** @param {false|'none'|'all'|'number'|'port'|'tile'|'(combo of number-port-tile)'} type  */
+  /**
+   * The swaps below keep a 6 off an 8 as they deal, but they cannot always: a board dealt into a
+   * corner is dealt again, from scratch, until the red numbers come out apart. The fewest clashes
+   * seen win if none does.
+   * @param {false|'none'|'all'|'number'|'port'|'tile'|'(combo of number-port-tile)'} type
+   */
   shuffle(type) {
+    const deals_numbers = type === 'all' || (type + '').includes('number')
+    let best = null, best_clashes = Infinity
+    for (let attempt = 0; attempt < 50 && best_clashes; attempt++) {
+      const shuffler = attempt ? new BoardShuffler(this.#mapkey) : this
+      const mapkey = shuffler.#shuffleOnce(type)
+      if (!deals_numbers) { return mapkey }
+      const clashes = shuffler.#redClashes()
+      if (clashes < best_clashes) { best = mapkey; best_clashes = clashes }
+    }
+    return best
+  }
+
+  /** Pairs of neighbouring tiles that both carry a red number. */
+  #redClashes() {
+    let clashes = 0
+    this.#board.tile_rows.flat().forEach(tile => {
+      if (!isRedNumber(tile.num) || tile.type === 'S' || tile.type === 'D') { return }
+      Object.values(tile.adjacent_tiles).forEach(t => {
+        if (t && t.type !== 'S' && t.type !== 'D' && isRedNumber(t.num)) { clashes++ }
+      })
+    })
+    return clashes / 2
+  }
+
+  #shuffleOnce(type) {
     if (!type || type === 'none') { return this.toMapKey() }
     type = type + ''
     const shuff_nums = type === 'all' || type.includes('number')
     const shuff_ports = type === 'all' || type.includes('port')
     const shuff_tiles = type === 'all' || type.includes('tile')
     let tile_index = 0, number_index = 0
-    const new_tiles = shuff_tiles ? arrayShuffle(this.#tiles) : this.#tiles
+    // Numbers are dealt in order to every tile but the deserts, so a desert that moved would slide
+    // every number after it along. With the numbers kept, the deserts stay put and only the
+    // resources change places, each number staying on its tile.
+    const new_tiles = !shuff_tiles ? this.#tiles
+      : shuff_nums ? arrayShuffle(this.#tiles)
+      : this.#shuffleResourcesOnly()
     const new_numbers = shuff_nums ? arrayShuffle(this.#numbers) : this.#numbers
 
     this.#board.tile_rows.forEach(row => {
