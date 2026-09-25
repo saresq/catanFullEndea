@@ -145,6 +145,8 @@ html, body {
 }
 
 .board .tile.robbed::before {
+    /* The editor redraws the board on every edit: the robber is drawn, never set down */
+    animation: none;
     background-image: url(/images/robber.png);
     left: 53px;
     top: 30px;
@@ -255,12 +257,12 @@ body.port-picking .board .tile.S {
         filter: drop-shadow(0 0 1px #0009);
     }
 
-    &.G .background { background-image: url('/images/tiles/Grassland.png'); }
-    &.J .background { background-image: url('/images/tiles/Jungle.png'); }
-    &.C .background { background-image: url('/images/tiles/Clay Pit.png'); }
-    &.M .background { background-image: url('/images/tiles/Mountain.png'); }
-    &.F .background { background-image: url('/images/tiles/Fields.png'); }
-    &.D .background { background-image: url('/images/tiles/Desert.png'); }
+    &.G .background { background-image: url('/images/tiles/Grassland.webp'); }
+    &.J .background { background-image: url('/images/tiles/Jungle.webp'); }
+    &.C .background { background-image: url('/images/tiles/Clay Pit.webp'); }
+    &.M .background { background-image: url('/images/tiles/Mountain.webp'); }
+    &.F .background { background-image: url('/images/tiles/Fields.webp'); }
+    &.D .background { background-image: url('/images/tiles/Desert.webp'); }
     /* Editor-only asset: the original outline-only hexagon, faint, so an empty sea cell still
        shows its edges without the board's water texture */
     &.S .background { background-image: url('/images/tiles/Sea-outline.png'); opacity: .4; }
