@@ -59,7 +59,7 @@ returns the hook names and installs `window.VISUAL`; after that one hook per cal
 | `VISUAL.build()` | settlements, cities and roads for both players |
 | `VISUAL.trade()` | an incoming trade offer; reports the row colour, how many offers are on screen and the list's share of the viewport height (the phone cap is 35%) |
 | `VISUAL.army()` | the Largest Army award; resolves when its banner is in (it stays ~2s, so screenshot right away) |
-| `VISUAL.road()` | the Longest Road award; resolves when its banner is in (it stays ~1.8s) |
+| `VISUAL.road()` | the Longest Road award; resolves when its banner is in (it stays ~2.2s) |
 | `VISUAL.end()` | the end-game modal, with a `dVps` map in its context; reports the row count, whether the first row is `.winner`, whether every row's parts add up to its total, any `.end-tab` or placeholder text, the table's sideways / inner scroll, page overflow, whether the winner row, `.vote-rematch` and `.rematch-timer` sit fully inside the viewport, and whether "Results" is on the status bar |
 | `VISUAL.colours()` | the scoreboard and the board pieces swept through all 11 colours |
 | `VISUAL.report()` | every resolved colour as JSON, for `diff` |
@@ -192,7 +192,8 @@ key, the turn timer and font loading all move - so do not try to gate on a check
 - A trade offer from *yourself* renders as an ongoing trade, not as a request. The hooks default to
   an opponent for that reason.
 - Trade requests carry `hide` outside the `player_actions` state; `VISUAL.trade()` strips it.
-- The animation zone fades itself back out ~950ms after it appears. `VISUAL.hold()` waits past that
-  and removes `finish`.
+- Awards (Largest Army, Longest Road) play in their own layer, `#game > .award-zone`, one after the
+  other, and their banner stays ~2s. `VISUAL.army()` / `VISUAL.road()` resolve once it is in:
+  screenshot right away.
 - The Largest Army / Longest Road badges key off `data-army` / `data-road` matching a row's
   `data-id`, not its colour class.

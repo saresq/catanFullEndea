@@ -363,6 +363,14 @@
     }
 }
 
+@media (prefers-reduced-motion: reduce) {
+    /* The banner just appears and goes; animations_ui already skips the knights and road motion */
+    .award-banner,
+    .award-banner.out {
+        animation: none;
+    }
+}
+
 /*
  * The knights played, dealt into a hand, in the middle of the board's area: every card sits in the same grid cell and turns about a
  * pivot well below it, so they open into an even arch and neighbours always overlap alike.

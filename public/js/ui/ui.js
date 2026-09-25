@@ -151,14 +151,14 @@ export default class UI {
     this.robber_drop_ui.render(count, this.#player.closed_cards)
   }
 
-  build(pid, piece, loc) {
+  build(pid, piece, loc, instant) {
     this.hideAllShown()
-    this.board_ui.build(pid, piece, loc)
+    this.board_ui.build(pid, piece, loc, instant)
   }
 
-  moveRobber(id) {
+  moveRobber(id, instant) {
     this.hideAllShown()
-    this.board_ui.moveRobber(id)
+    this.board_ui.moveRobber(id, instant)
   }
 
   toggleActions(bool) {

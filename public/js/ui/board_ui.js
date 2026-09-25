@@ -176,7 +176,7 @@ export default class BoardUI {
   renderRow(row) {
     return row.map((tile, j) =>
       `<div
-        class="tile ${tile.type} ${tile.robbed ? 'robbed' : ''}"
+        class="tile ${tile.type} ${tile.robbed ? 'robbed no-drop' : ''}"
         data-id="${tile.id}"
         ${(tile.type === 'S' && tile.trade_edge)
         ? `data-trade="${tile.trade_type}" data-trade-dir="${tile.trade_edge}"`
@@ -412,27 +412,40 @@ export default class BoardUI {
     this.#updateTransform()
   }
 
-  build(pid, piece, location) {
+  /**
+   * `instant`: the piece was already there (page load, reconnect), so it appears without its drop.
+   * A later build on the same spot (settlement -> city) animates again.
+   */
+  build(pid, piece, location, instant = false) {
     if (piece === 'S' || piece === 'C') {
       const $corner = this.#$getCorner(location)
       if (!$corner) return
       $corner.classList.remove('shown')
+      // A live upgrade clears no-drop together with the new data-taken, not before: in between the
+      // settlement would get its own drop back and fall again
+      instant && $corner.classList.add('no-drop')
       const cid = this.#getColorId(pid)
       piece === 'S' && $corner.classList.add('taken', `p${pid}`, `pc${cid}`)
-      setTimeout(_ => { $corner.dataset.taken = piece }, 200) // For animation
+      setTimeout(_ => {
+        instant || $corner.classList.remove('no-drop')
+        $corner.dataset.taken = piece
+      }, 200) // For animation
     } else if (piece === 'R') {
       const $edge = this.#$getEdge(location)
       $edge?.classList.remove('shown')
       $edge?.classList.add('taken')
+      $edge?.classList.toggle('no-drop', instant)
       const cid = this.#getColorId(pid)
       setTimeout(_ => { $edge?.classList.add('p' + pid); $edge?.classList.add('pc' + cid) }, 100) // For animation
     }
   }
 
-  moveRobber(id) {
+  /** `instant` as in build(): the robber was already there, so it is not set down again */
+  moveRobber(id, instant = false) {
+    this.$el.querySelectorAll('.tile.no-drop').forEach($t => $t.classList.remove('no-drop'))
     this.$el.querySelector('.tile.robbed')?.classList.remove('robbed')
     this.$el.querySelector('.tile.robber-animate')?.classList.remove('robber-animate')
-    this.#$getTile(id)?.classList.add('robbed', 'robber-animate')
+    this.#$getTile(id)?.classList.add('robbed', ...(instant ? ['no-drop'] : ['robber-animate']))
     setTimeout(_ => this.$el.querySelector('.tile.robber-animate')?.classList.remove('robber-animate'), 200)
   }
 

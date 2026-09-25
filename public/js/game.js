@@ -46,10 +46,10 @@ export default class Game {
 
     this.#ui.render()
 
-    // Existing Updates on Refresh
+    // Existing Updates on Refresh: already on the board, so no drop-in
     this.#board.existing_changes.forEach(({ pid, piece, loc }) => {
       this.#board.build(pid, piece, loc)
-      this.#ui.build(pid, piece, loc)
+      this.#ui.build(pid, piece, loc, true)
     })
     this.#ui.all_players_ui.updateActive(this.acting_pid)
     this.#ui.player_ui.setDevCardCount(game_obj.dev_cards_len)
@@ -57,7 +57,7 @@ export default class Game {
     game_obj.timer && this.config.timer && this.setTimerSoc(game_obj.timer, this.acting_pid)
     if (game_obj.robber_loc) {
       this.#board.moveRobber(game_obj.robber_loc)
-      this.#ui.moveRobber(game_obj.robber_loc)
+      this.#ui.moveRobber(game_obj.robber_loc, true)
     }
     if (game_obj.ongoing_trades.length) {
       game_obj.ongoing_trades.forEach(({ pid, ...params }) => {
@@ -349,10 +349,16 @@ export default class Game {
 
   #onGameEnd(context = this.end_context) {
     if (!context) return
+    // Let a Longest Road / Largest Army award still on screen (often the winning one) finish first
+    this.#ui.animation_ui.afterAwards(() => this.#showGameEnd(context))
+  }
+
+  #showGameEnd(context) {
     this.#ui.alert_ui.alertGameEnd(this.getPlayer(context.pid), context, this)
     this.#ui.alert_ui.showEndGameButton()
     this.#audio_manager.playGameEnd()
-    context.longest_road && this.#ui.board_ui.showLongestEdges(this.#player.longest_road_list)
+    // The winner's road, which is not necessarily the viewer's
+    context.longest_road && this.#ui.board_ui.showLongestEdges(this.getPlayer(context.pid)?.longest_road_list)
     this.#setupRematchUI()
   }
 

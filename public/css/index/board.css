@@ -185,6 +185,11 @@
             animation: robber-set-down .7s cubic-bezier(.25, .8, .35, 1) backwards;
         }
 
+        /* Already there when the board was drawn or the page loaded (board_ui) */
+        &.robbed.no-drop::before {
+            animation: none;
+        }
+
         &.robbed.robber-animate::before {
             opacity: 0;
             transform: scale(20);
@@ -310,7 +315,8 @@
         transition: filter var(--t-slow) ease;
     }
 
-    &.robbed::before {
+    /* Not while lifting off after a 7: that transition is the robber's own */
+    &.robbed:not(.robber-animate)::before {
         transition: filter var(--t-slow) ease, opacity var(--t-base) ease-in, transform var(--t-base) ease-in, z-index 0s linear;
     }
 }
@@ -445,6 +451,11 @@
 
             &[data-taken=C] {
                 --drop: city-drop .55s backwards;
+            }
+
+            /* Already there when the page loaded (board_ui.build(..., instant)) */
+            &.no-drop {
+                --drop: none;
             }
 
             &.shown {
@@ -602,7 +613,7 @@
             }
 
             /* build() adds the player class 100ms after .taken; the road has no colour until then */
-            &:is(.p0, .p1, .p2, .p3, .p4, .p5, .p6, .p7, .p8, .p9, .p10)::before {
+            &:is(.p0, .p1, .p2, .p3, .p4, .p5, .p6, .p7, .p8, .p9, .p10):not(.no-drop)::before {
                 animation: road-drop .5s backwards;
             }
 

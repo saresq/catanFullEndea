@@ -81,7 +81,7 @@
       return VISUAL.hold(4700)
     },
 
-    /** Longest Road award: deferred 0.5s, the road lights up, the banner is in ~2.5s later for ~1.8s. */
+    /** Longest Road award: deferred 0.5s, the road lights up, the banner is in ~2.5s later for ~2.2s. */
     road(pid = other, locs) {
       // The socket sends plain edge ids, in road order; game.js adds the corners itself
       game.updateLongestRoadSoc(pid, locs || $$('.edge.taken').map($_ => +$_.dataset.id).slice(0, 5))
@@ -90,7 +90,7 @@
 
     /** What the animation zone shows `after` ms from now (the award banner, if any). */
     hold(after = 0) {
-      const $z = document.querySelector('#game > .animation-zone')
+      const $z = document.querySelector('#game > .award-zone') || document.querySelector('#game > .animation-zone')
       return new Promise(res => setTimeout(() => {
         const $b = $z.querySelector('.award-banner')
         res({ zone: $z.className, banner: $b?.className, caption: $b?.querySelector('.award-text')?.textContent.trim() })
@@ -189,7 +189,8 @@
       })
       $$('.edge.taken').forEach($e => {
         const pc = $e.className.match(/pc\d+/)?.[0]
-        if (pc && !out[`edge.${pc}`]) out[`edge.${pc}`] = of($e, '--p-color', 'background-color')
+        // The road is painted on ::before; the edge itself stays transparent
+        if (pc && !out[`edge.${pc}`]) out[`edge.${pc}`] = of($e, '--p-color', '--piece')
       })
       out['award.banner'] = of(document.querySelector('#game > .animation-zone .award-banner'), 'border-top-color')
       out['trade.request'] = of(document.querySelector('.request .text') || document.querySelector('.request'), 'border-left-color')

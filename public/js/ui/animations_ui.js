@@ -16,8 +16,6 @@ export default class AnimationUI {
   $el = document.querySelector('#game > .animation-zone')
   $res_el = document.querySelector('#game > .resource-animation-zone')
 
-  // Timers and motions of the award playing now
-  #award = { timers: [], anims: [] }
   // Awards wait for each other: one that arrives while another plays starts when it has gone
   #awardQueue = []
   #awardPlaying = false
@@ -82,6 +80,41 @@ export default class AnimationUI {
     this.#queueAward(() => this.#playLongestRoad(pid, p, locs, is_me))
   }
 
+  /**
+   * Run `fn` once no award is playing or waiting: right away when idle. Game end uses it, as the
+   * last award is often the one that won the game. `max_wait` guards against an award that never
+   * finishes (a tab in the background can hold its timers back).
+   */
+  afterAwards(fn, max_wait = 12000) {
+    if (!this.#awardPlaying && !this.#awardQueue.length) return fn()
+    let done = false
+    const once = () => { if (!done) { done = true; fn() } }
+    this.#awardWaiters.push(once)
+    setTimeout(once, max_wait)
+  }
+  #awardWaiters = []
+
+  /**
+   * Awards have their own layer next to the shared animation zone, so a development card played
+   * meanwhile and an award never overwrite each other.
+   */
+  get #zone() {
+    if (!this.#awardZone?.isConnected) {
+      this.#awardZone = document.createElement('div')
+      this.#awardZone.className = 'animation-zone award-zone'
+      this.$el.after(this.#awardZone)
+    }
+    return this.#awardZone
+  }
+  #awardZone
+
+  #clearZone() {
+    if (!this.#awardZone) return
+    this.#awardZone.className = 'animation-zone award-zone'
+    this.#awardZone.innerHTML = ''
+    ;['--award-x', '--award-y', '--award-top'].forEach(v => this.#awardZone.style.removeProperty(v))
+  }
+
   #queueAward(play) {
     this.#awardQueue.push(play)
     this.#nextAward()
@@ -90,7 +123,6 @@ export default class AnimationUI {
   #nextAward() {
     if (this.#awardPlaying || !this.#awardQueue.length) return
     this.#awardPlaying = true
-    this.#award = { timers: [], anims: [] }
     this.#awardQueue.shift()()
   }
 
@@ -103,7 +135,7 @@ export default class AnimationUI {
     const $knights = document.createElement('div')
     $knights.className = 'award-knights'
     $knights.innerHTML = '<div class="card card--md" data-card="dK"></div>'.repeat(reduce ? 0 : n)
-    this.$el.append($knights)
+    this.#zone.append($knights)
     const cards = [...$knights.children]
     // Even spread, capped so a big army still fits in a hand-sized arch
     const spread = n > 1 ? Math.min(10, 64 / (n - 1)) : 0
@@ -161,23 +193,20 @@ export default class AnimationUI {
   #showAwardBanner(pid, p, card, caption) {
     const cid = (p && p.color_id) ? p.color_id : pid
     const { x, y, top } = this.#boardArea()
-    this.$el.style.setProperty('--award-x', `${x}px`)
-    this.$el.style.setProperty('--award-y', `${y}px`)
-    this.$el.style.setProperty('--award-top', `${top}px`)
-    this.$el.className = 'animation-zone ready award'
-    this.$el.innerHTML = `
+    this.#zone.style.setProperty('--award-x', `${x}px`)
+    this.#zone.style.setProperty('--award-y', `${y}px`)
+    this.#zone.style.setProperty('--award-top', `${top}px`)
+    this.#zone.className = 'animation-zone award-zone ready award'
+    this.#zone.innerHTML = `
       <div class="award-banner pending p${pid} pc${cid}">
         <div class="award-card ${card}"></div>
         <div class="award-text">${awardCaption(caption)}<span class="award-vp">+2 ${t('score.victory_points')}</span></div>
       </div>
     `
-    return this.$el.querySelector('.award-banner')
+    return this.#zone.querySelector('.award-banner')
   }
 
-  /**
-   * Slide the banner out at `at` ms and give the board back, then start the next award, if any.
-   * A zone reused since (a development card) is left alone.
-   */
+  /** Slide the banner out at `at` ms and give the board back, then start the next award, if any */
   #endAward($board, $banner, at, extra = () => {}) {
     this.#later(at, () => {
       $banner.classList.add('out')
@@ -185,11 +214,7 @@ export default class AnimationUI {
       extra()
     })
     this.#later(at + 400, () => {
-      if (this.$el.contains($banner)) {
-        this.$el.className = 'animation-zone'
-        this.$el.innerHTML = ''
-        ;['--award-x', '--award-y', '--award-top'].forEach(v => this.$el.style.removeProperty(v))
-      }
+      this.#clearZone()
       this.#awardDone()
     })
   }
@@ -197,6 +222,10 @@ export default class AnimationUI {
   #awardDone() {
     this.#awardPlaying = false
     this.#nextAward()
+    if (this.#awardPlaying) return
+    const waiters = this.#awardWaiters
+    this.#awardWaiters = []
+    waiters.forEach(fn => fn())
   }
 
   /**
@@ -209,6 +238,7 @@ export default class AnimationUI {
   }
 
   #undim($board) {
+    clearTimeout(this.#fadeTimer)
     $board?.classList.remove('award-dim')
     this.#fadeTimer = setTimeout(() => $board?.classList.remove('award-fade'), 600)
   }
@@ -224,6 +254,6 @@ export default class AnimationUI {
     return { x: (window.innerWidth - side) / 2, y: top + (window.innerHeight - dock - top) / 2, top }
   }
 
-  #later(ms, fn) { this.#award.timers.push(setTimeout(fn, ms)) }
-  #motion($el, frames, opts) { this.#award.anims.push($el.animate(frames, opts)) }
+  #later(ms, fn) { setTimeout(fn, ms) }
+  #motion($el, frames, opts) { $el.animate(frames, opts) }
 }
