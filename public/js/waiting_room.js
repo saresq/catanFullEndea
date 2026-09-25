@@ -2,6 +2,7 @@ import * as CONST from "./const.js"
 import { t } from "./i18n.js"
 import AudioManager from "./audio_manager.js"
 import AccessibilityUI from "./ui/accessibility_ui.js"
+import Board from "./board/board.js"
 const $ = document.querySelector.bind(document)
 
 class WaitingRoomUI {
@@ -210,12 +211,22 @@ class WaitingRoomUI {
     const $maxPlayersSelect = $('#max-players-select')
     const $diceModeSelect = $('#dice-mode-select')
 
-    CONST.MAP_LIST.forEach(map => {
-      const option = document.createElement('option')
-      option.value = map.mapkey
-      option.textContent = t('names.maps.' + map.id)
-      $mapSelect.appendChild(option)
-    })
+    // Only the maps that seat `player_count`: the presets sized for it, and the hand-made map the
+    // game was made with while it has the corners. One left too small gives way to the smallest preset.
+    const custom_mapkey = CONST.mapOf(window.mapkey) ? null : window.mapkey
+    const custom_seats = custom_mapkey ? Board.maxPlayers(custom_mapkey) : 0
+    const updateMapSelect = (player_count, mapkey) => {
+      $mapSelect.innerHTML = ''
+      const maps = CONST.MAP_LIST.filter(map => map.max_players >= player_count)
+      custom_seats >= player_count && maps.push({ id: 'custom', mapkey: custom_mapkey })
+      maps.forEach(map => {
+        const option = document.createElement('option')
+        option.value = map.mapkey
+        option.textContent = t('names.maps.' + map.id)
+        $mapSelect.appendChild(option)
+      })
+      $mapSelect.value = maps.some(map => map.mapkey === mapkey) ? mapkey : maps[0].mapkey
+    }
 
     // Populate Win Points
     CONST.WIN_POINT_OPTIONS.forEach(i => {
@@ -247,7 +258,7 @@ class WaitingRoomUI {
       $('#max-players-val').classList.add('hide')
       $('#dice-mode-val').classList.add('hide')
 
-      $mapSelect.value = CONST.MAPS[window.map_size]?.mapkey || window.mapkey || CONST.DEFAULT_MAPKEY
+      updateMapSelect(window.player_count, CONST.MAPS[window.map_size]?.mapkey || window.mapkey || CONST.DEFAULT_MAPKEY)
       $winPointsSelect.value = window.win_points
       this.updateMaxPlayersSelect()
       $maxPlayersSelect.value = window.player_count
@@ -265,7 +276,10 @@ class WaitingRoomUI {
 
       $mapSelect.addEventListener('change', emitConfig)
       $winPointsSelect.addEventListener('change', emitConfig)
-      $maxPlayersSelect.addEventListener('change', emitConfig)
+      $maxPlayersSelect.addEventListener('change', () => {
+        updateMapSelect(+$maxPlayersSelect.value, $mapSelect.value)
+        emitConfig()
+      })
       $diceModeSelect.addEventListener('change', emitConfig)
     }
 
@@ -283,7 +297,7 @@ class WaitingRoomUI {
       window.map_size = map_size
 
       if (this.is_host) {
-        $mapSelect.value = CONST.MAPS[map_size]?.mapkey || mapkey
+        updateMapSelect(player_count, CONST.MAPS[map_size]?.mapkey || mapkey)
         $winPointsSelect.value = win_points
         this.updateMaxPlayersSelect()
         $maxPlayersSelect.value = player_count

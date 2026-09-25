@@ -112,6 +112,14 @@ export default class Game {
   #setupConfig(config) {
     this.config = Object.assign({}, this.config, config)
     this.player_count = this.config.player_count
+    // A map that cannot seat everyone gives way to the smallest preset that can, as `/game/new`
+    // does; otherwise the initial placement runs out of corners mid-setup
+    const { mapkey } = this.config
+    if (!CONST.mapFitsPlayers(mapkey, this.player_count) || Board.maxPlayers(mapkey) < this.player_count) {
+      this.config.mapkey = CONST.mapForPlayers(this.player_count).mapkey
+      this.config.map_size = CONST.mapId(this.config.mapkey)
+      this.config.map_shuffle = CONST.shuffleTypeFor(this.config)
+    }
     this.dice = createDice(this.config.dice_mode || 'random')
     // Dev card deck & rule defaults depend on player count
     const tier = CONST.playerTier(this.player_count)
@@ -297,11 +305,15 @@ export default class Game {
     this.state = ST.PAIRED_ACTIONS
   }
 
-  /** A resource card, or a development card that can be played: not a Victory Point, and Road Building only with room for it */
+  /**
+   * A resource card, or a development card that can be played: not a Victory Point, not one bought
+   * since the own turn, Road Building only with room for it, Invention only with cards in the bank
+   */
   #hasPlayableCards(player) {
     if (player.resource_count > 0) return true
     return Object.keys(CONST.DEVELOPMENT_CARDS).some(card => {
-      if (card === 'dVp' || !(player.closed_cards[card] > 0)) return false
+      if (card === 'dVp' || !(player.closed_cards[card] > (player.turn_bought_dc[card] || 0))) return false
+      if (card === 'dY') return Object.values(this.bank).some(v => v > 0)
       if (card !== 'dR') return true
       return CONST.PIECES_COUNT.R - player.pieces.R.length >= 1
         && this.board.getRoadLocationsFromRoads(player.pieces.R, player.id).length > 0

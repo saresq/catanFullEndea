@@ -84,3 +84,23 @@ test('a map picked in the lobby brings its shuffle rule; the board shuffles once
   assert.equal(new Board(game.config.mapkey).tile_rows.flat().filter(t => t.type !== 'S').length, 30)
   game.clearTimer()
 })
+
+test('a lobby map too small for the seats gives way to the smallest preset that seats them', () => {
+  const io = { to: () => ({ emit: () => {} }) }
+  const game = new Game({
+    id: 'fit', io, host: { id: 1, name: 'P1' }, onGameEnd: () => {},
+    config: { player_count: 4, timer: false, mapkey: CONST.MAPS.standard.mapkey },
+  })
+  game.waitingRoomChangeConfigIO(1, { player_count: 10 })
+  assert.equal(game.config.mapkey, CONST.MAPS.xlarge.mapkey, 'more seats: a bigger preset')
+  assert.equal(game.config.map_size, 'xlarge')
+  game.waitingRoomChangeConfigIO(1, { mapkey: CONST.MAPS.standard.mapkey, map_size: 'standard' })
+  assert.equal(game.config.mapkey, CONST.MAPS.xlarge.mapkey, 'a preset too small is refused')
+  game.waitingRoomChangeConfigIO(1, { mapkey: CONST.MAPS.argentum.mapkey, map_size: 'argentum' })
+  assert.equal(game.config.mapkey, CONST.MAPS.argentum.mapkey, 'another preset that fits is kept')
+  const custom = 'S.S.S.S-S.F6.G8.S+S.C5.M2.J11.S-S.F3.G12.S+S.S.S.S'
+  game.waitingRoomChangeConfigIO(1, { mapkey: custom, map_size: 'custom' })
+  assert.equal(game.config.mapkey, CONST.MAPS.xlarge.mapkey, 'a hand-made map without the corners is refused')
+  game.waitingRoomChangeConfigIO(1, { player_count: 2, mapkey: custom, map_size: 'custom' })
+  assert.equal(game.config.mapkey, custom, 'and kept once it seats everyone')
+})

@@ -322,3 +322,31 @@ test('a partner whose only card is a Road Building it cannot place is skipped', 
   assert.equal(game.state, ST.PLAYER_ROLL, 'skipped: the card cannot be played')
   assert.equal(game.active_pid, 2)
 })
+
+test('a partner whose only card is one bought since the own turn is skipped', () => {
+  // Seat 4 is paired after turns 7 (+5) and 1 (+3); the knight bought in the first phase is held back
+  const game = newGame(8)
+  const p4 = game.getPlayer(4)
+  turnTo(game, 7)
+  rollAndDeal(game, pid => pid === 4 ? { W: 1, S: 1, O: 1 } : {})
+  game.dev_cards.push('dK')
+  game.endTurnIO(7)
+  assert.equal(game.partner_pid, 4)
+  game.buyDevCardIO(4)
+  assert.equal(p4.closed_cards.dK, 1)
+  game.endTurnIO(4)
+  turnTo(game, 1)
+  rollAndDeal(game, pid => pid === 6 ? RICH : {})
+  assert.equal(p4.closed_cards.dK, 1, 'the held-back knight is all player 4 has')
+  game.endTurnIO(1)
+  assert.equal(game.partner_pid, 6, 'player 4 skipped: nothing to play')
+})
+
+test('a partner whose only card is an Invention with the bank empty is skipped', () => {
+  const game = newGame(5)
+  rollAndDeal(game, pid => pid === 4 ? { dY: 1 } : {})
+  Object.keys(game.bank).forEach(r => { game.bank[r] = 0 })
+  game.endTurnIO(1)
+  assert.equal(game.state, ST.PLAYER_ROLL, 'skipped: the card cannot be played')
+  assert.equal(game.active_pid, 2)
+})
