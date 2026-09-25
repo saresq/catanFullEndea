@@ -94,6 +94,23 @@ export function leader(view) {
     .sort((a, b) => b.public_vps - a.public_vps || b.resource_count - a.resource_count)[0]
 }
 
+/** Some opponent is within `within` points of the win: everything else waits. */
+export function raceMode(view, within = 2) {
+  return view.players.some(p => p.id !== view.pid && !p.removed && p.public_vps + within >= view.config.win_points)
+}
+
+/** One point on the board weighs this many weighted pips of production: about half a settlement. */
+export const THREAT_VP = 4
+
+/**
+ * How much an opponent's progress is worth denying: points on the board plus production, the
+ * points still to come. Early on everyone sits level and the bigger producer is the threat; late,
+ * the one about to win is.
+ */
+export function threat(view, p) {
+  return p.public_vps * THREAT_VP + weightedPips(view.board, production(view.board, p))
+}
+
 /** Cards still missing for `cost`, as `{ res: n }`. Empty when affordable. */
 export function missingFor(cards, cost) {
   const out = {}

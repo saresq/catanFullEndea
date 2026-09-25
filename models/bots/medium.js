@@ -3,7 +3,7 @@
 import * as CONST from '../../public/js/const.js'
 import { bankRate, bankType, canBuy, victimsOn } from './moves.js'
 import {
-  pips, cornerPips, cornerScore, isFreeSpot, leader, missingFor, total, longestRoadWith, production,
+  pips, cornerPips, cornerScore, isFreeSpot, leader, missingFor, total, longestRoadWith, production, raceMode, scarcity, threat,
 } from './features.js'
 
 const RES = Object.keys(CONST.RESOURCES)
@@ -132,21 +132,39 @@ function bankTradeFor(view, goal) {
 
 // ---------- Robber ----------
 
-function robberChoice(view, moves) {
+/**
+ * The tile a robber costs the table most on: every opponent building's pips (a city twice, a rare
+ * resource more), each weighted by its owner's threat against the table's average, so early on
+ * the biggest producer's best tile goes and late on the one about to win is blocked wherever it
+ * hurts most. Never its own tile while another exists; in a race (an opponent within `race_within`
+ * points of the win), one the leader sits on.
+ */
+function robberTile(view, moves, race_within = 2) {
   const { board, pid } = view
-  const front = leader(view)
-  const tileScore = tile_id => {
+  const others = view.players.filter(p => p.id !== pid && !p.removed)
+  const mean = others.reduce((m, p) => m + threat(view, p), 0) / (others.length || 1)
+  const weight = Object.fromEntries(others.map(p => [p.id, mean ? threat(view, p) / mean : 1]))
+  const score = tile_id => {
     const tile = board.findTile(tile_id)
-    const p = pips(+tile.num)
-    let score = 0, mine = false
+    const p = pips(+tile.num) * scarcity(board, CONST.TILE_RES[tile.type])
+    let denied = 0, own = 0
     tile.getAllCorners().forEach(c => {
       if (!c.piece) return
-      if (c.player_id === pid) { mine = true; return }
-      score += p * (c.piece === 'C' ? 2 : 1) * (c.player_id === front?.id ? 2 : 1)
+      const yield_ = p * (c.piece === 'C' ? 2 : 1)
+      if (c.player_id === pid) { own += yield_ } else { denied += yield_ * (weight[c.player_id] || 0) }
     })
-    return mine ? score - 100 : score // never on itself while another tile exists
+    return own ? denied - own - 100 : denied
   }
-  const tile_id = best([...new Set(moves.map(m => m.tile_id))], tileScore)
+  const tiles = [...new Set(moves.map(m => m.tile_id))]
+  const front = leader(view)
+  const racing = front && raceMode(view, race_within) ? tiles.filter(id => moves.some(m => m.tile_id === id && m.stolen_pid === front.id)) : []
+  return best(racing.length ? racing : tiles, score)
+}
+
+/** The tile above, then the leader's hand if it has cards, else the fullest one. */
+function robberChoice(view, moves, race_within = 2) {
+  const front = leader(view)
+  const tile_id = robberTile(view, moves, race_within)
   const on_tile = moves.filter(m => m.tile_id === tile_id)
   const cardsOf = id => view.players.find(p => p.id === id)?.resource_count || 0
   return on_tile.find(m => m.stolen_pid === front?.id && cardsOf(front.id))
@@ -277,4 +295,4 @@ export function evaluate(view, moves) {
 }
 
 // Re-exported for tests, the simulator's reports, and tryhard, which builds on these
-export { goals, nearestGoal, production, placement, discard, tradeAnswer, robberChoice, devCardPlay, longestRoadSwing, networkCorners, edgeValue }
+export { goals, nearestGoal, production, placement, discard, tradeAnswer, robberTile, robberChoice, devCardPlay, longestRoadSwing, networkCorners, edgeValue }

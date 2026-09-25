@@ -45,3 +45,17 @@ export function setHand(player, cards) {
   player.takeCards(held)
   player.giveCards(cards)
 }
+
+/**
+ * The active seat settles the first legal corner touching every number in `want` and none in
+ * `avoid`, road on any legal edge. For fixtures where who sits on which tile is the point.
+ */
+export function placeOn(game, want, avoid = []) {
+  const nums = c => c.tiles.map(t => +t.num).filter(Boolean)
+  const corner = game.board.getSettlementLocations(-1)
+    .find(c => want.every(n => nums(c).includes(n)) && !avoid.some(n => nums(c).includes(n)))
+  if (!corner) throw new Error(`seat ${game.active_pid}: no free corner on ${want} away from ${avoid}`)
+  const edge = corner.getEdges(-1).find(e => !e.corner1.surroundedBySea() && !e.corner2.surroundedBySea())
+  game.initialBuildIO(game.active_pid, corner.id, edge.id)
+  return corner.id
+}

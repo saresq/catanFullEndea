@@ -41,18 +41,7 @@ test('cross-goal: trades sheep for ore and builds the city in one turn', async (
   game.clearTimer()
 })
 
-test('the robber follows the count', async () => {
-  const game = await acting(); if (!game) return
-  const tracker = new Tracker()
-  // Seat 2 is counted rich in ore, seat 3 counted empty; both sit on tiles the robber can reach
-  tracker.observe({ type: 'roll', total: 5, payout: [{ pid: 2, res: { O: 3 } }] })
-  game.getPlayer(2).giveCards({ O: 3 })
-  const view = withCount(buildView(game, 1), tracker)
-  const moves = legalMoves(view, ST.ROBBER_MOVE)
-  const choice = evaluate(view, moves)
-  if (moves.some(m => m.stolen_pid === 2)) { assert.equal(choice.stolen_pid, 2) }
-  game.clearTimer()
-})
+// The robber's tile and victim are covered on a fixed board in bot_robber_test.js
 
 test('race mode: no proposals, robber on the leader', async () => {
   const game = await acting(); if (!game) return

@@ -5,11 +5,12 @@
 import * as CONST from '../../public/js/const.js'
 import { bankRate, bankType, canAfford } from './moves.js'
 import {
-  pips, cornerScore, cornerPips, missingFor, total, leader, longestRoadWith,
-  productionOf, weightedPips, reachableSpots, devCardVp,
+  cornerScore, cornerPips, missingFor, total, leader, longestRoadWith,
+  productionOf, weightedPips, reachableSpots, devCardVp, raceMode,
 } from './features.js'
 import {
-  placement as mediumPlacement, discard, tradeAnswer, robberChoice as mediumRobber, devCardPlay, longestRoadSwing,
+  placement as mediumPlacement, discard, tradeAnswer, robberTile, robberChoice as mediumRobber, devCardPlay,
+  longestRoadSwing, nearestGoal,
 } from './medium.js'
 
 const RES = Object.keys(CONST.RESOURCES)
@@ -33,6 +34,7 @@ export const WEIGHTS = {
   knight: 1,     // play a knight whenever it is held (1) or only when robbed / for the army (0)
   give_scarce: 1, // offer the surplus card the table holds least of (1) or the deepest pile (0)
   ask_two: 0,    // offer two cards for one when the surplus is deep (1) or always ask one for one (0)
+  rob_race: 4,   // an opponent this close to the win is the robber's target; trade asks stop at 2
 }
 export const PLAN_STEPS = 3
 export const PLAN_CAP = 200
@@ -48,10 +50,6 @@ function initial(view) {
     vp: me.public_vps + (me.private_vps || 0),
     taken_spots: [], dev_bought: 0, steps: [], road_value: 0,
   }
-}
-
-function raceMode(view) {
-  return view.players.some(p => p.id !== view.pid && !p.removed && p.public_vps + 2 >= view.config.win_points)
 }
 
 function stateValue(view, state, spots, leader_spots) {
@@ -258,28 +256,23 @@ function proposal(view, moves) {
 
 // ---------- Robber, steal, answers ----------
 
+/**
+ * Medium's tile (threat-weighted denial, never its own), then the victim the count says holds the
+ * most: a card some build of its own is short of counts double, the leader breaks ties. With an
+ * opponent `rob_race` points from the win, the leader is robbed whenever they sit on the tile: a
+ * card off their hand is a turn off their win.
+ */
 function robber(view, moves) {
-  const { board, pid } = view
+  if (!view.counted) return mediumRobber(view, moves, WEIGHTS.rob_race)
   const front = leader(view)
-  if (raceMode(view) && front) {
-    const on_leader = moves.filter(m => m.stolen_pid === front.id)
-    if (on_leader.length) return best(on_leader, m => pips(+board.findTile(m.tile_id).num))
-  }
-  if (!view.counted) return mediumRobber(view, moves)
-  const cardsOf = p => RES.reduce((m, r) => m + view.counted.likely(p, r), 0)
-  const tileScore = tile_id => {
-    const tile = board.findTile(tile_id)
-    let score = 0, mine = false
-    tile.getAllCorners().forEach(c => {
-      if (!c.piece) return
-      if (c.player_id === pid) { mine = true; return }
-      score += pips(+tile.num) * (c.piece === 'C' ? 2 : 1) * (c.player_id === front?.id ? 1.5 : 1)
-    })
-    return mine ? score - 100 : score
-  }
-  const tile_id = best([...new Set(moves.map(m => m.tile_id))], tileScore)
+  const tile_id = robberTile(view, moves, WEIGHTS.rob_race)
   const on_tile = moves.filter(m => m.tile_id === tile_id)
-  return best(on_tile, m => m.stolen_pid ? cardsOf(m.stolen_pid) + (m.stolen_pid === front?.id ? 0.5 : 0) : 0)
+  const racing = front && raceMode(view, WEIGHTS.rob_race) && on_tile.find(m => m.stolen_pid === front.id)
+  if (racing) return racing
+  const goal = nearestGoal(view)
+  const need = goal ? missingFor(view.me.closed_cards, goal.goal.cost) : {}
+  const haul = p => RES.reduce((m, r) => m + view.counted.likely(p, r) * (need[r] ? 2 : 1), 0)
+  return best(on_tile, m => m.stolen_pid ? haul(m.stolen_pid) + (m.stolen_pid === front?.id ? 0.5 : 0) : 0)
 }
 
 function answer(view, moves) {
