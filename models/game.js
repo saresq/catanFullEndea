@@ -1,5 +1,5 @@
 import * as CONST from "../public/js/const.js"
-import { shuffle } from "../public/js/utils.js"
+import { shuffle, newObject } from "../public/js/utils.js"
 import Player from "./player.js"
 import Board from "../public/js/board/board.js"
 import BoardShuffler from "../public/js/board/board_shuffler.js"
@@ -37,8 +37,19 @@ export default class Game {
   config = CONST.GAME_CONFIG
   /** @type {Player[]} */ players = []
   map_changes = []; expected_actions = []; robbing_players = []
-  /** @type {{ pid, giving, asking, id, status:('open'|'closed'|'success'|'failed'|'deleted'), rejected:number[] }[]} */
+  /**
+   * Requests, proposals and counters, one list. `to` is null for a request to the table and the
+   * active player's pid for a proposal aimed at them; `counter_of` links a counter to the request it
+   * answers. @type {{ pid, giving, asking, id, status:('open'|'closed'|'success'|'failed'|'deleted'), rejected:number[], to:(number|null), counter_of:(number|null) }[]}
+   */
   ongoing_trades = []
+  /**
+   * The resource supply, public. Production, initial placement, bank trades and Invention draw
+   * from it; building costs, discards and cards given to the bank return to it. Player trades,
+   * steals and Monopoly move cards between hands and leave it alone. @type {{S:number, L:number, B:number, O:number, W:number}}
+   */
+  bank = newObject(CONST.RESOURCES, 0)
+  #bank_pending = false
   turn = 1; dice_value = 2
   // Adds +20s bonus only once per player's actions turn when they initiate a trade
   turn_trade_time_added = false
@@ -105,6 +116,7 @@ export default class Game {
     // Dev card deck & rule defaults depend on player count
     const tier = CONST.playerTier(this.player_count)
     this.dev_cards = shuffle(tier.deck)
+    this.bank = newObject(CONST.RESOURCES, tier.bank_per_resource)
     if (!config.hasOwnProperty('win_points')) { this.config.win_points = tier.win_points }
   }
 
@@ -291,7 +303,7 @@ export default class Game {
     return Object.keys(CONST.DEVELOPMENT_CARDS).some(card => {
       if (card === 'dVp' || !(player.closed_cards[card] > 0)) return false
       if (card !== 'dR') return true
-      return CONST.PIECES_COUNT.R - player.pieces.R.length >= 2
+      return CONST.PIECES_COUNT.R - player.pieces.R.length >= 1
         && this.board.getRoadLocationsFromRoads(player.pieces.R, player.id).length > 0
     })
   }
@@ -462,10 +474,10 @@ export default class Game {
             if (give) { clamped[k] = give; taken_count += give }
           }
         })
-        if (taken_count) { player.takeCards(clamped) }
+        if (taken_count) { this.#toBank(player, clamped) } // discards go back to the supply
       }
       const remaining = taking_count - taken_count
-      if (remaining > 0) { player.takeRandomResources(remaining) }
+      if (remaining > 0) { this.#toBank(null, Object.fromEntries(player.takeRandomResources(remaining))) }
       // The chosen cards are the player's secret; only how many is public
       this.#public({ type: 'discard', pid, count: taken_count + Math.max(0, remaining) })
     }
@@ -501,11 +513,12 @@ export default class Game {
       const [[stolen_res] = []] = this.getPlayer(stolen_pid).takeRandomResources()
       if (stolen_res) {
         this.#public({ type: 'steal', pid, from: stolen_pid })
-        player.giveCards({ [stolen_res]: 1})
+        player.giveCards({ [stolen_res]: 1}) // hand to hand: the bank is not involved
         this.players.forEach(p => {
           const send_res = p.id === pid || p.id === stolen_pid
           this.#io_manager.updateStolen_Private(this.getPlayerSocId(p.id), pid, stolen_pid, send_res && stolen_res)
         })
+        this.#updateOngoingTrades() // the victim may have been offering that card
       }
     }
     if (!knight) {
@@ -553,7 +566,7 @@ export default class Game {
     if (loc_type === CONST.LOCS.EDGE) {
       const valid_locs = this.board.getRoadLocationsFromRoads(player.pieces.R, pid)
       if (valid_locs.includes(id) && player.canBuy('R')) {
-        player.bought('R')
+        player.bought('R'); this.#toBank(null, CONST.COST.R)
         this.#public({ type: 'buy', pid, what: 'R' })
         this.build(pid, 'R', id)
         this.#updateOngoingTrades()
@@ -564,14 +577,14 @@ export default class Game {
       if (!corner.piece) {
         const valid_locs = this.board.getSettlementLocationsFromRoads(player.pieces.R)
         if (valid_locs.includes(id) && player.canBuy('S')) {
-          player.bought('S')
+          player.bought('S'); this.#toBank(null, CONST.COST.S)
           this.#public({ type: 'buy', pid, what: 'S' })
           this.build(pid, 'S', id)
           this.#updateOngoingTrades()
         }
       } else if (corner.piece === 'S') {
         if (player.pieces.S.includes(id) && player.canBuy('C')) {
-          player.bought('C')
+          player.bought('C'); this.#toBank(null, CONST.COST.C)
           this.#public({ type: 'buy', pid, what: 'C' })
           this.build(pid, 'C', id)
           this.#updateOngoingTrades()
@@ -587,7 +600,7 @@ export default class Game {
     const player = this.getPlayer(pid)
     if (!player.canBuy('DEV_C')) return
     const bought_card = this.dev_cards.pop()
-    player.bought('DEV_C', bought_card)
+    player.bought('DEV_C', bought_card); this.#toBank(null, CONST.COST.DEV_C)
     this.#public({ type: 'buy', pid, what: 'DEV_C' })
     this.players.forEach(p => {
       this.#io_manager.updateDevCardTaken_Private(this.getPlayerSocId(p.id), pid, this.dev_cards.length, p.id === pid && bought_card)
@@ -676,12 +689,21 @@ export default class Game {
     this.#next()
   }
 
-  /** Request a Trade */
+  /**
+   * A trade request, a bank trade, or, from a player whose turn it is not, a proposal to the
+   * active player - freestanding, or a counter to one of the active player's open requests
+   * (`counter_id`). A counter takes its author out of the request it answers, replaces their earlier
+   * counter to it and does not count against their proposal limit. No proposals in a paired phase,
+   * and no turn-time bonus for anyone but the turn's owner.
+   */
   tradeRequestIO(pid, type, giving, taking, counter_id) {
-    if (!this.#canAct(pid)) return
+    const player = this.getPlayer(pid)
+    if (!player || player.removed) return
+    const acting = this.#canAct(pid)
+    const proposing = !acting && type === 'Px' && this.state === ST.PLAYER_ACTIONS && !this.#isActive(pid)
+    if (!acting && !proposing) return
     // Reject trading the same resources
     if (Object.entries(giving).filter(([k, v]) => v && taking[k]).length) return
-    const player = this.getPlayer(pid)
     // Only a rate the player owns: Px and *4 for everyone, *3 and the 2:1s once built on that port
     if (!player.trade_offers[type]) return
     if (!player.hasAllResources(giving)) return
@@ -691,18 +713,40 @@ export default class Game {
     // Notify others of the Trade Request. Only on the own turn: a paired player trades with the bank
     if (type === 'Px') {
       if (this.state !== ST.PLAYER_ACTIONS) return
-      const total_requests = this.ongoing_trades.filter(_ => _.pid == pid && _.status !== 'deleted').length
-      if (total_requests >= this.config.max_trade_requests) return
-      const trade_obj = { pid, giving, asking: taking, id: this.ongoing_trades.length, rejected: [], status: 'open' }
+      let counter_of = null
+      if (proposing && counter_id !== undefined && counter_id !== null) {
+        const original = this.ongoing_trades[counter_id]
+        if (!original || original.status !== 'open' || original.to !== null || original.pid !== this.active_pid) return
+        counter_of = original.id
+      }
+      if (counter_of === null) {
+        const total_requests = this.ongoing_trades.filter(_ => _.pid == pid && _.counter_of === null && _.status !== 'deleted').length
+        if (total_requests >= this.config.max_trade_requests) return
+      } else {
+        // One counter per request per player: the newer one stands. Countering is declining.
+        this.ongoing_trades.forEach(t => {
+          if (t.pid === pid && t.counter_of === counter_of && t.status === 'open') { t.status = 'deleted' }
+        })
+        this.#refuse(this.ongoing_trades[counter_of], pid)
+      }
+      const trade_obj = {
+        pid, giving, asking: taking, id: this.ongoing_trades.length, rejected: [], status: 'open',
+        to: proposing ? this.active_pid : null, counter_of,
+      }
       this.ongoing_trades.push(trade_obj)
-      this.#extendTurnTimeOnFirstTrade()
+      if (!proposing) { this.#extendTurnTimeOnFirstTrade() }
       this.#io_manager.requestPlayerTrade(pid, trade_obj)
-      this.players.forEach(p => {
-        if (p.id !== pid && !p.removed) { this.#awaiting(p.id, 'TRADE_REQ', { trade_id: trade_obj.id }) }
-      })
+      if (counter_of !== null) { this.#io_manager.updateOngoingTrades(this.ongoing_trades) }
+      if (proposing) { this.#awaiting(this.active_pid, 'TRADE_REQ', { trade_id: trade_obj.id }) }
+      else {
+        this.players.forEach(p => {
+          if (p.id !== pid && !p.removed) { this.#awaiting(p.id, 'TRADE_REQ', { trade_id: trade_obj.id }) }
+        })
+      }
       return
     }
-    // Trade with the Board
+    // Trade with the Board: only for what the bank holds
+    if (!this.#bankHas(taking)) return
     if (CONST.PORTS_2_1.includes(type)) {
       const res = type[0]
       if (giving[res] === (taking_total * 2) && giving_total === giving[res]) {
@@ -719,37 +763,47 @@ export default class Game {
     }
   }
 
-  /** Responding to a Trade. The requester responding to their own request withdraws it. */
+  /**
+   * Responding to a trade. The author responding to their own row withdraws it (a withdrawn
+   * request takes its counters with it). A request is anyone else's to accept; a proposal or a
+   * counter is only the player it is aimed at's, and ignoring it fails it.
+   */
   tradeResponseIO(pid, id, accepted) {
     if (this.state !== ST.PLAYER_ACTIONS) return
-    if (this.ongoing_trades.length <= id) return
-    const { pid: trading_pid, giving, asking, status } = this.ongoing_trades[id]
-    if (!this.#isActive(pid) && !this.#isActive(trading_pid) ) return
+    const trade = this.ongoing_trades[id]
+    if (!trade) return
+    const { pid: trading_pid, giving, asking, status, to } = trade
     // Only an open request can be acted on: a settled one must not trade twice
     if (status !== 'open') return
     if (pid === trading_pid) {
       if (accepted) return
-      this.ongoing_trades[id].status = 'deleted'
+      trade.status = 'deleted'
+      if (to === null) {
+        this.ongoing_trades.forEach(t => { if (t.counter_of === trade.id && t.status === 'open') { t.status = 'deleted' } })
+      }
       this.#io_manager.updateOngoingTrades(this.ongoing_trades)
       return
     }
+    if (to !== null ? pid !== to : !this.#isActive(trading_pid)) return
     if (accepted) {
       const p1 = this.getPlayer(trading_pid)
       const p2 = this.getPlayer(pid)
       if (!p1.hasAllResources(giving)) return
       if (!p2.hasAllResources(asking)) return
-      this.ongoing_trades[id].status = 'success'
+      trade.status = 'success'
       this.#tradeResources(p1, giving, asking, p2)
     } else {
-      const rejected = this.ongoing_trades[id].rejected
-      if (!rejected.includes(pid)) { rejected.push(pid) }
-      // Everyone still in the game said no: a quit seat never answers
-      const others = this.players.filter(p => !p.removed && p.id !== trading_pid).length
-      if (rejected.length >= others) {
-        this.ongoing_trades[id].status = 'failed'
-      }
+      this.#refuse(trade, pid)
       this.#io_manager.updateOngoingTrades(this.ongoing_trades)
     }
+  }
+
+  /** `pid` is out of `trade`: a proposal fails at once, a request once everyone still in the game is out */
+  #refuse(trade, pid) {
+    if (!trade.rejected.includes(pid)) { trade.rejected.push(pid) }
+    const others = trade.to !== null ? 1
+      : this.players.filter(p => !p.removed && p.id !== trade.pid).length
+    if (trade.rejected.length >= others) { trade.status = 'failed' }
   }
 
   /** Knight Dev_C used */
@@ -775,24 +829,27 @@ export default class Game {
   }
 
 
-  /** Road Building Dev_C used */
+  /** Road Building Dev_C used: as many roads as the player has left, up to two */
   roadBuildingIO(pid, r1, r2) {
     if (!this.#canPlayDC(pid)) return
     const player = this.getPlayer(pid)
     if (!player.canPlayDevCard('dR')) { return }
-    if (CONST.PIECES_COUNT.R - player.pieces.R.length < 2) return
+    const pieces_left = CONST.PIECES_COUNT.R - player.pieces.R.length
+    if (pieces_left < 1) return
     let valid_edges = this.board.getRoadLocationsFromRoads(player.pieces.R, pid)
     // Nowhere legal to build: keep the card instead of spending it on nothing.
     if (!valid_edges.length) return
     player.playedDevCard('dR')
     if (!valid_edges.includes(r1)) { r1 = this.#getRandom(valid_edges) }
     this.build(pid, 'R', r1)
-    valid_edges = this.board.getRoadLocationsFromRoads(player.pieces.R, pid)
-    if (valid_edges.length) { // the first road can be the last legal spot
+    let built = 1
+    valid_edges = pieces_left >= 2 ? this.board.getRoadLocationsFromRoads(player.pieces.R, pid) : []
+    if (valid_edges.length) { // the first road can be the last legal spot, or the last piece
       if (!valid_edges.includes(r2)) { r2 = this.#getRandom(valid_edges) }
       this.build(pid, 'R', r2)
+      built = 2
     }
-    this.#io_manager.updateRoadBuildingUsed(pid)
+    this.#io_manager.updateRoadBuildingUsed(pid, built)
   }
 
   monopolyIO(pid, res) {
@@ -805,7 +862,7 @@ export default class Game {
     this.players.forEach(p => {
       if (p.id === pid) return
       const avail_res = p.closed_cards[res]
-      avail_res && p.takeCards({ [res]: avail_res })
+      avail_res && p.takeCards({ [res]: avail_res }) // hand to hand: the bank is not involved
       res_from_player[p.id] = avail_res
     })
     const total_count = Object.values(res_from_player).reduce((mem, v) => mem + v, 0)
@@ -815,17 +872,26 @@ export default class Game {
     this.players.forEach(p => {
       this.#io_manager.updateMonopolyUsed_Private(this.getPlayerSocId(p.id), pid, res, total_count, res_from_player[p.id])
     })
+    this.#updateOngoingTrades() // a proposer left without that card
   }
 
+  /**
+   * Invention: two cards the bank holds; with one card in the whole bank, that card. With none the
+   * card is kept rather than spent on nothing.
+   */
   yearOfPlentyIO(pid, res1, res2) {
     if (!CONST.RESOURCES[res1] || !CONST.RESOURCES[res2]) return
     if (!this.#canPlayDC(pid)) return
     const player = this.getPlayer(pid)
     if (!player.canPlayDevCard('dY')) { return }
+    const stock = Object.values(this.bank).reduce((m, v) => m + v, 0)
+    if (!stock) return
+    let res_obj = res1 === res2 ? { [res1]: 2 } : { [res1]: 1, [res2]: 1 }
+    if (stock < 2) { res_obj = { ...this.bank } }
+    else if (!this.#bankHas(res_obj)) return
     player.playedDevCard('dY')
-    const res_obj = res1 === res2 ? { [res1]: 2 } : { [res1]: 1, [res2]: 1 }
-    player.giveCards(res_obj)
-    this.#public({ type: 'year_of_plenty', pid, count: 2 })
+    res_obj = this.#fromBank(player, res_obj)
+    this.#public({ type: 'year_of_plenty', pid, count: Object.values(res_obj).reduce((m, v) => m + v, 0) })
     this.players.forEach(p => {
       this.#io_manager.updateYearOfPlentyUsed_Private(this.getPlayerSocId(p.id), pid, pid === p.id && res_obj)
     })
@@ -852,29 +918,44 @@ export default class Game {
       const _res_type = CONST.TILE_RES[tile.type]
       if (_res_type) { res[_res_type] = (res[_res_type] || 0) + 1 }
     })
-    player.giveCards(res)
-    this.#public({ type: 'initial_yield', pid: player.id, res })
+    this.#public({ type: 'initial_yield', pid: player.id, res: this.#fromBank(player, res) })
   }
 
+  /**
+   * Production for a roll, from the bank. A resource the bank cannot pay in full goes to nobody,
+   * unless exactly one player is owed it, who takes what is left. The rest of the roll pays out
+   * normally; `short` names the resources that ran out.
+   */
   #distributeTileResources(num) {
     const resource_by_pid = [...Array(this.player_count)].map(_ => ({}))
     this.board.distribute(num).forEach(({ pid, res, count }) => {
-      if (res && count) {
+      if (res && count && !this.getPlayer(pid)?.removed) {
         resource_by_pid[pid - 1][res] = (resource_by_pid[pid - 1][res] || 0) + count
       }
+    })
+    const short = []
+    Object.keys(CONST.RESOURCES).forEach(res => {
+      const owed = resource_by_pid.filter(r => r[res] > 0)
+      const demand = owed.reduce((m, r) => m + r[res], 0)
+      if (demand <= this.bank[res]) return
+      short.push(res)
+      if (owed.length === 1) { owed[0][res] = this.bank[res] }
+      else { owed.forEach(r => { r[res] = 0 }) }
     })
     resource_by_pid.forEach((res, index) => {
       const player = this.getPlayer(index + 1)
       if (player.removed) return
-      player.giveCards(res)
+      Object.keys(res).forEach(k => { if (!res[k]) delete res[k] })
+      this.#fromBank(player, res)
       this.#io_manager.updateResourceReceived_Private(this.getPlayerSocId(player.id), res)
     })
     // Broadcast public summary of this roll's distribution to all players
     const dist = resource_by_pid.map((res, i) => ({ pid: i + 1, res }))
-    this.#io_manager.updateRollDistribution(dist)
-    this.#public({ type: 'roll', total: num, payout: dist.filter(d => !this.getPlayer(d.pid).removed) })
+    this.#io_manager.updateRollDistribution(dist, short)
+    this.#public({ type: 'roll', total: num, payout: dist.filter(d => !this.getPlayer(d.pid).removed), short })
   }
 
+  /** God mode: cards out of nothing, on purpose - the bank is not involved */
   #grantFreeResourcesAll() {
     const freebies = { S: 2, L: 2, B: 2, O: 2, W: 2 }
     this.players.forEach(p => {
@@ -963,9 +1044,14 @@ export default class Game {
     })
   }
 
+  /** Cards change hands, or, with no `p2`, go to and come from the bank */
   #tradeResources(p1, giving, taking, p2) {
-    p1.takeCards(giving); p1.giveCards(taking)
-    if (p2) { p2.giveCards(giving); p2.takeCards(taking) }
+    if (p2) {
+      p1.takeCards(giving); p1.giveCards(taking) // hand to hand: the bank is not involved
+      p2.giveCards(giving); p2.takeCards(taking)
+    } else {
+      this.#toBank(p1, giving); this.#fromBank(p1, taking)
+    }
     this.#io_manager.updateTradeInfo(p1.id, giving, taking, p2?.id)
     this.#public(p2
       ? { type: 'player_trade', pid: p1.id, with: p2.id, giving, taking }
@@ -1127,6 +1213,43 @@ export default class Game {
     catch (e) { console.error(`[${this.id}] onPublic failed`, e) }
   }
 
+  // THE BANK
+  // #region ==========================
+
+  /** Cards from the supply into a hand, clamped to what the bank holds. Returns what was given. */
+  #fromBank(player, cards = {}) {
+    const given = {}
+    Object.entries(cards).forEach(([res, n]) => {
+      const take = Math.min(n || 0, this.bank[res] ?? 0)
+      if (take > 0) { given[res] = take; this.bank[res] -= take }
+    })
+    player.giveCards(given)
+    this.#announceBank()
+    return given
+  }
+
+  /** Cards into the supply, out of `player`'s hand first when one is given (already taken otherwise). */
+  #toBank(player, cards = {}) {
+    const returned = {}
+    Object.entries(cards).forEach(([res, n]) => {
+      if (!(res in this.bank) || !n) return
+      returned[res] = player ? Math.min(n, player.closed_cards[res]) : n
+    })
+    player && player.takeCards(returned)
+    Object.entries(returned).forEach(([res, n]) => { this.bank[res] += n })
+    this.#announceBank()
+  }
+
+  /** One broadcast per tick, however many hands a roll pays */
+  #announceBank() {
+    if (this.#bank_pending) return
+    this.#bank_pending = true
+    queueMicrotask(() => { this.#bank_pending = false; this.#io_manager.updateBank(this.bank) })
+  }
+
+  #bankHas(cards = {}) { return Object.entries(cards).every(([res, n]) => (this.bank[res] ?? 0) >= (n || 0)) }
+  //#endregion
+
   /** Move `active_pid` on to the next seat still in the game */
   #skipRemovedSeats() {
     for (let i = 1; i < this.player_count; i++) {
@@ -1250,6 +1373,7 @@ export default class Game {
       dev_cards_len: this.dev_cards.length,
       robber_loc: this.board?.robber_loc,
       ongoing_trades: this.ongoing_trades,
+      bank: this.bank,
       timer: timer_left > 1 ? timer_left : 0,
       godmode: !!this.godmode,
       spectators_count: this.#spectators.size,

@@ -12,6 +12,42 @@
         filter: blur(2px);
     }
 
+    /* The bank: cards left of each resource, for everyone, always on. A resource at 0 is dimmed
+       and struck. The icons are the shared sprite (resources.css) at the header's scale. */
+    .bank {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        gap: var(--space-1);
+        padding: 2px var(--space-1);
+        background: color-mix(in srgb, var(--surface-umber) 80%, #000);
+        color: #fff;
+        font-size: var(--text-sm);
+        font-variant-numeric: tabular-nums;
+        border-left: 3px solid var(--surface-umber);
+
+        .stock {
+            display: inline-flex;
+            align-items: center;
+            gap: 1px;
+            white-space: nowrap;
+
+            .res-icon {
+                margin: 0;
+                transform: scale(0.75);
+                transform-origin: right center;
+            }
+
+            &[data-count="0"] {
+                opacity: 0.55;
+
+                .count {
+                    text-decoration: line-through;
+                }
+            }
+        }
+    }
+
     .players-header {
         display: flex;
         justify-content: space-between;
@@ -341,7 +377,7 @@
         gap: var(--space-1);
         overflow: visible;
 
-        .players-header {
+        .players-header, .bank {
             flex: 0 0 100%;
             box-sizing: border-box;
         }
@@ -396,6 +432,17 @@
             top: 0;
             z-index: 2;
             border: none;
+        }
+
+        .bank {
+            grid-column: 1 / -1;
+            border: none;
+            padding: 1px 2px;
+            font-size: max(11px, 0.75em);
+
+            .stock .res-icon {
+                transform: scale(0.6);
+            }
         }
 
         .player {

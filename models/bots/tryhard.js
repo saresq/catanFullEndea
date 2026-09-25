@@ -3,7 +3,7 @@
 // count. Still no search beyond this turn and nothing hidden read: `view.counted` is built from the
 // same events every seat is told about.
 import * as CONST from '../../public/js/const.js'
-import { bankRate, bankType, canAfford } from './moves.js'
+import { bankRate, bankType, bankHas, canAfford } from './moves.js'
 import {
   cornerScore, cornerPips, missingFor, total, leader, longestRoadWith,
   productionOf, weightedPips, reachableSpots, devCardVp, raceMode,
@@ -48,6 +48,7 @@ function initial(view) {
     cards: { ...me.closed_cards },
     pieces: { S: me.pieces.S.slice(), C: me.pieces.C.slice(), R: me.pieces.R.slice() },
     vp: me.public_vps + (me.private_vps || 0),
+    bank: { ...(view.bank || {}) },
     taken_spots: [], dev_bought: 0, steps: [], road_value: 0,
   }
 }
@@ -125,18 +126,20 @@ function steps(view, state, spots) {
   if (view.dev_cards_len > state.dev_bought && afford(CONST.COST.DEV_C)) {
     out.push({ intent: { type: 'buy_dev' }, next: { ...state, cards: pay(CONST.COST.DEV_C), dev_bought: state.dev_bought + 1 } })
   }
-  // Bank trades: only for a card some build is short of, paid from a pile no build in reach needs
+  // Bank trades: only for a card some build is short of and the bank still holds, paid from a
+  // pile no build in reach needs
   const wanted = new Set()
   ;[CONST.COST.C, CONST.COST.S, CONST.COST.DEV_C, CONST.COST.R].forEach(cost => {
     const missing = missingFor(state.cards, cost)
     if (total(missing) >= 1 && total(missing) <= 2) { Object.keys(missing).forEach(r => wanted.add(r)) }
   })
   wanted.forEach(take => RES.forEach(give => {
-    if (give === take) return
+    if (give === take || !bankHas(state.bank, { [take]: 1 })) return
     const rate = bankRate(me, give)
     if (state.cards[give] < rate) return
     const cards = { ...state.cards, [give]: state.cards[give] - rate, [take]: state.cards[take] + 1 }
-    out.push({ intent: { type: 'bank_trade', offer: bankType(me, give), giving: { [give]: rate }, taking: { [take]: 1 } }, next: { ...state, cards } })
+    const bank = { ...state.bank, [give]: state.bank[give] + rate, [take]: state.bank[take] - 1 }
+    out.push({ intent: { type: 'bank_trade', offer: bankType(me, give), giving: { [give]: rate }, taking: { [take]: 1 } }, next: { ...state, cards, bank } })
   }))
   return out
 }

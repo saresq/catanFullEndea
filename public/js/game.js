@@ -25,6 +25,10 @@ export default class Game {
   partner_pid = null
   /** Seats still to roll for first player */
   first_roll_pending = []
+  /** The resource supply, public: `{ S, L, B, O, W }` cards left in the bank */
+  bank = {}
+  /** Last status seen per trade row, to notice an own proposal being ignored */
+  #trade_status = {}
   /** @type {UI} */ #ui;
   #board; #player; #socket_manager; #audio_manager
   #temp = {}
@@ -38,6 +42,7 @@ export default class Game {
     this.state = game_obj.state
     this.end_context = game_obj.end_context
     this.host_pid = game_obj.host_pid
+    this.bank = game_obj.bank || {}
     this.opponents = opponents_obj
 
     this.#board = new Board(game_obj.config.mapkey, game_obj.map_changes)
@@ -61,11 +66,11 @@ export default class Game {
       this.#board.moveRobber(game_obj.robber_loc)
       this.#ui.moveRobber(game_obj.robber_loc, true)
     }
-    if (game_obj.ongoing_trades.length) {
-      game_obj.ongoing_trades.forEach(({ pid, ...params }) => {
-        this.#ui.trade_ui.renderNewRequest(this.getPlayer(pid), { pid, ...params })
-      })
-    }
+    this.#ui.all_players_ui.updateBank(this.bank)
+    game_obj.ongoing_trades.forEach(({ pid, ...params }) => {
+      this.#ui.trade_ui.renderNewRequest(this.getPlayer(pid), { pid, ...params })
+      this.#trade_status[params.id] = params.status
+    })
     // State updates
     this.updateStateChangeSoc(this.state, this.acting_pid)
     // Mid roll-off: who has rolled and whether I still have to
@@ -121,6 +126,7 @@ export default class Game {
     this.#ui.toggleActions(0)
     this.#ui.hideAllShown()
     this.#ui.trade_ui.clearRequests()
+    this.#trade_status = {}
     if (this.#isMyPid(this.active_pid)) {
       this.#audio_manager.playTurnNotification()
       // Auto-roll: keep unified button disabled until actions phase
@@ -137,13 +143,28 @@ export default class Game {
       this.clearDevCardUsage()
       this.#ui.player_ui.toggleShow(1)
       this.#ui.toggleActions(1)
+    } else {
+      // Anyone else may propose a trade to the active player
+      this.#ui.player_ui.toggleTrade(true)
     }
+  }
+
+  /**
+   * What the trade drawer is for right now: `active` (requests and the bank, own actions phase),
+   * `bank` (a paired phase: bank only), `propose` (another player's actions phase), or null.
+   */
+  get trade_role() {
+    if (this.#player.spectator) return null
+    if (this.state === ST.PLAYER_ACTIONS) return this.#isMyPid(this.active_pid) ? 'active' : 'propose'
+    if (this.state === ST.PAIRED_ACTIONS && this.#isMyPid(this.partner_pid)) return 'bank'
+    return null
   }
   // STATE - Paired action phase: the partner builds, buys, plays a card, trades with the bank
   #onPairedActions() {
     this.clearDevCardUsage()
     this.#ui.hideAllShown()
     this.#ui.trade_ui.clearRequests()
+    this.#trade_status = {}
     if (this.#isMyPid(this.partner_pid)) {
       this.#audio_manager.playTurnNotification()
       this.#ui.player_ui.toggleShow(1)
@@ -268,20 +289,29 @@ export default class Game {
   // SOC_P - Total Res received
   updateTotalResReceivedInfoSoc(res_obj) { this.#ui.alert_ui.alertResTaken(res_obj) }
 
-  // SOC - Public roll distribution (per-player)
-  updateRollDistributionSoc(dist) {
+  // SOC - Public roll distribution (per-player), and the resources the bank could not pay
+  updateRollDistributionSoc(dist, short = []) {
     try {
       if (!Array.isArray(dist)) return
       const entries = dist
         .map(({ pid, res }) => ({ p: this.getPlayer(pid), res: res || {} }))
         .filter(({ res, p }) => p && Object.values(res).some(v => v > 0) && !this.#isMyPid(p.id))
-      if (!entries.length) return
-      const parts = entries.map(({ p, res }) => `${getName(p)}→ ${resToText(res)}`)
-      const msg = parts.join('| ')
-      this.#ui.alert_ui.appendStatus(msg)
+      if (entries.length) {
+        const parts = entries.map(({ p, res }) => `${getName(p)}→ ${resToText(res)}`)
+        this.#ui.alert_ui.appendStatus(parts.join('| '))
+      }
+      this.#ui.alert_ui.alertBankShort(short)
     } catch (e) {
       // Fail-safe: do nothing on formatting errors
     }
+  }
+
+  // SOC - The bank's counts changed
+  updateBankSoc(bank) {
+    this.bank = bank || {}
+    this.#ui.all_players_ui.updateBank(this.bank)
+    this.#ui.trade_ui.refresh()
+    this.#ui.res_selection_ui.refresh()
   }
 
   // SOC - Dev Card taken
@@ -317,13 +347,26 @@ export default class Game {
   updateOngoingTradesSoc(ongoing_trades = []) {
     ongoing_trades.forEach(obj => {
       this.#ui.trade_ui.updateOngoing(obj)
+      // My proposal was ignored: the row says so, the history too
+      if (obj.to != null && this.#isMyPid(obj.pid) && obj.status === 'failed' && this.#trade_status[obj.id] === 'open') {
+        this.#ui.alert_ui.alertProposalFailed(this.getPlayer(obj.to))
+      }
+      this.#trade_status[obj.id] = obj.status
     })
   }
 
-  // SOC - Trade Request
+  // SOC - Trade Request, or a proposal / counter aimed at the active player
   requestTradeSoc(pid, trade_obj) {
     this.#ui.trade_ui.renderNewRequest(this.getPlayer(pid), trade_obj)
-    this.#audio_manager.playTradeRequest()
+    this.#trade_status[trade_obj.id] = trade_obj.status
+    if (trade_obj.to != null) {
+      this.#ui.alert_ui.alertProposal(this.getPlayer(pid), this.getPlayer(trade_obj.to),
+        trade_obj.giving, trade_obj.asking, trade_obj.counter_of != null)
+    }
+    // A sound for whoever has to answer: the table for a request, the active player for a proposal
+    if (trade_obj.to == null || this.#isMyPid(trade_obj.to)) {
+      this.#audio_manager.playTradeRequest()
+    }
   }
 
   // SOC - DEV_C - Knight moved using Dev Card
@@ -333,10 +376,10 @@ export default class Game {
     this.#isMyPid(pid) || this.#ui.animation_ui.animateDevelopmentCard('dK')
   }
 
-  // SOC - DEV_C - Road Building Used
-  updateRoadBuildingUsedSoc(pid) {
+  // SOC - DEV_C - Road Building Used (`count` roads: one with the last piece)
+  updateRoadBuildingUsedSoc(pid, count) {
     this.#audio_manager.playRoadBuilding()
-    this.#ui.alert_ui.alertRoadBuildingUsed(this.getPlayer(pid))
+    this.#ui.alert_ui.alertRoadBuildingUsed(this.getPlayer(pid), count)
     this.#isMyPid(pid) || this.#ui.animation_ui.animateDevelopmentCard('dR')
   }
 
@@ -711,7 +754,8 @@ export default class Game {
       && [ST.PLAYER_ROLL, ST.PLAYER_ACTIONS, ST.PAIRED_ACTIONS].includes(this.state)
       && !this.#player._is_playing_dc
       && (type !== 'dR' || (
-        (CONST.PIECES_COUNT.R - this.#player.pieces.R.length) >= 2
+        // Road Building builds what is left, one road with the last piece
+        (CONST.PIECES_COUNT.R - this.#player.pieces.R.length) >= 1
         // No legal edge left: the server would refuse it anyway.
         && this.#board.getRoadLocationsFromRoads(this.#player.pieces.R, this.#player.id).length
       ))

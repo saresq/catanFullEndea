@@ -54,10 +54,12 @@
      * Call it several times with different ids to stack offers: `requestsShare` is what the
      * 35%-of-the-viewport cap on phones is read from.
      */
-    trade(pid = other, id = 'visual-1') {
+    trade(pid = other, id = 'visual-1', { to = null, counter_of = null } = {}) {
       // `status` and `rejected` are what the socket sends; without them the row renders hidden
-      // and its Accept button is never gated on what the viewer can pay.
-      game.requestTradeSoc(pid, { id, giving: { W: 2, S: 1 }, asking: { B: 1 }, status: 'open', rejected: [] })
+      // and its Accept button is never gated on what the viewer can pay. `to` makes it a proposal
+      // aimed at that seat (the viewer's own id: Accept / Ignore; another seat: no actions), and
+      // `counter_of` a counter to that request.
+      game.requestTradeSoc(pid, { id, giving: { W: 2, S: 1 }, asking: { B: 1 }, status: 'open', rejected: [], to, counter_of })
       const $req = document.querySelector(`.request[data-id="${id}"]`)
       $req?.classList.remove('hide')
       const $list = document.querySelector('#game .trade-requests')
@@ -65,6 +67,9 @@
         viewport: `${innerWidth}x${innerHeight}`,
         // The player colour sits on the row itself; the older markup carried it on `.text`.
         colour: $req ? getComputedStyle($req.querySelector('.text') || $req).borderLeftColor : 'no request',
+        kind: $req ? ['counter', 'proposal', 'request'].find(k => $req.classList.contains(k)) : null,
+        actions: $req ? $$(`.request[data-id="${id}"] .actions button`).map($_ => $_.textContent.trim()) : [],
+        tag: $req?.querySelector('.tag')?.textContent.trim() || null,
         requests: $$('#game .trade-requests .request:not(.hide)').length,
         requestsShare: $list ? +($list.getBoundingClientRect().height / innerHeight).toFixed(3) : null,
         requestsScroll: $list ? $list.scrollHeight > $list.clientHeight : null,
@@ -392,10 +397,20 @@
       const $btn = document.querySelector('#game .current-player .actions .trade')
       if (!$btn) { return 'no Trade button' }
       $btn.classList.remove('disabled')
-      $btn.click()
+      // `'propose'` and `'counter'`: another seat's actions phase, so the drawer opens to propose;
+      // a counter starts from an incoming request's Counter action, seeded with the sides swapped.
+      const proposing = mode === 'propose' || mode === 'counter'
+      if (proposing) {
+        game.updateStateChangeSoc('player_actions', other)
+        $btn.classList.remove('disabled')
+        if (mode === 'counter') {
+          VISUAL.trade(other, 'visual-counter')
+          document.querySelector('.request[data-id="visual-counter"] .counter')?.click()
+        } else { $btn.click() }
+      } else { $btn.click() }
       const $drawer = document.querySelector('#game .trade-card-selection')
       if (!$drawer || $drawer.classList.contains('hide')) { return 'drawer did not open' }
-      $drawer.querySelector(`.head .mode[data-mode="${mode}"]`)?.click()
+      proposing || $drawer.querySelector(`.head .mode[data-mode="${mode}"]`)?.click()
       const px = n => +n.toFixed(1)
       const rect = $_ => { const r = $_.getBoundingClientRect(); return { x: px(r.x), y: px(r.y), w: px(r.width), h: px(r.height) } }
       const overlaps = (a, b) => !!a && !!b && a.right > b.left && a.left < b.right && a.bottom > b.top && a.top < b.bottom
@@ -406,6 +421,11 @@
       return {
         viewport: `${innerWidth}x${innerHeight}`,
         mode: $drawer.dataset.mode,
+        role: $drawer.dataset.role || null,
+        modes: $$('#game .trade-card-selection .head .mode').filter($_ => $_.offsetWidth).map($_ => $_.dataset.mode),
+        // Bank mode: the stock ribbon on each card of the get row, and which are out
+        stock: Object.fromEntries($$('#game .trade-card-selection .palette.get .pick').map($_ => [$_.dataset.type, $_.dataset.stock ?? null])),
+        outOfStock: $$('#game .trade-card-selection .palette.get .pick[data-stock="0"]').map($_ => $_.dataset.type),
         drawer: rect($drawer),
         share: +(box.height / innerHeight).toFixed(3),
         inView: box.top >= -0.5 && box.left >= -0.5 && box.right <= innerWidth + 0.5 && box.bottom <= innerHeight + 0.5,
@@ -434,6 +454,29 @@
         guide: $drawer.querySelector('.foot .guide')?.textContent.trim() || null,
         submit: $submit && { label: $submit.textContent.trim(), disabled: $submit.disabled },
         blurred: !!document.querySelector('.board.blur, .all-players.blur'),
+      }
+    },
+
+    /**
+     * The bank counts through `updateBankSoc()` (default: ore out, sheep low) and the scoreboard's
+     * bank row: its box, whether it is on screen, the counts shown and which are marked out, and its
+     * smallest font. The trade drawer and the Invention picker read the same counts when open.
+     */
+    bank(counts = { S: 3, L: 12, B: 19, O: 0, W: 7 }) {
+      game.updateBankSoc(counts)
+      const $bank = document.querySelector('.all-players .bank')
+      if (!$bank) { return 'no bank row' }
+      const r = $bank.getBoundingClientRect()
+      const stocks = $$('.all-players .bank .stock')
+      return {
+        viewport: `${innerWidth}x${innerHeight}`,
+        box: { x: +r.x.toFixed(1), y: +r.y.toFixed(1), w: +r.width.toFixed(1), h: +r.height.toFixed(1) },
+        inView: r.top >= -0.5 && r.left >= -0.5 && r.right <= innerWidth + 0.5 && r.bottom <= innerHeight + 0.5,
+        counts: Object.fromEntries(stocks.map($_ => [$_.dataset.res, +$_.dataset.count])),
+        out: stocks.filter($_ => $_.dataset.count === '0').map($_ => $_.dataset.res),
+        oneLine: stocks.every($_ => Math.abs($_.getBoundingClientRect().top - stocks[0].getBoundingClientRect().top) < 2),
+        font: Math.min(...stocks.map($_ => parseFloat(getComputedStyle($_.querySelector('.count')).fontSize))),
+        hScroll: document.documentElement.scrollWidth > innerWidth,
       }
     },
 

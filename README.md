@@ -1,6 +1,14 @@
 # Catan
 Free to play multiplayer Catan board game
 
+<img width="900" alt="A four-player game, turn 10" src="docs/screenshots/game.webp">
+
+<p>
+  <img width="220" alt="The same game on a phone" src="docs/screenshots/game-mobile.webp">
+  <img width="330" alt="Waiting room with three bots" src="docs/screenshots/lobby.webp">
+  <img width="330" alt="Map editor" src="docs/screenshots/map-editor.webp">
+</p>
+
 ## Links
 **Play Game:** [catan.endea.ar](https://catan.endea.ar/login)
 
@@ -121,6 +129,20 @@ route, and is returned when a settlement breaks the holder's route (to the singl
 if there is one). A road never passes through another player's settlement. The discard limit on a
 7 is more than 7 cards at every player count.
 
+The bank is finite and public: 19 cards of each resource at 2–4 players, 24 at 5–6, 29 at 7–8
+and 34 at 9–10 (`PLAYER_TIERS.bank_per_resource`). Production, placement, bank and port trades and
+Year of Plenty draw from it; building costs, discards and cards given to the bank return to it.
+Player trades, steals and Monopoly do not touch it. A roll the bank cannot pay in full pays that
+resource to nobody, unless exactly one player is owed it, who takes what is left; the rest of the
+roll pays out normally. The bank never trades what it does not hold, and Year of Plenty takes
+what is there when fewer than two cards remain. Road Building builds one road with the last
+piece and cannot be played with none.
+
+While the active player is in their actions phase, any other player may send them a proposal, or
+a counter to one of their open requests, that only the active player can accept. A counter takes
+its author out of the request it answers; it is free of the per-player offer limit, and neither
+adds time to the turn. No proposals in a paired action phase.
+
 A player wins when they reach `config.win_points` while acting — on their own turn or in their
 paired action phase: settlements 1, cities 2, victory-point cards 1 each, largest army 2, longest
 road 2. Points reached any other time (a Longest Road swing on someone else's turn) count when their
@@ -131,7 +153,8 @@ turn starts, if they still hold them. The last player standing after quits wins 
 - [x] 2/3/4/5/6/7/8/9/10 Players
 - [x] Build Houses, Roads, and Cities
 - [x] Robber Mechanics
-- [x] Trade Requests
+- [x] Trade Requests, proposals and counter-offers
+- [x] Finite resource bank
 - [x] Buy and Use Development Cards
 - [x] Sounds
 - [x] Animations
@@ -252,4 +275,4 @@ const config = {
 config.mapkey = `S.S(bl_O2).S(br_O2).S-S.M8.D.M8.S-S.G9.S.S.G9.S-S.F10.S.S.S.F10.S-S.S.C11.S.S.C12.S.S-S.S.S.C2.S.C3.S.S.S-S(r_L2).J6.J5.J4.S.S.J4.J5.J6.S(l_L2)+S.S.S.S.S.S.S.S.S`
 ```
 Renders the map…
-<img width="900" alt="Screenshot 2024-02-04 at 11 46 20 copy" src="https://github.com/bigomega/catan/assets/2320747/7449040b-2f77-4ba1-beeb-a648af4dea05">
+<img width="900" alt="The mapkey above, rendered in the map editor" src="docs/screenshots/mapkey-example.webp">

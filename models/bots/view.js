@@ -25,6 +25,8 @@ export function buildView(game, pid) {
     largest_army_pid: game.largest_army_pid,
     longest_road_pid: game.longest_road_pid,
     ongoing_trades: clone(game.ongoing_trades),
+    /** The resource supply, public to every seat */
+    bank: clone(game.bank),
     config: clone(game.config),
   }
 }

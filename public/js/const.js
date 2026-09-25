@@ -39,9 +39,9 @@ const buildDeck = ({ knights, powers, vps }) => [
 ]
 
 /**
- * Rules & dev card deck per player count. Ordered biggest tier first. Each tier above the base
- * adds what the 5-6 player expansion adds: 6 Knights and one of each power card (`t` steps up);
- * the Victory Point counts are this game's own escalation.
+ * Rules, dev card deck and resource supply per player count. Ordered biggest tier first. Each tier
+ * above the base adds what the 5-6 player expansion adds: 6 Knights, one of each power card and
+ * 5 cards of each resource (`t` steps up); the Victory Point counts are this game's own escalation.
  */
 export const PLAYER_TIERS = [
   { min: 9, win_points: 13, vps: 10 },
@@ -50,7 +50,12 @@ export const PLAYER_TIERS = [
   { min: 2, win_points: 10, vps: 5 },
 ].map(({ min, win_points, vps }, i, tiers) => {
   const t = tiers.length - 1 - i
-  return { min, win_points, deck: buildDeck({ knights: 14 + 6 * t, powers: 2 + t, vps }) }
+  return {
+    min, win_points,
+    deck: buildDeck({ knights: 14 + 6 * t, powers: 2 + t, vps }),
+    /** The bank's starting stock of each resource: 19, 24, 29, 34 */
+    bank_per_resource: 19 + 5 * t,
+  }
 })
 
 /** @param {number} player_count */
@@ -292,6 +297,7 @@ export const SOCKET_EVENTS = {
   GODMODE: 'godmode_activated',
   GODMODE_FREE_RES: 'godmode_free_resources_activated',
   ROLL_DISTRIBUTION: 'dice_roll_distribution',
+  BANK: 'bank_update',
   SPECTATOR_COUNT: 'spectator_count',
   SEAT_TAKEN_OVER: 'seat_taken_over_by_bot',
   HOST_CHANGED: 'host_changed',

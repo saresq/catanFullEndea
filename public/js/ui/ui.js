@@ -10,7 +10,6 @@ import TradeUI from "./trade_ui.js"
 import ResSelectionUI from "./res_selection_ui.js"
 import AnimationUI from "./animations_ui.js"
 import AccessibilityUI from "./accessibility_ui.js"
-import { GAME_STATES } from "../const.js"
 const $ = document.querySelector.bind(document)
 
 export default class UI {
@@ -57,8 +56,8 @@ export default class UI {
       onDiceClick: _ => game.onDiceClick(),
       onPieceClick: (piece, is_active) => game.onPieceClick(piece, is_active),
       onBuyDevCardClick: _ => game.onBuyDevCardClick(),
-      // A paired player trades with the bank only
-      onTradeClick: _ => this.trade_ui.renderTradeSelection(this.#game.state === GAME_STATES.PAIRED_ACTIONS),
+      // Requests and the bank on the own turn, the bank alone in a paired phase, proposals otherwise
+      onTradeClick: _ => this.trade_ui.renderTradeSelection(this.#game.trade_role),
       onExitTrade: _ => this.trade_ui.clearSelections(),
       onEndTurnClick: _ => game.onEndTurn(),
       // While the trade drawer is open the hand is its give row.
@@ -83,12 +82,16 @@ export default class UI {
       showHandStakes: stakes => this.player_ui.setHandStakes(stakes),
       onTradeProposal: (...params) => game.onTradeProposal(...params),
       onTradeResponse: (id, resp) => game.onTradeResponse(id, resp),
+      getRole: _ => game.trade_role,
+      getBank: _ => game.bank,
+      getPlayer: pid => game.getPlayer(pid),
     })
 
     this.res_selection_ui = new ResSelectionUI({
       onSubmit: (type, res1, res2) => game.onMonopolyYearOfPlentyResSelection(type, res1, res2),
       onDevCardClick: type => this.player_ui.clickCard(type),
       onCancel: _ => game.clearDevCardUsage(),
+      getBank: _ => game.bank,
     })
   }
 

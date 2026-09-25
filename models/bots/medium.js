@@ -1,7 +1,7 @@
 // Medium: heuristics from dice probability and resources. No search, no card counting, nothing
 // tied to the standard board - every number comes from the map it is handed.
 import * as CONST from '../../public/js/const.js'
-import { bankRate, bankType, canBuy, victimsOn } from './moves.js'
+import { bankRate, bankType, bankHas, canBuy, victimsOn } from './moves.js'
 import {
   pips, cornerPips, cornerScore, isFreeSpot, leader, missingFor, total, longestRoadWith, production, raceMode, scarcity, threat,
 } from './features.js'
@@ -123,10 +123,13 @@ function bankTradeFor(view, goal) {
     return { res, rate, trades: Math.floor((cards[res] - (goal.cost[res] || 0)) / rate) }
   }).filter(s => s.trades > 0)
   if (sources.reduce((m, s) => m + s.trades, 0) < total(missing)) return
+  // Only for a card the bank holds: the server refuses the rest
+  const take = Object.keys(missing).find(res => bankHas(view.bank, { [res]: 1 }))
+  if (!take) return
   const from = sources.sort((a, b) => a.rate - b.rate || b.trades - a.trades)[0]
   return {
     type: 'bank_trade', offer: bankType(me, from.res),
-    giving: { [from.res]: from.rate }, taking: { [Object.keys(missing)[0]]: 1 },
+    giving: { [from.res]: from.rate }, taking: { [take]: 1 },
   }
 }
 
@@ -190,8 +193,17 @@ function devCardPlay(view, moves) {
   const missing = nearest ? missingFor(me.closed_cards, nearest.goal.cost) : {}
   const needed = Object.keys(missing).flatMap(res => Array(missing[res]).fill(res))
 
-  if (needed.length && needed.length <= 2 && moves.some(m => m.type === 'year_of_plenty')) {
-    return { type: 'year_of_plenty', res1: needed[0], res2: needed[1] || needed[0] }
+  const plenty = moves.filter(m => m.type === 'year_of_plenty')
+  if (needed.length && needed.length <= 2 && plenty.length) {
+    // The pair the bank holds that covers most of what is missing: 2 ore wanted and 1 in the bank
+    // asks for that ore and something else
+    const wanted = needed.length === 2 ? needed : [needed[0], needed[0]]
+    const covers = m => {
+      const left = [...wanted]
+      return [m.res1, m.res2].filter(r => { const i = left.indexOf(r); return i >= 0 && left.splice(i, 1) }).length
+    }
+    const pick = best(plenty, covers)
+    if (covers(pick) > 0) return pick
   }
   if (needed.length && moves.some(m => m.type === 'monopoly')) {
     const others = view.players.filter(p => p.id !== pid && !p.removed).reduce((m, p) => m + p.resource_count, 0)

@@ -71,7 +71,9 @@
         }
     }
 
-    /* One incoming offer: who, what they give, what they want, Accept / Ignore. */
+    /* One incoming offer: who, what they give, what they want, Accept / Ignore - and Counter on a
+       request while it is not your turn. A proposal or counter aimed at the active player is
+       dashed and tagged; a bystander sees it with no actions. */
     .request {
         display: flex;
         flex-wrap: wrap;
@@ -110,14 +112,43 @@
             opacity: 0.7;
         }
 
-        /* Accept and Ignore stay side by side; the row wraps around them when it is narrow. */
+        /* Accept, Ignore and Counter stay side by side; the row wraps around them when it is
+           narrow. The dock's `.actions` rules (current-player.css) reach this element too, so the
+           direction and padding are set back here. */
         .actions {
             display: flex;
-            flex-wrap: nowrap;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: flex-end;
             flex-shrink: 0;
             align-items: center;
             gap: var(--space-2);
             margin-left: auto;
+            padding: 0;
+
+            &:empty {
+                display: none;
+            }
+        }
+
+        /* "counter-offer", "to Bob": what kind of offer this is */
+        .tag {
+            font-size: var(--text-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.0625rem;
+            opacity: 0.75;
+
+            .p-name {
+                text-transform: none;
+                letter-spacing: 0;
+                font-family: var(--font-display), serif;
+                color: var(--p-color-dark, inherit);
+            }
+        }
+
+        &:is(.proposal, .counter) {
+            border-left-style: dashed;
+            background: color-mix(in srgb, var(--surface-sand) 85%, var(--p-color, #999));
         }
     }
 
@@ -148,6 +179,15 @@
             padding-left: var(--space-2);
             border-left: 0.25rem solid var(--sand-color-dark);
             border-radius: var(--radius-sm);
+
+            /* My proposals and counters, as opposed to my requests to the table */
+            &:is(.proposal, .counter) {
+                border-left-style: dashed;
+            }
+
+            .tag {
+                opacity: 0.7;
+            }
 
             .giving {
                 color: color-mix(in srgb, var(--trade-negative) 80%, #000);
@@ -254,6 +294,11 @@
                 border-color: var(--surface-ink);
             }
 
+            /* A mode the role does not offer: Players in a paired phase, Bank when proposing */
+            .mode.hide {
+                display: none;
+            }
+
             .close {
                 margin-left: auto;
                 font-family: var(--font-mono), sans-serif;
@@ -302,6 +347,28 @@
             &:disabled {
                 cursor: not-allowed;
                 filter: grayscale(1) brightness(0.55);
+            }
+
+            /* Bank mode and Invention: how many the bank holds, a ribbon across the foot of the card */
+            &[data-stock]::after {
+                content: attr(data-stock);
+                position: absolute;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                padding: 0.0625rem 0;
+                border-radius: 0 0 calc(var(--card-w) * .075) calc(var(--card-w) * .075);
+                background: color-mix(in srgb, var(--card-border) 88%, transparent);
+                color: var(--card-face);
+                font-size: var(--text-xs);
+                font-variant-numeric: tabular-nums;
+                text-align: center;
+                pointer-events: none;
+            }
+
+            &[data-stock="0"]::after {
+                background: color-mix(in srgb, var(--trade-negative) 80%, #000);
+                color: #fff;
             }
         }
 

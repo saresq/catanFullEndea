@@ -21,7 +21,10 @@ const PHASE_TIME = {
 
 /**
  * Plays every bot seat of one game. Bots are ordinary callers of the `*IO` methods a human's
- * socket reaches, so every rule check applies to them. The controller never acts inside the
+ * socket reaches, so every rule check applies to them. A proposal or counter aimed at an active
+ * bot arrives as a `TRADE_REQ` like any request and is answered on its own tick by the same accept
+ * logic; nothing waits on it, and no bot sends proposals (`can_propose` is only ever true on the
+ * bot's own actions phase). The controller never acts inside the
  * game's hook: it schedules a tick, and a tick whose turn / state / active seat / partner has moved on
  * does nothing. One action per tick, every tick wrapped, because a throw inside a timer would
  * take the whole process - every game on the server - down.

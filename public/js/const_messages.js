@@ -90,7 +90,17 @@ const GAME_MESSAGES = {
     }),
   },
   KNIGHT_USED_APPEND: { all: _ => t('log.knight_used_append') },
-  ROAD_BUILDING_USED: { all: p => line('road_building_used', p) },
+  ROAD_BUILDING_USED: { all: (p, n = 2) => line('road_building_used', p, { roads: t.plural('log.roads', n) }) },
+  /** Resources the bank could not pay on a roll */
+  BANK_SHORT: { all: short => t('log.bank_short', { res: short.map(resIcon).join('') }) },
+  /** `p` offers `to` a trade; a counter answers one of `to`'s requests. Either is null when the viewer. */
+  PROPOSAL: {
+    all: (p, to, giving, asking, is_counter) => {
+      const key = (is_counter ? 'counter' : 'proposal') + (to ? '' : '_to_you')
+      return line(key, p, { to: getName(to), given: resToText(giving), taken: resToText(asking) })
+    },
+  },
+  PROPOSAL_FAILED: { all: to => t('log.proposal_failed', { name: getName(to) }) },
   MONOPOLY_USED: {
     all: (p, res, total, self_c) => total
       ? line('monopoly_used', p, {

@@ -317,6 +317,8 @@ export default class PlayerUI {
   }
 
   toggleDice(active) { this.setUnifiedModeRoll(!!active) }
+  /** The Trade control alone: on for a non-active player who may propose to the active one */
+  toggleTrade(enabled) { !this.player.spectator && this.toggleAction(this.$trade_btn, enabled) }
   toggleAction($el, toggle) {
     $el?.classList[toggle ? 'remove' : 'add']('disabled')
   }

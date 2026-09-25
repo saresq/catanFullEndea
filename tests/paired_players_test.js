@@ -317,7 +317,7 @@ test('a partner whose only card is a Road Building it cannot place is skipped', 
   const game = newGame(5)
   const p4 = game.getPlayer(4)
   rollAndDeal(game, pid => pid === 4 ? { dR: 1 } : {})
-  p4.pieces.R = Array(14).fill(p4.pieces.R[0]) // one road left in the box
+  p4.pieces.R = Array(15).fill(p4.pieces.R[0]) // no road left in the box
   game.endTurnIO(1)
   assert.equal(game.state, ST.PLAYER_ROLL, 'skipped: the card cannot be played')
   assert.equal(game.active_pid, 2)

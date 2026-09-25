@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Civ pieces mockup</title>
+<style>
+  :root {
+    --bg: #1e1c18;
+    --card: #2a2722;
+    --ink: #e9e3d6;
+    --muted: #a39b8a;
+    --board: #d9c98f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 16px 80px;
+    background: var(--bg);
+    color: var(--ink);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; font-weight: 600; }
+  h2.group { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 28px 0 10px; font-weight: 600; }
+  .lead { color: var(--muted); margin: 0 0 20px; max-width: 70ch; }
+  .lead code { color: var(--ink); }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; margin-bottom: 8px; color: var(--muted); }
+  .controls label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+  .swatch { width: 14px; height: 14px; border-radius: 50%; display: inline-block; border: 1px solid #0006; }
+
+  .civ {
+    display: grid;
+    grid-template-columns: 170px 1fr;
+    gap: 16px;
+    background: var(--card);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+  }
+  .civ h3 { font-size: 16px; margin: 0 0 4px; font-weight: 600; }
+  .civ h3 small { font-size: 11px; color: #d9a441; font-weight: 600; margin-left: 6px; letter-spacing: .04em; }
+  .civ .note { color: var(--muted); font-size: 12.5px; margin: 0; }
+  .pieces { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+
+  .kind { display: grid; grid-template-columns: auto auto; gap: 8px; align-items: end; }
+  .kind .label { grid-column: 1 / -1; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+  .kind .label button { font: inherit; letter-spacing: 0; text-transform: none; background: none; border: 1px solid #ffffff22; color: var(--muted); border-radius: 6px; padding: 1px 7px; cursor: pointer; }
+  .kind .label button:hover { color: var(--ink); border-color: #ffffff55; }
+
+  .raw { width: var(--raw, 150px); height: var(--raw, 150px); background: #f1ece0; border-radius: 8px; display: grid; place-items: center; }
+  .raw svg { width: 88%; height: 88%; }
+
+  .board {
+    background: var(--board);
+    background-image: radial-gradient(circle at 30% 30%, #e6d9a6 0, transparent 55%), radial-gradient(circle at 80% 75%, #b7a768 0, transparent 50%);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    gap: 12px 14px;
+    align-items: end;
+  }
+
+  .piece {
+    position: relative;
+    display: inline-block;
+    filter: drop-shadow(-1px 1.5px .6px rgb(0 0 0 / .58)) drop-shadow(-4px 4.8px 2.75px rgb(0 0 0 / .74));
+  }
+  .piece.s30 { width: 30px; height: 30px; }
+  .piece.s60 { width: 60px; height: 60px; filter: drop-shadow(-1px 1.5px .6px rgb(0 0 0 / .58)) drop-shadow(-5px 6px 3px rgb(0 0 0 / .6)); }
+  .piece::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--piece) center / contain no-repeat, var(--p-color);
+    background-blend-mode: hard-light;
+    -webkit-mask: var(--piece) center / contain no-repeat;
+    mask: var(--piece) center / contain no-repeat;
+  }
+
+  .src { grid-column: 1 / -1; display: none; }
+  .src.open { display: block; }
+  .src textarea { width: 100%; height: 160px; font: 11px/1.3 ui-monospace, Menlo, monospace; background: #15130f; color: #cfc7b6; border: 1px solid #ffffff18; border-radius: 6px; padding: 8px; }
+
+  @media (max-width: 700px) {
+    .civ { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<h1>Civilization piece sets</h1>
+<p class="lead">Settlement and city per civilization, drawn the way the current pieces are: grey-only SVG, one file per piece, tinted at run time with the player colour through <code>hard-light</code> and masked to the silhouette. Same isometric light as <code>settlement.svg</code> (light from upper left, roofs brightest). Left is the raw grey file; the board strip shows each piece at the real corner size (30px) and at 2x, over three player colours. Roads stay shared.</p>
+
+<div class="controls">
+  <span>Player colour:</span>
+  <label><input type="radio" name="c" value="#e53a3a" checked><span class="swatch" style="background:#e53a3a"></span>red</label>
+  <label><input type="radio" name="c" value="#2b70ff"><span class="swatch" style="background:#2b70ff"></span>blue</label>
+  <label><input type="radio" name="c" value="#03a800"><span class="swatch" style="background:#03a800"></span>green</label>
+  <label><input type="radio" name="c" value="#dc9f00"><span class="swatch" style="background:#dc9f00"></span>gold</label>
+  <label><input type="radio" name="c" value="#ffffff"><span class="swatch" style="background:#fff"></span>white</label>
+  <label><input type="radio" name="c" value="#222222"><span class="swatch" style="background:#222"></span>black</label>
+  <label style="margin-left:auto"><input type="checkbox" id="big"> large previews</label>
+  <label><input type="checkbox" id="wire"> show facets</label>
+</div>
+
+<div id="root"></div>
+
+<script>
+/* ------------------------------------------------------------------
+   Tiny isometric renderer.
+   World: +x goes to screen right-down, +y to screen left-down, +z up.
+   The viewer sits at (+x,+y,+z), so the visible sides of a box are
+   its +x face (right), +y face (left) and top.
+   Faces are flat polygons; shade = Lambert against one light, mapped to
+   a grey. Grey 0x80 leaves the player colour as is under hard-light.
+------------------------------------------------------------------ */
+const SQ3 = Math.sqrt(3) / 2;
+const proj = p => [(p[0] - p[1]) * SQ3, (p[0] + p[1]) * 0.5 - p[2]];
+const norm = v => { const l = Math.hypot(...v) || 1; return v.map(a => a / l); };
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const VIEW = norm([1, 1, 1]);
+const LIGHT = norm([0.32, 0.62, 1.0]);
+const PI = Math.PI;
+
+function newell(pts) {
+  const n = [0, 0, 0];
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i], b = pts[(i + 1) % pts.length];
+    n[0] += (a[1] - b[1]) * (a[2] + b[2]);
+    n[1] += (a[2] - b[2]) * (a[0] + b[0]);
+    n[2] += (a[0] - b[0]) * (a[1] + b[1]);
+  }
+  return n;
+}
+function centroid(pts) {
+  const c = [0, 0, 0];
+  for (const p of pts) { c[0] += p[0]; c[1] += p[1]; c[2] += p[2]; }
+  return c.map(v => v / pts.length);
+}
+const toGrey = s => {
+  const g = Math.round(0x3a + Math.max(0, Math.min(1, s)) * 0x88);
+  return '#' + g.toString(16).padStart(2, '0').repeat(3);
+};
+
+/* A face: { pts, ref } (normal is flipped to point away from ref) or { pts, n } (explicit normal).
+   Optional: grey (fixed colour), bias (shade nudge). A part is an array of faces. */
+
+// ---- rings ------------------------------------------------------
+const rectRing = (cx, cy, z, wx, wy) => {
+  const hx = wx / 2, hy = wy / 2;
+  return [[cx - hx, cy - hy, z], [cx + hx, cy - hy, z], [cx + hx, cy + hy, z], [cx - hx, cy + hy, z]];
+};
+const ellRing = (cx, cy, z, rx, ry, n = 12, phase = 0) => {
+  const pts = [];
+  for (let i = 0; i < n; i++) { const a = phase + i * 2 * PI / n; pts.push([cx + rx * Math.cos(a), cy + ry * Math.sin(a), z]); }
+  return pts;
+};
+const circRing = (cx, cy, z, r, n = 12, phase = 0) => ellRing(cx, cy, z, r, r, n, phase);
+const arcRing = (cx, cy, z, r, n, a0, a1) => {
+  const pts = [];
+  for (let i = 0; i <= n; i++) { const a = a0 + (a1 - a0) * i / n; pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a), z]); }
+  return pts;
+};
+
+// ---- loft: skin between successive rings, cap the last one ------
+function loft(rings, { closed = true, capTop = true, capBottom = false, inward = false, grey, bias } = {}) {
+  const faces = [];
+  const m = rings[0].length;
+  const meanR = ring => {
+    const c = centroid(ring);
+    return ring.reduce((s, p) => s + Math.hypot(p[0] - c[0], p[1] - c[1]), 0) / ring.length;
+  };
+  for (let i = 0; i < rings.length - 1; i++) {
+    const A = rings[i], B = rings[i + 1];
+    const axis = centroid(A.concat(B));
+    const rA = meanR(A), rB = meanR(B);
+    const count = closed ? m : m - 1;
+    for (let j = 0; j < count; j++) {
+      const pts = [A[j], A[(j + 1) % m], B[(j + 1) % m], B[j]];
+      let n = newell(pts);
+      if (Math.hypot(...n) < 1e-9) continue;
+      n = norm(n);
+      if (Math.abs(n[2]) > 0.995) n = [0, 0, (rA > rB) !== inward ? 1 : -1];
+      else { const c = centroid(pts); if ((dot(n, [c[0] - axis[0], c[1] - axis[1], 0]) < 0) !== inward) n = n.map(v => -v); }
+      faces.push({ pts, n, grey, bias });
+    }
+  }
+  if (capTop) faces.push({ pts: rings[rings.length - 1], n: [0, 0, 1], grey, bias });
+  if (capBottom) faces.push({ pts: rings[0], n: [0, 0, -1], grey, bias });
+  return faces;
+}
+
+// ---- solids -----------------------------------------------------
+const box = (cx, cy, z, wx, wy, h, o) => loft([rectRing(cx, cy, z, wx, wy), rectRing(cx, cy, z + h, wx, wy)], o);
+const frustum = (cx, cy, z, wx0, wy0, wx1, wy1, h, o) => loft([rectRing(cx, cy, z, wx0, wy0), rectRing(cx, cy, z + h, wx1, wy1)], o);
+// stepped tower: tiers = [[wx, wy, h, topWx?, topWy?], ...] stacked
+function tiers(cx, cy, z, list, o) {
+  const rings = [];
+  let zz = z;
+  for (const [wx, wy, h, tx, ty] of list) {
+    rings.push(rectRing(cx, cy, zz, wx, wy));
+    rings.push(rectRing(cx, cy, zz + h, tx ?? wx, ty ?? wy));
+    zz += h;
+  }
+  return loft(rings, o);
+}
+// revolve a profile [[r, z], ...] (z relative to base) around a vertical axis
+function revolve(cx, cy, z, profile, n = 12, o = {}) {
+  const rings = profile.map(([r, dz]) => circRing(cx, cy, z + dz, Math.max(r, 0.001), n, o.phase || 0));
+  return loft(rings, { capTop: profile[profile.length - 1][0] > 0.01, ...o });
+}
+function halfRevolve(cx, cy, z, profile, n, a0, a1, o = {}) {
+  const rings = profile.map(([r, dz]) => arcRing(cx, cy, z + dz, Math.max(r, 0.001), n, a0, a1));
+  return loft(rings, { closed: false, capTop: profile[profile.length - 1][0] > 0.01, ...o });
+}
+// barrel vault: half cylinder, axis along x or y
+function barrel(cx, cy, z, r, len, n = 8, axis = 'y', o = {}) {
+  const ring = t => { const pts = []; for (let i = 0; i <= n; i++) { const a = PI * i / n; pts.push(axis === 'y' ? [cx + r * Math.cos(a), t, z + r * Math.sin(a)] : [t, cy + r * Math.cos(a), z + r * Math.sin(a)]); } return pts; };
+  const A = ring((axis === 'y' ? cy : cx) - len / 2), B = ring((axis === 'y' ? cy : cx) + len / 2);
+  const faces = [];
+  for (let j = 0; j < n; j++) {
+    const pts = [A[j], A[j + 1], B[j + 1], B[j]];
+    const c = centroid(pts);
+    faces.push({ pts, n: norm([c[0] - cx, c[1] - cy, c[2] - z].map((v, i) => (axis === 'y' ? i === 1 : i === 0) ? 0 : v)), bias: o.bias });
+  }
+  faces.push({ pts: B, n: axis === 'y' ? [0, 1, 0] : [1, 0, 0], bias: o.bias });
+  faces.push({ pts: A, n: axis === 'y' ? [0, -1, 0] : [-1, 0, 0], bias: o.bias });
+  return faces;
+}
+const column = (x, y, z, h, r, o) => revolve(x, y, z, [[r, 0], [r, h - 0.22], [r * 1.4, h - 0.22], [r * 1.4, h]], 8, o);
+
+// ---- roofs ------------------------------------------------------
+// Hipped / pyramidal roof around a rect: eave half sizes ex,ey; ridge half sizes rx,ry (0,0 = pyramid;
+// rx>0,ry=0 = ridge along x). p>1 makes the slope concave (east asian sweep); lift raises corners,
+// negative lift droops them (bengal). fascia adds a strip under the eave.
+function hip(o) {
+  const { cx, cy, z, ex, ey, rx = 0, ry = 0, h, p = 1, lift = 0, k = 3, nu = 8, nv = 4, fascia = 0, grey, bias } = o;
+  const corner = (i, hx, hy) => [[hx, -hy], [hx, hy], [-hx, hy], [-hx, -hy]][i & 3];
+  const pt = (side, u, v) => {
+    const a0 = corner(side, rx, ry), a1 = corner(side + 1, rx, ry);
+    const b0 = corner(side, ex, ey), b1 = corner(side + 1, ex, ey);
+    const tx = a0[0] + (a1[0] - a0[0]) * u, ty = a0[1] + (a1[1] - a0[1]) * u;
+    const bx = b0[0] + (b1[0] - b0[0]) * u, by = b0[1] + (b1[1] - b0[1]) * u;
+    const zz = z + h * Math.pow(1 - v, p) + lift * v * v * Math.pow(Math.abs(2 * u - 1), k);
+    return [cx + tx + (bx - tx) * v, cy + ty + (by - ty) * v, zz];
+  };
+  const faces = [];
+  const ref = [cx, cy, z - 60];
+  for (let s = 0; s < 4; s++) {
+    for (let i = 0; i < nu; i++) for (let j = 0; j < nv; j++) {
+      faces.push({ pts: [pt(s, i / nu, j / nv), pt(s, (i + 1) / nu, j / nv), pt(s, (i + 1) / nu, (j + 1) / nv), pt(s, i / nu, (j + 1) / nv)], ref, grey, bias });
+    }
+    if (fascia) for (let i = 0; i < nu; i++) {
+      const a = pt(s, i / nu, 1), b = pt(s, (i + 1) / nu, 1);
+      faces.push({ pts: [a, b, [b[0], b[1], b[2] - fascia], [a[0], a[1], a[2] - fascia]], ref: [cx, cy, z - 60], bias: -0.1 });
+    }
+  }
+  faces.walls = ({ wx, wy, z0, eps = 0.1, n = 8, bias }) => {
+    const out = [];
+    const wref = [cx, cy, z0 + 0.5];
+    for (let s = 0; s < 4; s++) {
+      const alongX = s % 2 === 0;
+      const hx = wx / 2, hy = wy / 2;
+      const vw = alongX ? (hx - rx) / (ex - rx) : (hy - ry) / (ey - ry);
+      const A = alongX ? ry * (1 - vw) + ey * vw : rx * (1 - vw) + ex * vw;
+      const lim = alongX ? hy : hx;
+      const u0 = (-lim + A) / (2 * A), u1 = (lim + A) / (2 * A);
+      const top = [];
+      for (let i = 0; i <= n; i++) { const q = pt(s, u1 + (u0 - u1) * i / n, vw); top.push([q[0], q[1], q[2] - eps]); }
+      const b1 = [top[0][0], top[0][1], z0], b0 = [top[n][0], top[n][1], z0];
+      out.push({ pts: [b0, b1, ...top], ref: wref, bias });
+    }
+    out.push({ pts: rectRing(cx, cy, z0, wx, wy), n: [0, 0, 1], bias });
+    return out;
+  };
+  faces.pt = pt;
+  return faces;
+}
+
+// Gable roof, ridge along x. curve bows the whole roof up in the middle (bengal hull), lift turns the
+// eave corners up (east asian), p>1 sags the slope.
+function gable(o) {
+  const { cx, cy, z, ex, ey, h, p = 1, lift = 0, k = 3, curve = 0, nu = 8, nv = 4, fascia = 0, bias } = o;
+  const zf = (u, v) => z + h * Math.pow(1 - v, p) + lift * v * v * Math.pow(Math.abs(2 * u - 1), k) + curve * (1 - Math.pow(2 * u - 1, 2));
+  const pt = (s, u, v) => [cx + (2 * u - 1) * ex, cy + s * v * ey, zf(u, v)];
+  const faces = [];
+  const ref = [cx, cy, z - 60];
+  for (const s of [-1, 1]) {
+    for (let i = 0; i < nu; i++) for (let j = 0; j < nv; j++) {
+      faces.push({ pts: [pt(s, i / nu, j / nv), pt(s, (i + 1) / nu, j / nv), pt(s, (i + 1) / nu, (j + 1) / nv), pt(s, i / nu, (j + 1) / nv)], ref, bias });
+    }
+    if (fascia) {
+      for (let i = 0; i < nu; i++) {
+        const a = pt(s, i / nu, 1), b = pt(s, (i + 1) / nu, 1);
+        faces.push({ pts: [a, b, [b[0], b[1], b[2] - fascia], [a[0], a[1], a[2] - fascia]], ref, bias: -0.1 });
+      }
+      // rake board only on the near slope: the far one reads as a floating stick
+      if (s > 0) for (const u of [0, 1]) for (let j = 0; j < nv; j++) {
+        const a = pt(s, u, j / nv), b = pt(s, u, (j + 1) / nv);
+        faces.push({ pts: [a, b, [b[0], b[1], b[2] - fascia], [a[0], a[1], a[2] - fascia]], ref, bias: -0.1 });
+      }
+    }
+  }
+  faces.walls = ({ wx, wy, z0, eps = 0.1, n = 8, bias }) => {
+    const out = [];
+    const wref = [cx, cy, z0 + 0.5];
+    const hx = wx / 2, hy = wy / 2;
+    const vw = hy / ey, uw0 = (1 - hx / ex) / 2, uw1 = (1 + hx / ex) / 2;
+    for (const s of [-1, 1]) {
+      const top = [];
+      for (let i = 0; i <= n; i++) { const q = pt(s, uw1 + (uw0 - uw1) * i / n, vw); top.push([q[0], q[1], q[2] - eps]); }
+      out.push({ pts: [[top[n][0], top[n][1], z0], [top[0][0], top[0][1], z0], ...top], ref: wref, bias });
+    }
+    for (const u of [uw0, uw1]) {
+      const top = [];
+      for (let i = 0; i <= n; i++) { const q = pt(-1, u, vw * (1 - i / n)); top.push([q[0], q[1], q[2] - eps]); }
+      for (let i = 1; i <= n; i++) { const q = pt(1, u, vw * i / n); top.push([q[0], q[1], q[2] - eps]); }
+      out.push({ pts: [[top[top.length - 1][0], top[top.length - 1][1], z0], [top[0][0], top[0][1], z0], ...top], ref: wref, bias });
+    }
+    out.push({ pts: rectRing(cx, cy, z0, wx, wy), n: [0, 0, 1], bias });
+    return out;
+  };
+  faces.zf = zf;
+  return faces;
+}
+
+// Round east asian roof: a swept cone from radius R down to rHole (0 = closed point), with a lip.
+function sweep(cx, cy, z, R, h, rHole = 0, n = 16, o = {}) {
+  const prof = [[R, -0.3], [R, 0]];
+  const vHole = rHole / R;
+  for (let i = 1; i <= 5; i++) { const v = 1 + (vHole - 1) * i / 5; prof.push([R * v, h * Math.pow(1 - v, 1.6)]); }
+  return revolve(cx, cy, z, prof, n, { capTop: rHole === 0, ...o });
+}
+
+// ---- details ----------------------------------------------------
+function outline2d(shape, w, h, n = 7) {
+  const hw = w / 2, pts = [[-hw, 0], [hw, 0]];
+  if (shape === 'flat') pts.push([hw, h], [-hw, h]);
+  else if (shape === 'corbel') pts.push([hw, h * 0.55], [hw * 0.25, h], [-hw * 0.25, h], [-hw, h * 0.55]);
+  else if (shape === 'pointed') {
+    const r = w * 0.95, zs = h - hw * 0.9;
+    for (let i = 0; i <= n; i++) { const a = (PI / 3) * (i / n); pts.push([hw - r + r * Math.cos(a), zs + r * Math.sin(a)]); }
+    for (let i = n; i >= 0; i--) { const a = (PI / 3) * (i / n); pts.push([-hw + r - r * Math.cos(a), zs + r * Math.sin(a)]); }
+  } else {
+    const r = shape === 'horseshoe' ? hw * 1.15 : hw, zs = h - r;
+    const a0 = shape === 'horseshoe' ? -0.5 : 0;
+    for (let i = 0; i <= n; i++) { const a = a0 + (PI - 2 * a0) * (i / n); pts.push([r * Math.cos(a), zs + r * Math.sin(a)]); }
+  }
+  return pts;
+}
+// Dark opening on a wall facing +y (axis 'y', wall at y = at) or +x (axis 'x', wall at x = at).
+function arch({ axis = 'y', at, c, z, w, h, shape = 'round', grey = '#262626', n = 7 }) {
+  const pts = outline2d(shape, w, h, n).map(([s, up]) => axis === 'y' ? [c + s, at + 0.03, z + up] : [at + 0.03, c - s, z + up]);
+  return [{ pts, n: axis === 'y' ? [0, 1, 0] : [1, 0, 0], grey }];
+}
+// Same on a cylinder / ellipse wall of radii rx, ry at angle a
+function archOnCyl({ cx, cy, z, rx, ry = rx, a, w, h, shape = 'round', grey = '#262626', n = 6 }) {
+  const nn = norm([Math.cos(a) / rx, Math.sin(a) / ry, 0]);
+  const px = cx + rx * Math.cos(a) + nn[0] * 0.04, py = cy + ry * Math.sin(a) + nn[1] * 0.04;
+  const t = [-nn[1], nn[0], 0];
+  const pts = outline2d(shape, w, h, n).map(([s, up]) => [px + t[0] * s, py + t[1] * s, z + up]);
+  return [{ pts, n: nn, grey }];
+}
+// Stair climbing a facade that faces +y. innerY(z) is where the building face sits at height z.
+function stairs({ cx, innerY, yOut, w, zTop, n = 6, z0 = 0 }) {
+  const iy = typeof innerY === 'function' ? innerY : () => innerY;
+  const rise = (zTop - z0) / n, run = (yOut - iy(z0)) / n;
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const zb = z0 + i * rise;
+    const yIn = iy(zb + rise * 0.5) - 0.05, yFront = yOut - i * run;
+    if (yFront <= yIn) continue;
+    out.push(...box(cx, (yIn + yFront) / 2, zb, w, yFront - yIn, rise));
+  }
+  return out;
+}
+// Sloped block climbing a +y facade.
+function ramp({ cx, yIn, yOut, z0, zTop, w }) {
+  const hw = w / 2, ref = [cx, (yIn + yOut) / 2, (z0 + zTop) / 2 - 0.6];
+  return [
+    { pts: [[cx - hw, yOut, z0], [cx + hw, yOut, z0], [cx + hw, yIn, zTop], [cx - hw, yIn, zTop]], ref },
+    { pts: [[cx + hw, yOut, z0], [cx + hw, yIn, z0], [cx + hw, yIn, zTop]], ref },
+    { pts: [[cx - hw, yOut, z0], [cx - hw, yIn, z0], [cx - hw, yIn, zTop]], ref },
+    { pts: [[cx - hw, yIn, z0], [cx + hw, yIn, z0], [cx + hw, yIn, zTop], [cx - hw, yIn, zTop]], ref },
+  ];
+}
+// Battlements around the top of a rect wall
+function crenel(cx, cy, z, wx, wy, { pitch = 1.0, h = 0.45, t = 0.4 } = {}) {
+  const out = [];
+  const n = Math.max(2, Math.round(wx / pitch)), m = Math.max(2, Math.round(wy / pitch));
+  for (let i = 0; i < n; i += 2) {
+    const x = -wx / 2 + (i + 0.5) * (wx / n) + cx;
+    out.push(box(x, cy + wy / 2 - t / 2, z, wx / n * 0.9, t, h), box(x, cy - wy / 2 + t / 2, z, wx / n * 0.9, t, h));
+  }
+  for (let j = 0; j < m; j += 2) {
+    const y = -wy / 2 + (j + 0.5) * (wy / m) + cy;
+    out.push(box(cx + wx / 2 - t / 2, y, z, t, wy / m * 0.9, h), box(cx - wx / 2 + t / 2, y, z, t, wy / m * 0.9, h));
+  }
+  return out.flat();
+}
+// Shared profiles
+const saucer = r => [[r, 0], [r * 0.93, r * 0.22], [r * 0.72, r * 0.42], [r * 0.4, r * 0.56], [0, r * 0.62]];
+const pointed = r => [[r, 0], [r * 0.99, r * 0.28], [r * 0.9, r * 0.55], [r * 0.7, r * 0.8], [r * 0.42, r * 1.0], [r * 0.15, r * 1.14], [0, r * 1.2]];
+const onion = r => [[r * 0.78, 0], [r, r * 0.3], [r * 0.95, r * 0.62], [r * 0.68, r * 0.9], [r * 0.35, r * 1.1], [r * 0.12, r * 1.25], [0, r * 1.38]];
+const hemi = r => [[r, 0], [r * 0.95, r * 0.3], [r * 0.82, r * 0.57], [r * 0.6, r * 0.8], [r * 0.3, r * 0.95], [0, r]];
+const cone = (r, h) => [[r, 0], [0, h]];
+const finial = (x, y, z, s = 1) => revolve(x, y, z, [[0.1 * s, 0], [0.16 * s, 0.25 * s], [0.06 * s, 0.4 * s], [0.06 * s, 0.7 * s], [0, 0.72 * s]], 6);
+const cross = (x, y, z, s = 1) => [box(x, y, z, 0.18 * s, 0.18 * s, 1.0 * s), box(x, y, z + 0.6 * s, 0.6 * s, 0.18 * s, 0.18 * s)];
+
+// ---- render -----------------------------------------------------
+function render(parts, { pad = 0.4, wire = false } = {}) {
+  const polys = [];
+  const all = [];
+  for (const part of parts.map(p => p.pts ? [p] : p)) {
+    const vis = [];
+    for (const f of part) {
+      let n = f.n;
+      if (!n) {
+        n = newell(f.pts);
+        if (Math.hypot(...n) < 1e-9) continue;
+        n = norm(n);
+        if (dot(n, sub(centroid(f.pts), f.ref)) < 0) n = n.map(v => -v);
+      }
+      if (dot(n, VIEW) <= 0.002) continue;
+      const c = centroid(f.pts);
+      const grey = f.grey || toGrey(dot(n, LIGHT) + (f.bias || 0));
+      vis.push({ pts: f.pts, grey, depth: c[0] + c[1] + c[2] });
+    }
+    vis.sort((a, b) => a.depth - b.depth);
+    polys.push(...vis);
+  }
+  const pts2 = polys.map(p => p.pts.map(proj));
+  for (const poly of pts2) all.push(...poly);
+  const xs = all.map(p => p[0]), ys = all.map(p => p[1]);
+  const minX = Math.min(...xs) - pad, maxX = Math.max(...xs) + pad, minY = Math.min(...ys) - pad, maxY = Math.max(...ys) + pad;
+  const side = Math.max(maxX - minX, maxY - minY);
+  const ox = (minX + maxX) / 2 - side / 2, oy = (minY + maxY) / 2 - side / 2;
+  const f = v => (Math.round(v * 100) / 100).toFixed(2).replace(/\.?0+$/, '');
+  const body = polys.map((p, i) => {
+    const d = pts2[i].map(q => `${f(q[0] - ox)},${f(q[1] - oy)}`).join(' ');
+    const stroke = wire ? ' stroke="#000" stroke-width=".04"' : ` stroke="${p.grey}" stroke-width=".06" stroke-linejoin="round"`;
+    return `<polygon fill="${p.grey}"${stroke} points="${d}"/>`;
+  }).join('\n  ');
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f(side)} ${f(side)}">\n  ${body}\n</svg>`;
+}
+
+/* ------------------------------------------------------------------
+   Pieces. Facades (doors, stairs) face +y: the lighter, left-front side.
+------------------------------------------------------------------ */
+const CIVS = [];
+const civ = (name, note, S, C, tag) => CIVS.push({ name, note, S, C, tag });
+const corners4 = f => [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([sx, sy]) => f(sx, sy));
+
+/* ================= FIRST PASS (upgraded) ========================= */
+
+// ---- Khmer ------------------------------------------------------
+const prang = (cx, cy, z, s, h) => {
+  const list = [];
+  const prof = [1, 0.9, 0.78, 0.64, 0.48];
+  let hh = h * 0.28;
+  for (const f of prof) { list.push([s * f, s * f, hh, s * f * 0.93, s * f * 0.93]); hh *= 0.86; }
+  const top = z + list.reduce((a, t) => a + t[2], 0);
+  const w = s * 0.48;
+  return [tiers(cx, cy, z, list), revolve(cx, cy, top - 0.02, [[w * 0.55, 0], [w * 0.62, 0.25 * w], [w * 0.45, 0.6 * w], [w * 0.2, 0.95 * w], [0, 1.25 * w]], 8, { phase: PI / 8 })];
+};
+civ('Khmer', 'Angkor: laterite platform and a corn-cob prang of receding tiers with a lotus-bud tip. City is the quincunx over a gallery.',
+  [ box(0, 0, 0, 8, 8, 1.2),
+    ...prang(0, 0, 1.2, 4.6, 6.8),
+    arch({ at: 2.3, c: 0, z: 1.2, w: 1.1, h: 1.7, shape: 'corbel' }) ],
+  [ box(0, 0, 0, 12.5, 12.5, 0.9),
+    box(0, 0, 0.9, 10.5, 10.5, 1.1),
+    ...prang(-3.3, -3.3, 2, 2.8, 4.2),
+    ...prang(0, 0, 2, 4.4, 7.4),
+    ...prang(3.3, -3.3, 2, 2.8, 4.2),
+    ...prang(-3.3, 3.3, 2, 2.8, 4.2),
+    box(4.6, 0, 0.9, 1.3, 10.5, 1.9),
+    box(-0.65, 4.6, 0.9, 9.2, 1.3, 1.9),
+    arch({ at: 5.25, c: 0, z: 0.9, w: 1.4, h: 1.6, shape: 'corbel' }) ]);
+
+// ---- Japanese ---------------------------------------------------
+{
+  const roofS = gable({ cx: 0, cy: 0, z: 3.4, ex: 3.3, ey: 2.9, h: 3.4, p: 1.05, lift: 0.1, fascia: 0.3 });
+  const S = [ box(0, 0, 0, 6.2, 4.8, 0.9), roofS.walls({ wx: 5.4, wy: 3.6, z0: 0.9 }), roofS ];
+  for (const x of [-1.6, 0, 1.6]) S.push(box(x, 0, 6.6, 0.55, 1.7, 0.5));
+  for (const x of [-3.1, 3.1]) S.push(box(x, 0, 6.0, 0.3, 0.45, 1.9));
+  // Tenshu castle: battered stone base, white storeys, stacked hip roofs
+  const W = { bias: 0.22 };
+  const r1 = hip({ cx: 0, cy: 0, z: 4.0, ex: 5.0, ey: 4.5, rx: 3.0, ry: 2.5, h: 0.9, p: 1.4, lift: 0.45, k: 2.4, fascia: 0.3 });
+  const r2 = hip({ cx: 0, cy: 0, z: 6.3, ex: 4.1, ey: 3.6, rx: 2.2, ry: 1.7, h: 0.9, p: 1.4, lift: 0.45, k: 2.4, fascia: 0.3 });
+  const r3 = hip({ cx: 0, cy: 0, z: 8.5, ex: 3.2, ey: 2.6, rx: 1.3, ry: 0, h: 1.5, p: 1.4, lift: 0.5, k: 2.4, fascia: 0.3 });
+  const C = [ frustum(0, 0, 0, 10.5, 9.5, 8.6, 7.6, 2.4, { bias: -0.08 }),
+    box(0, 0, 2.4, 7.8, 6.8, 1.7, W), r1,
+    box(0, 0, 4.8, 6.0, 5.0, 1.6, W), r2,
+    box(0, 0, 7.1, 4.4, 3.4, 1.5, W), r3,
+    box(-1.3, 0, 9.95, 0.35, 0.35, 0.6), box(1.3, 0, 9.95, 0.35, 0.35, 0.6),
+    arch({ at: 3.4, c: -1.6, z: 2.4, w: 0.7, h: 0.9, shape: 'flat' }), arch({ at: 3.4, c: 0, z: 2.4, w: 0.7, h: 0.9, shape: 'flat' }), arch({ at: 3.4, c: 1.6, z: 2.4, w: 0.7, h: 0.9, shape: 'flat' }),
+    arch({ at: 2.5, c: -0.9, z: 4.8, w: 0.7, h: 0.8, shape: 'flat' }), arch({ at: 2.5, c: 0.9, z: 4.8, w: 0.7, h: 0.8, shape: 'flat' }) ];
+  civ('Japanese', 'Shrine and castle. Settlement keeps the raised shrine hall with katsuogi and chigi. City is now a tenshu keep: battered stone base, white plastered storeys, stacked swept roofs, shachihoko on the ridge.', S, C, 'city changed');
+}
+
+// ---- Malians ----------------------------------------------------
+{
+  const torons = (faces, x0, y0, wx, wy, zs, axis) => {
+    for (const zz of zs) for (const t of [-0.32, 0, 0.32]) {
+      if (axis === 'y') faces.push(box(x0 + t * wx, y0 + 0.3, zz, 0.26, 0.7, 0.26));
+      else faces.push(box(x0 + 0.3, y0 + t * wy, zz, 0.7, 0.26, 0.26));
+    }
+  };
+  // round mud hut with a thatched cone
+  const S = [ revolve(0, 0, 0, [[3.5, 0], [3.5, 0.4]], 14),
+    revolve(0, 0, 0.4, [[2.7, 0], [2.6, 2.3]], 14),
+    revolve(0, 0, 2.6, [[3.3, -0.3], [3.3, 0], [2.3, 1.0], [1.2, 2.1], [0.3, 2.9], [0, 3.05]], 14, { bias: 0.1 }),
+    finial(0, 0, 5.55, 0.8),
+    archOnCyl({ cx: 0, cy: 0, z: 0.4, rx: 2.65, a: PI / 4, w: 1.1, h: 1.7, shape: 'round' }) ];
+  const C = [ box(0, 0, 0, 13, 12, 0.6), frustum(0, 0, 0.6, 10, 9, 9.3, 8.4, 3.2) ];
+  for (const x of [-3.2, 0, 3.2]) {
+    C.push(frustum(x, 3.6, 0.6, 2.3, 2.3, 1.45, 1.45, 5.4));
+    C.push(revolve(x, 3.6, 6.0, [[0.3, 0], [0.42, 0.3], [0.3, 0.6], [0, 0.78]], 8));
+    torons(C, x, 4.75, 0, 0, [2.0, 3.2, 4.4], 'y');
+    C.push(arch({ at: 4.75, c: x, z: 0.6, w: 0.9, h: 1.7, shape: 'round' }));
+  }
+  C.push(...corners4((sx, sy) => frustum(sx * 4.3, sy * 3.9, 3.7, 1.0, 1.0, 0.4, 0.4, 1.1)));
+  torons(C, 4.7, -1.2, 0, 5, [1.6, 2.6], 'x');
+  civ('Malians', 'Settlement is now a round mud hut under a thatched cone. City stays the Great Mosque of Djenne: battered walls, torons, three tapering towers with egg finials.', S, C, 'settlement changed');
+}
+
+// ---- Chinese ----------------------------------------------------
+{
+  const roofS = hip({ cx: 0, cy: 0, z: 3.3, ex: 4.5, ey: 3.7, rx: 1.7, ry: 0, h: 2.1, p: 1.5, lift: 0.75, k: 2.4, fascia: 0.32 });
+  const S = [ box(0, 0, 0, 8.6, 7, 0.9), roofS.walls({ wx: 6.4, wy: 4.6, z0: 0.9 }), roofS,
+    box(0, 0, 5.3, 3.9, 0.5, 0.35), box(-1.85, 0, 5.3, 0.5, 0.55, 0.85), box(1.85, 0, 5.3, 0.5, 0.55, 0.85),
+    arch({ at: 2.3, c: 0, z: 0.9, w: 1.3, h: 1.9, shape: 'flat' }) ];
+  // Temple of Heaven: round terraces, three round swept roofs
+  const C = [ revolve(0, 0, 0, [[6.8, 0], [6.8, 0.5], [5.9, 0.5], [5.9, 1.0], [5.0, 1.0], [5.0, 1.5]], 24),
+    revolve(0, 0, 1.5, [[3.7, 0], [3.7, 2.0]], 16, { bias: -0.05 }),
+    archOnCyl({ cx: 0, cy: 0, z: 1.5, rx: 3.7, a: PI / 4, w: 1.0, h: 1.5, shape: 'flat' }),
+    archOnCyl({ cx: 0, cy: 0, z: 1.5, rx: 3.7, a: PI / 4 + 0.7, w: 0.8, h: 1.3, shape: 'flat' }),
+    archOnCyl({ cx: 0, cy: 0, z: 1.5, rx: 3.7, a: PI / 4 - 0.7, w: 0.8, h: 1.3, shape: 'flat' }),
+    sweep(0, 0, 3.4, 5.0, 1.3, 2.9, 16),
+    revolve(0, 0, 4.2, [[2.8, 0], [2.8, 1.4]], 16, { bias: -0.05 }),
+    sweep(0, 0, 5.5, 3.9, 1.2, 2.0, 16),
+    revolve(0, 0, 6.3, [[1.9, 0], [1.9, 1.2]], 16, { bias: -0.05 }),
+    sweep(0, 0, 7.4, 2.9, 1.7, 0, 16),
+    finial(0, 0, 9.0, 1.1) ];
+  civ('Chinese', 'Settlement stays the hipped hall with swept eaves and chiwen. City is now the Temple of Heaven: three round terraces and three round swept roofs on a drum, closed by a gilt finial.', S, C, 'city changed');
+}
+
+// ---- Aztecs -----------------------------------------------------
+{
+  const S = [ box(0, 0, 0, 8.4, 8.4, 1.1), box(0, 0, 1.1, 6.4, 6.4, 1.0),
+    box(0, 0, 2.1, 3.6, 3.4, 2.1), box(0, 0, 4.2, 3.7, 3.5, 0.5), box(0, 0, 4.7, 3.4, 3.2, 0.7),
+    stairs({ cx: 0, innerY: z => z < 1.1 ? 3.2 : 1.7, yOut: 5.0, w: 2.4, zTop: 2.1, n: 5 }),
+    arch({ at: 1.7, c: 0, z: 2.1, w: 1.1, h: 1.4, shape: 'flat' }) ];
+  const C = [];
+  const tl = [[13, 1.1], [11, 1.0], [9.2, 1.0], [7.6, 1.0]];
+  let z = 0;
+  const heights = [];
+  for (const [w, h] of tl) { C.push(box(0, 0, z, w, w, h)); heights.push([z, w / 2]); z += h; }
+  for (const x of [-1.9, 1.9]) {
+    C.push(box(x, -0.6, z, 3.0, 3.0, 2.2));
+    C.push(box(x, -0.6, z + 2.2, 3.1, 3.1, 0.45));
+    C.push(box(x, -0.6, z + 2.65, 2.8, 2.8, x < 0 ? 0.9 : 0.6));
+    C.push(arch({ at: 0.9, c: x, z, w: 1.0, h: 1.4, shape: 'flat' }));
+  }
+  const innerY = zz => { let r = 3.8; for (const [z0, half] of heights) if (zz >= z0) r = half; return zz >= z ? 0.9 : r; };
+  for (const x of [-1.7, 1.7]) C.push(stairs({ cx: x, innerY, yOut: 8.2, w: 2.4, zTop: z, n: 6 }));
+  civ('Aztecs', 'Tenochtitlan. Low, wide stepped platform with a single shrine and stair; city is the Templo Mayor with twin shrines and a double staircase.', S, C);
+}
+
+// ---- Mayans -----------------------------------------------------
+{
+  // oval thatched hut on a platform
+  const roofS = hip({ cx: 0, cy: 0, z: 3.2, ex: 3.7, ey: 2.3, rx: 1.4, ry: 0, h: 2.8, p: 1, fascia: 0.3, bias: 0.1 });
+  const S = [ box(0, 0, 0, 8, 6.4, 0.8),
+    box(0, 0, 0.8, 3.2, 3.6, 2.5),
+    halfRevolve(1.6, 0, 0.8, [[1.8, 0], [1.8, 2.5]], 6, -PI / 2, PI / 2),
+    halfRevolve(-1.6, 0, 0.8, [[1.8, 0], [1.8, 2.5]], 6, PI / 2, 3 * PI / 2),
+    roofS,
+    arch({ at: 1.8, c: 0, z: 0.8, w: 1.0, h: 1.5, shape: 'flat' }) ];
+  const C = [];
+  const ws = [12, 10.4, 9.0, 7.8, 6.7, 5.7];
+  let z = 0;
+  const heights = [];
+  for (const w of ws) { C.push(box(0, 0, z, w, w, 1.05)); heights.push([z, w / 2]); z += 1.05; }
+  C.push(box(0, 0, z, 3.8, 3.4, 2.1));
+  C.push(frustum(0, 0, z + 2.1, 4.0, 3.6, 2.8, 2.4, 0.9));
+  C.push(box(0, -0.5, z + 3.0, 3.2, 0.7, 2.4), box(0, -0.5, z + 5.4, 2.4, 0.55, 1.1));
+  C.push(arch({ at: 1.7, c: 0, z, w: 1.0, h: 1.5, shape: 'corbel' }));
+  const innerY = zz => { let r = 6; for (const [z0, half] of heights) if (zz >= z0) r = half; return zz >= z ? 1.7 : r; };
+  C.push(stairs({ cx: 0, innerY, yOut: 7.6, w: 2.4, zTop: z, n: 11 }));
+  civ('Mayans', 'Settlement is now the oval thatched house of the Yucatan, rounded ends under a tall palm roof. City stays the steep Tikal temple with its roof comb and single stair.', S, C, 'settlement changed');
+}
+
+// ---- Byzantines -------------------------------------------------
+{
+  const S = [ box(0, 0, 0, 6.2, 5.2, 2.8),
+    halfRevolve(3.1, 0, 0, [[1.6, 0], [1.6, 2.2], [1.45, 2.5], [1.05, 2.85], [0.5, 3.05], [0, 3.1]], 6, -PI / 2, PI / 2),
+    box(0, 0, 2.8, 3.6, 3.6, 0.4),
+    revolve(0, 0, 3.2, [[1.75, 0], [1.75, 1.0]], 12),
+    archOnCyl({ cx: 0, cy: 0, z: 3.3, rx: 1.75, a: PI / 4, w: 0.45, h: 0.75 }), archOnCyl({ cx: 0, cy: 0, z: 3.3, rx: 1.75, a: PI / 4 + 0.8, w: 0.45, h: 0.75 }), archOnCyl({ cx: 0, cy: 0, z: 3.3, rx: 1.75, a: PI / 4 - 0.8, w: 0.45, h: 0.75 }),
+    revolve(0, 0, 4.2, saucer(1.8), 12),
+    ...cross(0, 0, 5.25),
+    arch({ at: 2.6, c: -1.4, z: 0, w: 1.0, h: 1.9 }), arch({ at: 2.6, c: 1.0, z: 1.1, w: 0.6, h: 1.2 }) ];
+  const corner = (x, y) => revolve(x, y, 1.6, [[0.9, 0], [0.9, 0.7], ...saucer(0.95).map(([r, z]) => [r, z + 0.7])], 8);
+  const C = [ box(0, 0, 0, 12.4, 10.4, 1.6), box(0, 0, 1.6, 9.2, 7.6, 1.8),
+    halfRevolve(-4.6, 0, 1.6, [[2.6, 0], [2.6, 0.5], [2.5, 1.1], [2.0, 1.9], [1.1, 2.4], [0, 2.55]], 6, PI / 2, 3 * PI / 2),
+    halfRevolve(4.6, 0, 1.6, [[2.6, 0], [2.6, 0.5], [2.5, 1.1], [2.0, 1.9], [1.1, 2.4], [0, 2.55]], 6, -PI / 2, PI / 2),
+    corner(-3.6, -3.1), corner(3.6, -3.1), corner(-3.6, 3.1), corner(3.6, 3.1),
+    box(0, 0, 3.4, 5.4, 5.4, 0.5),
+    revolve(0, 0, 3.9, [[2.9, 0], [2.9, 1.1]], 16),
+    ...[-1.2, -0.6, 0, 0.6, 1.2].map(d => archOnCyl({ cx: 0, cy: 0, z: 4.05, rx: 2.9, a: PI / 4 + d, w: 0.5, h: 0.8 })),
+    revolve(0, 0, 5.0, saucer(3.0), 16),
+    ...cross(0, 0, 6.85),
+    arch({ at: 3.8, c: -1.8, z: 1.6, w: 0.9, h: 1.5 }), arch({ at: 3.8, c: 0, z: 1.6, w: 0.9, h: 1.5 }), arch({ at: 3.8, c: 1.8, z: 1.6, w: 0.9, h: 1.5 }) ];
+  civ('Byzantines', 'Saucer domes on drums, round apse, heavy walls. Drums now carry a ring of arched windows. City is a Hagia Sophia with half domes and four corner domes.', S, C, 'windows added');
+}
+
+// ---- Indians ----------------------------------------------------
+{
+  const shikhara = (cx, cy, z, s, h) => {
+    const ts = [0, 0.28, 0.52, 0.72, 0.88, 1];
+    const rings = ts.map(t => rectRing(cx, cy, z + t * h, s * Math.pow(1 - t * t, 0.55) + 0.001, s * Math.pow(1 - t * t, 0.55) + 0.001));
+    const amalaka = revolve(cx, cy, z + h - 0.05, [[s * 0.22, 0], [s * 0.36, 0.1], [s * 0.36, 0.28], [s * 0.2, 0.38]], 10);
+    const kalasha = revolve(cx, cy, z + h + 0.3, [[0.14, 0], [0.3, 0.25], [0.12, 0.5], [0, 0.85]], 8);
+    return [loft(rings), amalaka, kalasha];
+  };
+  const S = [ box(0, 0, 0, 7.6, 6.2, 0.8),
+    box(-0.9, 0, 0.8, 3.6, 3.6, 2.4), ...shikhara(-0.9, 0, 3.2, 3.9, 4.4),
+    box(1.9, 0, 0.8, 2.6, 3.4, 1.9), hip({ cx: 1.9, cy: 0, z: 2.6, ex: 1.6, ey: 2.0, rx: 0.3, ry: 0.5, h: 0.9, p: 1, nu: 2, nv: 2 }),
+    arch({ at: 1.7, c: 1.9, z: 0.8, w: 1.1, h: 1.5, shape: 'flat' }) ];
+  // Mughal mausoleum: iwans, chhatris, onion dome, four minarets
+  const W = { bias: 0.12 };
+  const minaret = (x, y) => [revolve(x, y, 0.8, [[0.5, 0], [0.5, 5.4], [0.68, 5.4], [0.68, 5.7], [0.42, 5.7], [0.42, 6.3]], 8, W), revolve(x, y, 7.1, saucer(0.6), 8, W), finial(x, y, 7.45, 0.6)];
+  const chhatri = (x, y) => [revolve(x, y, 4.7, [[0.7, 0], [0.7, 0.75]], 8, { ...W, phase: PI / 8 }), revolve(x, y, 5.45, saucer(0.85), 8, W), finial(x, y, 5.95, 0.5)];
+  const C = [ box(0, 0, 0, 13.5, 13.5, 0.8),
+    ...minaret(-5.2, -5.2), ...minaret(5.2, -5.2), ...minaret(-5.2, 5.2),
+    box(0, 0, 0.8, 8.4, 8.4, 0.5, W),
+    box(0, 0, 1.3, 6.8, 6.8, 3.4, W),
+    box(0, 3.55, 1.3, 3.2, 0.3, 3.9, W), arch({ at: 3.7, c: 0, z: 1.3, w: 2.0, h: 3.3, shape: 'pointed' }),
+    box(3.55, 0, 1.3, 0.3, 3.2, 3.9, W), arch({ axis: 'x', at: 3.7, c: 0, z: 1.3, w: 2.0, h: 3.3, shape: 'pointed' }),
+    ...chhatri(-2.6, -2.6), ...chhatri(2.6, -2.6), ...chhatri(-2.6, 2.6), ...chhatri(2.6, 2.6),
+    revolve(0, 0, 4.7, [[2.5, 0], [2.5, 1.3]], 14, W),
+    revolve(0, 0, 6.0, onion(2.75), 14, W),
+    finial(0, 0, 9.75, 1.1),
+    ...minaret(5.2, 5.2) ];
+  civ('Indians', 'Towers and domes. Settlement stays the Nagara shrine with its curvilinear shikhara. City is now Mughal: a marble mausoleum with pointed iwans, four chhatris, a bulbous onion dome and four minarets.', S, C, 'city changed');
+}
+
+// ---- Saracens ---------------------------------------------------
+{
+  const S = [ box(0, 0, 0, 6.4, 6.0, 3.0), crenel(0, 0, 3.0, 6.4, 6.0),
+    box(-0.6, -0.6, 3.0, 3.8, 3.8, 0.5),
+    revolve(-0.6, -0.6, 3.5, [[1.75, 0], [1.75, 0.9]], 12),
+    revolve(-0.6, -0.6, 4.4, pointed(1.85), 12), finial(-0.6, -0.6, 6.6),
+    stairs({ cx: 2.2, innerY: 3.0, yOut: 5.2, w: 1.2, zTop: 3.0, n: 6 }),
+    arch({ at: 3.0, c: -0.4, z: 0, w: 1.5, h: 2.3, shape: 'horseshoe' }) ];
+  const C = [ box(0, 0, 0, 12, 10, 2.8), crenel(0, 0, 2.8, 12, 10),
+    revolve(-1.2, -1.2, 2.8, [[3.0, 0], [3.0, 1.0]], 16), revolve(-1.2, -1.2, 3.8, pointed(3.1), 16), finial(-1.2, -1.2, 7.5),
+    revolve(2.9, -2.9, 2.8, [[1.05, 0], [1.05, 0.6]], 10), revolve(2.9, -2.9, 3.4, pointed(1.1), 10), finial(2.9, -2.9, 4.7),
+    revolve(-3.6, 2.6, 2.8, [[1.05, 0], [1.05, 0.6]], 10), revolve(-3.6, 2.6, 3.4, pointed(1.1), 10), finial(-3.6, 2.6, 4.7),
+    box(4.8, 3.8, 0, 1.6, 1.6, 3.4),
+    revolve(4.8, 3.8, 3.4, [[0.62, 0], [0.62, 4.0], [0.95, 4.1], [0.95, 4.45], [0.5, 4.5], [0.5, 6.2]], 10),
+    revolve(4.8, 3.8, 9.6, pointed(0.6), 10), finial(4.8, 3.8, 10.3),
+    ...[-2.9, -1.0, 0.9, 2.8].map(c => arch({ at: 5.0, c, z: 0, w: 1.3, h: 2.1, shape: 'horseshoe' })) ];
+  civ('Saracens', 'Pointed domes, horseshoe arches, crenellated parapets. Settlement gained the outside stair to the roof. City is the congregational mosque with great dome, lesser domes, arcade and minaret.', S, C, 'stair added');
+}
+
+// ---- Bengalis ---------------------------------------------------
+{
+  const roofS = gable({ cx: 0, cy: 0, z: 3.0, ex: 3.9, ey: 3.3, h: 2.3, p: 1.25, curve: 0.9, fascia: 0.32 });
+  const S = [ box(0, 0, 0, 7, 6, 0.7), roofS.walls({ wx: 5.6, wy: 4.4, z0: 0.7 }), roofS,
+    arch({ at: 2.2, c: 0, z: 0.7, w: 1.2, h: 1.6, shape: 'pointed' }),
+    arch({ at: 2.2, c: -1.7, z: 0.7, w: 0.9, h: 1.3, shape: 'pointed' }), arch({ at: 2.2, c: 1.7, z: 0.7, w: 0.9, h: 1.3, shape: 'pointed' }) ];
+  const cap = r => [[r, 0], [r * 0.9, r * 0.35], [r * 0.62, r * 0.7], [r * 0.25, r * 0.92], [0, r * 1.0]];
+  const ratna = (x, y, z, r, hDrum) => [revolve(x, y, z, [[r, 0], [r, hDrum]], 8, { phase: PI / 8 }), revolve(x, y, z + hDrum, cap(r * 1.1), 8, { phase: PI / 8 }), revolve(x, y, z + hDrum + r * 1.05, [[0.08, 0], [0.16, 0.2], [0, 0.5]], 6)];
+  const roofC = hip({ cx: 0, cy: 0, z: 4.6, ex: 4.9, ey: 4.9, rx: 2.4, ry: 2.4, h: 1.5, p: 1.2, lift: -0.9, k: 2, fascia: 0.34 });
+  const C = [ box(0, 0, 0, 12, 12, 0.8), box(0, 0, 0.8, 10, 10, 0.5),
+    roofC.walls({ wx: 8.2, wy: 8.2, z0: 1.3 }), roofC,
+    box(0, 0, 6.05, 4.8, 4.8, 0.25),
+    ...ratna(-2.1, -2.1, 6.3, 0.62, 0.9), ...ratna(2.1, -2.1, 6.3, 0.62, 0.9), ...ratna(-2.1, 2.1, 6.3, 0.62, 0.9), ...ratna(2.1, 2.1, 6.3, 0.62, 0.9),
+    ...ratna(0, 0, 6.3, 1.3, 1.5),
+    ...[-2.2, 0, 2.2].map(c => arch({ at: 4.1, c, z: 1.3, w: 1.1, h: 1.9, shape: 'pointed' })) ];
+  civ('Bengalis', 'Terracotta Bengal. Do-chala hut with the hull-curved roof and a triple pointed arch; city is a pancha-ratna temple with drooping cornices and five turrets.', S, C);
+}
+
+/* ================= SECOND PASS (new) ============================= */
+
+// ---- Vikings ----------------------------------------------------
+{
+  const roofS = gable({ cx: 0, cy: 0, z: 1.9, ex: 4.1, ey: 2.5, h: 2.5, fascia: 0.3, bias: 0.08 });
+  const S = [ box(0, 0, 0, 8, 4.4, 0.4), roofS.walls({ wx: 7.2, wy: 3.4, z0: 0.4 }), roofS,
+    box(-4.2, 0, 4.2, 0.6, 0.35, 0.55), box(4.2, 0, 4.2, 0.6, 0.35, 0.55),
+    box(-4.2, 0, 4.0, 0.25, 0.35, 0.9), box(4.2, 0, 4.0, 0.25, 0.35, 0.9),
+    arch({ at: 1.7, c: 0.8, z: 0.4, w: 0.9, h: 1.4, shape: 'flat' }) ];
+  const g1 = gable({ cx: 0, cy: 0, z: 2.7, ex: 3.7, ey: 2.7, h: 2.5, fascia: 0.28 });
+  const g2 = gable({ cx: 0, cy: 0, z: 5.9, ex: 2.6, ey: 1.8, h: 1.9, fascia: 0.25 });
+  const heads = (x, z) => [box(x, 0, z, 0.55, 0.3, 0.5), box(x, 0, z - 0.1, 0.22, 0.3, 0.8)];
+  const C = [ box(0, 0, 0, 9, 7, 0.5),
+    hip({ cx: 0, cy: 0, z: 1.7, ex: 4.6, ey: 3.5, rx: 3.3, ry: 2.2, h: 0.8, fascia: 0.25 }).walls({ wx: 8.4, wy: 6.4, z0: 0.5 }),
+    hip({ cx: 0, cy: 0, z: 1.7, ex: 4.6, ey: 3.5, rx: 3.3, ry: 2.2, h: 0.8, fascia: 0.25 }),
+    g1.walls({ wx: 6.4, wy: 4.4, z0: 2.3 }), g1,
+    g2.walls({ wx: 4.6, wy: 3.0, z0: 4.6 }), g2,
+    box(0, 0, 7.4, 2.0, 2.0, 1.5),
+    hip({ cx: 0, cy: 0, z: 8.8, ex: 1.4, ey: 1.4, h: 1.9, fascia: 0.2 }),
+    ...heads(-3.6, 5.1), ...heads(3.6, 5.1), ...heads(-2.5, 7.7), ...heads(2.5, 7.7),
+    ...cross(0, 0, 10.6, 0.7),
+    arch({ at: 3.2, c: 0, z: 0.5, w: 0.9, h: 1.5, shape: 'round' }) ];
+  civ('Vikings', 'Longhouse and stave church. Settlement is the long turf-roofed hall with crossed gable boards. City stacks steep shingled roofs into a stave church, dragon heads on every gable.', S, C, 'new');
+}
+
+// ---- Sumerians --------------------------------------------------
+{
+  const S = [ box(0, 0, 0, 6.4, 5.4, 2.6),
+    box(1.0, -0.6, 2.6, 2.8, 2.6, 1.2),
+    ...[-1.9, -0.9, 0.1].map(c => arch({ at: 2.7, c, z: 0.3, w: 0.35, h: 2.0, shape: 'flat', grey: '#4a4a4a' })),
+    stairs({ cx: 2.3, innerY: 2.7, yOut: 4.8, w: 1.2, zTop: 2.6, n: 6 }),
+    arch({ at: 2.7, c: -0.9, z: 0, w: 0.9, h: 1.4, shape: 'flat' }) ];
+  const C = [ box(0, 0, 0, 14, 10, 0.4) ];
+  const tl = [[12.4, 8.8, 2.4], [9.2, 6.4, 1.8], [6.4, 4.4, 1.4]];
+  let z = 0.4;
+  const hs = [];
+  for (const [wx, wy, h] of tl) {
+    C.push(frustum(0, 0, z, wx, wy, wx * 0.94, wy * 0.94, h));
+    hs.push([z, wy / 2]);
+    // buttress strips on the front face
+    const n = Math.round(wx / 1.4);
+    for (let i = 0; i < n; i++) C.push(box(-wx / 2 + (i + 0.5) * wx / n, wy / 2 - 0.1, z, 0.45, 0.45, h * 0.97));
+    z += h;
+  }
+  C.push(box(0, 0, z, 2.6, 2.2, 1.5), arch({ at: 1.1, c: 0, z, w: 0.8, h: 1.1, shape: 'flat' }));
+  const innerY = zz => { let r = 4.4; for (const [z0, half] of hs) if (zz >= z0) r = half; return zz >= z ? 1.1 : r; };
+  C.push(stairs({ cx: 0, innerY, yOut: 8.4, w: 2.0, zTop: z, n: 10, z0: 0.4 }));
+  civ('Sumerians', 'Mud brick of Ur. Settlement is a flat-roofed house with a roof room, recessed niches and an outside stair. City is the ziggurat: three battered terraces with buttressed faces and one long stair to the shrine.', S, C, 'new');
+}
+
+// ---- Babylonians ------------------------------------------------
+{
+  const S = [ box(0, 0, 0, 8, 5, 0.4),
+    box(-2.2, 0, 0.4, 2.4, 3.6, 4.4), box(2.2, 0, 0.4, 2.4, 3.6, 4.4),
+    crenel(-2.2, 0, 4.8, 2.4, 3.6, { pitch: 0.8, h: 0.4 }), crenel(2.2, 0, 4.8, 2.4, 3.6, { pitch: 0.8, h: 0.4 }),
+    box(0, 0, 0.4, 2.2, 2.8, 3.4), crenel(0, 0, 3.8, 2.2, 2.8, { pitch: 0.75, h: 0.35 }),
+    arch({ at: 1.8, c: 0, z: 0.4, w: 1.4, h: 2.7, shape: 'round' }),
+    ...[-2.6, -1.8, 2.6, 1.8].map(c => arch({ at: 1.8, c, z: 1.2, w: 0.3, h: 0.5, shape: 'flat', grey: '#4a4a4a' })),
+    ...[-2.6, -1.8, 2.6, 1.8].map(c => arch({ at: 1.8, c, z: 2.6, w: 0.3, h: 0.5, shape: 'flat', grey: '#4a4a4a' })) ];
+  const C = [ box(0, 0, 0, 14, 12, 0.4) ];
+  const ws = [12, 10.3, 8.6, 7.0, 5.4, 3.8];
+  let z = 0.4;
+  const hs = [];
+  for (const w of ws) { C.push(box(0, 0, z, w, w, 1.0)); hs.push([z, w / 2]); z += 1.0; }
+  C.push(box(0, 0, z, 2.6, 2.6, 1.4), crenel(0, 0, z + 1.4, 2.6, 2.6, { pitch: 0.75, h: 0.35 }));
+  C.push(ramp({ cx: 0, yIn: 1.3, yOut: 8.6, z0: 0.4, zTop: z, w: 1.6 }));
+  C.push(box(-1.35, 5.0, 0.4, 0.5, 1.4, 1.0), box(1.35, 5.0, 0.4, 0.5, 1.4, 1.0));
+  civ('Babylonians', 'Ishtar gate and Etemenanki. Settlement is the crenellated twin-tower gate with its round arch and glazed-brick niches. City is the seven-stage tower of Babel with one straight ramp up the front.', S, C, 'new');
+}
+
+// ---- Egyptians --------------------------------------------------
+{
+  const S = [ box(0, 0, 0, 9, 6, 0.4),
+    frustum(-1.9, -0.4, 0.4, 2.7, 2.7, 2.1, 2.1, 3.6), frustum(1.9, -0.4, 0.4, 2.7, 2.7, 2.1, 2.1, 3.6),
+    box(-1.9, -0.4, 4.0, 2.5, 2.5, 0.35), box(1.9, -0.4, 4.0, 2.5, 2.5, 0.35),
+    box(0, -0.4, 0.4, 1.4, 2.2, 2.6), arch({ at: 0.7, c: 0, z: 0.4, w: 0.8, h: 1.9, shape: 'flat' }),
+    frustum(3.6, 2.2, 0.4, 0.6, 0.6, 0.4, 0.4, 3.4), frustum(3.6, 2.2, 3.8, 0.4, 0.4, 0, 0, 0.5),
+    arch({ at: 0.95, c: -1.9, z: 1.2, w: 0.25, h: 2.0, shape: 'flat', grey: '#4a4a4a' }), arch({ at: 0.95, c: 1.9, z: 1.2, w: 0.25, h: 2.0, shape: 'flat', grey: '#4a4a4a' }) ];
+  const C = [ box(0, 0, 0, 14, 14, 0.4),
+    frustum(-0.6, -0.6, 0.4, 10.6, 10.6, 0, 0, 7.4),
+    frustum(4.6, -4.4, 0.4, 3.4, 3.4, 0, 0, 2.4),
+    frustum(-4.4, 4.6, 0.4, 3.4, 3.4, 0, 0, 2.4),
+    arch({ at: 4.7, c: -0.6, z: 0.4, w: 0.9, h: 1.0, shape: 'flat' }) ];
+  civ('Egyptians', 'Temple pylon and pyramid. Settlement is the twin battered towers of a pylon gate with an obelisk in front. City is the Great Pyramid with two satellite pyramids, smooth cased faces only.', S, C, 'new');
+}
+
+// ---- Britons ----------------------------------------------------
+{
+  const roofS = gable({ cx: 0, cy: 0, z: 2.1, ex: 3.1, ey: 2.5, h: 2.6, fascia: 0.35, bias: 0.06 });
+  const S = [ roofS.walls({ wx: 5.4, wy: 4.0, z0: 0, bias: 0.15 }), roofS,
+    box(1.7, -0.7, 3.4, 0.7, 0.7, 1.9),
+    ...[-1.9, -1.2, 0.2, 0.9].map(c => arch({ at: 2.0, c, z: 0, w: 0.16, h: 2.0, shape: 'flat', grey: '#3a3a3a' })),
+    arch({ at: 2.0, c: -0.5, z: 0, w: 0.75, h: 1.4, shape: 'flat' }),
+    arch({ at: 2.0, c: 1.5, z: 0.7, w: 0.6, h: 0.6, shape: 'flat' }) ];
+  const turret = (x, y) => revolve(x, y, 0.6, [[1.0, 0], [1.0, 5.4], [1.2, 5.4], [1.2, 6.1]], 8);
+  const C = [ box(0, 0, 0, 10, 10, 0.6),
+    box(0, 0, 0.6, 6.6, 6.6, 4.8),
+    turret(-3.1, -3.1), turret(3.1, -3.1), turret(-3.1, 3.1),
+    crenel(0, 0, 5.4, 6.6, 6.6, { pitch: 0.9 }),
+    turret(3.1, 3.1),
+    ...[-1.4, 0, 1.4].map(c => arch({ at: 3.3, c, z: 3.2, w: 0.25, h: 1.2, shape: 'flat' })),
+    arch({ at: 3.3, c: 0, z: 0.6, w: 1.2, h: 2.0, shape: 'round' }),
+    box(0, 0, 5.4, 0.12, 0.12, 1.6), box(0.35, 0, 6.6, 0.7, 0.05, 0.4, { bias: 0.1 }) ];
+  civ('Britons', 'Cottage and keep. Settlement is a half-timbered cottage under a thick thatch with a chimney. City is a Norman keep: square, four corner turrets, battlements, arrow slits and a pennant.', S, C, 'new');
+}
+
+// ---- Persians ---------------------------------------------------
+{
+  const S = [ box(0, 0, 0, 6.4, 5.2, 2.8), crenel(0, 0, 2.8, 6.4, 5.2, { pitch: 0.8, h: 0.4 }),
+    box(0, 3.1, 2.4, 3.4, 1.4, 0.35), column(-1.2, 3.4, 0, 2.4, 0.22), column(1.2, 3.4, 0, 2.4, 0.22),
+    arch({ at: 2.6, c: 0, z: 0, w: 1.3, h: 2.1, shape: 'pointed' }),
+    stairs({ cx: 2.6, innerY: 2.6, yOut: 4.4, w: 1.0, zTop: 2.8, n: 6 }) ];
+  const C = [ box(0, 0, 0, 13, 11, 1.4), box(0, 0, 1.4, 11, 9, 0.5) ];
+  C.push(box(-0.7, -0.7, 1.9, 5.6, 4.6, 4.5, { bias: -0.14 }));
+  for (const x of [-2.8, 0, 2.8]) for (const y of [-2.2, 0.2, 2.6]) C.push(column(x, y, 1.9, 4.2, 0.36), box(x, y, 5.9, 1.1, 1.1, 0.5));
+  C.push(box(0, 0, 6.4, 9.6, 8.0, 0.6), crenel(0, 0, 7.0, 9.6, 8.0, { pitch: 0.8, h: 0.35 }));
+  C.push(stairs({ cx: -3.0, innerY: 5.5, yOut: 8.6, w: 2.2, zTop: 1.4, n: 5 }), stairs({ cx: 3.0, innerY: 5.5, yOut: 8.6, w: 2.2, zTop: 1.4, n: 5 }));
+  C.push(box(-1.0, 5.2, 1.4, 0.8, 0.9, 1.4), box(1.0, 5.2, 1.4, 0.8, 0.9, 1.4));
+  civ('Persians', 'Achaemenid stone. Settlement is a house with a columned porch, pointed door, stepped merlons and a side stair. City is the Apadana of Persepolis: a tall platform, twin stairs, a forest of columns under a flat roof.', S, C, 'new');
+}
+
+// ---- Atlanteans -------------------------------------------------
+{
+  const rotunda = (cx, cy, z, r, h, ncol, dome) => {
+    const out = [ revolve(cx, cy, z, [[r + 0.6, 0], [r + 0.6, 0.4]], 16) ];
+    out.push(revolve(cx, cy, z + 0.4, [[r - 0.55, 0], [r - 0.55, h]], 16, { bias: -0.18 }));
+    for (let i = 0; i < ncol; i++) { const a = i * 2 * PI / ncol + PI / ncol; out.push(column(cx + r * Math.cos(a), cy + r * Math.sin(a), z + 0.4, h, 0.22)); }
+    out.push(revolve(cx, cy, z + 0.4 + h, [[r + 0.4, 0], [r + 0.4, 0.5]], 16));
+    out.push(revolve(cx, cy, z + 0.9 + h, dome(r + 0.3), 16, { bias: 0.05 }));
+    return out;
+  };
+  const S = [ ...rotunda(0, 0, 0, 2.7, 2.4, 10, hemi), finial(0, 0, 6.7, 0.9) ];
+  const C = [ revolve(0, 0, 0, [[7.0, 0], [7.0, 0.45], [6.2, 0.45], [6.2, 0.9]], 20),
+    ...rotunda(0, 0, 0.9, 4.6, 3.2, 14, hemi),
+    revolve(0, 0, 9.4, [[1.0, 0], [1.0, 0.9]], 10), revolve(0, 0, 10.3, hemi(1.05), 10), finial(0, 0, 11.35, 0.9) ];
+  civ('Atlanteans', 'Fantasy classical. A colonnaded rotunda under a bronze dome, the city a taller one on stepped rings with a lantern dome on top.', S, C, 'new');
+}
+
+// ---- Poles ------------------------------------------------------
+{
+  // manor with the polish broken (mansard-like) hip roof and a columned porch
+  const S = [ box(0, 0, 0, 7.4, 5.8, 2.1, { bias: 0.12 }),
+    hip({ cx: 0, cy: 0, z: 2.0, ex: 4.1, ey: 3.3, rx: 3.0, ry: 2.2, h: 1.2, fascia: 0.25 }),
+    hip({ cx: 0, cy: 0, z: 3.3, ex: 3.1, ey: 2.3, rx: 1.2, ry: 0, h: 1.2 }),
+    box(0, 3.4, 2.1, 2.8, 1.2, 0.3), hip({ cx: 0, cy: 3.5, z: 2.4, ex: 1.6, ey: 0.9, rx: 1.0, ry: 0, h: 0.6 }),
+    column(-0.9, 3.7, 0, 2.1, 0.16), column(0.9, 3.7, 0, 2.1, 0.16),
+    box(1.8, -1.0, 4.0, 0.6, 0.6, 1.2),
+    arch({ at: 2.9, c: 0, z: 0, w: 0.9, h: 1.6, shape: 'flat' }),
+    arch({ at: 2.9, c: -2.3, z: 0.6, w: 0.6, h: 0.9, shape: 'flat' }), arch({ at: 2.9, c: 2.3, z: 0.6, w: 0.6, h: 0.9, shape: 'flat' }) ];
+  // brick gothic town hall: steep roof, stepped gables, tall tower with spire
+  const g = gable({ cx: 0.6, cy: 0, z: 3.6, ex: 4.2, ey: 3.1, h: 2.8, fascia: 0.25 });
+  const stepGable = x => [box(x, 0, 3.4, 0.45, 5.6, 1.1), box(x, 0, 4.5, 0.45, 3.8, 1.1), box(x, 0, 5.6, 0.45, 2.0, 1.0)];
+  const C = [ box(0, 0, 0, 12, 9, 0.5),
+    g.walls({ wx: 7.6, wy: 5.4, z0: 0.5 }), g,
+    ...stepGable(4.6), ...stepGable(-3.4),
+    box(-1.8, -0.6, 0.5, 2.4, 2.4, 7.2),
+    hip({ cx: -1.8, cy: -0.6, z: 7.7, ex: 1.5, ey: 1.5, h: 2.6 }), finial(-1.8, -0.6, 10.3, 0.7),
+    box(-1.8, 0.65, 5.4, 0.9, 0.05, 1.2), box(-1.8, 0.65, 6.6, 0.25, 0.05, 0.3),
+    ...[-2.4, -1.0, 0.4, 1.8, 3.2].map(c => arch({ at: 2.7, c, z: 0.5, w: 0.8, h: 1.9, shape: 'pointed' })),
+    arch({ at: 0.6, c: -1.8, z: 4.8, w: 0.5, h: 1.2, shape: 'pointed' }) ];
+  civ('Poles', 'Manor and town hall. Settlement is a dwor: broken hip roof, columned porch, chimney. City is brick gothic: steep roof between stepped gables, pointed arcade, a tall tower with a spire and a clock face.', S, C, 'new');
+}
+
+// ---- Portuguese -------------------------------------------------
+{
+  const bartizan = (x, y, z, r = 0.5) => [revolve(x, y, z, [[r * 0.4, 0], [r, 0.4], [r, 1.6], [r * 1.15, 1.6], [r * 1.15, 1.85]], 8), revolve(x, y, z + 1.85, cone(r * 1.15, 0.9), 8)];
+  const S = [ box(0, 0, 0, 5.6, 5.6, 0.4),
+    box(0, 0, 0.4, 3.8, 3.8, 3.8), crenel(0, 0, 4.2, 3.8, 3.8, { pitch: 0.7, h: 0.4, t: 0.35 }),
+    ...corners4((sx, sy) => bartizan(sx * 1.9, sy * 1.9, 2.4)).flat(),
+    arch({ at: 1.9, c: 0, z: 0.4, w: 1.0, h: 1.8, shape: 'round' }),
+    arch({ at: 1.9, c: 0, z: 2.7, w: 0.6, h: 0.8, shape: 'round' }) ];
+  const C = [ box(0, 0, 0, 13, 10, 0.4),
+    frustum(0, 0, 0.4, 11.4, 8.4, 10.8, 7.8, 1.8), crenel(0, 0, 2.2, 10.8, 7.8, { pitch: 0.8, h: 0.45 }),
+    ...corners4((sx, sy) => bartizan(sx * 5.0, sy * 3.5, 1.4, 0.55)).flat(),
+    box(-1.2, -0.8, 2.2, 4.6, 4.6, 5.0), crenel(-1.2, -0.8, 7.2, 4.6, 4.6, { pitch: 0.75, h: 0.4, t: 0.35 }),
+    ...corners4((sx, sy) => bartizan(-1.2 + sx * 2.3, -0.8 + sy * 2.3, 5.0, 0.55)).flat(),
+    ...[-2.2, -0.6, 1.0].map(c => arch({ at: 3.9, c, z: 0.4, w: 0.9, h: 1.5, shape: 'round' })),
+    arch({ at: 1.5, c: -1.2, z: 3.4, w: 1.2, h: 1.6, shape: 'round' }), arch({ at: 1.5, c: -1.2, z: 5.6, w: 0.6, h: 0.9, shape: 'round' }),
+    box(-1.2, -0.8, 7.2, 0.12, 0.12, 1.8), box(-0.85, -0.8, 8.5, 0.7, 0.05, 0.45, { bias: 0.1 }) ];
+  civ('Portuguese', 'Manueline forts. Settlement is a small square tower with corner bartizans. City is the Tower of Belem: a wide bastion with battlements and watch turrets, the keep rising from it with its own bartizans.', S, C, 'new');
+}
+
+// ---- Spanish ----------------------------------------------------
+{
+  const roofS = hip({ cx: 0, cy: 0, z: 2.5, ex: 3.4, ey: 2.8, rx: 1.4, ry: 0, h: 1.3, fascia: 0.25, bias: -0.05 });
+  const S = [ roofS.walls({ wx: 6.0, wy: 4.8, z0: 0, bias: 0.2 }), roofS,
+    box(-1.6, 0, 3.2, 0.6, 0.6, 1.0),
+    arch({ at: 2.4, c: 0, z: 0, w: 1.1, h: 1.8, shape: 'round' }),
+    arch({ at: 2.4, c: -1.8, z: 0.8, w: 0.6, h: 0.8, shape: 'flat' }), arch({ at: 2.4, c: 1.8, z: 0.8, w: 0.6, h: 0.8, shape: 'flat' }),
+    ...[-1.2, 1.2].map(c => arch({ at: 2.4, c, z: 0.3, w: 0.08, h: 1.9, shape: 'flat', grey: '#5a5a5a' })) ];
+  const tower = (x, y) => revolve(x, y, 0.4, [[1.3, 0], [1.3, 4.0], [1.55, 4.0], [1.55, 4.7]], 10);
+  const C = [ box(0, 0, 0, 13, 13, 0.4),
+    box(0, 0, 0.4, 9.6, 9.6, 3.0), crenel(0, 0, 3.4, 9.6, 9.6, { pitch: 0.9 }),
+    tower(-4.6, -4.6), tower(4.6, -4.6), tower(-4.6, 4.6),
+    box(0, 0, 3.4, 4.4, 4.4, 2.8), crenel(0, 0, 6.2, 4.4, 4.4, { pitch: 0.75, h: 0.4, t: 0.35 }),
+    tower(4.6, 4.6),
+    arch({ at: 5.2, c: 0, z: 0.4, w: 1.6, h: 2.4, shape: 'round' }),
+    ...[-1.2, 1.2].map(c => arch({ at: 2.2, c, z: 4.2, w: 0.25, h: 1.0, shape: 'flat' })),
+    box(0, 0, 6.2, 0.12, 0.12, 1.8), box(0.4, 0, 7.5, 0.8, 0.05, 0.5, { bias: 0.1 }) ];
+  civ('Spanish', 'Castilla. Settlement is a whitewashed house under a low tiled hip roof with a round-arched door and a chimney. City is a castle: square curtain wall, four round corner towers, central keep and banner.', S, C, 'new');
+}
+
+// ---- Slavs ------------------------------------------------------
+{
+  const roofS = gable({ cx: 0, cy: 0, z: 2.3, ex: 3.4, ey: 2.8, h: 1.7, fascia: 0.3 });
+  const S = [ box(0, 0, 0, 6.4, 5.0, 0.3), roofS.walls({ wx: 5.4, wy: 4.2, z0: 0.3 }), roofS ];
+  for (let i = 0; i < 5; i++) {
+    const z = 0.35 + i * 0.42;
+    const odd = i % 2;
+    for (const [sx, sy] of [[1, 1], [1, -1], [-1, 1]]) {
+      if (odd) S.push(box(sx * 2.7, sy * 2.1 + sy * 0.2, z, 0.3, 0.7, 0.3));
+      else S.push(box(sx * 2.7 + sx * 0.2, sy * 2.1, z, 0.7, 0.3, 0.3));
+    }
+  }
+  S.push(box(-1.2, -0.6, 3.4, 0.6, 0.6, 1.0), arch({ at: 2.1, c: 0.6, z: 1.0, w: 0.7, h: 0.7, shape: 'flat' }), arch({ at: 2.1, c: -1.1, z: 1.0, w: 0.7, h: 0.7, shape: 'flat' }));
+  const onionTower = (x, y, z, r, h) => [revolve(x, y, z, [[r, 0], [r, h]], 10, { phase: PI / 10 }), revolve(x, y, z + h, onion(r * 1.25), 10), finial(x, y, z + h + r * 1.25 * 1.38 - 0.05, 0.6),
+    archOnCyl({ cx: x, cy: y, z: z + h * 0.35, rx: r, a: PI / 4, w: r * 0.55, h: r * 1.0, shape: 'round' })];
+  const C = [ box(0, 0, 0, 10, 10, 0.6), box(0, 0, 0.6, 7.4, 7.4, 1.4),
+    ...onionTower(-2.6, -2.6, 2.0, 1.05, 3.4), ...onionTower(2.6, -2.6, 2.0, 1.05, 3.0), ...onionTower(-2.6, 2.6, 2.0, 1.05, 3.0),
+    box(0, 0, 2.0, 2.8, 2.8, 3.2), hip({ cx: 0, cy: 0, z: 5.2, ex: 1.7, ey: 1.7, h: 3.4, p: 0.9 }), revolve(0, 0, 8.5, onion(0.55), 8), finial(0, 0, 9.2, 0.6),
+    ...onionTower(2.6, 2.6, 2.0, 1.05, 2.6),
+    ...[-1.9, 0, 1.9].map(c => arch({ at: 3.7, c, z: 0.6, w: 0.9, h: 1.1, shape: 'round' })) ];
+  civ('Slavs', 'Izba and cathedral. Settlement is a log cabin with the log ends showing at every corner, shuttered windows and a stove chimney. City is a Muscovite church: a central tent roof ringed by four onion domes.', S, C, 'new');
+}
+
+// ---- Iroquois ---------------------------------------------------
+{
+  const S = [ revolve(0, 0, 0, [[3.6, 0], [3.6, 0.3]], 14),
+    revolve(0, 0, 0.3, [[2.7, 0], [0.32, 4.6], [0.32, 4.9]], 10, { phase: PI / 10, bias: 0.06 }) ];
+  for (const a of [0.3, 1.2, 2.1, 3.0, 3.9, 4.8, 5.7]) {
+    const c = Math.cos(a), s = Math.sin(a);
+    const p0 = [0.25 * c, 0.25 * s, 4.7], p1 = [1.2 * c, 1.2 * s, 6.1];
+    const t = [-s * 0.07, c * 0.07, 0];
+    S.push({ pts: [[p0[0] + t[0], p0[1] + t[1], p0[2]], [p0[0] - t[0], p0[1] - t[1], p0[2]], [p1[0] - t[0], p1[1] - t[1], p1[2]], [p1[0] + t[0], p1[1] + t[1], p1[2]]], n: VIEW, grey: '#505050' });
+  }
+  S.push({ pts: [[0.7 * Math.cos(PI / 4) + 0.5, 0.7 * Math.sin(PI / 4) - 0.5, 0.3], [2.6 * Math.cos(PI / 4) + 0.02, 2.6 * Math.sin(PI / 4) + 0.02, 0.3], [0.7 * Math.cos(PI / 4) - 0.5, 0.7 * Math.sin(PI / 4) + 0.5, 0.3], [1.6 * Math.cos(PI / 4), 1.6 * Math.sin(PI / 4), 2.2]], n: norm([1, 1, 0.55]), grey: '#262626' });
+  const C = [ box(0, 0, 0, 12, 7, 0.4),
+    box(0, 0, 0.4, 9.6, 4.8, 1.4, { bias: 0.04 }),
+    barrel(0, 0, 1.8, 2.4, 9.6, 8, 'x', { bias: 0.04 }),
+    ...[-3.2, -1.0, 1.2, 3.4].map(x => barrel(x, 0, 1.75, 2.52, 0.32, 8, 'x', { bias: -0.12 })),
+    ...[-3.2, -1.0, 1.2, 3.4].map(x => box(x, 0, 1.6, 0.32, 5.0, 0.25, { bias: -0.12 })),
+    ...[-2.1, 0.1, 2.3].map(x => box(x, 0, 4.1, 0.6, 0.9, 0.3, { bias: -0.2 })),
+    arch({ axis: 'x', at: 4.8, c: 0, z: 0.4, w: 1.0, h: 1.6, shape: 'flat' }),
+    box(0, 4.0, 0, 11, 0.3, 1.0, { bias: -0.05 }), ...[-4.5, -3, -1.5, 0, 1.5, 3, 4.5].map(x => frustum(x, 4.0, 0, 0.45, 0.45, 0.2, 0.2, 1.5)) ];
+  civ('Iroquois', 'Haudenosaunee. Settlement is a bark wigwam cone with its poles showing at the smoke hole. City is the longhouse: a long barrel of elm bark on bent saplings, ribbed, smoke holes along the ridge, a palisade in front.', S, C, 'new');
+}
+
+// ---- Greeks -----------------------------------------------------
+{
+  const temple = (cx, cy, nx, ny, wx, wy, hcol, r) => {
+    const out = [ box(cx, cy, 0, wx + 2.4, wy + 2.4, 0.35), box(cx, cy, 0.35, wx + 1.6, wy + 1.6, 0.35), box(cx, cy, 0.7, wx + 0.8, wy + 0.8, 0.35) ];
+    const z0 = 1.05;
+    out.push(box(cx, cy, z0, wx - 2 * r - 1.2, wy - 2 * r - 1.2, hcol, { bias: -0.1 }));
+    const hx = wx / 2 - r, hy = wy / 2 - r;
+    for (let i = 0; i < nx; i++) for (let j = 0; j < ny; j++) {
+      if (i > 0 && i < nx - 1 && j > 0 && j < ny - 1) continue;
+      out.push(column(cx - hx + i * (2 * hx) / (nx - 1), cy - hy + j * (2 * hy) / (ny - 1), z0, hcol, r, { bias: 0.1 }));
+    }
+    out.push(box(cx, cy, z0 + hcol, wx + 0.3, wy + 0.3, 0.7, { bias: 0.1 }));
+    const g = gable({ cx, cy, z: z0 + hcol + 0.7, ex: wx / 2 + 0.35, ey: wy / 2 + 0.35, h: (wy / 2 + 0.35) * 0.42, fascia: 0.2, bias: 0.05 });
+    out.push(g.walls({ wx: wx + 0.3, wy: wy + 0.3, z0: z0 + hcol + 0.69, eps: 0.05, bias: -0.15 }), g);
+    return out;
+  };
+  const S = temple(0, 0, 4, 3, 4.4, 3.4, 2.4, 0.24);
+  const C = temple(0, 0, 8, 5, 10.0, 6.4, 3.2, 0.3);
+  civ('Greeks', 'Doric temples. Settlement is a small tetrastyle temple on three steps; city is the Parthenon, eight columns across, pediments front and back, the cella dark behind the colonnade.', S, C, 'new');
+}
+
+// ---- Romans -----------------------------------------------------
+{
+  const r1 = hip({ cx: 0, cy: 0, z: 2.4, ex: 3.5, ey: 2.8, rx: 1.6, ry: 0, h: 1.4, fascia: 0.25, bias: -0.06 });
+  const r2 = hip({ cx: 2.9, cy: 1.6, z: 1.6, ex: 1.6, ey: 1.7, rx: 0.6, ry: 0, h: 0.8, fascia: 0.2, bias: -0.06 });
+  const S = [ box(0, 0, 0, 8.4, 6.4, 0.3),
+    r1.walls({ wx: 6.2, wy: 4.8, z0: 0.3, bias: 0.12 }), r1,
+    r2.walls({ wx: 2.6, wy: 2.8, z0: 0.3, bias: 0.12 }), r2,
+    ...[-1.6, 0].map(c => arch({ at: 2.4, c, z: 0.3, w: 1.0, h: 1.7, shape: 'round' })),
+    arch({ at: 3.0, c: 2.9, z: 0.3, w: 0.9, h: 1.3, shape: 'round' }),
+    box(-2.2, -1.2, 3.4, 0.6, 0.6, 1.0) ];
+  // Colosseum: elliptical wall, higher at the back, seating bowl inside
+  const RX = 6.4, RY = 5.0, n = 28;
+  const outer = [ellRing(0, 0, 0.3, RX, RY, n), []];
+  for (let i = 0; i < n; i++) { const a = i * 2 * PI / n; const back = (1 - Math.cos(a - 5 * PI / 4)) / 2; outer[1].push([RX * Math.cos(a), RY * Math.sin(a), 0.3 + 3.2 + 1.6 * Math.pow(back, 1.5)]); }
+  const bowl = [outer[1], outer[1].map(p => [p[0] * 0.78, p[1] * 0.78, p[2] - 1.4]), ellRing(0, 0, 1.6, RX * 0.58, RY * 0.58, n), ellRing(0, 0, 1.2, RX * 0.5, RY * 0.5, n)];
+  const C = [ box(0, 0, 0, 15, 12.5, 0.3),
+    loft(outer, { capTop: false, bias: 0.08 }),
+    loft(bowl, { capTop: false, inward: true, bias: -0.05 }),
+    revolve(0, 0, 0.3, [[RX * 0.5, 0], [RX * 0.5, 0.9]], n, { bias: -0.18 }) ];
+  for (let i = -5; i <= 6; i++) {
+    const a = PI / 4 + i * 0.24;
+    C.push(archOnCyl({ cx: 0, cy: 0, z: 0.5, rx: RX, ry: RY, a, w: 0.55, h: 1.15, shape: 'round' }));
+    C.push(archOnCyl({ cx: 0, cy: 0, z: 2.0, rx: RX, ry: RY, a, w: 0.55, h: 1.15, shape: 'round' }));
+  }
+  civ('Romans', 'Domus and Colosseum. Settlement is a tiled villa with round arches and a lower wing. City is the amphitheatre: an elliptical wall of stacked arcades, higher at the back where it still stands, the seating bowl and arena inside.', S, C, 'new');
+}
+
+/* ------------------------------------------------------------------
+   Page
+------------------------------------------------------------------ */
+const root = document.getElementById('root');
+const colours = ['#e53a3a', '#2b70ff', '#03a800', '#dc9f00'];
+let pick = colours[0];
+const toUrl = svg => `url("data:image/svg+xml,${encodeURIComponent(svg).replace(/%20/g, ' ').replace(/%3D/g, '=').replace(/%3A/g, ':').replace(/%2F/g, '/').replace(/%22/g, "'")}")`;
+
+function pieceEl(url, size, colour) {
+  const el = document.createElement('span');
+  el.className = `piece s${size}`;
+  el.style.setProperty('--piece', url);
+  el.style.setProperty('--p-color', colour);
+  return el;
+}
+
+function kindEl(label, svg, url, filename) {
+  const k = document.createElement('div');
+  k.className = 'kind';
+  const lab = document.createElement('div');
+  lab.className = 'label';
+  lab.textContent = label;
+  const btn = document.createElement('button');
+  btn.textContent = 'svg';
+  btn.title = 'Show / copy the SVG source';
+  lab.appendChild(btn);
+  const raw = document.createElement('div');
+  raw.className = 'raw';
+  raw.innerHTML = svg;
+  const board = document.createElement('div');
+  board.className = 'board';
+  const others = colours.filter(c => c !== pick).slice(0, 3);
+  for (const c of [pick, ...others]) board.appendChild(pieceEl(url, 30, c));
+  for (const c of [pick, ...others]) board.appendChild(pieceEl(url, 60, c));
+  const src = document.createElement('div');
+  src.className = 'src';
+  const ta = document.createElement('textarea');
+  ta.readOnly = true;
+  ta.value = `<!-- ${filename} -->\n` + svg;
+  src.appendChild(ta);
+  btn.onclick = () => { src.classList.toggle('open'); if (src.classList.contains('open')) { ta.select(); navigator.clipboard?.writeText(ta.value); } };
+  k.append(lab, raw, board, src);
+  return k;
+}
+
+function build() {
+  root.innerHTML = '';
+  const wire = document.getElementById('wire').checked;
+  document.documentElement.style.setProperty('--raw', document.getElementById('big').checked ? '260px' : '150px');
+  let group = null;
+  for (const c of CIVS) {
+    const g = c.tag === 'new' ? 'Second pass: new civilizations' : 'First pass: upgraded';
+    if (g !== group) { group = g; const h = document.createElement('h2'); h.className = 'group'; h.textContent = g; root.appendChild(h); }
+    const row = document.createElement('section');
+    row.className = 'civ';
+    const head = document.createElement('div');
+    head.innerHTML = `<h3>${c.name}${c.tag && c.tag !== 'new' ? `<small>${c.tag}</small>` : ''}</h3><p class="note">${c.note}</p>`;
+    const pieces = document.createElement('div');
+    pieces.className = 'pieces';
+    const slug = c.name.toLowerCase();
+    let sSvg, cSvg;
+    try { sSvg = render(c.S, { wire }); cSvg = render(c.C, { wire }); }
+    catch (e) { console.error(c.name, e); continue; }
+    pieces.append(kindEl('Settlement', sSvg, toUrl(sSvg), `${slug}-settlement.svg`), kindEl('City', cSvg, toUrl(cSvg), `${slug}-city.svg`));
+    row.append(head, pieces);
+    root.appendChild(row);
+  }
+}
+document.querySelectorAll('input[name=c]').forEach(r => r.onchange = () => { pick = r.value; build(); });
+document.getElementById('wire').onchange = build;
+document.getElementById('big').onchange = build;
+build();
+</script>
+</body>
+</html>

@@ -37,6 +37,9 @@ export default class AllPlayersUI {
       <span class="spectators-count ${spec_count ? '' : 'hide'}">${t('score.spec')} <span>${spec_count}</span></span>
       <span class="victory-target" title="${t('score.victory_target_title')}">${CONST.icon('trophy')} ${win_points} · ${t('score.turn')} <span class="dot">⬢</span></span>
       <button class="toggle-players" title="${t('score.toggle_players')}">▼</button>
+    </div>
+    <div class="bank" title="${t('score.bank')}" aria-label="${t('score.bank')}">${Object.keys(CONST.RESOURCES).map(res => `
+      <span class="stock" data-res="${res}" data-count="0"><span class="res-icon ${res}"></span><span class="count">0</span></span>`).join('')}
     </div>`
     this.$el.innerHTML = header + all_players.map(player => `
       <div class="player p${player.id} pc${player.color_id || player.id} ${player.removed ? 'deactivated' : ''} ${player.is_bot ? 'bot' : ''}" data-id="${player.id}" data-level="${player.bot_level || ''}">
@@ -168,6 +171,16 @@ export default class AllPlayersUI {
   setHost(host_pid) {
     this.host_pid = host_pid
     this.$el.classList.toggle('host', host_pid === this.player.id)
+  }
+
+  /** The bank's five counts; a resource at 0 is marked out */
+  updateBank(bank = {}) {
+    this.$el.querySelectorAll('.bank .stock').forEach($stock => {
+      const n = bank[$stock.dataset.res] ?? 0
+      $stock.dataset.count = n
+      $stock.querySelector('.count').textContent = n
+      $stock.title = `${CONST.RESOURCES[$stock.dataset.res]}: ${n}`
+    })
   }
 
   updateSpectatorCount(count) {

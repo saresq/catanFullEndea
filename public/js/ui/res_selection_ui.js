@@ -3,17 +3,18 @@ import { t } from "../i18n.js"
 
 /**
  * Year of Plenty and Monopoly: the trade drawer with only a "You get" row. Year of Plenty stakes
- * up to 2 cards and a chip takes one back; Monopoly replaces the choice on every pick.
+ * up to 2 cards the bank holds and a chip takes one back; Monopoly replaces the choice on every pick.
  */
 export default class ResSelectionUI {
-  type; #onSubmit; #onDevCardClick; #onCancel
+  type; #onSubmit; #onDevCardClick; #onCancel; #getBank
   selected = []
   $el = document.querySelector('#game .current-player > .trade-zone > .resource-selection-zone')
 
-  constructor({ onSubmit, onDevCardClick, onCancel }) {
+  constructor({ onSubmit, onDevCardClick, onCancel, getBank }) {
     this.#onSubmit = onSubmit
     this.#onDevCardClick = onDevCardClick
     this.#onCancel = onCancel
+    this.#getBank = getBank || (() => ({}))
   }
 
   render() {
@@ -58,10 +59,31 @@ export default class ResSelectionUI {
 
   #max() { return this.type === 'dM' ? 1 : 2 }
 
-  /** Every `disabled`, the chips and the guide, after every change. */
+  /**
+   * Every `disabled`, the chips and the guide, after every change. Year of Plenty takes from the
+   * bank: a card it is out of cannot be picked, unless the whole bank holds fewer than two, when
+   * any ask takes what is there.
+   */
   #update() {
-    const full = this.type === 'dY' && this.selected.length >= this.#max()
-    this.$el.querySelectorAll('.palette .pick').forEach($pick => $pick.disabled = full)
+    const plenty = this.type === 'dY'
+    const full = plenty && this.selected.length >= this.#max()
+    const bank = this.#getBank() || {}
+    const stock = Object.values(bank).reduce((m, v) => m + v, 0)
+    this.$el.querySelectorAll('.palette .pick').forEach($pick => {
+      const res = $pick.dataset.type
+      const left = (bank[res] ?? 0) - this.selected.filter(s => s === res).length
+      // Two or more in the bank: a card it is out of; one: any ask takes it; none: nothing to take
+      const out = plenty && (stock >= 2 ? left <= 0 : stock === 0)
+      $pick.disabled = full || out
+      if (plenty) {
+        $pick.dataset.stock = bank[res] ?? 0
+        $pick.title = out ? t(bank[res] ? 'trade.bank_low' : 'trade.bank_out', { res: CONST.RESOURCES[res] })
+          : `${CONST.RESOURCES[res]} · ${t('trade.bank_stock', { n: bank[res] ?? 0 })}`
+      } else {
+        delete $pick.dataset.stock
+        $pick.title = CONST.RESOURCES[res]
+      }
+    })
     this.$el.querySelector('.deal').classList.toggle('empty', !this.selected.length)
     this.$el.querySelector('.deal .side.get').innerHTML = Object.keys(CONST.RESOURCES)
       .map(k => [k, this.selected.filter(s => s === k).length]).filter(([k, n]) => n).map(([k, n]) => `
@@ -87,4 +109,7 @@ export default class ResSelectionUI {
   }
 
   hide() { this.$el.classList.add('hide') }
+
+  /** The bank changed: repaint, if open */
+  refresh() { !this.$el.classList.contains('hide') && this.type && this.#update() }
 }

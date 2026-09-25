@@ -77,3 +77,11 @@ test('a listener that throws is caught', async () => {
   assert.equal(game.state, ST.PLAYER_ROLL, 'the game went on')
   game.clearTimer()
 })
+
+test('a shortage on a roll is counted as what was paid, not what was owed', () => {
+  const t = new Tracker()
+  // The bank ran out of ore: the roll paid seat 2 its wheat only, and says so
+  t.observe({ type: 'roll', total: 8, payout: [{ pid: 2, res: { W: 1 } }, { pid: 3, res: {} }], short: ['O'] })
+  assert.deepEqual(t.known[2], { S: 0, L: 0, B: 0, O: 0, W: 1 })
+  assert.deepEqual(t.known[3], { S: 0, L: 0, B: 0, O: 0, W: 0 })
+})

@@ -126,7 +126,11 @@ export default class IOManager {
     this.#io.to(player_socket_id).emit(SOC.RES_RECEIVED, total_resources)
   }
 
-  updateRollDistribution(data) { this.emit(SOC.ROLL_DISTRIBUTION, data) }
+  /** `short`: resources the bank could not pay this roll */
+  updateRollDistribution(data, short = []) { this.emit(SOC.ROLL_DISTRIBUTION, data, short) }
+
+  /** The five counts, after every card that enters or leaves the supply */
+  updateBank(bank) { this.emit(SOC.BANK, bank) }
 
   moveRobber(active_pid, id) { this.emit(SOC.ROBBER_MOVE, active_pid, id) }
 
@@ -143,7 +147,8 @@ export default class IOManager {
 
   updateKnightMoved(pid) { this.emit(SOC.KNIGHT_MOVE, pid) }
 
-  updateRoadBuildingUsed(pid) { this.emit(SOC.ROAD_BUILDING, pid) }
+  /** `count`: roads placed, 1 with the last piece */
+  updateRoadBuildingUsed(pid, count = 2) { this.emit(SOC.ROAD_BUILDING, pid, count) }
 
   updateMonopolyUsed_Private(player_socket_id, pid, res, total_count, self_count) {
     if (!player_socket_id) { return }

@@ -1,8 +1,10 @@
-// Road Building (dev card `dR`): it must never be spent on nothing.
+// Road Building (dev card `dR`): as many roads as the player has left, up to two, and never spent on nothing.
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import Game from '../models/game.js'
 import * as CONST from '../public/js/const.js'
+import { buildView } from '../models/bots/view.js'
+import { legalMoves } from '../models/bots/moves.js'
 import { rollOff } from './helpers.js'
 
 const ST = CONST.GAME_STATES
@@ -50,4 +52,33 @@ test('Road Building is refused when no edge is legal, and keeps the card', () =>
   assert.equal(player.pieces.R.length, 0, 'nothing built')
   assert.equal(player.closed_cards.dR, 1, 'card still in hand')
   assert.ok(player.can_play_dc, 'and still playable this turn')
+})
+
+test('Road Building with one piece left builds that one road', () => {
+  const { game, player } = playingGame()
+  player.pieces.R = Array(14).fill(player.pieces.R[0])
+
+  game.roadBuildingIO(player.id)
+  assert.equal(player.pieces.R.length, 15, 'the last piece placed')
+  assert.equal(player.closed_cards.dR, 0, 'card spent')
+})
+
+test('Road Building with no piece left is refused, and keeps the card', () => {
+  const { game, player } = playingGame()
+  player.pieces.R = Array(15).fill(player.pieces.R[0])
+
+  game.roadBuildingIO(player.id)
+  assert.equal(player.pieces.R.length, 15, 'nothing built')
+  assert.equal(player.closed_cards.dR, 1, 'card still in hand')
+})
+
+test('a bot may play Road Building with one piece left', () => {
+  const { game, player } = playingGame()
+  player.pieces.R = Array(14).fill(player.pieces.R[0])
+  const view = buildView(game, player.id)
+  const moves = legalMoves(view, ST.PLAYER_ACTIONS)
+  assert.ok(moves.some(m => m.type === 'road_building'), 'the intent is offered')
+  player.pieces.R = Array(15).fill(player.pieces.R[0])
+  const none = legalMoves(buildView(game, player.id), ST.PLAYER_ACTIONS)
+  assert.ok(!none.some(m => m.type === 'road_building'), 'not with no piece left')
 })

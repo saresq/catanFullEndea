@@ -117,8 +117,43 @@ test('no asking with a player two points from winning, and no accepting from the
   let view = buildView(game, 2)
   const intent = evaluate(view, legalMoves(view, ST.PLAYER_ACTIONS, { can_propose: true }))
   assert.notEqual(intent.type, 'player_trade')
-  // The leader asks for the bot's spare brick, giving the ore it wants
+  // The leader offers the ore the bot wants for its spare brick: a proposal aimed at the active
+  // seat, and one the bot's accept logic turns down whoever it is aimed at
   game.tradeRequestIO(3, 'Px', { O: 1 }, { B: 1 })
-  assert.equal(game.ongoing_trades.length, 0, 'not the active player: refused by the rules anyway')
+  assert.equal(game.ongoing_trades.length, 1)
+  assert.equal(game.ongoing_trades[0].to, 1, 'aimed at the active player')
+  view = buildView(game, 2)
+  const answer = evaluate(view, legalMoves(view, 'TRADE_REQ', { trade_id: 0 }))
+  assert.equal(answer.type, 'trade_response')
+  assert.equal(answer.accepted, false, 'not feeding a player about to win')
+  game.clearTimer()
+})
+
+test('a bot never asks the bank for what it does not hold', async () => {
+  const { game } = await oneShort({ bot_opts: { delay_ms: 5 } })
+  const bot = game.getPlayer(2)
+  setHand(bot, { W: 2, O: 2, B: 8 }) // brick to spare: the bank trade for ore is the obvious plan
+  game.bank.O = 0
+  const view = buildView(game, 2)
+  const moves = legalMoves(view, ST.PLAYER_ACTIONS, { can_propose: false })
+  assert.ok(!moves.some(m => m.type === 'bank_trade' && m.taking.O), 'no bank trade for ore is even offered')
+  const intent = evaluate(view, moves)
+  assert.ok(!(intent.type === 'bank_trade' && intent.taking.O), `pursued another plan: ${intent.type}`)
+  game.clearTimer()
+})
+
+test('Invention adapts to a short bank', async () => {
+  const { game } = await oneShort({ bot_opts: { delay_ms: 5 } })
+  const bot = game.getPlayer(2)
+  setHand(bot, { W: 2, O: 1 }) // two ore short of a city
+  game.dev_cards = [] // no deck: a development card would be the nearer goal
+  bot.giveCards({ dY: 1 }); bot.can_play_dc = true
+  game.bank.O = 1
+  const view = buildView(game, 2)
+  const intent = evaluate(view, legalMoves(view, ST.PLAYER_ACTIONS))
+  assert.equal(intent.type, 'year_of_plenty')
+  const asked = [intent.res1, intent.res2]
+  assert.equal(asked.filter(r => r === 'O').length, 1, 'one ore, the one the bank has')
+  assert.ok(game.bank[asked.find(r => r !== 'O')] > 0, 'and something the bank holds')
   game.clearTimer()
 })

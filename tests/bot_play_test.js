@@ -176,3 +176,32 @@ test('legal moves match what the server accepts', async () => {
   assert.ok(moves.some(m => m.type === 'end_turn'))
   game.clearTimer()
 })
+
+test('an active bot answers a proposal: takes a good one, ignores a bad one, and plays on', async () => {
+  const { game } = botLobby({ humans: 1, bots: ['medium'], config: { player_count: 3 }, bot_opts: { delay_ms: 5 } })
+  game.join('Human 3')
+  game.start()
+  await playSetup(game)
+  game.dice = { roll: () => ({ d1: 2, d2: 3 }) }
+  game.board.distribute = () => []
+  const bot = game.getPlayer(2), human = game.getPlayer(1)
+  const settled = () => game.ongoing_trades.length === 2 && game.ongoing_trades.every(t => t.status !== 'open')
+  const inner = game.onAwaiting
+  game.onAwaiting = a => {
+    // Two proposals land as the bot's actions phase opens, ahead of its first tick
+    if (a.pid === 2 && a.kind === ST.PLAYER_ACTIONS && !game.ongoing_trades.length) {
+      setHand(bot, { W: 2, O: 2, B: 1 }) // one ore short of a city, a brick to spare
+      setHand(human, { O: 1, S: 1 })
+      game.tradeRequestIO(1, 'Px', { O: 1 }, { B: 1 }) // the ore it wants for its spare brick
+      game.tradeRequestIO(1, 'Px', { S: 1 }, { W: 2 }) // its city cards for a sheep
+    }
+    inner(a)
+  }
+  game.playerRollIO(1); game.endTurnIO(1)
+  await until(settled, 'the bot to answer both')
+  assert.equal(game.ongoing_trades[0].status, 'success')
+  assert.equal(game.ongoing_trades[1].status, 'failed')
+  await until(() => game.active_pid !== 2, 'the bot to play on and end its turn')
+  assert.equal(bot.pieces.C.length, 1, 'the city the ore was for')
+  game.clearTimer()
+})

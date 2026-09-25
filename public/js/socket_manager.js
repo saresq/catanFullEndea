@@ -65,7 +65,7 @@ export default class SocketManager {
     socket.on(SOC.KNIGHT_MOVE, pid => game.updateKnightMovedSoc(pid))
 
     /** @event Road-Building-Used */
-    socket.on(SOC.ROAD_BUILDING, pid => game.updateRoadBuildingUsedSoc(pid))
+    socket.on(SOC.ROAD_BUILDING, (pid, count) => game.updateRoadBuildingUsedSoc(pid, count))
 
     /** @event Monopoly-Used */
     socket.on(SOC.MONOPOLY, (pid, res, total, self_count) => game.updateMonopolyUsedSoc(pid, res, total, self_count))
@@ -74,7 +74,10 @@ export default class SocketManager {
     socket.on(SOC.YEAR_OF_PLENTY, (pid, res_obj) => game.updateYearOfPlentyUsedSoc(pid, res_obj))
 
     /** @event Dice-Roll-Distribution */
-    socket.on(SOC.ROLL_DISTRIBUTION, dist => game.updateRollDistributionSoc(dist))
+    socket.on(SOC.ROLL_DISTRIBUTION, (dist, short) => game.updateRollDistributionSoc(dist, short))
+
+    /** @event Bank: the resource supply after a card entered or left it */
+    socket.on(SOC.BANK, bank => game.updateBankSoc(bank))
 
     /** @event Larget-Army */
     socket.on(SOC.LARGEST_ARMY, (pid, count) => game.updateLargestArmySoc(pid, count))

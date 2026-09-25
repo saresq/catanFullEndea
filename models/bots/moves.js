@@ -18,6 +18,9 @@ export function canPlayDevCard(me, type) {
   return !!me.can_play_dc && me.closed_cards[type] > (me.turn_bought_dc?.[type] || 0)
 }
 
+/** Whether the bank holds every card in `cards` */
+export const bankHas = (bank, cards) => Object.entries(cards).every(([res, n]) => (bank?.[res] ?? 0) >= n)
+
 /** Best bank rate the player owns for giving `res`: 2, 3 or 4. */
 export function bankRate(me, res) {
   if (me.trade_offers[res + '2']) return 2
@@ -46,12 +49,18 @@ function devCardIntents(view) {
   const { me, board } = view
   const intents = []
   if (canPlayDevCard(me, 'dK')) { intents.push(...robberIntents(view, 'knight')) }
-  if (canPlayDevCard(me, 'dR') && CONST.PIECES_COUNT.R - me.pieces.R.length >= 2) {
+  // Road Building builds what is left, one road with the last piece
+  if (canPlayDevCard(me, 'dR') && CONST.PIECES_COUNT.R - me.pieces.R.length >= 1) {
     // `r2` is the evaluator's to fill: it depends on `r1`. Left empty the server picks one.
     board.getRoadLocationsFromRoads(me.pieces.R, view.pid).forEach(r1 => intents.push({ type: 'road_building', r1 }))
   }
   if (canPlayDevCard(me, 'dY')) {
-    RES.forEach((res1, i) => RES.slice(i).forEach(res2 => intents.push({ type: 'year_of_plenty', res1, res2 })))
+    // Only pairs the bank holds; with one card in the whole bank any ask takes it, with none no play
+    const stock = Object.values(view.bank || {}).reduce((m, v) => m + v, 0)
+    RES.forEach((res1, i) => RES.slice(i).forEach(res2 => {
+      const pair = res1 === res2 ? { [res1]: 2 } : { [res1]: 1, [res2]: 1 }
+      if (stock === 1 || bankHas(view.bank, pair)) { intents.push({ type: 'year_of_plenty', res1, res2 }) }
+    }))
   }
   if (canPlayDevCard(me, 'dM')) { RES.forEach(res => intents.push({ type: 'monopoly', res })) }
   return intents
@@ -95,11 +104,11 @@ function buildIntents(view) {
 function actionIntents(view, extra = {}) {
   const { me } = view
   const intents = buildIntents(view)
-  // Bank and port trades, one card at a time at the best rate owned
+  // Bank and port trades, one card at a time at the best rate owned, for what the bank holds
   RES.forEach(give => {
     const rate = bankRate(me, give)
     if (me.closed_cards[give] < rate) return
-    RES.filter(take => take !== give).forEach(take => intents.push({
+    RES.filter(take => take !== give && bankHas(view.bank, { [take]: 1 })).forEach(take => intents.push({
       type: 'bank_trade', offer: bankType(me, give), giving: { [give]: rate }, taking: { [take]: 1 },
     }))
   })

@@ -218,7 +218,14 @@ export default class AlertUI {
     }, given, taken))
   }
   alertKnightUsed() { this.appendStatus(MSG.KNIGHT_USED_APPEND.all()) }
-  alertRoadBuildingUsed(p) { this.setStatus(MSG.ROAD_BUILDING_USED.all(this.#isNotMe(p))) }
+  /** `short`: resources the bank could not pay on this roll */
+  alertBankShort(short) { short?.length && this.appendStatus(MSG.BANK_SHORT.all(short)) }
+  /** `p` offers `to` a trade (`is_counter`: answering one of `to`'s requests) */
+  alertProposal(p, to, giving, asking, is_counter) {
+    this.setStatus(MSG.PROPOSAL.all(this.#isNotMe(p), this.#isNotMe(to), giving, asking, is_counter))
+  }
+  alertProposalFailed(to) { this.setStatus(MSG.PROPOSAL_FAILED.all(this.#isNotMe(to))) }
+  alertRoadBuildingUsed(p, n) { this.setStatus(MSG.ROAD_BUILDING_USED.all(this.#isNotMe(p), n)) }
   alertMonopolyUsed(p, res, total, self) { this.setStatus(MSG.MONOPOLY_USED.all(this.#isNotMe(p), res, total, self)) }
   alertYearOfPlentyUsed(p, res_obj) { this.setStatus(MSG.YEAR_OF_PLENTY_USED.all(this.#isNotMe(p), res_obj)) }
   alertLargestArmy(p, count) { this.setStatus(MSG.LARGEST_ARMY.all(this.#isNotMe(p), count)) }
