@@ -13,15 +13,16 @@ export const ACTION_CAP = 25
 const ERRORS_BEFORE_EASY = 3
 /** Phase timer (seconds, from the game config) a delay has to fit inside */
 const PHASE_TIME = {
-  [ST.INITIAL_SETUP]: 'initial_build_time', [ST.PLAYER_ROLL]: 'roll_time',
-  [ST.PLAYER_ACTIONS]: 'player_turn_time', [ST.ROBBER_DROP]: 'robber_drop_time',
-  [ST.ROBBER_MOVE]: 'robber_move_time', [ST.SPECIAL_BUILD]: 'special_build_time',
+  [ST.FIRST_ROLL]: 'first_roll_time', [ST.INITIAL_SETUP]: 'initial_build_time',
+  [ST.PLAYER_ROLL]: 'roll_time', [ST.PLAYER_ACTIONS]: 'player_turn_time',
+  [ST.ROBBER_DROP]: 'robber_drop_time', [ST.ROBBER_MOVE]: 'robber_move_time',
+  [ST.PAIRED_ACTIONS]: 'player_turn_time',
 }
 
 /**
  * Plays every bot seat of one game. Bots are ordinary callers of the `*IO` methods a human's
  * socket reaches, so every rule check applies to them. The controller never acts inside the
- * game's hook: it schedules a tick, and a tick whose turn / state / active seat / builder has moved on
+ * game's hook: it schedules a tick, and a tick whose turn / state / active seat / partner has moved on
  * does nothing. One action per tick, every tick wrapped, because a throw inside a timer would
  * take the whole process - every game on the server - down.
  */
@@ -87,10 +88,10 @@ export default class BotController {
   /** Where the game is: a tick scheduled at one point does nothing once it has moved on */
   #token() {
     const game = this.#game
-    return { turn: game.turn, state: game.state, active_pid: game.active_pid, builder_pid: game.builder_pid }
+    return { turn: game.turn, state: game.state, active_pid: game.active_pid, partner_pid: game.partner_pid }
   }
   #sameToken(a, b) {
-    return a.turn === b.turn && a.state === b.state && a.active_pid === b.active_pid && a.builder_pid === b.builder_pid
+    return a.turn === b.turn && a.state === b.state && a.active_pid === b.active_pid && a.partner_pid === b.partner_pid
   }
 
   #schedule(job) {
@@ -110,7 +111,7 @@ export default class BotController {
       // Own trade request open: give the table time to answer before playing on
       if (job.kind === KINDS.PLAYER_ACTIONS && this.#waitingOnProposal(job.pid)) { return this.#schedule(job) }
 
-      // The active seat too: a bot gets a building window after every other player's turn
+      // The active seat too: a bot's paired phase comes after another player's turn
       const key = `${token.turn}|${token.state}|${token.active_pid}|${job.pid}|${job.trade_id ?? ''}`
       const count = (this.#actions.get(key) || 0) + 1
       if (this.#actions.size > 64) { this.#actions.clear() }
@@ -261,9 +262,10 @@ export default class BotController {
     this.stats.fallbacks++
     switch (kind) {
       case KINDS.INITIAL_SETUP: return game.initialBuildIO(pid)
+      case KINDS.FIRST_ROLL: return game.playerRollIO(pid)
       case KINDS.PLAYER_ROLL: return game.playerRollIO(pid)
       case KINDS.PLAYER_ACTIONS: return game.endTurnIO(pid)
-      case KINDS.SPECIAL_BUILD: return game.endTurnIO(pid)
+      case KINDS.PAIRED_ACTIONS: return game.endTurnIO(pid)
       case KINDS.ROBBER_DROP: return game.robberDropIO(pid, {})
       case KINDS.ROBBER_MOVE: return game.robberMoveIO(pid)
       case KINDS.TRADE_REQ: return game.tradeResponseIO(pid, trade_id, false)

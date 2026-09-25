@@ -8,6 +8,7 @@ import { legalMoves } from '../models/bots/moves.js'
 import { pips, cornerPips } from '../models/bots/features.js'
 import * as CONST from '../public/js/const.js'
 import { botLobby, playSetup, setHand } from './bot_helpers.js'
+import { rollOff } from './helpers.js'
 
 const ST = CONST.GAME_STATES
 
@@ -21,6 +22,7 @@ test('pips follow the dice', () => {
 test('placement takes the 6-8-5 corner', async () => {
   const { game } = botLobby({ humans: 1, bots: ['medium'], config: { player_count: 2, mapkey: FIXTURE, map_shuffle: 'none' } })
   game.start()
+  rollOff(game)
   // Bot is seat 2: the human places somewhere far from the best corner first
   const view0 = buildView(game, 1)
   const worst = legalMoves(view0, ST.INITIAL_SETUP).reduce((m, mv) =>

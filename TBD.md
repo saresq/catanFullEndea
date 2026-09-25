@@ -151,6 +151,13 @@ always has a full deck. That was the abandoned-game reaper, and it is fixed (`58
 ~40 lines only because a five-tile hand-made map has already crashed the server once (`Board.maxPlayers`,
 2026-09-17), so tiny maps are a real thing users make and this is the second way they wedge.
 
+**Seen again 2026-09-25, at ten seats.** Bot-only games on the `xlarge` preset (52 hexes, target 13)
+ran 400 rounds without a winner in 6 of 6 tries, before and after `align-official-rules`: every
+seat ends with its two initial corners upgraded to cities, no settlement spot left and the deck
+empty, so nobody gets past 10. Eight seats finished 2 of 6, six seats 6 of 6. The same board
+exhaustion, on a preset; `tests/bot_paired_test.js` therefore runs its ten-seat games for thirty
+rounds and asserts no stall, not a winner.
+
 **Decided: one winner, not a draw.** The end screen hardcodes a single winner
 (`public/js/game.js:328`, `public/js/ui/alert_ui.js:193`) and a real multi-winner screen is 40-60
 lines of markup and CSS. Highest VP, then most cities, then most settlements, then lowest pid. But
@@ -291,8 +298,8 @@ Not scoped, not promised.
 
 ## 9. Expansions — planned, in order
 
-Decided 2026-09-23. Step 0, the special building phase and the own-turn win rule, shipped
-2026-09-23 (`openspec/changes/archive/2026-09-23-add-special-building-phase`). Each item below becomes its own OpenSpec change,
+Decided 2026-09-23. Step 0, the own-turn win rule and the 5+ player phase (a special building phase
+then, paired players since `align-official-rules`), shipped 2026-09-23. Each item below becomes its own OpenSpec change,
 explored and proposed only after the previous one lands.
 
 **Ground rules for all of them:**
@@ -302,7 +309,7 @@ explored and proposed only after the previous one lands.
   build a rules engine ahead of need. Each expansion brings only the plumbing it uses.
 - **Official rules only.** Custom/house rules may come later; keep constants in one place so they
   can become per-game config then.
-- **Bots play the base game only** (2-10 players, including the special building phase). The lobby
+- **Bots play the base game only** (2-10 players, paired phases included). The lobby
   must refuse bot seats when an expansion is selected, and the server must refuse them too.
 - Every new string goes into both `en` and `es-AR`.
 
@@ -410,8 +417,8 @@ mutually adjacent, so a corner's island is well defined.
 **Road Building** builds two roads, two ships, or one of each. The payload names the piece per
 location.
 
-**Special building phase** (5+ players, custom maps only for now, since New Shores seats 4): ships
-may be built there. Ships may not be moved there.
+**Paired action phase** (5+ players, custom maps only for now, since New Shores seats 4): ships
+may be built there and one may be moved, as on an own turn.
 
 **Victory target.** A scenario brings its own (`win_points` on the preset: 14 for New Shores,
 check). The host can still override it as today.
@@ -535,8 +542,8 @@ Each step leaves the base game green and can be its own commit.
 #### Tests
 
 - `tests/ships_test.js`: the legality table (land/land, coast, sea/sea, border allowed), no road-to-ship
-  joint without a building, settlement off a ship, 15-piece cap, ships in a special building
-  window.
+  joint without a building, settlement off a ship, 15-piece cap, ships in a paired action
+  phase.
 - `tests/ship_move_test.js`: open end only, closed route frozen, not built this turn, once per
   turn, pirate-adjacent frozen, and the route shrinking and losing the title.
 - `tests/trade_route_test.js`: mixed route through a building counts, through a bare corner does
@@ -564,10 +571,11 @@ Each step leaves the base game green and can be its own commit.
 **Decided 2026-09-24, after checking the 2025 rulebooks (CN3083, CN3084).** These replace the
 matching points above, and the full change is in `openspec/changes/add-seafarers`.
 
-- **5+ seat Seafarers games use the 2025 paired players, not the special building phase.** After
-  each turn, the player three seats to the left takes an action phase: build, move one ship, play
-  one card, trade with the bank only. This applies at every size from 5 to 10. Base games keep the
-  special building phase.
+- **Paired players come from `align-official-rules`** (2026-09-25). They replace the special
+  building phase in every 5+ game, and 7-10 seats get more than one paired player. Seafarers only
+  adds ships to what a paired player may do: build them and move one. `add-seafarers` now depends
+  on `align-official-rules` and `implement-missing-rules` (the bank; Road Building with one piece)
+  and applies after both.
 - **The pirate may be moved off the board** ("to the frame"), which steals nothing.
 - **The island bonus on custom maps is 1 VP**, with a 12 VP target, from the book's New World
   variant. This replaces the earlier 2 VP. New Shores keeps 2 VP and 14 VP.
@@ -578,6 +586,10 @@ matching points above, and the full change is in `openspec/changes/add-seafarers
 - **Seafarers needs 3 or more seats.**
 - **New Shores ships in all three layouts:** 3 players, 4 players and 5-6 players. The 3-player map
   starts the robber on the 12.
+- **Escalation to 7-8 and 9-10 (2026-09-25):** New Shores gets 7-8 and 9-10 presets that repeat
+  the book's 4 → 5-6 step. Preset targets are the base target + 4 (14 / 14 / 14 / 16 / 17). Custom
+  Seafarers maps default to 12 / 12 / 12 / 14 / 15 with a 1 VP island bonus. Seafarers adds no
+  development cards.
 
 ### 9.2 `add-traders-barbarians`
 

@@ -57,7 +57,8 @@ export default class UI {
       onDiceClick: _ => game.onDiceClick(),
       onPieceClick: (piece, is_active) => game.onPieceClick(piece, is_active),
       onBuyDevCardClick: _ => game.onBuyDevCardClick(),
-      onTradeClick: _ => this.trade_ui.renderTradeSelection(),
+      // A paired player trades with the bank only
+      onTradeClick: _ => this.trade_ui.renderTradeSelection(this.#game.state === GAME_STATES.PAIRED_ACTIONS),
       onExitTrade: _ => this.trade_ui.clearSelections(),
       onEndTurnClick: _ => game.onEndTurn(),
       // While the trade drawer is open the hand is its give row.
@@ -163,7 +164,7 @@ export default class UI {
 
   toggleActions(bool) {
     bool && this.#game.updateAllPossibleLocations()
-    this.player_ui.checkAndToggleActions(bool, this.#game.state === GAME_STATES.SPECIAL_BUILD)
+    this.player_ui.checkAndToggleActions(bool)
   }
 
   setTimer(t, pid) { this.player_ui.resetRenderTimer(t, pid) }

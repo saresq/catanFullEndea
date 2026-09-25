@@ -7,7 +7,7 @@ import { attachBots, ACTION_CAP } from '../models/bots/controller.js'
 import { buildView } from '../models/bots/view.js'
 import { legalMoves } from '../models/bots/moves.js'
 import * as CONST from '../public/js/const.js'
-import { until, tick } from './helpers.js'
+import { until, tick, rollOff } from './helpers.js'
 import { botLobby, playSetup, setHand, spyIo } from './bot_helpers.js'
 
 const ST = CONST.GAME_STATES
@@ -58,6 +58,7 @@ test('a stale tick is dropped: the bot never acts out of turn', async () => {
     bot_opts: { delay_ms: 30, evaluators: { easy: (view, moves) => { evaluations++; return moves[0] } } } })
   game.join('Human 3')
   game.start()
+  rollOff(game)
   // Seat 1 places, the bot's tick is now scheduled for seat 2 on turn 1...
   game.initialBuildIO(1)
   assert.equal(game.active_pid, 2)

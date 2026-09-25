@@ -171,7 +171,13 @@ export default class AlertUI {
     this.#onStatusUpdate(html)
   }
 
-  alertStrategy(t) { this.setStatusBarOnly(MSG.STRATEGIZE.all(t)) }
+  /** `mine`: I still have to roll; `tied`: the players rolling again after a tie, else falsy */
+  alertFirstRoll(mine, tied) {
+    if (tied) return this.setStatus(MSG.FIRST_ROLL_TIE.all(tied.map(p => getName(this.#isNotMe(p)))))
+    this.setStatusBarOnly(mine ? MSG.FIRST_ROLL.self() : MSG.FIRST_ROLL.other())
+  }
+  alertFirstRollValue(p, d1, d2) { this.setStatus(MSG.FIRST_ROLL_VALUE.all(d1, d2, this.#isNotMe(p))) }
+  alertFirstPlayer(p) { this.setStateStatus(MSG.FIRST_PLAYER.all(this.#isNotMe(p))) }
 
   alertInitialSetup(p, turn) {
     const msg = turn < 2 ? MSG.INITIAL_BUILD : MSG.INITIAL_BUILD_2
@@ -181,7 +187,11 @@ export default class AlertUI {
   alertRollTurn(p) {
     this.setStatusBarOnly(this.#isMe(p) ? MSG.ROLL_TURN.self() : MSG.ROLL_TURN.other(p))
   }
-  alertSpecialBuild(p) { this.setStateStatus(MSG.SPECIAL_BUILD.all(this.#isNotMe(p))) }
+  /** A paired action phase gets its own history group, like a turn */
+  alertPairedActions(p) {
+    this.addTurnSeparator(MSG.PAIRED_SEPARATOR.all(this.#isNotMe(p)))
+    this.setStateStatus(MSG.PAIRED_ACTIONS.all(this.#isNotMe(p)))
+  }
   alertTurnStart(p) { this.addTurnSeparator(getName(this.#isNotMe(p))) }
   alertDiceValue(p, d1, d2, rob_res) {
     this.setStatus(MSG.DICE_VALUE.all(d1, d2, this.#isNotMe(p), rob_res))
@@ -213,6 +223,7 @@ export default class AlertUI {
   alertYearOfPlentyUsed(p, res_obj) { this.setStatus(MSG.YEAR_OF_PLENTY_USED.all(this.#isNotMe(p), res_obj)) }
   alertLargestArmy(p, count) { this.setStatus(MSG.LARGEST_ARMY.all(this.#isNotMe(p), count)) }
   alertLongestRoad(p, len) { this.setStatus(MSG.LONGEST_ROAD.all(this.#isNotMe(p), len)) }
+  alertLongestRoadLost(p) { this.setStatus(MSG.LONGEST_ROAD_LOST.all(this.#isNotMe(p))) }
   /** `replace_pid`: the host gets a button to hand the seat to a bot; everyone else just the news */
   alertPlayerQuit(p, replace_pid) {
     this.bigAlert(MSG.PLAYER_QUIT.all(p, replace_pid), !!replace_pid)

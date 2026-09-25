@@ -59,7 +59,7 @@ test('bad levels, non-hosts, full rooms and human seats are refused', () => {
   assert.ok(game.hasPlayer(2), 'a human is not removed as a bot')
 
   game.waitingRoomStartGameIO(1)
-  assert.equal(game.state, ST.INITIAL_SETUP, 'bots count as present')
+  assert.equal(game.state, ST.FIRST_ROLL, 'bots count as present')
   assert.equal(game.addBot('easy'), undefined, 'lobby only')
   game.removeBot(bot.id)
   assert.ok(game.hasPlayer(bot.id))
@@ -82,7 +82,7 @@ test('the host changes a bot\'s level in place', () => {
   assert.equal(JSON.parse(JSON.stringify(sent[1])).bot_level, 'easy', 'the room is told')
   game.join('Cleo')
   game.waitingRoomStartGameIO(1)
-  assert.equal(game.state, ST.INITIAL_SETUP)
+  assert.equal(game.state, ST.FIRST_ROLL)
   assert.equal(game.setBotLevel(3, 'medium'), undefined, 'lobby only')
   assert.equal(bot.bot_level, 'easy')
   game.clearTimer()

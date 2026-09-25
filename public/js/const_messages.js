@@ -19,7 +19,10 @@ const line = (key, p, vars) => t(p ? `log.${key}` : `log.${key}_self`, { name: g
 // Every line is a whole sentence in the dictionary (`log.*`); the functions only fill the names,
 // numbers and icons in. Word order, plurals and articles are the locale's business.
 const GAME_MESSAGES = {
-  STRATEGIZE: { all: time => t('log.strategize', { t: time }) },
+  FIRST_ROLL: { self: _ => t('log.first_roll_self'), other: _ => t('log.first_roll') },
+  FIRST_ROLL_TIE: { all: names => t('log.first_roll_tie', { names: names.join(', ') }) },
+  FIRST_ROLL_VALUE: { all: (n, m, p) => line('first_roll_value', p, { total: n + m, d1: n, d2: m }) },
+  FIRST_PLAYER: { all: p => line('first_player', p) },
   INITIAL_BUILD: {
     self: _ => t('log.initial_build_self'),
     other: p => t('log.initial_build_other', { name: getName(p) }),
@@ -32,7 +35,8 @@ const GAME_MESSAGES = {
     self: _ => t('log.roll_turn_self'),
     other: p => t('log.roll_turn_other', { name: getName(p) }),
   },
-  SPECIAL_BUILD: { all: p => line('special_build', p) },
+  PAIRED_ACTIONS: { all: p => line('paired_actions', p) },
+  PAIRED_SEPARATOR: { all: p => line('paired_separator', p) },
   DICE_VALUE: {
     all: (n, m, p, res) => line('dice_value', p, {
       total: n + m, d1: n, d2: m,
@@ -102,6 +106,7 @@ const GAME_MESSAGES = {
   },
   LARGEST_ARMY: { all: (p, c) => line('largest_army', p, { n: c }) },
   LONGEST_ROAD: { all: (p, l) => line('longest_road', p, { n: l }) },
+  LONGEST_ROAD_LOST: { all: p => line('longest_road_lost', p) },
   PLAYER_QUIT: {
     all: (p, replace_pid) => t('log.player_quit', { name: getName(p) })
       + (replace_pid ? `<div class="quit-actions"><button type="button" class="btn btn--primary btn--sm replace-bot" data-pid="${replace_pid}">${t('log.replace_with_bot')}</button></div>` : ''),

@@ -3,6 +3,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import Game from '../models/game.js'
 import * as CONST from '../public/js/const.js'
+import { rollOff } from './helpers.js'
 
 const ST = CONST.GAME_STATES
 const fakeIo = { to: () => ({ emit: () => {} }) }
@@ -17,6 +18,7 @@ function playingGame() {
   })
   game.join('Bob'); game.join('Cleo')
   game.start()
+  rollOff(game)
   let guard = 0
   while (game.state === ST.INITIAL_SETUP && guard++ < 20) { game.initialBuildIO(game.active_pid) }
   game.dice = { roll: () => ({ d1: 3, d2: 3 }) } // never a 7: no robber phase

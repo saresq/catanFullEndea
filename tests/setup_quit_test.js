@@ -4,7 +4,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import Game from '../models/game.js'
 import * as CONST from '../public/js/const.js'
-import { until } from './helpers.js'
+import { until, rollOff } from './helpers.js'
 
 const ST = CONST.GAME_STATES
 const io = { to: () => ({ emit: () => {} }) }
@@ -13,6 +13,7 @@ function setupGame(player_count, onGameEnd = () => {}) {
   const game = new Game({ id: 'setup-quit', io, host: { id: 1, name: 'P1' }, config: { player_count, timer: false }, onGameEnd })
   for (let i = 2; i <= player_count; i++) { game.join('P' + i) }
   game.start()
+  rollOff(game)
   return game
 }
 function finishSetup(game) {

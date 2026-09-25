@@ -4,6 +4,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import Game from '../models/game.js'
 import * as CONST from '../public/js/const.js'
+import { rollOff } from './helpers.js'
 
 const ST = CONST.GAME_STATES
 const fakeIo = { to: () => ({ emit: () => {} }) }
@@ -18,6 +19,7 @@ function playingGame() {
   })
   game.join('Bob'); game.join('Cleo')
   game.start()
+  rollOff(game)
   let guard = 0
   while (game.state === ST.INITIAL_SETUP && guard++ < 20) { game.initialBuildIO(game.active_pid) }
   game.dice = { roll: () => ({ d1: 3, d2: 3 }) }
@@ -57,7 +59,7 @@ test('a legal corner still builds', () => {
   for (let i = 0; i < 10 && loc === undefined; i++) {
     loc = game.board.getSettlementLocationsFromRoads(player.pieces.R)[0]
     if (loc === undefined) {
-      const edge = game.board.getRoadLocationsFromRoads(player.pieces.R)[0]
+      const edge = game.board.getRoadLocationsFromRoads(player.pieces.R, player.id)[0]
       game.clickedLocationIO(player.id, CONST.LOCS.EDGE, edge)
     }
   }

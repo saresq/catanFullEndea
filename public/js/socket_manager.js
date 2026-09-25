@@ -19,6 +19,9 @@ export default class SocketManager {
     /** @event Rematch-New-Game */
     socket.on(SOC.REMATCH_NEW_GAME, (redirectMap) => game.handleRematchNewGameSoc(redirectMap))
 
+    /** @event First-Player-Roll */
+    socket.on(SOC.FIRST_ROLL, data => game.updateFirstRollSoc(data))
+
     /** @event Set-Timer */
     socket.on(SOC.SET_TIMER, (t, pid) => game.setTimerSoc(t, pid))
 

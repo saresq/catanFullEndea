@@ -184,9 +184,11 @@ export default class TradeUI {
     this.clearSelections()
   }
 
-  renderTradeSelection() {
+  /** `bank_only`: a paired action phase - the Players mode is not offered */
+  renderTradeSelection(bank_only = false) {
     this.$card_selection.classList.remove('hide')
-    this.#setMode('players')
+    this.$card_selection.querySelector('.head .mode[data-mode="players"]').classList.toggle('hide', bank_only)
+    this.#setMode(bank_only ? 'bank' : 'players')
   }
 
   /** Closes the drawer; the hand goes back to normal only if the drawer was the one showing on it. */

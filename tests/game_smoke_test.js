@@ -3,7 +3,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import Game from '../models/game.js'
 import * as CONST from '../public/js/const.js'
-import { until, tick } from './helpers.js'
+import { until, tick, rollOff } from './helpers.js'
 
 const ST = CONST.GAME_STATES
 const fakeIo = { to: () => ({ emit: () => {} }) }
@@ -29,6 +29,8 @@ test('full game flow', async t => {
     assert.equal(game.config.robber_hand_limit, 7)
 
     game.start()
+    assert.equal(game.state, ST.FIRST_ROLL)
+    rollOff(game)
     assert.equal(game.state, ST.INITIAL_SETUP)
     assert.ok(game.board, 'board built from mapkey')
   })
@@ -61,7 +63,7 @@ test('full game flow', async t => {
     const player = game.getActivePlayer()
     player.giveCards({ L: 1, B: 1 })
     const before = { roads: player.pieces.R.length, L: player.closed_cards.L, B: player.closed_cards.B }
-    const loc = game.board.getRoadLocationsFromRoads(player.pieces.R)[0]
+    const loc = game.board.getRoadLocationsFromRoads(player.pieces.R, player.id)[0]
 
     game.clickedLocationIO(player.id, CONST.LOCS.EDGE, loc)
     assert.equal(player.pieces.R.length, before.roads + 1)

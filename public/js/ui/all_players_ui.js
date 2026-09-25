@@ -43,6 +43,7 @@ export default class AllPlayersUI {
         <div class="seat">
           <div class="name" title="${player.name}">${player.name}</div>
           <span class="bot-mark" title="${botTag(player.bot_level)}">${CONST.BOT_ICON}<small>${botTag(player.bot_level)}</small></span>
+          <span class="first-roll" title="${t('score.first_roll')}"></span>
         </div>
         <button type="button" class="btn btn--secondary btn--sm replace-bot" title="${t('score.replace_with_bot')}" aria-label="${t('score.replace_with_bot_aria', { name: player.name })}">${t('score.bot_q')}</button>
         <div class="victory-points" title="${t('score.victory_points')}"><span>${player.public_vps + (player.private_vps || 0)}</span></div>
@@ -91,6 +92,7 @@ export default class AllPlayersUI {
       this.player_refs[$player.dataset.id] = {
         $p: $player,
         $vps: $player.querySelector('.victory-points span'),
+        $roll: $player.querySelector('.first-roll'),
         $res: $player.querySelector('.resources'),
         $dc: $player.querySelector('.development-cards'),
         $army: $player.querySelector('.largest-army'),
@@ -103,6 +105,13 @@ export default class AllPlayersUI {
     this.$el.dataset.active = pid
     this.#updateTurnIndicator()
   }
+
+  /** The seat's roll for first player, beside its name; empty once placement starts */
+  showRoll(pid, total) { const $roll = this.player_refs[pid]?.$roll; $roll && ($roll.textContent = total) }
+  clearRolls() { this.player_refs.forEach(refs => refs?.$roll && (refs.$roll.textContent = '')) }
+
+  /** `pid` lost Longest Road and nobody holds it */
+  clearLongestRoad(pid) { if (+this.$el.dataset.road === pid) { this.$el.dataset.road = '-' } }
 
   /** The header's ⬢ takes the active player's colour; it is the only turn marker. */
   #updateTurnIndicator() {

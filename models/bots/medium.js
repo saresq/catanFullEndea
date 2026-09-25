@@ -7,6 +7,8 @@ import {
 } from './features.js'
 
 const RES = Object.keys(CONST.RESOURCES)
+/** States where the seat may build, buy, trade with the bank and play cards */
+const ACTING_STATES = [CONST.GAME_STATES.PLAYER_ACTIONS, CONST.GAME_STATES.PAIRED_ACTIONS]
 const best = (list, score) => list.reduce((mem, item) => {
   const s = score(item)
   return (!mem || s > mem.s) ? { item, s } : mem
@@ -90,7 +92,7 @@ function goals(view) {
   }
   if (view.dev_cards_len) { list.push({ key: 'DEV_C', cost: CONST.COST.DEV_C, intent: { type: 'buy_dev' } }) }
   if (pieces_left('R') > 0) {
-    const edges = board.getRoadLocationsFromRoads(me.pieces.R)
+    const edges = board.getRoadLocationsFromRoads(me.pieces.R, view.pid)
     const reached = networkCorners(board, me)
     const swing = longestRoadSwing(view, edges)
     const opening = (!spots.length && pieces_left('S') > 0)
@@ -164,7 +166,7 @@ function devCardPlay(view, moves) {
       && (holder ? army > holder.open_dev_cards.dK : army >= view.config.largest_army_count)
     if (robbed || takes_army) return robberChoice(view, knights)
   }
-  if (view.state !== CONST.GAME_STATES.PLAYER_ACTIONS) return
+  if (!ACTING_STATES.includes(view.state)) return
 
   const nearest = nearestGoal(view)
   const missing = nearest ? missingFor(me.closed_cards, nearest.goal.cost) : {}
@@ -199,9 +201,8 @@ function devCardPlay(view, moves) {
 function turn(view, moves) {
   const play = devCardPlay(view, moves)
   if (play) return play
-  // A building window works like the actions phase, minus trades
-  const in_window = view.state === CONST.GAME_STATES.SPECIAL_BUILD
-  if (view.state !== CONST.GAME_STATES.PLAYER_ACTIONS && !in_window) return moves.find(m => m.type === 'roll')
+  // A paired action phase plays like the own actions phase; only player trades are off the table
+  if (!ACTING_STATES.includes(view.state)) return moves.find(m => m.type === 'roll')
 
   const cards = view.me.closed_cards
   const list = goals(view)
@@ -216,7 +217,6 @@ function turn(view, moves) {
       if (canBuy(view.me, goal.key)) return goal.intent
       continue
     }
-    if (in_window) continue
     const trade = bankTradeFor(view, goal)
     if (trade) return trade
   }

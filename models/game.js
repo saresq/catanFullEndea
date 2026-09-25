@@ -25,8 +25,12 @@ export default class Game {
   /** pids whose first regular-round roll is still pending (7 is forbidden for them) */
   #first_round_roll_pids = null
   #active_pid = 0
-  /** Seat whose special building window is open, and the seats still to get one this phase */
-  #builder_pid = null; #builders = []
+  /** Seat that won the roll for first player: rounds and the placement snake start there */
+  #first_pid = 1
+  /** Roll for first player: totals of the current round and the seats still to roll */
+  #first_rolls = new Map(); #roll_pending = new Set()
+  /** Seat taking a paired action phase (5+ players), and the seats still to take one this turn */
+  #partner_pid = null; #partners = []
   /** Turn the last connected socket was seen on; drives the abandoned-game reaper */
   #idle_from_turn = 1
   #spectators = new Map() // spectator_id -> Set(sockets)
@@ -65,14 +69,18 @@ export default class Game {
     this.#io_manager.updateState(s, this.acting_pid, this.turn)
   }
   get active_pid() { return this.#active_pid + 1 }
-  /** Seat whose building window is open, null outside the special building phase */
-  get builder_pid() { return this.#state === ST.SPECIAL_BUILD ? this.#builder_pid : null }
-  /** Seat the game is waiting on: the builder in a building window, else the turn's owner */
-  get acting_pid() { return this.builder_pid ?? this.active_pid }
+  /** Seat in its paired action phase, null outside one */
+  get partner_pid() { return this.#state === ST.PAIRED_ACTIONS ? this.#partner_pid : null }
+  /** Seat the game is waiting on: the partner in a paired phase, else the turn's owner */
+  get acting_pid() { return this.partner_pid ?? this.active_pid }
+  /** Wraps both ways; `turn` is counted by `#advanceTurn`, at the first player's seat */
   set active_pid(pid) {
-    if (pid < 1 || pid > this.player_count) { this.turn++ }
-    this.#active_pid = (pid - 1) % this.player_count
+    const n = this.player_count
+    this.#active_pid = (((pid - 1) % n) + n) % n
   }
+  get first_pid() { return this.#first_pid }
+  /** Seats still to roll for first player */
+  get first_roll_pending() { return [...this.#roll_pending] }
   get spectators_count() { return this.#spectators.size }
   get ending() { return this.#ending }
   /** Milliseconds left on the running phase timer, 0 when none */
@@ -98,7 +106,6 @@ export default class Game {
     const tier = CONST.playerTier(this.player_count)
     this.dev_cards = shuffle(tier.deck)
     if (!config.hasOwnProperty('win_points')) { this.config.win_points = tier.win_points }
-    if (!config.hasOwnProperty('robber_hand_limit')) { this.config.robber_hand_limit = tier.robber_hand_limit }
   }
 
   join(name, { bot_level } = {}) {
@@ -171,8 +178,8 @@ export default class Game {
   start() {
     this.config.mapkey = (new BoardShuffler(this.config.mapkey)).shuffle(this.config.map_shuffle)
     this.board = new Board(this.config.mapkey)
-    this.state = ST.INITIAL_SETUP
-    this.config.timer ? this.setTimer(this.config.strategize_time) : this.#next()
+    this.state = ST.FIRST_ROLL
+    this.#next()
   }
 
   // ===================
@@ -182,6 +189,8 @@ export default class Game {
     this.clearTimer()
     this.#resolvePendingActions()
     if (this.#isAbandoned()) { return this.#onGameEnd(this.id) }
+
+    if (this.state === ST.FIRST_ROLL) { return this.#askFirstRolls() }
 
     if (this.turn < 3) {
       this.#expect({ callback: this.#expectedInitialBuild.bind(this) })
@@ -202,14 +211,9 @@ export default class Game {
 
       case ST.PLAYER_ACTIONS:
         this.#expect({ callback: _ => {
-          if (this.player_count >= CONST.SPECIAL_BUILD_MIN_PLAYERS) {
-            // Every other seat still in the game, clockwise from the next one
-            this.#builders = [...Array(this.player_count - 1).keys()]
-              .map(i => (this.#active_pid + 1 + i) % this.player_count + 1)
-              .filter(pid => !this.getPlayer(pid)?.removed)
-            this.#openNextWindow()
-          } else { this.#advanceTurn() }
           this.ongoing_trades = []
+          this.#partners = this.#pairedSeats()
+          this.#openNextPairedPhase()
         }})
         // Reset once-per-turn trade bonus flag at the start of each actions phase
         this.turn_trade_time_added = false
@@ -242,37 +246,133 @@ export default class Game {
         this.setTimer(this.config.robber_move_time)
         break
 
-      case ST.SPECIAL_BUILD:
-        // Closed by a pass, the timer or the builder quitting
-        this.#expect({ pid: this.#builder_pid, callback: _ => this.#openNextWindow() })
-        this.setTimer(this.config.special_build_time)
+      case ST.PAIRED_ACTIONS:
+        // Ended by the end-turn control, the timer or the partner quitting
+        this.#expect({ pid: this.#partner_pid, callback: _ => this.#openNextPairedPhase() })
+        this.setTimer(this.config.player_turn_time)
         break
     }
   }
 
-  /** Next seat in the queue that can afford something gets a window; with none left the next turn starts */
-  #openNextWindow() {
-    this.#builder_pid = null
-    while (this.#builders.length && !this.#builder_pid) {
-      const player = this.getPlayer(this.#builders.shift())
-      if (player && !player.removed && this.#canAffordAny(player)) { this.#builder_pid = player.id }
-    }
-    this.#builder_pid ? (this.state = ST.SPECIAL_BUILD) : this.#advanceTurn()
+  /**
+   * Seats that take a paired action phase after this turn, in order. With `n` seats still in the
+   * game, `ceil(n / 3) - 1` of them, spread evenly clockwise from the active player: the third
+   * seat to the left at 5 and 6 (the rulebook's paired player), two seats at 7-9, three at 10.
+   */
+  #pairedSeats() {
+    // The turn's owner quit mid-turn: the aborted turn pairs nobody; the next seat's turn will
+    if (this.getActivePlayer().removed) return []
+    const seats = [...Array(this.player_count).keys()]
+      .map(i => (this.#active_pid + i) % this.player_count + 1)
+      .filter(pid => !this.getPlayer(pid)?.removed)
+    const n = seats.length
+    if (n < CONST.PAIRED_MIN_PLAYERS) return []
+    const k = Math.ceil(n / 3) - 1
+    return [...Array(k).keys()].map(i => seats[Math.round((i + 1) * n / (k + 1))])
   }
 
-  /** Any piece left in the box or a development card left in the deck that `player` can pay for */
-  #canAffordAny(player) {
-    return ['R', 'S', 'C'].some(p => player.canBuy(p)) || !!(this.dev_cards.length && player.canBuy('DEV_C'))
+  /** The next partner with a card to play takes an action phase; with none left the next turn starts */
+  #openNextPairedPhase() {
+    this.#partner_pid = null
+    while (this.#partners.length && !this.#partner_pid) {
+      const player = this.getPlayer(this.#partners.shift())
+      if (player && !player.removed && this.#hasPlayableCards(player)) { this.#partner_pid = player.id }
+    }
+    if (!this.#partner_pid) return this.#advanceTurn()
+    // A separate turn for development cards: one play; cards bought since the own turn stay held back
+    this.getPlayer(this.#partner_pid).resetDevCard(true, false)
+    this.ongoing_trades = []
+    this.state = ST.PAIRED_ACTIONS
+  }
+
+  /** A resource card, or a development card that can be played: not a Victory Point, and Road Building only with room for it */
+  #hasPlayableCards(player) {
+    if (player.resource_count > 0) return true
+    return Object.keys(CONST.DEVELOPMENT_CARDS).some(card => {
+      if (card === 'dVp' || !(player.closed_cards[card] > 0)) return false
+      if (card !== 'dR') return true
+      return CONST.PIECES_COUNT.R - player.pieces.R.length >= 2
+        && this.board.getRoadLocationsFromRoads(player.pieces.R, player.id).length > 0
+    })
   }
 
   /** The next seat still in the game starts its turn */
   #advanceTurn() {
+    const from = this.active_pid
     this.active_pid++
     this.#skipRemovedSeats()
-    this.players.forEach(p => p.resetDevCard(this.#isActive(p.id)))
+    if (this.#crossesFirst(from, this.active_pid)) { this.turn++ }
+    // Everyone's play is spent; the seat whose turn ended may play what it bought from its next phase on
+    this.players.forEach(p => p.resetDevCard(this.#isActive(p.id), this.#isActive(p.id) || p.id === from))
     this.state = ST.PLAYER_ROLL
     this.#checkTurnStartWin()
   }
+
+  /** Going clockwise from `from` to `to` passes or lands on the first player: a new round */
+  #crossesFirst(from, to) {
+    const n = this.player_count
+    const steps = (to - from + n) % n
+    const to_first = (this.#first_pid - from + n) % n
+    return to_first > 0 && to_first <= steps
+  }
+
+  // ROLL FOR FIRST PLAYER
+  // #region ==========================
+
+  /** One roll expected per seat still to roll; the timer rolls for whoever has not */
+  #askFirstRolls() {
+    const reroll = this.#roll_pending.size > 0 // a tie left only the tied seats pending
+    if (!reroll) { this.#roll_pending = new Set(this.players.filter(p => p?.id).map(p => p.id)) }
+    this.#io_manager.updateFirstRoll({ pending: this.first_roll_pending, rolls: this.#firstRollsJSON(), reroll })
+    this.#roll_pending.forEach(pid => this.#expect({ pid, callback: this.#expectedFirstRoll.bind(this) }))
+    this.setTimer(this.config.first_roll_time)
+  }
+
+  #firstRollsJSON() { return Object.fromEntries(this.#first_rolls) }
+
+  #expectedFirstRoll(pid) {
+    if (!this.#roll_pending.has(pid)) return
+    const { d1, d2 } = this.dice.roll([]) // not a game roll: a 7 is just a 7
+    this.#first_rolls.set(pid, d1 + d2)
+    this.#roll_pending.delete(pid)
+    this.dice_value = [d1, d2]
+    this.#io_manager.updateDiceValue(this.dice_value, pid)
+    if (!this.#roll_pending.size) { this.#resolveFirstRoll() }
+  }
+
+  /** Highest total wins; a tie sends only the tied seats back to roll. A quit seat never wins. */
+  #resolveFirstRoll() {
+    const rolls = [...this.#first_rolls].filter(([pid]) => !this.getPlayer(pid).removed)
+    if (!rolls.length) { // every seat that rolled has quit: whoever is left rolls
+      this.#roll_pending = new Set(this.players.filter(p => p?.id && !p.removed).map(p => p.id))
+      this.#first_rolls = new Map()
+      return
+    }
+    const top = Math.max(...rolls.map(([, total]) => total))
+    const tied = rolls.filter(([, total]) => total === top).map(([pid]) => pid)
+    if (tied.length > 1) {
+      this.#roll_pending = new Set(tied)
+      this.#first_rolls = new Map()
+      return
+    }
+    this.#first_pid = tied[0]
+    this.active_pid = tied[0]
+    this.#io_manager.updateFirstRoll({ first_pid: this.#first_pid })
+    this.state = ST.INITIAL_SETUP
+  }
+
+  /** A seat's roll from its socket or bot: only while that seat is due to roll */
+  #firstRollIO(pid) {
+    const index = this.expected_actions.findIndex(a => a.type === ST.FIRST_ROLL && a.pid === pid)
+    if (index < 0) return
+    const { callback } = this.expected_actions[index]
+    this.expected_actions.splice(index, 1)
+    const last = this.#roll_pending.size === 1
+    callback(pid)
+    // Everyone rolled: on to placement, or the tied seats roll again
+    if (last) { this.#next() }
+  }
+  //#endregion
 
   // EXPECTATIONS & RESOLUTIONS
   // #region ==========================
@@ -301,10 +401,12 @@ export default class Game {
       console.warn(`[${this.id}] no legal spot left for player ${pid} - map too small for ${this.player_count} players`)
     }
     if (this.turn === 1) {
-      this.active_pid < this.player_count ? this.active_pid++ : this.turn++
+      // Clockwise up to the seat before the first player, who then places again in reverse
+      const next = this.active_pid % this.player_count + 1
+      next === this.#first_pid ? this.turn++ : this.active_pid++
     } else {
       placed && this.#distributeCornerResources(s_id)
-      if (this.active_pid == 1) {
+      if (this.active_pid === this.#first_pid) {
         this.turn++
         // Initialize first-round roll protection for all current players
         this.#first_round_roll_pids = new Set(this.players.filter(p => p?.id && !p.removed).map(p => p.id))
@@ -437,6 +539,7 @@ export default class Game {
 
   /** Player Roll Click */
   playerRollIO(pid) {
+    if (this.state === ST.FIRST_ROLL) return this.#firstRollIO(pid)
     // Sockets and bots always say who they are; only that seat, only while a roll is due
     if (pid !== undefined && !(this.#isActive(pid) && this.state === ST.PLAYER_ROLL)) return
     this.#next()
@@ -444,11 +547,11 @@ export default class Game {
 
   /** Building - Edge & Corner click (other than initial-build) */
   clickedLocationIO(pid, loc_type, id) {
-    if (!this.#canBuild(pid)) return
+    if (!this.#canAct(pid)) return
     const player = this.getPlayer(pid)
     // Validate & Build
     if (loc_type === CONST.LOCS.EDGE) {
-      const valid_locs = this.board.getRoadLocationsFromRoads(player.pieces.R)
+      const valid_locs = this.board.getRoadLocationsFromRoads(player.pieces.R, pid)
       if (valid_locs.includes(id) && player.canBuy('R')) {
         player.bought('R')
         this.#public({ type: 'buy', pid, what: 'R' })
@@ -479,7 +582,7 @@ export default class Game {
 
   /** Development Card buying click */
   buyDevCardIO(pid) {
-    if (!this.#canBuild(pid)) return
+    if (!this.#canAct(pid)) return
     if (!this.dev_cards.length) return
     const player = this.getPlayer(pid)
     if (!player.canBuy('DEV_C')) return
@@ -555,6 +658,8 @@ export default class Game {
     if (config.dice_mode && !['random', 'balanced'].includes(config.dice_mode)) {
       delete config.dice_mode
     }
+    // A map picked in the lobby brings its own shuffle rule (presets always shuffle)
+    if (config.mapkey) { config.map_shuffle = CONST.shuffleTypeFor({ ...this.config, ...config }) }
     this.#setupConfig(config)
     this.#io_manager.updateWaitingRoomConfig(this.config)
   }
@@ -583,8 +688,9 @@ export default class Game {
     const giving_total = Object.values(giving).reduce((m, v) => m + v, 0)
     const taking_total = Object.values(taking).reduce((m, v) => m + v, 0)
     if (!(giving_total && taking_total)) return
-    // Notify others of the Trade Request
+    // Notify others of the Trade Request. Only on the own turn: a paired player trades with the bank
     if (type === 'Px') {
+      if (this.state !== ST.PLAYER_ACTIONS) return
       const total_requests = this.ongoing_trades.filter(_ => _.pid == pid && _.status !== 'deleted').length
       if (total_requests >= this.config.max_trade_requests) return
       const trade_obj = { pid, giving, asking: taking, id: this.ongoing_trades.length, rejected: [], status: 'open' }
@@ -675,13 +781,13 @@ export default class Game {
     const player = this.getPlayer(pid)
     if (!player.canPlayDevCard('dR')) { return }
     if (CONST.PIECES_COUNT.R - player.pieces.R.length < 2) return
-    let valid_edges = this.board.getRoadLocationsFromRoads(player.pieces.R)
+    let valid_edges = this.board.getRoadLocationsFromRoads(player.pieces.R, pid)
     // Nowhere legal to build: keep the card instead of spending it on nothing.
     if (!valid_edges.length) return
     player.playedDevCard('dR')
     if (!valid_edges.includes(r1)) { r1 = this.#getRandom(valid_edges) }
     this.build(pid, 'R', r1)
-    valid_edges = this.board.getRoadLocationsFromRoads(player.pieces.R)
+    valid_edges = this.board.getRoadLocationsFromRoads(player.pieces.R, pid)
     if (valid_edges.length) { // the first road can be the last legal spot
       if (!valid_edges.includes(r2)) { r2 = this.#getRandom(valid_edges) }
       this.build(pid, 'R', r2)
@@ -725,10 +831,9 @@ export default class Game {
     })
   }
 
-  /** Ends the turn, or in a special building window, the builder passes */
+  /** Ends the turn, or the paired action phase, of the seat acting in it */
   endTurnIO(pid) {
-    const allowed = this.state === ST.SPECIAL_BUILD ? pid === this.#builder_pid : this.#canAct(pid)
-    if (pid !== undefined && !allowed) return
+    if (pid !== undefined && !this.#canAct(pid)) return
     this.#next()
   }
   saveStatusIO(pid, text) { this.getPlayer(pid).setLastStatus(text) }
@@ -783,58 +888,72 @@ export default class Game {
     const player = this.getPlayer(pid)
     this.board.build(pid, piece, loc)
     if (piece === 'S') {
-      player.addPort(this.board.findCorner(loc)?.trade)
-      // is this breaking enemy roads?
-      const [e1, e2] = (this.board.findCorner(loc)?.getEdges(null) || []).filter(_ => _.road !== pid)
-      if (e1 && e2 && e1.road && e1.road === e2.road) { // yes
-        const longest_player = this.getPlayer(this.longest_road_pid)
-        if (longest_player && this.longest_road_pid === e1.road
-          && longest_player.longest_road_list.includes(e1.id)
-          && longest_player.longest_road_list.includes(e2.id))
-        {
-          this.#checkLongestRoad({ broken_pid: e2.road })
-        }
-      }
+      const corner = this.board.findCorner(loc)
+      player.addPort(corner?.trade)
+      // The corner now cuts every other player's route through it
+      const cut = new Set((corner?.getEdges(null) || []).map(e => e.road).filter(road => road && road !== pid))
+      this.#refreshRoutes([...cut])
+      this.#awardRouteByValidity()
     }
     player.addPiece(loc, piece)
-    piece === 'R' && this.#checkLongestRoad({ pid })
+    if (piece === 'R') {
+      this.#refreshRoutes([pid])
+      this.#awardRouteByGrowth(pid)
+    }
     this.map_changes.push({ pid, piece, loc })
     this.#io_manager.updateBuild(pid, piece, loc)
   }
 
-  #checkLongestRoad({ pid, broken_pid }) {
-    let player, longest_path
-    if (pid) {
-      player = this.getPlayer(pid)
-      longest_path = this.board.findLongestPathFromRoads(pid, player.pieces.R)
-      if (longest_path.length > player.longest_road_list.length) {
-        player.setLongestRoadPath(longest_path)
-      }
-    } else {
-      if (broken_pid) {
-        const broken_player = this.getPlayer(broken_pid)
-        const new_long_path = this.board.findLongestPathFromRoads(broken_pid, broken_player?.pieces.R)
-        if (new_long_path.length < broken_player.longest_road_list.length) {
-          this.longest_road_pid = -1
-          broken_player?.setLongestRoadPath(new_long_path)
-        }
-      }
-      player = this.players.slice().sort((a, b) => a.longest_road_list.length - b.longest_road_list.length).pop()
-      longest_path = player.longest_road_list
-    }
+  // LONGEST ROUTE
+  // #region ==========================
 
-    const curr_long_player = this.getPlayer(this.longest_road_pid)
-    if (this.longest_road_pid !== player.id
-      && (curr_long_player
-        ? longest_path.length > curr_long_player.longest_road_list.length
-        : longest_path.length >= this.config.longest_road_count)
-    ) {
-      curr_long_player?.toggleLongestRoad(false)
-      player.toggleLongestRoad(true)
-      this.longest_road_pid = player.id
-      this.#io_manager.updateLongestRoad(player.id, longest_path)
-    }
+  /** Recompute and store each seat's longest route, shorter or not */
+  #refreshRoutes(pids) {
+    pids.forEach(pid => {
+      const player = this.getPlayer(pid)
+      player?.setLongestRoadPath(this.board.findLongestPathFromRoads(pid, player.pieces.R))
+    })
   }
+
+  /** The one player with the longest route of at least `longest_road_count`; null on a tie or none */
+  #singleLongestRoute() {
+    const seated = this.players.filter(p => p?.id)
+    const longest = Math.max(...seated.map(p => p.longest_road_list.length))
+    if (longest < this.config.longest_road_count) return null
+    const top = seated.filter(p => p.longest_road_list.length === longest)
+    return top.length === 1 ? top[0] : null
+  }
+
+  #giveRoute(player) {
+    this.getPlayer(this.longest_road_pid)?.toggleLongestRoad(false)
+    player.toggleLongestRoad(true)
+    this.longest_road_pid = player.id
+    this.#io_manager.updateLongestRoad(player.id, player.longest_road_list)
+  }
+
+  /** After a road: the holder keeps it unless `pid` is now strictly longer; with no holder, the single longest */
+  #awardRouteByGrowth(pid) {
+    const holder = this.getPlayer(this.longest_road_pid)
+    if (!holder) {
+      const single = this.#singleLongestRoute()
+      return single && this.#giveRoute(single)
+    }
+    const player = this.getPlayer(pid)
+    if (holder.id !== pid && player.longest_road_list.length > holder.longest_road_list.length) { this.#giveRoute(player) }
+  }
+
+  /** After a settlement: a holder no longer alone at the longest loses it; then the single longest, if any, takes it */
+  #awardRouteByValidity() {
+    const holder = this.getPlayer(this.longest_road_pid)
+    const single = this.#singleLongestRoute()
+    if (holder && single !== holder) {
+      holder.toggleLongestRoad(false)
+      this.longest_road_pid = -1
+      this.#io_manager.updateLongestRoad(holder.id, []) // returned: nobody holds it
+    }
+    if (single && this.longest_road_pid === -1) { this.#giveRoute(single) }
+  }
+  //#endregion
 
   #onPlayerUpdate(pid, key, context) {
     const player = this.getPlayer(pid)
@@ -862,11 +981,11 @@ export default class Game {
     this.#io_manager.updateOngoingTrades(this.ongoing_trades)
   }
 
-  /** Only on their own turn: reached any other time, it is checked again when their turn starts */
+  /** Only while acting (own turn or paired phase): reached any other time, it is checked again when their turn starts */
   #onPlayerVpChange(pid, vps) {
     if (vps < this.config.win_points) return
-    if (pid !== this.active_pid) return
-    if (!this.state || this.state === ST.SPECIAL_BUILD || this.state === ST.END) return
+    if (pid !== this.acting_pid) return
+    if (!this.state || this.state === ST.END) return
     this.#endGame(pid, vps)
   }
 
@@ -947,15 +1066,17 @@ export default class Game {
     if (remaining_players.length === 0) {
       return this.#onGameEnd(this.id)
     }
-    // Otherwise - Game Continues. A builder's window closes. The turn's owner quitting during the
-    // building phase leaves the windows open: the phase belongs to the others.
-    if (this.state === ST.SPECIAL_BUILD) {
-      if (this.#builder_pid === pid) { this.#next() }
+    // Otherwise - Game Continues. A quit seat is rolled for and never plays first.
+    if (this.state === ST.FIRST_ROLL) { return this.#firstRollIO(pid) }
+    // A partner's phase ends. The turn's owner quitting during a paired phase leaves the
+    // remaining phases to run: the next turn starts when they are done.
+    if (this.state === ST.PAIRED_ACTIONS) {
+      if (this.#partner_pid === pid) { this.#next() }
       return
     }
     // In the initial placement this places for the quit seat at random.
     // Bounded: a reaped game returns from #next without moving on.
-    for (let i = 0; i < 10 && this.active_pid === pid && this.state !== ST.SPECIAL_BUILD; i++) { this.#next() }
+    for (let i = 0; i < 10 && this.active_pid === pid && this.state !== ST.PAIRED_ACTIONS; i++) { this.#next() }
   }
 
   godModeActivateIO(pid) {
@@ -1042,13 +1163,13 @@ export default class Game {
   }
 
   #canPlayDC(pid) {
-    return this.#isActive(pid)
-      && (this.state === ST.PLAYER_ACTIONS || this.state === ST.PLAYER_ROLL)
+    return this.#isActing(pid)
+      && [ST.PLAYER_ROLL, ST.PLAYER_ACTIONS, ST.PAIRED_ACTIONS].includes(this.state)
   }
-  #canAct(pid) { return this.#isActive(pid) && this.state === ST.PLAYER_ACTIONS }
-  /** Build or buy: the active player in their actions phase, or the builder in their window */
-  #canBuild(pid) { return this.#canAct(pid) || (this.state === ST.SPECIAL_BUILD && pid === this.#builder_pid) }
+  /** Build, buy, trade with the bank, end: the active player in their actions phase, or the partner in theirs */
+  #canAct(pid) { return this.#isActing(pid) && (this.state === ST.PLAYER_ACTIONS || this.state === ST.PAIRED_ACTIONS) }
   #isActive(pid) { return pid === this.active_pid }
+  #isActing(pid) { return pid === this.acting_pid }
 
   addSpectator(socket, spectator_id = socket.id) {
     if (!this.#spectators.has(spectator_id)) {
@@ -1120,7 +1241,9 @@ export default class Game {
       map_changes: this.map_changes,
       config: this.config,
       active_pid: this.active_pid,
-      builder_pid: this.builder_pid,
+      partner_pid: this.partner_pid,
+      first_pid: this.#first_pid,
+      first_roll: this.state === ST.FIRST_ROLL ? { pending: this.first_roll_pending, rolls: this.#firstRollsJSON() } : null,
       host_pid: this.host_pid,
       state: this.state,
       turn: this.turn,

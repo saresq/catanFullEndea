@@ -109,10 +109,11 @@ export default class Player {
     this.trade_offers[type] = true
   }
 
-  resetDevCard(allowed) {
+  /** `clear_bought`: the cards bought since the last own turn become playable (the own turn's start) */
+  resetDevCard(allowed, clear_bought = allowed) {
     this.can_play_dc = !!allowed
-    if (allowed) { this.turn_bought_dc = {} }
-    this.#onChange(this.id, 'dc_update', { can_play_dc: this.can_play_dc, turn_bought_dc: {} })
+    if (clear_bought) { this.turn_bought_dc = {} }
+    this.#onChange(this.id, 'dc_update', { can_play_dc: this.can_play_dc, turn_bought_dc: this.turn_bought_dc })
   }
 
   canPlayDevCard(type) {

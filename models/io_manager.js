@@ -97,7 +97,11 @@ export default class IOManager {
     this.emit(SOC.CHANGE_CONFIG, { player_count, win_points, mapkey, map_size, dice_mode })
   }
 
-  updateState(state, active_pid, turn) { this.emit(SOC.STATE_CHANGE, state, active_pid, turn) }
+  /** `acting_pid`: the seat the state waits on - the partner in a paired phase, else the turn's owner */
+  updateState(state, acting_pid, turn) { this.emit(SOC.STATE_CHANGE, state, acting_pid, turn) }
+
+  /** Roll for first player: `{ pending, rolls, reroll }` while it runs, `{ first_pid }` once decided */
+  updateFirstRoll(data) { this.emit(SOC.FIRST_ROLL, data) }
 
   updateTimer(time, pid) { this.emit(SOC.SET_TIMER, time, pid) }
 
@@ -153,6 +157,7 @@ export default class IOManager {
 
   updateLargestArmy(pid, count) { this.emit(SOC.LARGEST_ARMY, pid, count) }
 
+  /** `locs` empty: `pid` lost the award and nobody holds it */
   updateLongestRoad(pid, locs) { this.emit(SOC.LONGEST_ROAD, pid, locs) }
 
   updateGameEnd(context) { this.emit(SOC.GAME_END, context) }

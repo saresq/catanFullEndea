@@ -105,15 +105,26 @@ discards half) then `ROBBER_MOVE` (active player relocates the robber and steals
 distributes resources and goes to `PLAYER_ACTIONS` (build, buy/play dev cards, trade, end turn).
 `INITIAL_SETUP` runs first, two snake-order rounds, with the second settlement paying out.
 
-With 5 or more players, ending a turn opens `SPECIAL_BUILD` first: every other player still in the
-game, clockwise from the next seat, gets one window (`config.special_build_time`, 15 s, or until they
-Pass) to build and buy development cards. No trading and no card plays in a window. A player who
-can afford nothing is skipped. Then the next player rolls.
+`FIRST_ROLL` comes before all of that: every seat rolls once, the highest total plays first (ties
+re-roll among the tied, `config.first_roll_time` rolls for whoever has not), and placement, its
+reverse round and the turn count all start from that seat.
 
-A player wins when they reach `config.win_points` on their own turn — settlements 1, cities 2,
-victory-point cards 1 each, largest army 2, longest road 2. Points reached any other time (in a
-building window, or a Longest Road swing on someone else's turn) count when their turn starts, if
-they still hold them. The last player standing after quits wins at once.
+With 5 or more players (the 2025 5–6 Player Expansion's paired players), ending a turn opens
+`PAIRED_ACTIONS` first: the third seat to the left of the active player takes a full action phase
+of their own — build, buy, play one development card, trade with the bank or their ports — before
+the next player rolls. No player trades in that phase, and a seat with no resource card and no
+playable development card is skipped. Bigger tables pair more seats per turn (`ceil(n / 3) - 1`,
+spread evenly: two at 7–9 seats, three at 10) so nobody waits more than about three turns to act.
+
+Longest Road goes to the first single player with a route of 5, is taken only by a strictly longer
+route, and is returned when a settlement breaks the holder's route (to the single longest player,
+if there is one). A road never passes through another player's settlement. The discard limit on a
+7 is more than 7 cards at every player count.
+
+A player wins when they reach `config.win_points` while acting — on their own turn or in their
+paired action phase: settlements 1, cities 2, victory-point cards 1 each, largest army 2, longest
+road 2. Points reached any other time (a Longest Road swing on someone else's turn) count when their
+turn starts, if they still hold them. The last player standing after quits wins at once.
 
 ## Game Features
 - [x] Design your own map

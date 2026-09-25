@@ -14,7 +14,7 @@ function autoPlacedGame(mapkey, player_count) {
   const config = Object.assign({}, CONST.GAME_CONFIG, {
     mapkey, player_count, map_shuffle: 'none',
     // Everything auto-places immediately: nobody clicks a corner.
-    timer: true, strategize_time: 0, initial_build_time: 0,
+    timer: true, first_roll_time: 0, initial_build_time: 0,
   })
   const game = new Game({ id: 'test', io: fakeIo, host: { name: 'P1', id: 1 }, config, onGameEnd: () => {} })
   for (let i = 2; i <= player_count; i++) { game.join('P' + i) }

@@ -18,7 +18,7 @@ function spyIo(events = []) {
 function fastGame({ onGameEnd = () => {}, io }) {
   const config = {
     player_count: 3, timer: true,
-    strategize_time: 0, initial_build_time: 0, roll_time: 0, player_turn_time: 0,
+    first_roll_time: 0, initial_build_time: 0, roll_time: 0, player_turn_time: 0,
     // A rolled 7 parks the game in the robber phase on its own 30s timer, which stalls the turn
     // counter for longer than any test should wait. Zero them too, so turns really do fly.
     robber_drop_time: 0, robber_move_time: 0,

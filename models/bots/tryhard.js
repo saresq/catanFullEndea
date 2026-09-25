@@ -98,7 +98,7 @@ function steps(view, state, spots) {
   }
   // Roads: toward Longest Road, or toward a spot when none is buildable yet
   if (state.pieces.R.length < CONST.PIECES_COUNT.R && afford(CONST.COST.R) && state.steps.length < 2) {
-    const edges = board.getRoadLocationsFromRoads(state.pieces.R)
+    const edges = board.getRoadLocationsFromRoads(state.pieces.R, view.pid)
     const cur_len = longestRoadWith(board, view.pid, state.pieces.R)
     const holder = view.players.find(p => p.id === view.longest_road_pid)
     const to_beat = view.longest_road_pid === view.pid ? Infinity
@@ -127,7 +127,6 @@ function steps(view, state, spots) {
   if (view.dev_cards_len > state.dev_bought && afford(CONST.COST.DEV_C)) {
     out.push({ intent: { type: 'buy_dev' }, next: { ...state, cards: pay(CONST.COST.DEV_C), dev_bought: state.dev_bought + 1 } })
   }
-  if (view.state === CONST.GAME_STATES.SPECIAL_BUILD) return out // no trading in a building window
   // Bank trades: only for a card some build is short of, paid from a pile no build in reach needs
   const wanted = new Set()
   ;[CONST.COST.C, CONST.COST.S, CONST.COST.DEV_C, CONST.COST.R].forEach(cost => {
@@ -314,11 +313,11 @@ export function evaluate(view, moves) {
   const play = knightFirst(view, moves) || devCardPlay(view, moves)
   if (play) return play
   const ST = CONST.GAME_STATES
-  if (view.state !== ST.PLAYER_ACTIONS && view.state !== ST.SPECIAL_BUILD) return moves.find(m => m.type === 'roll')
+  if (view.state !== ST.PLAYER_ACTIONS && view.state !== ST.PAIRED_ACTIONS) return moves.find(m => m.type === 'roll')
 
   const chosen = plan(view)
   if (chosen.first) {
-    // Rather than paying the bank, ask the table when it is cheaper and allowed
+    // Rather than paying the bank, ask the table when it is cheaper and allowed (never in a paired phase)
     if (chosen.first.type === 'bank_trade') {
       const ask = proposal(view, moves)
       if (ask) return ask

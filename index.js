@@ -13,7 +13,6 @@ import { attachBots } from "./models/bots/controller.js"
 import { rematchNonVoters, createRematch } from "./models/rematch.js"
 import * as CONST from "./public/js/const.js"
 import { t, DICT, LOCALE } from "./public/js/i18n.js"
-import BoardShuffler from "./public/js/board/board_shuffler.js"
 import Board from "./public/js/board/board.js"
 
 const app = express()
@@ -92,34 +91,9 @@ app.get('/game/new', function (req, res) {
     return res.redirect(`/login?notice=${encodeURIComponent(t.plural('notice.map_seats', seats))}`)
   }
 
-  // Shuffle after determining the base map and storing the label
-  let shuffleType = config.map_shuffle;
-  
-  // Respect "Do not shuffle" settings if they exist
-  if (shuffleType && shuffleType !== 'none') {
-    const shuffleOptions = [];
-    
-    // Add tile shuffling if resources should be shuffled
-    if (!config.do_not_shuffle_resources) {
-      shuffleOptions.push('tile');
-    }
-    
-    // Add number shuffling if numbers should be shuffled
-    if (!config.do_not_shuffle_numbers) {
-      shuffleOptions.push('number');
-    }
-    
-    // Always include port shuffling if the original shuffle type includes it
-    if (shuffleType === 'all' || shuffleType.includes('port')) {
-      shuffleOptions.push('port');
-    }
-    
-    // If we have options to shuffle, join them with hyphens, otherwise use 'none'
-    shuffleType = shuffleOptions.length > 0 ? shuffleOptions.join('-') : 'none';
-  }
-  
-  config.map_shuffle = shuffleType
-  config.mapkey = (new BoardShuffler(config.mapkey)).shuffle(shuffleType)
+  // Presets always shuffle everything; a hand-made map keeps the editor's "keep my layout" options.
+  // The shuffle itself happens once, in `Game.start()`, after the lobby has settled on a map.
+  config.map_shuffle = CONST.shuffleTypeFor(config)
   const pid = 1
   const game = new Game({
     id, io,

@@ -48,7 +48,7 @@ function devCardIntents(view) {
   if (canPlayDevCard(me, 'dK')) { intents.push(...robberIntents(view, 'knight')) }
   if (canPlayDevCard(me, 'dR') && CONST.PIECES_COUNT.R - me.pieces.R.length >= 2) {
     // `r2` is the evaluator's to fill: it depends on `r1`. Left empty the server picks one.
-    board.getRoadLocationsFromRoads(me.pieces.R).forEach(r1 => intents.push({ type: 'road_building', r1 }))
+    board.getRoadLocationsFromRoads(me.pieces.R, view.pid).forEach(r1 => intents.push({ type: 'road_building', r1 }))
   }
   if (canPlayDevCard(me, 'dY')) {
     RES.forEach((res1, i) => RES.slice(i).forEach(res2 => intents.push({ type: 'year_of_plenty', res1, res2 })))
@@ -86,7 +86,7 @@ function buildIntents(view) {
     board.getSettlementLocationsFromRoads(me.pieces.R).forEach(loc => intents.push({ type: 'build', piece: 'S', loc }))
   }
   if (canBuy(me, 'R')) {
-    board.getRoadLocationsFromRoads(me.pieces.R).forEach(loc => intents.push({ type: 'build', piece: 'R', loc }))
+    board.getRoadLocationsFromRoads(me.pieces.R, view.pid).forEach(loc => intents.push({ type: 'build', piece: 'R', loc }))
   }
   if (view.dev_cards_len && canBuy(me, 'DEV_C')) { intents.push({ type: 'buy_dev' }) }
   return intents
@@ -128,15 +128,18 @@ export function legalMoves(view, kind, extra = {}) {
           .filter(e => !e.corner1.surroundedBySea() && !e.corner2.surroundedBySea())
           .map(e => ({ type: 'initial_build', settlement_loc: corner.id, road_loc: e.id })))
 
+    case KINDS.FIRST_ROLL:
+      return [{ type: 'roll' }]
+
     case KINDS.PLAYER_ROLL:
       return [{ type: 'roll' }, ...devCardIntents(view)]
 
     case KINDS.PLAYER_ACTIONS:
       return actionIntents(view, extra)
 
-    // A building window: no trades, no card plays
-    case KINDS.SPECIAL_BUILD:
-      return [...buildIntents(view), { type: 'end_turn' }]
+    // A paired action phase: everything of an actions phase but a player trade request
+    case KINDS.PAIRED_ACTIONS:
+      return actionIntents(view, { ...extra, can_propose: false })
 
     case KINDS.ROBBER_DROP:
       return [{ type: 'discard', count: extra.drop_count ?? Math.floor(me.resource_count / 2), resources: {} }]

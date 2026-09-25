@@ -21,8 +21,10 @@ const DELAYS = {
 
 export default class Game {
   id; config; active_pid; state; opponents; host_pid
-  /** Seat whose special building window is open; `active_pid` stays the turn's owner meanwhile */
-  builder_pid = null
+  /** Seat in its paired action phase; `active_pid` stays the turn's owner meanwhile */
+  partner_pid = null
+  /** Seats still to roll for first player */
+  first_roll_pending = []
   /** @type {UI} */ #ui;
   #board; #player; #socket_manager; #audio_manager
   #temp = {}
@@ -32,7 +34,7 @@ export default class Game {
     this.id = game_obj.id
     this.config = game_obj.config
     this.active_pid = game_obj.active_pid
-    this.builder_pid = game_obj.builder_pid ?? null
+    this.partner_pid = game_obj.partner_pid ?? null
     this.state = game_obj.state
     this.end_context = game_obj.end_context
     this.host_pid = game_obj.host_pid
@@ -66,12 +68,13 @@ export default class Game {
     }
     // State updates
     this.updateStateChangeSoc(this.state, this.acting_pid)
-    // Do not request initial setup immediately; wait for server to emit INITIAL_SETUP after strategize time
+    // Mid roll-off: who has rolled and whether I still have to
+    game_obj.first_roll && this.updateFirstRollSoc(game_obj.first_roll)
   }
 
 
   updateAllPossibleLocations() {
-    this.possible_locations.R = this.#board.getRoadLocationsFromRoads(this.#player.pieces.R)
+    this.possible_locations.R = this.#board.getRoadLocationsFromRoads(this.#player.pieces.R, this.#player.id)
     this.possible_locations.S = this.#board.getSettlementLocationsFromRoads(this.#player.pieces.R)
     this.possible_locations.C = this.#player.pieces.S.slice(0)
   }
@@ -84,30 +87,33 @@ export default class Game {
   //   SOCKET UPDATES
   //#region -----------
 
-  /** `pid` is the acting seat: the builder in a special building window, else the turn's owner */
+  /** `pid` is the acting seat: the partner in a paired action phase, else the turn's owner */
   updateStateChangeSoc(state, pid) {
     this.state = state
-    if (state === ST.SPECIAL_BUILD) { this.builder_pid = pid }
-    else { this.builder_pid = null; this.active_pid = pid }
+    if (state === ST.PAIRED_ACTIONS) { this.partner_pid = pid }
+    else { this.partner_pid = null; this.active_pid = pid }
     this.#ui.all_players_ui.updateActive(pid)
     switch (state) {
+      case ST.FIRST_ROLL: this.#onFirstRoll(); break
       case ST.INITIAL_SETUP: this.#onInitialSetup(); break
       case ST.PLAYER_ROLL: this.#onPlayerRoll(); break
       case ST.PLAYER_ACTIONS: this.#onPlayerAction(); break
       case ST.ROBBER_DROP: this.#onRobberDropCards(); break
       case ST.ROBBER_MOVE: this.#onRobberMove(); break
-      case ST.SPECIAL_BUILD: this.#onSpecialBuild(); break
+      case ST.PAIRED_ACTIONS: this.#onPairedActions(); break
       case ST.END: this.#onGameEnd(); break
     }
   }
   //#region
+  // STATE - Roll for first player: every seat rolls once, the highest plays first
+  #onFirstRoll() {
+    this.#audio_manager.playStart()
+    this.#ui.player_ui.toggleShow()
+    this.#ui.all_players_ui.updateActive(null) // nobody's turn yet
+  }
   // STATE - Initial Setup
   #onInitialSetup() {
-    if (this.config.timer) {
-      const time = this.config.strategize_time
-      this.#ui.alert_ui.alertStrategy(time)
-    }
-    this.#audio_manager.playStart()
+    this.#ui.all_players_ui.clearRolls()
   }
   // STATE - Roll
   #onPlayerRoll() {
@@ -133,12 +139,12 @@ export default class Game {
       this.#ui.toggleActions(1)
     }
   }
-  // STATE - Special building window: the builder may build and buy, nothing else
-  #onSpecialBuild() {
+  // STATE - Paired action phase: the partner builds, buys, plays a card, trades with the bank
+  #onPairedActions() {
     this.clearDevCardUsage()
     this.#ui.hideAllShown()
     this.#ui.trade_ui.clearRequests()
-    if (this.#isMyPid(this.builder_pid)) {
+    if (this.#isMyPid(this.partner_pid)) {
       this.#audio_manager.playTurnNotification()
       this.#ui.player_ui.toggleShow(1)
       this.#ui.toggleActions(1)
@@ -146,7 +152,7 @@ export default class Game {
       this.#ui.toggleActions(0)
       this.#ui.player_ui.toggleShow()
     }
-    this.#ui.alert_ui.alertSpecialBuild(this.getPlayer(this.builder_pid))
+    this.#ui.alert_ui.alertPairedActions(this.getPlayer(this.partner_pid))
   }
   // STATE - Drop for Robber
   #onRobberDropCards() {
@@ -221,8 +227,30 @@ export default class Game {
     this.#amIActing(update_player.id) && this.#ui.toggleActions(1)
   }
 
+  // SOC - Roll for first player: `{ pending, rolls, reroll }` while it runs, `{ first_pid }` once decided
+  updateFirstRollSoc({ pending, rolls, reroll, first_pid }) {
+    if (first_pid) {
+      this.first_roll_pending = []
+      this.#ui.alert_ui.alertFirstPlayer(this.getPlayer(first_pid))
+      return
+    }
+    this.first_roll_pending = pending
+    Object.entries(rolls || {}).forEach(([pid, total]) => this.#ui.all_players_ui.showRoll(+pid, total))
+    const mine = pending.includes(this.#player.id)
+    this.#ui.player_ui.toggleShow(mine)
+    this.#ui.player_ui.toggleDice(mine)
+    this.#ui.alert_ui.alertFirstRoll(mine, reroll && pending.map(pid => this.getPlayer(pid)))
+  }
+
   // SOC - Dice Value Update
   updateDiceValueSoc([d1, d2], pid) {
+    if (this.state === ST.FIRST_ROLL) {
+      this.#isMyPid(pid) && this.#ui.player_ui.toggleDice(false)
+      this.#audio_manager.playDice(this.#isMyPid(pid))
+      this.#ui.all_players_ui.showRoll(pid, d1 + d2)
+      this.#ui.alert_ui.alertFirstRollValue(this.getPlayer(pid), d1, d2)
+      return
+    }
     this.#ui.player_ui.toggleDice(false)
     // After rolling, keep End Turn disabled for a second, then enable
     if (this.#isMyPid(pid)) { this.#ui.player_ui.startEndTurnCooldown(DELAYS.END_TURN_COOLDOWN) }
@@ -336,8 +364,13 @@ export default class Game {
     }, DELAYS.LARGEST_ARMY)
   }
 
-  // SOC - Longest Road
+  // SOC - Longest Road; no `locs`: `pid` lost it and nobody holds it
   updateLongestRoadSoc(pid, locs = []) {
+    if (!locs.length) {
+      this.#ui.alert_ui.alertLongestRoadLost(this.getPlayer(pid))
+      this.#ui.all_players_ui.clearLongestRoad(pid)
+      return
+    }
     setTimeout(_ => {
       this.#audio_manager.playLongestRoad()
       const player = this.getPlayer(pid)
@@ -515,7 +548,10 @@ export default class Game {
     this.#socket_manager.sendGodModeFreeResActivate()
   }
 
-  setTimerSoc(t, pid) { this.#ui.player_ui.resetTimer(t, this.#isMyPid(pid)) }
+  setTimerSoc(t, pid) {
+    const mine = this.state === ST.FIRST_ROLL ? this.first_roll_pending.includes(this.#player.id) : this.#isMyPid(pid)
+    this.#ui.player_ui.resetTimer(t, mine)
+  }
   //#endregion
 
 
@@ -592,7 +628,7 @@ export default class Game {
       } else {
         this.#temp.r1 = id
         this.#board.findEdge(id)?.buildRoad(20) // Temp pid-20 build
-        this.#ui.showEdges([id, ...this.#board.getRoadLocationsFromRoads([id , ...this.#player.pieces.R])])
+        this.#ui.showEdges([id, ...this.#board.getRoadLocationsFromRoads([id , ...this.#player.pieces.R], this.#player.id)])
       }
       return
     }
@@ -631,7 +667,7 @@ export default class Game {
       case 'dK': this.#onRobberMove(true); break
       case 'dR':
         this.#temp = {}
-        this.#ui.showEdges(this.#board.getRoadLocationsFromRoads(this.#player.pieces.R))
+        this.#ui.showEdges(this.#board.getRoadLocationsFromRoads(this.#player.pieces.R, this.#player.id))
         break
       case 'dM':
       case 'dY':
@@ -671,23 +707,23 @@ export default class Game {
     return this.#player.can_play_dc
       && this.#player.closed_cards[type]
       && this.#player.closed_cards[type] > (this.#player.turn_bought_dc[type] || 0)
-      && this.active_pid === this.#player.id
-      && (this.state === ST.PLAYER_ACTIONS || this.state === ST.PLAYER_ROLL)
+      && this.acting_pid === this.#player.id
+      && [ST.PLAYER_ROLL, ST.PLAYER_ACTIONS, ST.PAIRED_ACTIONS].includes(this.state)
       && !this.#player._is_playing_dc
       && (type !== 'dR' || (
         (CONST.PIECES_COUNT.R - this.#player.pieces.R.length) >= 2
         // No legal edge left: the server would refuse it anyway.
-        && this.#board.getRoadLocationsFromRoads(this.#player.pieces.R).length
+        && this.#board.getRoadLocationsFromRoads(this.#player.pieces.R, this.#player.id).length
       ))
   }
   playRobberAudio() { this.#audio_manager.playRobber() }
+  /** Building, buying, trading: my own actions phase or my paired phase */
   #amIActing(pid = this.#player.id) {
-    return this.#isMyPid(pid)
-      && (this.state === ST.SPECIAL_BUILD ? pid === this.builder_pid
-        : pid === this.active_pid && this.state === ST.PLAYER_ACTIONS)
+    return this.#isMyPid(pid) && pid === this.acting_pid
+      && (this.state === ST.PLAYER_ACTIONS || this.state === ST.PAIRED_ACTIONS)
   }
-  /** Seat the game waits on: the builder in a window, else the turn's owner */
-  get acting_pid() { return this.builder_pid ?? this.active_pid }
+  /** Seat the game waits on: the partner in a paired phase, else the turn's owner */
+  get acting_pid() { return this.partner_pid ?? this.active_pid }
   saveStatus(text) { this.#socket_manager.saveStatus(text) }
   #isMyPid(pid) { return pid === this.#player.id }
 

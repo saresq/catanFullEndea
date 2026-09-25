@@ -38,13 +38,20 @@ const buildDeck = ({ knights, powers, vps }) => [
   ...Array(vps).fill('dVp'),
 ]
 
-/** Rules & dev card deck per player count. Ordered biggest tier first. */
+/**
+ * Rules & dev card deck per player count. Ordered biggest tier first. Each tier above the base
+ * adds what the 5-6 player expansion adds: 6 Knights and one of each power card (`t` steps up);
+ * the Victory Point counts are this game's own escalation.
+ */
 export const PLAYER_TIERS = [
-  { min: 9, win_points: 13, robber_hand_limit: 10, deck: buildDeck({ knights: 30, powers: 5, vps: 10 }) },
-  { min: 7, win_points: 12, robber_hand_limit: 10, deck: buildDeck({ knights: 24, powers: 4, vps: 8 }) },
-  { min: 5, win_points: 11, robber_hand_limit: 8, deck: buildDeck({ knights: 20, powers: 3, vps: 6 }) },
-  { min: 2, win_points: 10, robber_hand_limit: 7, deck: buildDeck({ knights: 14, powers: 2, vps: 5 }) },
-]
+  { min: 9, win_points: 13, vps: 10 },
+  { min: 7, win_points: 12, vps: 8 },
+  { min: 5, win_points: 10, vps: 6 },
+  { min: 2, win_points: 10, vps: 5 },
+].map(({ min, win_points, vps }, i, tiers) => {
+  const t = tiers.length - 1 - i
+  return { min, win_points, deck: buildDeck({ knights: 14 + 6 * t, powers: 2 + t, vps }) }
+})
 
 /** @param {number} player_count */
 export const playerTier = player_count =>
@@ -124,12 +131,28 @@ export const mapFitsPlayers = (mapkey, player_count) => {
   return !map || map.max_players >= player_count
 }
 
+/**
+ * What a new game shuffles. A preset always shuffles everything: no game is ever tied to the
+ * arrangement printed in the rulebook. A hand-made map keeps the editor's "keep my layout" options.
+ * @returns {'none'|'all'|string} a `BoardShuffler.shuffle` type
+ */
+export const shuffleTypeFor = ({ mapkey, map_shuffle, do_not_shuffle_resources, do_not_shuffle_numbers }) => {
+  if (mapOf(mapkey)) return 'all'
+  if (!map_shuffle || map_shuffle === 'none') return 'none'
+  const parts = []
+  if (!do_not_shuffle_resources) parts.push('tile')
+  if (!do_not_shuffle_numbers) parts.push('number')
+  if (map_shuffle === 'all' || map_shuffle.includes('port')) parts.push('port')
+  return parts.length ? parts.join('-') : 'none'
+}
+
 export const GAME_CONFIG = {
   // private_game: true,
   player_count: 3,
   win_points: 10,
   timer: true,
-  strategize_time: 10,
+  /** Seconds the roll for first player waits before rolling for whoever has not */
+  first_roll_time: 10,
   initial_build_time: 60,
   auto_roll: false,
   roll_time: 15,
@@ -137,8 +160,6 @@ export const GAME_CONFIG = {
   trade_time_bonus_seconds: 20, // Bonus seconds added on first trade of a turn
   robber_drop_time: 30,
   robber_move_time: 30,
-  /** Seconds each special building window stays open (5+ players) */
-  special_build_time: 15,
   max_trade_requests: 4,
   /** Bots may open player trade requests (tryhard does); they answer requests regardless */
   bot_trades: true,
@@ -149,7 +170,7 @@ export const GAME_CONFIG = {
   alert_time: 3,
   largest_army_count: 3,
   longest_road_count: 5,
-  robber_hand_limit: 7, // Default hand limit for triggering robber (will be adjusted based on player count)
+  robber_hand_limit: 7, // Discard on a 7 only above this many resource cards, at every player count
   mapkey: DEFAULT_MAPKEY,
   /** @type {false|'none'|'all'|'number'|'port'|'tile'|'(combo of number-port-tile)'} */
   map_shuffle: 'all',
@@ -207,17 +228,18 @@ export const icon = (name, cls = '') =>
   `<svg class="lucide lucide-${name}${cls ? ' ' + cls : ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${LUCIDE[name]}</svg>`
 
 export const GAME_STATES = {
+  FIRST_ROLL: 'first_roll',
   INITIAL_SETUP: 'INITIAL_SETUP',
   PLAYER_ROLL: 'player_roll',
   PLAYER_ACTIONS: 'player_actions',
   ROBBER_DROP: 'drop_resource_for_robber',
   ROBBER_MOVE: 'moving_robber',
-  SPECIAL_BUILD: 'special_build',
+  PAIRED_ACTIONS: 'paired_actions',
   END: 'end',
 }
 
-/** Games of this many seats or more get a special building phase after every turn. */
-export const SPECIAL_BUILD_MIN_PLAYERS = 5
+/** Games of this many seats or more pair players: after each turn other seats take an action phase. */
+export const PAIRED_MIN_PLAYERS = 5
 
 export const SOCKET_EVENTS = {
   // Client Sends…
@@ -249,6 +271,7 @@ export const SOCKET_EVENTS = {
   YEAR_OF_PLENTY: 'year_of_plenty_resource/ack', // Private
   // Server Sends…
   JOINED_WAITING_ROOM: 'joined_waiting_room',
+  FIRST_ROLL: 'first_player_roll',
   PLAYER_COLOR_UPDATED: 'waiting_room_player_color_updated',
   STATE_CHANGE: 'state_change',
   SET_TIMER: 'set_timer',

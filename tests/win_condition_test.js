@@ -1,10 +1,11 @@
-// A player wins only on their own turn: points reached any other time are checked again when their
-// turn starts. The one exception is the last player standing.
+// A player wins only while acting: on their own turn, or in their paired action phase. Points
+// reached any other time are checked again when their turn starts. The one exception is the last
+// player standing.
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import Game from '../models/game.js'
 import * as CONST from '../public/js/const.js'
-import { until, tick } from './helpers.js'
+import { until, tick, playToFirstRoll } from './helpers.js'
 import { setHand } from './bot_helpers.js'
 
 const ST = CONST.GAME_STATES
@@ -16,14 +17,12 @@ function newGame(player_count) {
     config: { player_count, timer: false }, onGameEnd: () => {},
   })
   for (let i = 2; i <= player_count; i++) { game.join('P' + i) }
-  game.start()
-  let guard = 0
-  while (game.state === ST.INITIAL_SETUP && guard++ < 40) { game.initialBuildIO(game.active_pid) }
+  playToFirstRoll(game)
   game.dice = { roll: () => ({ d1: 2, d2: 3 }) }
   return game
 }
 
-/** The active seat rolls and ends its turn, every hand emptied so no building window opens. */
+/** The active seat rolls and ends its turn, every hand emptied so no paired phase opens. */
 function playTurn(game) {
   game.playerRollIO(game.active_pid)
   game.players.forEach(p => setHand(p, {}))
@@ -95,22 +94,32 @@ test('hidden victory point cards count at the turn start', async () => {
   assert.equal(game.end_context.dVp, 1)
 })
 
-test('reaching the target in a building window waits for the builder\'s turn', async () => {
+test('reaching the target in a paired action phase wins at once', async () => {
   const game = newGame(5)
   game.playerRollIO(1)
-  game.players.forEach(p => setHand(p, p.id === 3 ? { W: 2, O: 3 } : {}))
-  const p3 = game.getPlayer(3)
-  upTo(game, p3, 1)
+  game.players.forEach(p => setHand(p, p.id === 4 ? { W: 2, O: 3 } : {}))
+  const p4 = game.getPlayer(4)
+  upTo(game, p4, 1)
   game.endTurnIO(1)
-  assert.equal(game.builder_pid, 3)
-  game.clickedLocationIO(3, CONST.LOCS.CORNER, p3.pieces.S[0]) // a city: at the target
-  assert.equal(p3.public_vps + p3.private_vps, game.config.win_points)
+  assert.equal(game.partner_pid, 4)
+  game.clickedLocationIO(4, CONST.LOCS.CORNER, p4.pieces.S[0]) // a city: at the target
+  assert.equal(await winner(game), 4)
+  assert.equal(game.end_context.C, 1)
+})
+
+test('an award passed to a third seat during a paired phase waits for that seat', async () => {
+  const game = newGame(5)
+  game.playerRollIO(1)
+  game.players.forEach(p => setHand(p, p.id === 4 ? { L: 1, B: 1 } : {}))
+  game.endTurnIO(1)
+  assert.equal(game.partner_pid, 4)
+  const p2 = game.getPlayer(2)
+  upTo(game, p2, 2)
+  p2.toggleLongestRoad(true) // an award swing during player 4's phase
   await stillPlaying(game)
-  game.endTurnIO(3)
-  assert.equal(game.active_pid, 2)
-  await stillPlaying(game)
-  playTurn(game) // player 3's turn starts
-  assert.equal(await winner(game), 3)
+  game.endTurnIO(4)
+  assert.equal(game.active_pid, 2, 'player 2\'s turn starts')
+  assert.equal(await winner(game), 2)
 })
 
 test('the last player standing still wins at once', async () => {

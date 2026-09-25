@@ -143,6 +143,18 @@
             display: block;
         }
 
+        /* The seat's roll for first player, until placement starts */
+        .first-roll {
+            flex: none;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0 var(--space-1);
+            border-radius: var(--space-1);
+            background: rgb(255 255 255 / 0.25);
+
+            &:empty { display: none; }
+        }
+
         /* The host's way to hand a quit seat to a bot; only on quit seats, only for the host */
         .replace-bot {
             display: none;

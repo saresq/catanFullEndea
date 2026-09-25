@@ -100,8 +100,9 @@ Private events are sent only to a specific player's socket (never broadcast). Ma
 | `JOINED_WAITING_ROOM` | `joined_waiting_room` | room | `Player.toJSON()` | lobby add |
 | `PLAYER_COLOR_UPDATED` | `waiting_room_player_color_updated` | room | `(pid, color_id)` | lobby color change |
 | `CHANGE_CONFIG` | `change_game_config` | room | `config` | lobby config sync |
-| `STATE_CHANGE` | `state_change` | room | `(state, active_pid, turn)` | state machine transition |
-| `SET_TIMER` | `set_timer` | room | `(seconds, active_pid)` | turn/action timer broadcast |
+| `STATE_CHANGE` | `state_change` | room | `(state, acting_pid, turn)` | state machine transition; `acting_pid` is the partner in `PAIRED_ACTIONS`, else the active player |
+| `SET_TIMER` | `set_timer` | room | `(seconds, acting_pid)` | turn/action timer broadcast |
+| `FIRST_ROLL` | `first_player_roll` | room | `{ pending, rolls, reroll }` while it runs, `{ first_pid }` once decided | roll for first player |
 | `INITIAL_SETUP` | `ask/return_initial_setup` | room | `(active_pid, turn)` | prompt active player to place |
 | `BUILD` | `build` | room | `(pid, piece: 'R'\|'S'\|'C', loc_id)` | piece placed |
 | `UPDATE_PLAYER` | `update_player_data` | **PRIVATE** | `(player_json, key, data)` | sync own resources/pieces/dev cards |
@@ -118,7 +119,7 @@ Private events are sent only to a specific player's socket (never broadcast). Ma
 | `MONOPOLY` | `monopoly_resource/ack` | **PRIVATE** | `(pid, resource, total_taken, self_count)` | monopoly result |
 | `YEAR_OF_PLENTY` | `year_of_plenty_resource/ack` | **PRIVATE** | `(pid, {res_key: n})` | year of plenty result |
 | `LARGEST_ARMY` | `largest_army` | room | `(pid, knight_count)` | title holder changed |
-| `LONGEST_ROAD` | `longest_road` | room | `(pid, [loc_ids])` | title holder changed |
+| `LONGEST_ROAD` | `longest_road` | room | `(pid, [loc_ids])` | title holder changed; an empty list means `pid` lost it and nobody holds it |
 | `GAME_END` | `game_end` | room | `{winner_pid, end_reason, final_vps}` | terminal state |
 | `PLAYER_QUIT` | `player_quit` | room | `(pid)` | disconnect notice |
 | `SEAT_TAKEN_OVER` | `seat_taken_over_by_bot` | room | `(player_json)` | a bot took a quit seat: new name, `is_bot`, `removed: false` |
@@ -142,11 +143,13 @@ States live in `public/js/const.js:190-200` (`GAME_STATES`) and are mirrored in 
 
 ```
 null            → pre-game lobby (waiting_room view)
-INITIAL_SETUP   → turns 1-2, each player places 1 settlement + 1 road
+FIRST_ROLL      → every seat rolls once for first player; ties re-roll among the tied
+INITIAL_SETUP   → turns 1-2, each player places 1 settlement + 1 road, snake order from the first player
 PLAYER_ROLL     → active player must roll
 PLAYER_ACTIONS  → active player can build/trade/buy/play dev cards/end turn
 ROBBER_DROP     → on 7: all players with >hand_limit cards must discard
 ROBBER_MOVE     → active player moves robber + steals
+PAIRED_ACTIONS  → 5+ players, after PLAYER_ACTIONS: a paired seat's own action phase (no player trades); one or more per turn
 END             → game over
 ```
 
@@ -166,8 +169,8 @@ Every mutation of `Game.state` fires `STATE_CHANGE` broadcast via the `io_manage
 4. Client emits `PLAYER_ONLINE`; server sets `player.ready = true`.
 5. Host can emit `CHANGE_CONFIG` and `PLAYER_COLOR_CHANGE`; server rebroadcasts.
 6. Host emits `START_GAME`. Server calls `game.start()`:
-   - `state ← INITIAL_SETUP`, `active_pid ← 1`, `turn ← 1`.
-   - Broadcasts `STATE_CHANGE` then `INITIAL_SETUP(active_pid, turn)`.
+   - `state ← FIRST_ROLL`, `turn ← 1`: every seat rolls once (`ROLL_DICE`, answered with `DICE_VALUE`), ties re-roll among the tied, the timer rolls for whoever has not. `FIRST_ROLL` broadcasts who is still to roll and then `{ first_pid }`.
+   - `state ← INITIAL_SETUP`, `active_pid ← first_pid`. Broadcasts `STATE_CHANGE` then `INITIAL_SETUP(active_pid, turn)`.
 
 ### 7.2 Initial placement (turns 1-2, snake order)
 

@@ -2,7 +2,7 @@
 import Game from '../models/game.js'
 import { attachBots } from '../models/bots/controller.js'
 import * as CONST from '../public/js/const.js'
-import { until } from './helpers.js'
+import { until, rollOff } from './helpers.js'
 
 const ST = CONST.GAME_STATES
 
@@ -26,8 +26,12 @@ export function botLobby({ humans = 1, bots = [], config = {}, bot_opts, io = sp
   return { game, controller }
 }
 
-/** Human seats place at random whenever it is their turn, until the first roll is due. */
+/**
+ * Seat 1 wins the roll-off (decided before any bot tick lands), then human seats place at random
+ * whenever it is their turn, until the first roll is due.
+ */
 export async function playSetup(game) {
+  if (game.state === ST.FIRST_ROLL) { rollOff(game) }
   await until(() => {
     if (game.state !== ST.INITIAL_SETUP) return true
     const active = game.getActivePlayer()

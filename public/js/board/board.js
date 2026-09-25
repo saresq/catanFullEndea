@@ -144,14 +144,19 @@ export default class Board {
     return corners
   }
 
-  getRoadLocationsFromRoads(existing_roads = []) {
+  /**
+   * Empty edges a road may go on: those sharing a corner with one of `existing_roads`, where that
+   * corner is empty or holds `pid`'s own building. Another player's building blocks the corner.
+   * @param {number[]} existing_roads edge ids
+   * @param {number} pid the builder
+   */
+  getRoadLocationsFromRoads(existing_roads = [], pid) {
     if (!existing_roads.length) return []
+    const open = corner => (!corner.player_id || corner.player_id === pid) ? corner.getEdges(-1) : []
     const valid_edges = existing_roads
       .reduce((mem, r_loc) => {
         const edge = this.findEdge(r_loc)
-        const c1_edges = edge?.corner1.getEdges(-1)
-        const c2_edges = edge?.corner2.getEdges(-1)
-        return mem.concat(c1_edges, c2_edges)
+        return edge ? mem.concat(open(edge.corner1), open(edge.corner2)) : mem
       }, [])
       .filter(_ => !_.corner1.surroundedBySea() && !_.corner2.surroundedBySea()) // Not into sea
       .map(e => e.id)
