@@ -32,8 +32,10 @@ const portsOf = generic => ({ '*3': generic, S2: 1, L2: 1, B2: 1, O2: 1, W2: 1 }
 
 const TIERS = [
   { id: 'extended', players: 6, land: { C: 5, J: 6, G: 6, M: 5, F: 6, D: 2 }, hexes: 30, discs: discsOf(2, 3), ports: portsOf(6) },
-  { id: 'large', players: 8, land: { C: 7, J: 8, G: 8, M: 7, F: 8, D: 3 }, hexes: 41, discs: discsOf(3, 4), ports: portsOf(8) },
-  { id: 'xlarge', players: 10, land: { C: 9, J: 10, G: 10, M: 9, F: 10, D: 4 }, hexes: 52, discs: discsOf(4, 5), ports: portsOf(10) },
+  // The large preset is a hand-tidied shape, one hill over the expansion's count and its discs to match
+  { id: 'large', players: 8, land: { C: 8, J: 8, G: 8, M: 7, F: 8, D: 3 }, hexes: 42, discs: { ...discsOf(4, 4), 10: 3 }, ports: portsOf(8) },
+  // Hand-tidied too: a hill for a pasture, one 10 as a 2, and one generic port fewer
+  { id: 'xlarge', players: 10, land: { C: 10, J: 10, G: 9, M: 9, F: 10, D: 4 }, hexes: 52, discs: { ...discsOf(4, 5), 2: 5, 10: 4 }, ports: portsOf(9) },
 ]
 
 TIERS.forEach(({ id, players, land, hexes, discs, ports }) => {
@@ -64,6 +66,10 @@ test('presets always shuffle everything; a hand-made map keeps the editor\'s opt
   assert.equal(CONST.shuffleTypeFor({ mapkey: custom, ...keep }), 'none')
   assert.equal(CONST.shuffleTypeFor({ mapkey: custom, map_shuffle: 'all', do_not_shuffle_numbers: true }), 'tile-port')
   assert.equal(CONST.shuffleTypeFor({ mapkey: custom, map_shuffle: 'all' }), 'tile-number-port')
+  // What the editor's "Play this map" sends: land, ports, both or neither
+  assert.equal(CONST.shuffleTypeFor({ mapkey: custom, map_shuffle: 'tile-number' }), 'tile-number')
+  assert.equal(CONST.shuffleTypeFor({ mapkey: custom, map_shuffle: 'port' }), 'port')
+  assert.equal(CONST.shuffleTypeFor({ mapkey: custom, map_shuffle: 'tile-number-port' }), 'tile-number-port')
 })
 
 test('a map picked in the lobby brings its shuffle rule; the board shuffles once, at start', () => {
