@@ -277,9 +277,11 @@ export default class Game {
     if (this.#isMyPid(pid)) { this.#ui.player_ui.startEndTurnCooldown(DELAYS.END_TURN_COOLDOWN) }
     this.#audio_manager.playDice(this.#isMyPid(pid))
     const total = d1 + d2
+    // A bot can move the robber before the delay is up: lifting it off then would hide it on its new tile
+    const robber_at_roll = this.#board.robber_loc
     total === CONST.ROBBER_ROLL && setTimeout(_ => {
       this.#audio_manager.playRobber()
-      this.#ui.board_ui.animateRobber()
+      this.#board.robber_loc === robber_at_roll && this.#ui.board_ui.animateRobber()
     }, DELAYS.ROBBER_AFTER_DICE)
     const robbed_tile = this.#board.getRobbedTile()
     const rob_tile_type = +robbed_tile?.num === total && robbed_tile.type

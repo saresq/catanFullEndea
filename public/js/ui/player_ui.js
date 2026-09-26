@@ -14,6 +14,8 @@ export default class PlayerUI {
   #onHandUpdated
   #is_end_cooldown = false
   #end_cooldown_timer = null
+  /** What the game last asked of End Turn; the cooldown restores this, not always on (a 7 goes to the robber first) */
+  #end_wanted = false
   player; has_timer; timer; auto_roll; hand
 
   get maxVisualCards() { return window.innerWidth <= CONST.MOBILE_MAX_WIDTH ? 3 : 5 }
@@ -369,6 +371,10 @@ export default class PlayerUI {
   }
   /** The same button ends a paired action phase */
   setUnifiedModeEnd(enabled) {
+    this.#end_wanted = !!enabled
+    this.#renderUnifiedEnd()
+  }
+  #renderUnifiedEnd() {
     if (!this.$dice) return
     this.$dice.dataset.mode = 'end'
     this.$dice.classList.add('end-turn')
@@ -376,7 +382,7 @@ export default class PlayerUI {
     this.$dice.setAttribute('aria-label', t('dock.end_turn'))
     const label = this.$dice.querySelector('.label') || this.#ensureDiceLabel()
     label.innerHTML = CONST.icon('skip-forward')
-    const effective = !!enabled && !this.#is_end_cooldown
+    const effective = this.#end_wanted && !this.#is_end_cooldown
     this.toggleAction(this.$dice, effective)
   }
 
@@ -387,10 +393,10 @@ export default class PlayerUI {
     // Clear previous timer if any
     if (this.#end_cooldown_timer) { clearTimeout(this.#end_cooldown_timer); this.#end_cooldown_timer = null }
     // Switch to End mode but keep disabled
-    this.setUnifiedModeEnd(false)
+    this.#renderUnifiedEnd()
     this.#end_cooldown_timer = setTimeout(() => {
       this.#is_end_cooldown = false
-      this.setUnifiedModeEnd(true)
+      this.#renderUnifiedEnd()
       this.#end_cooldown_timer = null
     }, ms)
   }
