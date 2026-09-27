@@ -59,6 +59,14 @@ export default class AnimationUI {
       </div>
     `
     setTimeout(_ => this.$el.classList.add('start'), out ? 100 : 300)
+    // Once faded out, drop the card: a 3D-transformed layer left over the board can make iOS Safari
+    // skip painting the pieces under it. Not if a newer card has taken the zone meanwhile.
+    const $card = this.$el.firstElementChild
+    setTimeout(_ => {
+      if (this.$el.firstElementChild !== $card) return
+      this.$el.className = 'animation-zone'
+      this.$el.innerHTML = ''
+    }, out ? 1000 : 2600)
   }
 
   /**

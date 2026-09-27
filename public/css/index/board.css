@@ -3,20 +3,28 @@
  * -------------
 */
 /*
- * Robber targets pulse on one beat: the board animates --glow and every candidate tile reads it,
- * so they can never drift out of phase (a per-tile animation restarted whenever a tile was
- * hovered). Every target only gets lighter on the beat, never darker: two things moving in
- * opposite directions reads as out of sync and makes people dizzy.
+ * Robber targets pulse on one beat: every candidate token runs its own keyframes, all started by
+ * the same showTiles() call, and hovering one never touches its animation (the hover look wins
+ * with !important instead), so none restarts and drifts out of phase. Plain keyframes on the
+ * tokens, not a custom property animated on .board: that restyled every piece on the board each
+ * frame, a suspect for iOS Safari dropping the pieces while the robber moves. Every target only
+ * gets lighter on the beat, never darker: two things moving in opposite directions reads as out of
+ * sync and makes people dizzy.
  */
-@property --glow {
-    syntax: '<number>';
-    inherits: true;
-    initial-value: 0;
+.board {
+    --token-lit: color-mix(in srgb, var(--sand-color), #fff 45%);
+    --token-halo: color-mix(in srgb, var(--sand-color) 80%, #fff);
 }
 
-@keyframes glow-pulse {
-    from { --glow: 0; }
-    to { --glow: 1; }
+@keyframes token-glow {
+    from { background-color: var(--sand-color); box-shadow: 0 0 3px 0 var(--token-halo); }
+    to { background-color: var(--token-lit); box-shadow: 0 0 12px 3px var(--token-halo); }
+}
+
+/* The desert's see-through ghost token */
+@keyframes token-ghost-glow {
+    from { background-color: color-mix(in srgb, var(--sand-color) 65%, transparent); box-shadow: 0 0 3px 0 var(--token-halo); }
+    to { background-color: color-mix(in srgb, var(--token-lit) 65%, transparent); box-shadow: 0 0 12px 3px var(--token-halo); }
 }
 
 /*
@@ -43,10 +51,6 @@
 
     &.blur {
         filter: blur(2px);
-    }
-
-    &:has(.tile.shown) {
-        animation: glow-pulse .7s ease-in-out infinite alternate;
     }
 
     .row {
@@ -114,13 +118,9 @@
         /* Tokens stay sand on the beat: lighter plus a sand halo (brightness pushed them yellow).
            The desert has no token, so it gets a see-through ghost one that pulses the same way;
            the tile itself stays still, or it would wash the ghost out at the peak. */
-        &.shown:not(:has(.background:hover, .background~.number:hover)) {
-            --token-glow-bg: color-mix(in srgb, var(--sand-color), #fff calc(var(--glow) * 45%));
-            --token-glow-halo: 0 0 calc(3px + var(--glow) * 9px) calc(var(--glow) * 3px) color-mix(in srgb, var(--sand-color) 80%, #fff);
-
+        &.shown {
             .number {
-                background-color: var(--token-glow-bg);
-                box-shadow: var(--token-glow-halo);
+                animation: token-glow .7s ease-in-out infinite alternate;
             }
 
             &.D::after {
@@ -133,8 +133,7 @@
                 border-radius: 50%;
                 z-index: 3;
                 pointer-events: none;
-                background-color: color-mix(in srgb, var(--token-glow-bg) 65%, transparent);
-                box-shadow: var(--token-glow-halo);
+                animation: token-ghost-glow .7s ease-in-out infinite alternate;
             }
         }
 
@@ -149,15 +148,21 @@
                 filter: drop-shadow(5px 5px 5px #000) sepia(.8) brightness(0.9);
             }
 
+            /* !important: it has to beat the running token-glow, which keeps going underneath */
             .number {
                 margin-left: 45px;
                 margin-top: 57px;
-                animation: none;
-                background: #999;
+                background: #999 !important;
+                box-shadow: none !important;
 
                 &::before {
                     color: #666;
                 }
+            }
+
+            /* Hidden, not removed: taking its animation away would restart it out of phase */
+            &.D::after {
+                opacity: 0;
             }
         }
 
@@ -798,9 +803,16 @@
 
 @media (prefers-reduced-motion: reduce) {
     /* Pieces just appear; robber targets hold a steady glow instead of pulsing */
-    .board:has(.tile.shown) {
+    .board .tile.shown .number {
         animation: none;
-        --glow: .6;
+        background-color: color-mix(in srgb, var(--sand-color), #fff 27%);
+        box-shadow: 0 0 8px 2px var(--token-halo);
+    }
+
+    .board .tile.shown.D::after {
+        animation: none;
+        background-color: color-mix(in srgb, color-mix(in srgb, var(--sand-color), #fff 27%) 65%, transparent);
+        box-shadow: 0 0 8px 2px var(--token-halo);
     }
 
     /* !important: the rules they undo are nested deeper, so they out-rank these */
