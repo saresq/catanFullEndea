@@ -841,77 +841,37 @@
  * WATER (water_ui.js)
  * -------------
  * Depth, ripples, coast foam and swell, drawn under the tiles inside .board so they pan and zoom
- * with it. Only transform and opacity animate. Without .wfx (effect off, or not ready yet) the
- * sea is the plain white hex per tile, as before.
+ * with it. Every layer is a small canvas the compositor scales for free: no CSS masks, which a
+ * phone re-rasterises at every pinch step. Only transform and opacity animate. Without .wfx
+ * (effect off, or not ready yet) the sea is the plain white hex per tile, as before.
 */
-.board {
-    --wfx-hi: rgb(230 245 255 / .42);
-    --wfx-foam: #f2f9fd;
-    --wfx-hexline: rgb(255 255 255 / .16);
-}
-
-:root.godmode .board {
-    --wfx-hi: rgb(1 186 239 / .55);
-    --wfx-foam: #01baef;
-    --wfx-hexline: rgb(1 186 239 / .18);
-}
-
 .board .wfx-water {
     position: absolute;
     z-index: -5;
     pointer-events: none;
     opacity: 0;
     transition: opacity .8s ease;
-    /* The ripple tiles overhang their box by one period to loop without a seam; clip it */
+    /* The ripple canvases overhang by one period so their drift loops without a seam; clip it */
     overflow: hidden;
-    contain: paint;
 
     &.shown {
         opacity: 1;
     }
 
-    > * {
+    canvas {
         position: absolute;
-        inset: 0;
+        left: 0;
+        top: 0;
         width: 100%;
         height: 100%;
-        overflow: hidden;
     }
 }
 
-.board .wfx-masked {
-    -webkit-mask-size: 100% 100%;
-    mask-size: 100% 100%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-}
-
-/* The depth canvas is the water now: sea tiles keep only a faint hex outline */
-.board.wfx .tile.S .background {
-    opacity: 1;
-    background: var(--wfx-hexline);
-    -webkit-mask: url(/images/tiles/Sea-outline.png) center / 100% 100% no-repeat;
-    mask: url(/images/tiles/Sea-outline.png) center / 100% 100% no-repeat;
-}
-
-/* A patch of colour cut by a repeating SVG mask, drifting exactly one period per loop */
-.board .wfx-ripples {
-    /* Zoomed far out the strokes shrink into a moiré hatch: fade them out below 40% zoom,
-       gone at 20%. --board-scale comes from board_ui. */
+/* Drift exactly one period per loop. Zoomed far out the strokes shrink into a moiré hatch: fade
+   them out below 40% zoom, gone at 20%. --board-scale comes from board_ui. */
+.board .wfx-ripple {
     opacity: calc(.8 * clamp(0, (var(--board-scale, 1) - .2) / .2, 1));
-
-    .wfx-pat {
-        position: absolute;
-        left: calc(-1 * var(--p));
-        top: calc(-1 * var(--p));
-        width: calc(100% + 2 * var(--p));
-        height: calc(100% + 2 * var(--p));
-        background: var(--wfx-hi);
-        -webkit-mask-size: var(--p) var(--p);
-        mask-size: var(--p) var(--p);
-        animation: wfx-drift var(--dur) linear infinite;
-        will-change: transform;
-    }
+    animation: wfx-drift var(--dur) linear infinite;
 }
 
 @keyframes wfx-drift {
@@ -919,19 +879,15 @@
     to { transform: translate(var(--dx), var(--dy)); }
 }
 
-.board .wfx-foam {
-    background: var(--wfx-foam);
+.board .wfx-coast {
+    opacity: .25;
+    animation: wfx-breathe 5s ease-in-out infinite;
+}
 
-    &.coast {
-        opacity: .25;
-        animation: wfx-breathe 5s ease-in-out infinite;
-    }
-
-    /* One broken swell line off the coast, surfacing and sinking slowly */
-    &.swell {
-        opacity: 0;
-        animation: wfx-swell 8s ease-in-out infinite;
-    }
+/* One broken swell line off the coast, surfacing and sinking slowly */
+.board .wfx-swell {
+    opacity: 0;
+    animation: wfx-swell 8s ease-in-out infinite;
 }
 
 @keyframes wfx-breathe {
@@ -945,6 +901,17 @@
     80%, 100% { opacity: 0; }
 }
 
+/* The depth canvas is the water now: sea tiles keep only a faint hex outline, a plain background
+   image rather than a mask, so zooming does not re-rasterise thirty masked tiles */
+.board.wfx .tile.S .background {
+    opacity: 1;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 151 176' preserveAspectRatio='none'%3E%3Cpath d='M75.5 1.5 149.5 44.25v87.5L75.5 174.5 1.5 131.75v-87.5z' fill='none' stroke='%23fff' stroke-opacity='.16' stroke-width='1.6'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+
+:root.godmode .board.wfx .tile.S .background {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 151 176' preserveAspectRatio='none'%3E%3Cpath d='M75.5 1.5 149.5 44.25v87.5L75.5 174.5 1.5 131.75v-87.5z' fill='none' stroke='%2301baef' stroke-opacity='.18' stroke-width='1.6'/%3E%3C/svg%3E");
+}
+
 /* Under a dialog the board is blurred: a still layer is blurred once, a moving one every frame */
 .board.blur .wfx-water * {
     animation-play-state: paused;
@@ -955,7 +922,7 @@
         animation: none !important;
     }
 
-    .board .wfx-foam.swell {
+    .board .wfx-swell {
         display: none;
     }
 }
