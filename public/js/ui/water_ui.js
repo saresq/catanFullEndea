@@ -146,17 +146,18 @@ export default class WaterUI {
     $water.append(
       $canvas,
       $ripples,
-      masked('wfx-foam coast', this.#maskUrl(SD.coastAlpha)),
-      masked('wfx-foam swell', this.#maskUrl(SD.swellAlpha)),
+      masked('wfx-foam coast', this.#maskUrl((d, edge, x, y) => SD.coastAlpha(d, x, y))),
+      masked('wfx-foam swell', this.#maskUrl((d, edge, x, y) => SD.swellAlpha(d, x, y))),
     )
     this.#$board.prepend($water)
     this.#$water = $water
     this.#$canvas = $canvas
   }
 
-  /** An alpha mask from the field, white where the effect shows. */
+  /** An alpha mask from the field, white where the effect shows. `alphaOf(d, edge, x, y)`. */
   #maskUrl(alphaOf) {
-    const { cols, rows, minX, minY } = this.#grid
+    const { cols, rows, minX, minY, W } = this.#grid
+    const toTiles = CELL / W
     const c = document.createElement('canvas')
     c.width = cols
     c.height = rows
@@ -165,7 +166,8 @@ export default class WaterUI {
       for (let i = 0; i < cols; i++) {
         const k = (j * cols + i) * 4
         data[k] = data[k + 1] = data[k + 2] = 255
-        data[k + 3] = 255 * alphaOf(this.#field[j * cols + i], minX + (i + .5) * CELL, minY + (j + .5) * CELL)
+        const edge = Math.min(i, cols - 1 - i, j, rows - 1 - j) * toTiles
+        data[k + 3] = 255 * alphaOf(this.#field[j * cols + i], edge, minX + (i + .5) * CELL, minY + (j + .5) * CELL)
       }
     }
     ctx.putImageData(img, 0, 0)

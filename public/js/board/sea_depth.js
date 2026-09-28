@@ -100,8 +100,14 @@ export function rampColor(stops, t) {
 export const noise = (x, y) =>
   .5 + .25 * Math.sin(x * .031 + Math.sin(y * .017) * 2.1) + .25 * Math.sin(y * .027 + Math.sin(x * .013) * 1.7)
 
-/** Ripple strength: full at the coast, a fifth of it about three tiles out, none on land. */
-export const shoreAlpha = d => d < -.05 ? 0 : 1 - .8 * smoothstep(0, 2.8, d)
+/**
+ * Ripple strength: full at the coast, a fifth of it about three tiles out, none on land, and none
+ * at the edge of the drawn water: the page background beyond it has no ripples, so any left there
+ * outline the water as a lighter box when zoomed out.
+ * @param {number} d distance to land, @param {number} edge distance to the drawn edge, both in tiles
+ */
+export const shoreAlpha = (d, edge) =>
+  d < -.05 ? 0 : (1 - .8 * smoothstep(0, 2.8, d)) * smoothstep(0, EDGE_BLEND + 1, edge)
 
 /** The foam line just outside the beaches, uneven along the coast. */
 export const coastAlpha = (d, x, y) => Math.exp(-(((d - .14) / .05) ** 2)) * (.6 + .4 * noise(x, y))

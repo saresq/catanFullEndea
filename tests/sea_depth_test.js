@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  ENDEA_BLUE, EDGE_BLEND, computeField, depthAt, depthCurve, hexRgb, rampColor, sdHex, waterStops,
+  ENDEA_BLUE, EDGE_BLEND, computeField, depthAt, depthCurve, hexRgb, rampColor, sdHex, shoreAlpha, waterStops,
 } from '../public/js/board/sea_depth.js'
 
 const W = 149, H = 129
@@ -61,4 +61,10 @@ test('computeField can be cancelled between slices', async () => {
     { land: [{ x: 0, y: 0 }], W, minX: -3000, minY: -3000, cols: 1000, rows: 1000, cell: 6 },
     { sliceMs: 0, isCancelled: () => true })
   assert.equal(field, null)
+})
+
+test('ripples fade out at the edge of the drawn water', () => {
+  assert.equal(shoreAlpha(3, 0), 0)
+  assert.ok(shoreAlpha(0, 10) > .99)
+  assert.equal(shoreAlpha(-1, 10), 0)
 })

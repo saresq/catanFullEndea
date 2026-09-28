@@ -896,7 +896,9 @@
 
 /* A patch of colour cut by a repeating SVG mask, drifting exactly one period per loop */
 .board .wfx-ripples {
-    opacity: .8;
+    /* Zoomed far out the strokes shrink into a moiré hatch: fade them out below 40% zoom,
+       gone at 20%. --board-scale comes from board_ui. */
+    opacity: calc(.8 * clamp(0, (var(--board-scale, 1) - .2) / .2, 1));
 
     .wfx-pat {
         position: absolute;
