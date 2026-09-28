@@ -840,9 +840,9 @@
 /* --------------------------------------
  * WATER (water_ui.js)
  * -------------
- * Depth, ripples, coast foam and swell, drawn under the tiles inside .board so they pan and zoom
- * with it. Every layer is a small canvas the compositor scales for free: no CSS masks, which a
- * phone re-rasterises at every pinch step. Only transform and opacity animate. Without .wfx
+ * Depth, ripples, coast foam and swell, all in one canvas redrawn by script, under the tiles
+ * inside .board so it pans and zooms with it. No CSS masks or animated layers: those split the
+ * board into many composited layers that blink on Chromium phones during a pinch. Without .wfx
  * (effect off, or not ready yet) the sea is the plain white hex per tile, as before.
 */
 .board .wfx-water {
@@ -851,54 +851,10 @@
     pointer-events: none;
     opacity: 0;
     transition: opacity .8s ease;
-    /* The ripple canvases overhang by one period so their drift loops without a seam; clip it */
-    overflow: hidden;
 
     &.shown {
         opacity: 1;
     }
-
-    canvas {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-    }
-}
-
-/* Drift exactly one period per loop. Zoomed far out the strokes shrink into a moiré hatch: fade
-   them out below 40% zoom, gone at 20%. --board-scale comes from board_ui. */
-.board .wfx-ripple {
-    opacity: calc(.8 * clamp(0, (var(--board-scale, 1) - .2) / .2, 1));
-    animation: wfx-drift var(--dur) linear infinite;
-}
-
-@keyframes wfx-drift {
-    from { transform: translate(0, 0); }
-    to { transform: translate(var(--dx), var(--dy)); }
-}
-
-.board .wfx-coast {
-    opacity: .25;
-    animation: wfx-breathe 5s ease-in-out infinite;
-}
-
-/* One broken swell line off the coast, surfacing and sinking slowly */
-.board .wfx-swell {
-    opacity: 0;
-    animation: wfx-swell 8s ease-in-out infinite;
-}
-
-@keyframes wfx-breathe {
-    0%, 100% { opacity: .18; }
-    60% { opacity: .32; }
-}
-
-@keyframes wfx-swell {
-    0% { opacity: 0; }
-    40% { opacity: .2; }
-    80%, 100% { opacity: 0; }
 }
 
 /* The depth canvas is the water now: sea tiles keep only a faint hex outline, a plain background
@@ -912,17 +868,3 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 151 176' preserveAspectRatio='none'%3E%3Cpath d='M75.5 1.5 149.5 44.25v87.5L75.5 174.5 1.5 131.75v-87.5z' fill='none' stroke='%2301baef' stroke-opacity='.18' stroke-width='1.6'/%3E%3C/svg%3E");
 }
 
-/* Under a dialog the board is blurred: a still layer is blurred once, a moving one every frame */
-.board.blur .wfx-water * {
-    animation-play-state: paused;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .board .wfx-water * {
-        animation: none !important;
-    }
-
-    .board .wfx-swell {
-        display: none;
-    }
-}
