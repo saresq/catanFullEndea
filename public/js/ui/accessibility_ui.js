@@ -9,7 +9,8 @@ export default class AccessibilityUI {
   muted_notif = (localStorage.getItem(KEYS.MUTE_NOTIFICATIONS) === null)
     ? true
     : !!+localStorage.getItem(KEYS.MUTE_NOTIFICATIONS)
-  #toggleBoardZoom; #recenterMap; #toggleBgm; #toggleNotificationsAudio
+  #toggleBoardZoom; #recenterMap; #toggleBgm; #toggleNotificationsAudio; #toggleWater
+  water_on = true
   $el = document.querySelector('#game .accessibility-zone')
 
   // The keys are physical and fixed; only the labels are translated.
@@ -38,15 +39,17 @@ export default class AccessibilityUI {
   ]
 
   constructor({ toggleBoardZoom = _dummyFn, recenterMap = null, toggleBgm = _dummyFn, toggleNotificationsAudio = _dummyFn,
+    /** `(on) => …`: the game's water effects. Its row shows only with `icons.water`. */
+    toggleWater = _dummyFn, water_on = true,
     spectator_link = false, quit_label = t('menu.quit_game'),
     /** `{ label, href }`: a last row that leaves without the quit arming, for pages with no game to lose. */
     back = null,
     icons: { fullscreen = true, zoom = true, bgm = true, notifcation_sounds = true,
-      shorcuts = true, info = true, quit = true } = {}} = {}) {
+      shorcuts = true, info = true, quit = true, water = false } = {}} = {}) {
     this.#shown_icons = {
       // iPhone Safari has no Element#requestFullscreen: no item, and `f` does nothing.
       fullscreen: fullscreen && !!document.documentElement.requestFullscreen,
-      zoom, bgm, notifcation_sounds, shorcuts, info, quit,
+      zoom, bgm, notifcation_sounds, shorcuts, info, quit, water,
     }
     this.#spectator_link = spectator_link
     this.#quit_label = quit_label
@@ -55,6 +58,8 @@ export default class AccessibilityUI {
     this.#recenterMap = recenterMap
     this.#toggleBgm = toggleBgm
     this.#toggleNotificationsAudio = toggleNotificationsAudio
+    this.#toggleWater = toggleWater
+    this.water_on = water_on
   }
 
   render() {
@@ -76,6 +81,7 @@ export default class AccessibilityUI {
         ${shown.zoom ? item('zoom-in', icon('zoom-in'), t('menu.zoom_in'), '=') + item('zoom-out', icon('zoom-out'), t('menu.zoom_out'), '-') : ''}
         ${shown.notifcation_sounds ? item('notifications', icon('volume-2'), t('menu.notification_sounds'), 'n', true) : ''}
         ${shown.bgm ? item('bgm', icon('music'), t('menu.music'), 'm', true) : ''}
+        ${shown.water ? item('water', icon('waves'), t('menu.water_effects'), '', true) : ''}
         ${shown.shorcuts ? item('question-mark', icon('keyboard'), t('menu.keyboard_shortcuts'), '?') : ''}
         ${this.#spectator_link ? item('spectator-link', icon('link'), t('menu.copy_spectator_link')) : ''}
         ${shown.info ? item('info', icon('info'), t('menu.about')) : ''}
@@ -136,6 +142,7 @@ export default class AccessibilityUI {
     set('.item.full-screen', full, icon(full ? 'minimize' : 'maximize'))
     set('.item.notifications', !this.muted_notif, icon(this.muted_notif ? 'volume-x' : 'volume-2'))
     set('.item.bgm', !this.muted)
+    set('.item.water', this.water_on)
   }
 
   #disarmQuit() {
@@ -190,6 +197,7 @@ export default class AccessibilityUI {
     this.$el.querySelector('.item.full-screen')?.addEventListener('click', e => this.toggleFullScreen())
     this.$el.querySelector('.item.notifications')?.addEventListener('click', e => this.toggleMuteNotications())
     this.$el.querySelector('.item.bgm')?.addEventListener('click', e => this.toggleMuteBgm())
+    this.$el.querySelector('.item.water')?.addEventListener('click', e => this.toggleWater())
     this.$el.querySelector('.item.zoom-in')?.addEventListener('click', e => this.toggleZoom())
     this.$el.querySelector('.item.zoom-out')?.addEventListener('click', e => this.toggleZoom(true))
     this.$el.querySelector('.item.question-mark')?.addEventListener('click', e => {
@@ -257,6 +265,13 @@ export default class AccessibilityUI {
     this.muted = !this.muted
     // localStorage.setItem('mute', +this.muted)
     this.#toggleBgm(!this.muted)
+    this.#syncStates()
+  }
+
+  toggleWater() {
+    if (!this.#shown_icons.water) return
+    this.water_on = !this.water_on
+    this.#toggleWater(this.water_on)
     this.#syncStates()
   }
 

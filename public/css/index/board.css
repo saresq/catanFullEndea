@@ -310,13 +310,14 @@
 }
 
 /*
- * Awards (Longest Road, Largest Army) dim the land, never the pieces. Tokens, the coast and the
+ * Awards (Longest Road, Largest Army) dim the land and the ports, never the pieces. Tokens, the coast and the
  * robber already wear a filter: the dimming goes after it, so their shadow or halo neither vanishes
  * on the dim nor snaps back after it. The fade only runs during an award (.award-fade, set by
  * animations_ui): elsewhere these filters must change at once, like the robber-target hover.
  */
 .board.award-fade .tile {
-    :is(.background, .number, .beach, .trade-post) {
+    :is(.background, .number, .beach, .trade-post),
+    &.S[data-trade]::after {
         transition: filter var(--t-slow) ease;
     }
 
@@ -327,7 +328,8 @@
 }
 
 .board.award-dim .tile {
-    :is(.background, .trade-post) {
+    :is(.background, .trade-post),
+    &.S[data-trade]::after {
         filter: brightness(.6);
     }
 
@@ -832,5 +834,126 @@
 
     .board .tile.robbed.robber-animate::before {
         transform: none !important;
+    }
+}
+
+/* --------------------------------------
+ * WATER (water_ui.js)
+ * -------------
+ * Depth, ripples, coast foam and swell, drawn under the tiles inside .board so they pan and zoom
+ * with it. Only transform and opacity animate. Without .wfx (effect off, or not ready yet) the
+ * sea is the plain white hex per tile, as before.
+*/
+.board {
+    --wfx-hi: rgb(230 245 255 / .42);
+    --wfx-foam: #f2f9fd;
+    --wfx-hexline: rgb(255 255 255 / .16);
+}
+
+:root.godmode .board {
+    --wfx-hi: rgb(1 186 239 / .55);
+    --wfx-foam: #01baef;
+    --wfx-hexline: rgb(1 186 239 / .18);
+}
+
+.board .wfx-water {
+    position: absolute;
+    z-index: -5;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .8s ease;
+    /* The ripple tiles overhang their box by one period to loop without a seam; clip it */
+    overflow: hidden;
+    contain: paint;
+
+    &.shown {
+        opacity: 1;
+    }
+
+    > * {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+}
+
+.board .wfx-masked {
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+}
+
+/* The depth canvas is the water now: sea tiles keep only a faint hex outline */
+.board.wfx .tile.S .background {
+    opacity: 1;
+    background: var(--wfx-hexline);
+    -webkit-mask: url(/images/tiles/Sea-outline.png) center / 100% 100% no-repeat;
+    mask: url(/images/tiles/Sea-outline.png) center / 100% 100% no-repeat;
+}
+
+/* A patch of colour cut by a repeating SVG mask, drifting exactly one period per loop */
+.board .wfx-ripples {
+    opacity: .8;
+
+    .wfx-pat {
+        position: absolute;
+        left: calc(-1 * var(--p));
+        top: calc(-1 * var(--p));
+        width: calc(100% + 2 * var(--p));
+        height: calc(100% + 2 * var(--p));
+        background: var(--wfx-hi);
+        -webkit-mask-size: var(--p) var(--p);
+        mask-size: var(--p) var(--p);
+        animation: wfx-drift var(--dur) linear infinite;
+        will-change: transform;
+    }
+}
+
+@keyframes wfx-drift {
+    from { transform: translate(0, 0); }
+    to { transform: translate(var(--dx), var(--dy)); }
+}
+
+.board .wfx-foam {
+    background: var(--wfx-foam);
+
+    &.coast {
+        opacity: .25;
+        animation: wfx-breathe 5s ease-in-out infinite;
+    }
+
+    /* One broken swell line off the coast, surfacing and sinking slowly */
+    &.swell {
+        opacity: 0;
+        animation: wfx-swell 8s ease-in-out infinite;
+    }
+}
+
+@keyframes wfx-breathe {
+    0%, 100% { opacity: .18; }
+    60% { opacity: .32; }
+}
+
+@keyframes wfx-swell {
+    0% { opacity: 0; }
+    40% { opacity: .2; }
+    80%, 100% { opacity: 0; }
+}
+
+/* Under a dialog the board is blurred: a still layer is blurred once, a moving one every frame */
+.board.blur .wfx-water * {
+    animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .board .wfx-water * {
+        animation: none !important;
+    }
+
+    .board .wfx-foam.swell {
+        display: none;
     }
 }

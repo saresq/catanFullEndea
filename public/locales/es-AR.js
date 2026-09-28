@@ -169,6 +169,7 @@ export default {
     zoom_out: 'Alejar zoom',
     notification_sounds: 'Notificaciones',
     music: 'Música',
+    water_effects: 'Efectos de agua',
     keyboard_shortcuts: 'Atajos de teclado',
     copy_spectator_link: 'Copiar link de espectador',
     link_copied: 'Link copiado',

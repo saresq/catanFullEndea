@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Water mockup</title>
+<link rel="stylesheet" href="/css/index.css">
+<style>
+  /* ---------- Water layers (live inside .board, so they pan and zoom with it) ---------- */
+  .board .wfx-layer {
+    position: absolute;
+    pointer-events: none;
+    z-index: -5;
+    /* The drifting patterns overhang their box by one period; without a hard clip that overhang
+       showed past the water's edge as a lighter band when zoomed out */
+    overflow: hidden;
+    contain: paint;
+  }
+  .board .wfx-depth { image-rendering: auto; }
+  .board .wfx-masked {
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    overflow: hidden;
+    z-index: -4;
+  }
+  /* Sea tiles stop painting their white hex: the depth canvas is the water now */
+  .board.wfx .tile.S .background { opacity: 0; }
+  .board.wfx.wfx-hexlines .tile.S .background {
+    opacity: 1;
+    background: var(--wfx-hexline);
+    -webkit-mask: url(/images/tiles/Sea-outline.png) center / 100% 100% no-repeat;
+    mask: url(/images/tiles/Sea-outline.png) center / 100% 100% no-repeat;
+  }
+
+  /* Surface pattern: a tile of colour cut by a repeating SVG mask, drifting one period per loop */
+  .wfx-pat {
+    position: absolute;
+    left: calc(-1 * var(--p));
+    top: calc(-1 * var(--p));
+    width: calc(100% + 2 * var(--p));
+    height: calc(100% + 2 * var(--p));
+    background: var(--wfx-hi);
+    -webkit-mask-size: var(--p) var(--p);
+    mask-size: var(--p) var(--p);
+    animation: wfx-drift var(--dur) linear infinite;
+    will-change: transform;
+  }
+  @keyframes wfx-drift {
+    from { transform: translate(0, 0); }
+    to { transform: translate(var(--dx), var(--dy)); }
+  }
+
+  .wfx-foam { background: var(--wfx-foam); }
+  /* One broken swell line, well off the coast, that surfaces and sinks slowly */
+  .wfx-foam.ring { opacity: 0; animation: wfx-lap 8s ease-in-out infinite; }
+  .wfx-coast-only .wfx-foam.ring { display: none; }
+  .wfx-foam.coast { opacity: .25; animation: wfx-breathe 5s ease-in-out infinite; }
+  @keyframes wfx-lap {
+    0% { opacity: 0; }
+    40% { opacity: .2; }
+    80%, 100% { opacity: 0; }
+  }
+  @keyframes wfx-breathe {
+    0%, 100% { opacity: .18; }
+    60% { opacity: .32; }
+  }
+
+  .board.wfx-still .wfx-layer, .board.wfx-still .wfx-layer * { animation-play-state: paused !important; }
+  .board.award-dim .wfx-layer { filter: brightness(.6); }
+
+  /* ---------- Control panel ---------- */
+  .panel {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 50;
+    width: min(340px, calc(100vw - 24px));
+    max-height: calc(100vh - 24px);
+    overflow: auto;
+    background: rgb(18 24 30 / .88);
+    color: #eef3f6;
+    border-radius: 12px;
+    padding: 12px 14px 14px;
+    font: 14px/1.35 var(--font-body), system-ui, sans-serif;
+    box-shadow: 0 8px 30px rgb(0 0 0 / .35);
+    backdrop-filter: blur(6px);
+  }
+  .panel.collapsed .body { display: none; }
+  .panel header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .panel h1 { font-size: 16px; margin: 0; font-weight: 700; }
+  .panel .stats { font-size: 12px; opacity: .7; font-variant-numeric: tabular-nums; }
+  .panel .toggle-panel {
+    display: inline-block; background: rgb(255 255 255 / .1); border-radius: 6px; padding: 2px 8px;
+  }
+  .panel .group { margin-top: 10px; }
+  .panel .label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; opacity: .65; margin-bottom: 4px; }
+  .panel .seg { display: flex; flex-wrap: wrap; gap: 4px; }
+  .panel .seg button {
+    display: inline-block;
+    padding: 4px 9px;
+    border-radius: 6px;
+    background: rgb(255 255 255 / .08);
+    font-size: 13px;
+  }
+  .panel .seg button:hover { background: rgb(255 255 255 / .16); }
+  .panel .seg button.on { background: #2f9fd0; color: #fff; }
+  .panel .presets button { font-weight: 700; }
+  .panel .swatch { display: inline-flex; width: 42px; height: 10px; border-radius: 3px; overflow: hidden; vertical-align: middle; margin-right: 6px; }
+  .panel .swatch i { flex: 1; }
+  .panel .note { font-size: 12px; opacity: .7; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div id="game">
+  <div class="board-container">
+    <div class="board"></div>
+  </div>
+</div>
+
+<div class="panel">
+  <header>
+    <h1>Water mockup</h1>
+    <span class="stats"></span>
+    <button class="toggle-panel" type="button">hide</button>
+  </header>
+  <div class="body">
+    <div class="group">
+      <div class="label">Quick presets</div>
+      <div class="seg presets" data-key="preset"></div>
+    </div>
+    <div class="group"><div class="label">Depth</div><div class="seg" data-key="depth"></div></div>
+    <div class="group"><div class="label">Palette</div><div class="seg" data-key="palette"></div></div>
+    <div class="group"><div class="label">Surface</div><div class="seg" data-key="surface"></div></div>
+    <div class="group"><div class="label">Shore foam</div><div class="seg" data-key="foam"></div></div>
+    <div class="group"><div class="label">Sea hex lines</div><div class="seg" data-key="hexlines"></div></div>
+    <div class="group"><div class="label">Motion</div><div class="seg" data-key="motion"></div></div>
+    <div class="group"><div class="label">H4x0r (god mode)</div><div class="seg" data-key="h4x"></div></div>
+    <div class="group"><div class="label">Award dim</div><div class="seg" data-key="dim"></div></div>
+    <div class="group"><div class="label">Map (reloads)</div><div class="seg" data-key="map"></div></div>
+    <div class="note">Drag to pan, wheel or pinch to zoom. Settings live in the URL, so a link reproduces the look.</div>
+  </div>
+</div>
+
+<script type="module">
+import Board from '/js/board/board.js'
+import BoardUI from '/js/ui/board_ui.js'
+import * as MAPS from '/js/const_maps.js'
+
+// Archipelago: three islands, one single-hex islet and a one-hex lake inside the main island
+const ARCHIPELAGO =
+  `S.S.S.S.S.S.S.S.S.S.S.S
+  -S.F5.G6.J8.M4.S.S.S.S.M9.C4.S
+  +S.G3.J11.S.C10.F9.S.S.S.C8.F6.S
+  -S.S.M6.J5.G12.S.S.S.S.G2.J10.S
+  +S.S.F4.D.M3.S.S.S.S.S.S.S
+  -S.S.S.S.S.S.S.S.S.S.S.S
+  +S.S.S.S.S.S.S.F11.S.S.S.S
+  -S.S.J9.G5.S.S.S.S.S.S.S.S
+  +S.S.C6.S.S.S.S.S.S.S.S.S
+  -S.S.S.S.S.S.S.S.S.S.S.S`
+
+const MAP_OPTIONS = {
+  base: ['3-4', MAPS.DEFAULT_MAPKEY],
+  m56: ['5-6', MAPS.DEFAULT_MAPKEY_5_6],
+  m78: ['7-8', MAPS.DEFAULT_MAPKEY_7_8],
+  m910: ['9-10', MAPS.DEFAULT_MAPKEY_9_10],
+  argentum: ['Argentum', MAPS.ARGENTUM_MAPKEY],
+  archi: ['Archipelago', ARCHIPELAGO],
+}
+
+/*
+ * Palettes: shore (index 0) to open ocean (last). The last stop is also the page background,
+ * so the canvas edge melts into it. `hi` paints the surface pattern, `foam` the breakers.
+ */
+const PALETTES = {
+  // Shallows are kept mid-tone and a little grey, and open ocean stays mid-dark: water frames the
+  // island, it should neither glare nor turn the board into a dark slab
+  atlantic: {
+    name: 'Atlantic',
+    stops: ['#6aae9f', '#5ba39c', '#4c9597', '#3f878f', '#357885', '#2c687c'],
+    hi: 'rgb(225 250 242 / .42)', foam: '#eefaf5',
+  },
+  endea: {
+    name: 'Endea blue',
+    stops: ['#6aa9c6', '#5d9ec3', '#4f92bd', '#4285b4', '#3778a8', '#2c6b9c'],
+    hi: 'rgb(230 245 255 / .42)', foam: '#f2f9fd',
+  },
+  // Caribe with a twist: the turquoise is cut with sand, so the shallows read warm, not neon
+  caribe: {
+    name: 'Caribe sand',
+    stops: ['#7cb3a3', '#6ba99f', '#5c9e9d', '#4e9198', '#418391', '#35768b'],
+    hi: 'rgb(240 250 238 / .42)', foam: '#fbf8ee',
+  },
+  fjord: {
+    name: 'Fjord',
+    stops: ['#789f9d', '#6c9596', '#61898d', '#577d85', '#4c707b', '#41626f'],
+    hi: 'rgb(230 242 240 / .4)', foam: '#eef4f2',
+  },
+  mediterraneo: {
+    name: 'Mediterráneo',
+    stops: ['#6fa2bd', '#6297ba', '#5589b5', '#487cad', '#3c6fa3', '#326296'],
+    hi: 'rgb(232 242 255 / .42)', foam: '#f4f8fd',
+  },
+}
+
+// H4x0r: the chosen palette pushed towards black (more so with depth), with the H4x0r cyan for highlights
+const H4X = { hi: 'rgb(1 186 239 / .55)', foam: '#01baef', shore: .42, deep: .03 }
+
+const OPTIONS = {
+  depth: { off: 'Today (flat)', hex: 'Hex bands', contour: 'Contours', smooth: 'Smooth' },
+  palette: Object.fromEntries(Object.entries(PALETTES).map(([k, p]) => [k, p.name])),
+  surface: { none: 'None', ripples: 'Ripples', caustics: 'Caustics', both: 'Ripples + caustics' },
+  foam: { off: 'Off', coast: 'Coast line', swell: 'Coast + swell' },
+  hexlines: { off: 'Off', on: 'On' },
+  motion: { on: 'On', off: 'Off' },
+  h4x: { off: 'Off', on: 'On' },
+  dim: { off: 'Off', on: 'On' },
+  map: Object.fromEntries(Object.entries(MAP_OPTIONS).map(([k, [name]]) => [k, name])),
+}
+
+const PRESETS = {
+  Today: { depth: 'off', surface: 'none', foam: 'off', hexlines: 'off' },
+  A: { depth: 'hex', surface: 'none', foam: 'off', hexlines: 'off' },
+  B: { depth: 'smooth', surface: 'none', foam: 'off', hexlines: 'off' },
+  C: { depth: 'smooth', surface: 'ripples', foam: 'off', hexlines: 'off' },
+  D: { depth: 'smooth', surface: 'caustics', foam: 'coast', hexlines: 'off' },
+  E: { depth: 'smooth', surface: 'both', foam: 'coast', hexlines: 'off' },
+  F: { depth: 'contour', surface: 'ripples', foam: 'coast', hexlines: 'on' },
+}
+
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
+const params = new URLSearchParams(location.search)
+const state = {
+  depth: 'smooth', palette: 'atlantic', surface: 'ripples', foam: 'coast', hexlines: 'off',
+  motion: reduced ? 'off' : 'on', h4x: 'off', dim: 'off', map: 'archi',
+}
+for (const k of Object.keys(state)) {
+  if (params.has(k) && OPTIONS[k][params.get(k)]) { state[k] = params.get(k) }
+  if (k === 'foam' && params.get(k) === 'on') { state.foam = 'coast' } // links from before the split
+}
+
+/* ---------- Board ---------- */
+const board = new Board(MAP_OPTIONS[state.map][1])
+const ui = new BoardUI(board, () => {})
+ui.viewStorageKey = `water-mockup-view-${state.map}`
+ui.render()
+const $board = ui.$el
+
+/* ---------- Geometry: tile centres, the hex lattice, and a signed distance to land ---------- */
+const tiles = [...$board.querySelectorAll('.tile')].map($t => {
+  const $row = $t.parentElement
+  return {
+    land: !$t.classList.contains('S'),
+    x: $row.offsetLeft + $t.offsetLeft + $t.offsetWidth / 2,
+    y: $row.offsetTop + $t.offsetTop + $t.offsetHeight / 2,
+  }
+})
+const rows = [...new Set(tiles.map(t => t.y))].sort((a, b) => a - b)
+const row0 = tiles.filter(t => t.y === rows[0]).sort((a, b) => a.x - b.x)
+const W = row0[1].x - row0[0].x         // centre to centre in a row (149px)
+const H = rows[1] - rows[0]             // row pitch (129px)
+const X0 = row0[0].x, Y0 = row0[0].y
+
+// Axial coordinates on the board's own lattice: centre = (X0 + q*W + r*W/2, Y0 + r*H)
+function toAxial(x, y) {
+  const r = (y - Y0) / H
+  return [(x - X0) / W - r / 2, r]
+}
+function roundAxial(q, r) {
+  const s = -q - r
+  let rq = Math.round(q), rr = Math.round(r), rs = Math.round(s)
+  const dq = Math.abs(rq - q), dr = Math.abs(rr - r), ds = Math.abs(rs - s)
+  if (dq > dr && dq > ds) rq = -rr - rs
+  else if (dr > ds) rr = -rq - rs
+  return [rq, rr]
+}
+const land = tiles.filter(t => t.land).map(t => {
+  const [q, r] = roundAxial(...toAxial(t.x, t.y))
+  return { ...t, q, r }
+})
+
+// Exact signed distance to a pointy-top hexagon of inradius a (iq's sdHexagon with axes swapped)
+const KX = -0.866025404, KY = 0.5, KZ = 0.577350269
+function sdHex(px, py, a) {
+  let x = Math.abs(py), y = Math.abs(px)
+  const d = 2 * Math.min(KX * x + KY * y, 0)
+  x -= d * KX; y -= d * KY
+  x -= Math.min(Math.max(x, -KZ * a), KZ * a)
+  y -= a
+  return Math.hypot(x, y) * Math.sign(y)
+}
+const INR = W / 2, CIRC = W / Math.sqrt(3)
+// A plain min() leaves a visible crease where two coasts are equally far; a smooth min rounds it.
+// Its width grows with the distance, so the coast itself stays exact and only open water blends.
+function smin(a, b) {
+  const m = Math.min(a, b)
+  const k = Math.max(.15 * W, .5 * m)
+  const h = Math.max(k - Math.abs(a - b), 0) / k
+  return m - h * h * k / 4
+}
+function landDistance(x, y) {
+  let best = Infinity
+  for (const t of land) {
+    const dx = x - t.x, dy = y - t.y
+    if (Math.hypot(dx, dy) - CIRC > best + Math.max(W, .5 * best)) continue
+    best = best === Infinity ? sdHex(dx, dy, INR) : smin(best, sdHex(dx, dy, INR))
+  }
+  return best
+}
+const hexCache = new Map()
+function hexDepth(q, r) {
+  const key = q + ',' + r
+  if (hexCache.has(key)) return hexCache.get(key)
+  let best = Infinity
+  for (const t of land) {
+    const dq = q - t.q, dr = r - t.r
+    best = Math.min(best, (Math.abs(dq) + Math.abs(dr) + Math.abs(dq + dr)) / 2)
+  }
+  hexCache.set(key, best)
+  return best
+}
+
+/* ---------- Field: one pass, cached; colours are applied per palette on top ---------- */
+const MARGIN = 6 * W, CELL = 5
+const minX = Math.min(...tiles.map(t => t.x)) - W / 2 - MARGIN
+const minY = Math.min(...tiles.map(t => t.y)) - CIRC - MARGIN
+const maxX = Math.max(...tiles.map(t => t.x)) + W / 2 + MARGIN
+const maxY = Math.max(...tiles.map(t => t.y)) + CIRC + MARGIN
+const cols = Math.ceil((maxX - minX) / CELL), rowsN = Math.ceil((maxY - minY) / CELL)
+const t0 = performance.now()
+const field = new Float32Array(cols * rowsN)   // distance to land in tile widths
+const hexF = new Uint8Array(cols * rowsN)      // hex rings to land
+for (let j = 0; j < rowsN; j++) {
+  for (let i = 0; i < cols; i++) {
+    const x = minX + (i + .5) * CELL, y = minY + (j + .5) * CELL
+    field[j * cols + i] = landDistance(x, y) / W
+    hexF[j * cols + i] = Math.min(255, hexDepth(...roundAxial(...toAxial(x, y))))
+  }
+}
+const fieldMs = Math.round(performance.now() - t0)
+
+/* ---------- Colour helpers ---------- */
+const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16))
+function ramp(stops, t) {
+  t = Math.min(Math.max(t, 0), 1) * (stops.length - 1)
+  const i = Math.min(Math.floor(t), stops.length - 2), f = t - i
+  const a = stops[i], b = stops[i + 1]
+  return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f]
+}
+// How far the shallows stand out from open water: 1 is the palette as written, lower pulls every
+// stop towards the deepest one, so the coast glows less without changing the palette's hue
+const GLOW = .7
+function paletteStops() {
+  const raw = PALETTES[state.palette].stops.map(hexRgb), deep = raw[raw.length - 1]
+  const stops = raw.map(c => c.map((v, j) => deep[j] + (v - deep[j]) * GLOW))
+  if (state.h4x !== 'on') return stops
+  return stops.map((c, i) => {
+    const k = H4X.shore + (H4X.deep - H4X.shore) * (i / (stops.length - 1))
+    return c.map(v => v * k)
+  })
+}
+const smoothstep = (a, b, x) => { const t = Math.min(Math.max((x - a) / (b - a), 0), 1); return t * t * (3 - 2 * t) }
+// Cheap, deterministic noise so foam and dithering never reshuffle
+const noise = (x, y) => .5 + .25 * Math.sin(x * .031 + Math.sin(y * .017) * 2.1) + .25 * Math.sin(y * .027 + Math.sin(x * .013) * 1.7)
+
+const DEEP_TILES = 2.2 // contour lines stop this many tile widths out
+const FALLOFF = .9     // smooth depth: tile widths per step of the curve below
+const HEX_RINGS = 4    // hex bands: ring 4 and beyond are open ocean
+
+function depthT(idx) {
+  const d = field[idx]
+  if (state.depth === 'hex') return (Math.max(hexF[idx], 1) - 1) / (HEX_RINGS - 1)
+  if (state.depth === 'contour') return depthCurve(Math.floor(Math.max(d, 0) / .5) * .5)
+  return depthCurve(Math.max(d, 0))
+}
+// Soft off the coast, then a long tail that only approaches open ocean (~60% at 2 tiles, ~90% at
+// 3.5, ~99% at the canvas edge). A curve that lands at a fixed distance reads as a halo with a rim
+// when zoomed out.
+function depthCurve(d) {
+  const x = d / FALLOFF
+  return 1 - (1 + x) * Math.exp(-x)
+}
+
+function makeCanvas() {
+  const c = document.createElement('canvas')
+  c.width = cols; c.height = rowsN
+  return c
+}
+function paintDepth(canvas) {
+  const ctx = canvas.getContext('2d')
+  const img = ctx.createImageData(cols, rowsN)
+  const stops = paletteStops()
+  const line = state.h4x === 'on' ? [1, 186, 239] : [255, 255, 255]
+  for (let idx = 0; idx < field.length; idx++) {
+    let [r, g, b] = ramp(stops, depthT(idx))
+    if (state.depth === 'contour') {
+      const d = field[idx], f = (d / .5) % 1
+      if (d > .05 && d < DEEP_TILES + .5 && (f < .06 || f > .94)) {
+        const k = .14
+        r += (line[0] - r) * k; g += (line[1] - g) * k; b += (line[2] - b) * k
+      }
+    }
+    const dither = (Math.random() - .5) * 2
+    img.data[idx * 4] = r + dither
+    img.data[idx * 4 + 1] = g + dither
+    img.data[idx * 4 + 2] = b + dither
+    img.data[idx * 4 + 3] = 255
+  }
+  ctx.putImageData(img, 0, 0)
+}
+// Alpha-only masks, white where the effect shows
+function maskUrl(alphaOf) {
+  const c = makeCanvas(), ctx = c.getContext('2d')
+  const img = ctx.createImageData(cols, rowsN)
+  for (let j = 0; j < rowsN; j++) {
+    for (let i = 0; i < cols; i++) {
+      const idx = j * cols + i
+      img.data[idx * 4] = img.data[idx * 4 + 1] = img.data[idx * 4 + 2] = 255
+      img.data[idx * 4 + 3] = 255 * alphaOf(field[idx], minX + i * CELL, minY + j * CELL)
+    }
+  }
+  ctx.putImageData(img, 0, 0)
+  return `url(${c.toDataURL()})`
+}
+const MASKS = {
+  shore: maskUrl(d => d < -.05 ? 0 : 1 - .8 * smoothstep(0, 2.8, d)),
+  shallow: maskUrl(d => d < -.05 ? 0 : 1 - smoothstep(.1, 1.5, d)),
+  coast: maskUrl((d, x, y) => Math.exp(-(((d - .14) / .05) ** 2)) * (.6 + .4 * noise(x, y))),
+  ring: [maskUrl((d, x, y) => Math.exp(-(((d - .36) / .06) ** 2)) * smoothstep(.5, .8, noise(x * .7 + 40, y * .7)))],
+}
+
+/* ---------- Surface patterns (SVG as masks, so CSS can colour them) ---------- */
+const svg = s => `url("data:image/svg+xml,${encodeURIComponent(s)}")`
+const PATTERNS = {
+  ripples: [
+    { p: 180, dur: 26, dx: -180, dy: -180, img: svg(`<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180' fill='none' stroke='#000' stroke-width='2.4' stroke-linecap='round'>
+      <path d='M14 30q10-7 20 0t20 0'/><path d='M104 16q8-5 16 0t16 0'/><path d='M60 78q12-8 24 0t24 0'/>
+      <path d='M140 100q8-5 16 0'/><path d='M8 126q10-6 20 0t20 0'/><path d='M92 150q10-7 20 0t20 0'/></svg>`) },
+    { p: 240, dur: 38, dx: 240, dy: -240, img: svg(`<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240' fill='none' stroke='#000' stroke-width='1.6' stroke-linecap='round'>
+      <path d='M30 60q14-8 28 0'/><path d='M150 40q12-7 24 0t24 0'/><path d='M90 130q16-9 32 0'/>
+      <path d='M190 170q10-6 20 0'/><path d='M20 200q14-8 28 0t28 0'/></svg>`) },
+  ],
+  caustics: [
+    { p: 320, dur: 60, dx: -320, dy: -320, img: caustic(320, 12, 3) },
+    { p: 256, dur: 46, dx: 256, dy: -256, img: caustic(256, 10, 11) },
+  ],
+}
+// Real caustics are a net of bright, curved cells: light focused by the waves onto the bottom.
+// A Worley pattern (distance to the nearest point minus the second nearest) draws that net; the
+// lookup is warped by whole sine periods so the cells curve and the tile still wraps. Two tiles of
+// different sizes drift apart and their overlap keeps re-forming, which is what reads as water.
+function caustic(size, cells, seed) {
+  let a = seed >>> 0
+  const rnd = () => {
+    a = (a + 0x6D2B79F5) >>> 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+  const pts = Array.from({ length: cells }, () => [rnd() * size, rnd() * size])
+  const c = document.createElement('canvas')
+  c.width = c.height = size
+  const ctx = c.getContext('2d'), img = ctx.createImageData(size, size)
+  const TAU = Math.PI * 2, amp = size * .035, cell = size / Math.sqrt(cells)
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const wx = x + amp * Math.sin(TAU * 2 * y / size + 1.3) + amp * .5 * Math.sin(TAU * 3 * (x + y) / size)
+      const wy = y + amp * Math.sin(TAU * 2 * x / size + .4) + amp * .5 * Math.sin(TAU * 3 * (x - y) / size)
+      let f1 = Infinity, f2 = Infinity
+      for (const [px, py] of pts) {
+        let dx = Math.abs(wx - px) % size, dy = Math.abs(wy - py) % size
+        if (dx > size / 2) dx = size - dx
+        if (dy > size / 2) dy = size - dy
+        const d = Math.hypot(dx, dy)
+        if (d < f1) { f2 = f1; f1 = d } else if (d < f2) f2 = d
+      }
+      const e = (f2 - f1) / cell // 0 on a cell edge
+      const v = Math.exp(-((e / .045) ** 2)) * .9 + Math.exp(-((e / .16) ** 2)) * .25
+      img.data[(y * size + x) * 4 + 3] = Math.min(255, v * 255)
+    }
+  }
+  ctx.putImageData(img, 0, 0)
+  return `url(${c.toDataURL()})`
+}
+
+/* ---------- Layers ---------- */
+const box = `left:${minX}px;top:${minY}px;width:${cols * CELL}px;height:${rowsN * CELL}px`
+const $depth = makeCanvas()
+$depth.className = 'wfx-layer wfx-depth'
+$depth.style.cssText = box
+const $surface = document.createElement('div')
+$surface.className = 'wfx-layer'
+$surface.style.cssText = box
+const $foam = document.createElement('div')
+$foam.className = 'wfx-layer'
+$foam.style.cssText = box
+$foam.replaceChildren(...[MASKS.coast, ...MASKS.ring].map((m, i) => {
+  const $f = document.createElement('div')
+  $f.className = `wfx-layer wfx-masked wfx-foam ${i ? 'ring' : 'coast'}`
+  $f.style.inset = '0'
+  $f.style.setProperty('-webkit-mask-image', m)
+  $f.style.setProperty('mask-image', m)
+  return $f
+}))
+$board.prepend($depth, $surface, $foam)
+
+function apply() {
+  const on = state.depth !== 'off'
+  const pal = PALETTES[state.palette]
+  const h4x = state.h4x === 'on'
+  document.documentElement.classList.toggle('godmode', h4x)
+  $board.classList.toggle('wfx', on)
+  $board.classList.toggle('wfx-hexlines', on && state.hexlines === 'on')
+  $board.classList.toggle('wfx-still', state.motion === 'off')
+  $board.classList.toggle('award-dim', state.dim === 'on')
+  $board.style.setProperty('--wfx-hi', h4x ? H4X.hi : pal.hi)
+  $board.style.setProperty('--wfx-foam', h4x ? H4X.foam : pal.foam)
+  $board.style.setProperty('--wfx-hexline', h4x ? 'rgb(1 186 239 / .18)' : 'rgb(255 255 255 / .16)')
+
+  if (on) {
+    paintDepth($depth)
+    const stops = paletteStops(), deep = stops[stops.length - 1]
+    document.documentElement.style.setProperty('--water-color', `rgb(${deep.map(Math.round).join(' ')})`)
+  } else {
+    document.documentElement.style.removeProperty('--water-color')
+  }
+  $depth.style.display = on ? '' : 'none'
+  $foam.style.display = on && state.foam !== 'off' ? '' : 'none'
+  $foam.classList.toggle('wfx-coast-only', state.foam === 'coast')
+
+  // Ripples fade out over ~3 tiles; caustics stay in the shallows, where light reaches the bottom
+  const SURFACES = {
+    ripples: { mask: MASKS.shore, opacity: .8 },
+    caustics: { mask: MASKS.shallow, opacity: .5 },
+  }
+  const kinds = !on || state.surface === 'none' ? [] : state.surface === 'both' ? ['caustics', 'ripples'] : [state.surface]
+  $surface.style.display = kinds.length ? '' : 'none'
+  // Set through the style API: the SVG data URIs carry quotes that break a style="" attribute
+  $surface.replaceChildren(...kinds.map(kind => {
+    const $l = document.createElement('div')
+    $l.className = `wfx-layer wfx-masked wfx-${kind}`
+    $l.style.inset = '0'
+    $l.style.opacity = SURFACES[kind].opacity
+    $l.style.setProperty('-webkit-mask-image', SURFACES[kind].mask)
+    $l.style.setProperty('mask-image', SURFACES[kind].mask)
+    $l.append(...PATTERNS[kind].map((p, i) => {
+      const $p = document.createElement('div')
+      $p.className = `wfx-pat ${i ? 'b' : 'a'}`
+      const props = { '--p': `${p.p}px`, '--dur': `${p.dur}s`, '--dx': `${p.dx}px`, '--dy': `${p.dy}px`,
+        '-webkit-mask-image': p.img, 'mask-image': p.img }
+      for (const [k, v] of Object.entries(props)) $p.style.setProperty(k, v)
+      return $p
+    }))
+    return $l
+  }))
+
+  const url = new URLSearchParams(state)
+  history.replaceState(null, '', `?${url}`)
+  renderPanel()
+}
+
+/* ---------- Panel ---------- */
+const $panel = document.querySelector('.panel')
+function renderPanel() {
+  $panel.querySelectorAll('.seg[data-key]').forEach($seg => {
+    const key = $seg.dataset.key
+    if (key === 'preset') {
+      $seg.innerHTML = Object.keys(PRESETS).map(p => {
+        const on = Object.entries(PRESETS[p]).every(([k, v]) => state[k] === v)
+        return `<button type="button" data-preset="${p}" class="${on ? 'on' : ''}">${p}</button>`
+      }).join('')
+      return
+    }
+    $seg.innerHTML = Object.entries(OPTIONS[key]).map(([v, label]) => {
+      const sw = key === 'palette'
+        ? `<span class="swatch">${PALETTES[v].stops.map(c => `<i style="background:${c}"></i>`).join('')}</span>` : ''
+      return `<button type="button" data-v="${v}" class="${state[key] === v ? 'on' : ''}">${sw}${label}</button>`
+    }).join('')
+  })
+}
+$panel.addEventListener('click', e => {
+  const $b = e.target.closest('button')
+  if (!$b) return
+  if ($b.classList.contains('toggle-panel')) {
+    $panel.classList.toggle('collapsed')
+    $b.textContent = $panel.classList.contains('collapsed') ? 'show' : 'hide'
+    return
+  }
+  if ($b.dataset.preset) { Object.assign(state, PRESETS[$b.dataset.preset]); apply(); return }
+  const key = $b.closest('.seg').dataset.key
+  if (key === 'map') {
+    state.map = $b.dataset.v
+    location.search = new URLSearchParams(state)
+    return
+  }
+  state[key] = $b.dataset.v
+  apply()
+})
+
+apply()
+
+/* ---------- FPS ---------- */
+const $stats = $panel.querySelector('.stats')
+let frames = 0, last = performance.now()
+function tick(now) {
+  frames++
+  if (now - last >= 1000) {
+    $stats.textContent = `${Math.round(frames * 1000 / (now - last))} fps · field ${fieldMs} ms`
+    frames = 0; last = now
+  }
+  requestAnimationFrame(tick)
+}
+requestAnimationFrame(tick)
+</script>
+</body>
+</html>

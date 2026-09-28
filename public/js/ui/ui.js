@@ -10,12 +10,13 @@ import TradeUI from "./trade_ui.js"
 import ResSelectionUI from "./res_selection_ui.js"
 import AnimationUI from "./animations_ui.js"
 import AccessibilityUI from "./accessibility_ui.js"
+import WaterUI from "./water_ui.js"
 const $ = document.querySelector.bind(document)
 
 export default class UI {
   #game; #board; #player
   board_ui; player_ui; alert_ui; trade_ui; animation_ui; all_players_ui
-  robber_drop_ui; res_selection_ui; accessibility_ui
+  robber_drop_ui; res_selection_ui; accessibility_ui; water_ui
   #temp = {}
   $splash = $('.splash')
 
@@ -27,6 +28,7 @@ export default class UI {
 
     this.board_ui = new BoardUI(board, (loc, id) => game.onBoardClick(loc, id), undefined, (pid) => (game.getPlayer(pid)?.color_id ?? pid))
     this.animation_ui = new AnimationUI()
+    this.water_ui = new WaterUI()
 
     this.alert_ui = new AlertUI(player, game.config.alert_time, {
       onStatusUpdate: st => game.saveStatus(st),
@@ -39,8 +41,10 @@ export default class UI {
       recenterMap: () => this.board_ui.recenter(),
       toggleBgm: allow => game.toggleBgm(allow),
       toggleNotificationsAudio: allow => game.toggleNotificationsAudio(allow),
+      toggleWater: on => this.water_ui.setEnabled(on),
+      water_on: this.water_ui.enabled,
       spectator_link: true,
-      icons: { zoom: false },
+      icons: { zoom: false, water: true },
     })
 
     this.all_players_ui = new AllPlayersUI(player, opponents, {
@@ -105,6 +109,7 @@ export default class UI {
     this.res_selection_ui.render()
     // Board last: its initial fit measures the space left by the player bar
     this.board_ui.render()
+    this.water_ui.attach(this.board_ui.$el)
     this.$splash.classList.add('hide')
   }
 
