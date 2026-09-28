@@ -9,18 +9,20 @@
     --trade-positive: #64b864;
     --trade-negative: #ff4f4f;
 
-    --player-1-color: #e53a3a;
-    --player-2-color: #2b70ff;
-    --player-3-color: #03a800;
-    --player-4-color: #dc9f00;
-    --player-5-color: #8a2be2; /* Purple */
-    --player-6-color: #808080; /* Grey */
-    --player-7-color: #000000; /* Black */
-    --player-8-color: #b9178c; /* Dark Pink */
-    --player-9-color: #f87e21;
-    --player-10-color: #c77dff;
-    /* GodMode special color */
-    --player-0-color: #01BAEF; /* H4x0r */
+    /* Endea palette. Heraldic tinctures, rich rather than neon, kept off the board's own ochres
+       and olives. Checked on every terrain in tmp/player-colors (the mockup). */
+    --player-1-color: #d61b2a; /* Gules */
+    --player-2-color: #355fe6; /* Azure */
+    --player-3-color: #ffd60a; /* Cadmium */
+    --player-4-color: #34b050; /* Sinople */
+    --player-5-color: #ff8437; /* Tenne */
+    --player-6-color: #bf2a82; /* Murrey */
+    --player-7-color: #05b5b1; /* Turquoise */
+    --player-8-color: #246e3a; /* Vert */
+    --player-9-color: #ffa59f; /* Carnation */
+    --player-10-color: #8e25d1; /* Purpure */
+    /* GodMode special color: a black with an indigo cast, so it still reads as alive */
+    --player-0-color: #1f1c3d; /* H4x0r */
 
     --player-1-color-light: color-mix(in srgb, var(--player-1-color) 40%, #fff);
     --player-2-color-light: color-mix(in srgb, var(--player-2-color) 40%, #fff);
@@ -159,7 +161,7 @@
  * `.pN` is keyed on the player's seat id and is only a fallback; `.pcN` is keyed on the colour the
  * player picked and is declared afterwards, so it wins whenever an element carries both.
  *
- * --p-color-on-dark is --p-color, except for the black player where it is the light variant, so
+ * --p-color-on-dark is --p-color, except for H4x0r's near-black where it is the light variant, so
  * text and thin shapes stay visible on a dark background.
  */
 
@@ -167,7 +169,7 @@
     --p-color: var(--player-0-color);
     --p-color-light: var(--player-0-color-light);
     --p-color-dark: var(--player-0-color-dark);
-    --p-color-on-dark: var(--player-0-color);
+    --p-color-on-dark: var(--player-0-color-light);
 }
 
 .p1 {
@@ -216,7 +218,7 @@
     --p-color: var(--player-7-color);
     --p-color-light: var(--player-7-color-light);
     --p-color-dark: var(--player-7-color-dark);
-    --p-color-on-dark: var(--player-7-color-light);
+    --p-color-on-dark: var(--player-7-color);
 }
 
 .p8 {
@@ -246,7 +248,7 @@
     --p-color: var(--player-0-color);
     --p-color-light: var(--player-0-color-light);
     --p-color-dark: var(--player-0-color-dark);
-    --p-color-on-dark: var(--player-0-color);
+    --p-color-on-dark: var(--player-0-color-light);
 }
 
 .pc1 {
@@ -295,7 +297,7 @@
     --p-color: var(--player-7-color);
     --p-color-light: var(--player-7-color-light);
     --p-color-dark: var(--player-7-color-dark);
-    --p-color-on-dark: var(--player-7-color-light);
+    --p-color-on-dark: var(--player-7-color);
 }
 
 .pc8 {
