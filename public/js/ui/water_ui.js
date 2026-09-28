@@ -7,8 +7,11 @@ const CELL = 6
 /** Board px per pixel of the water canvas: soft ripple strokes, and a texture a phone can hold. */
 const RES = 3
 
-/** Redraws per second while the water moves. The motion is slow; 30 is plenty. */
-const FPS = 30
+/**
+ * Redraws per second while the water moves. The drift is a few screen px per second, so 20 looks
+ * as smooth as 60 and costs a third of the battery.
+ */
+const FPS = 20
 
 const svgImage = s => `data:image/svg+xml,${encodeURIComponent(s)}`
 
@@ -72,6 +75,7 @@ export default class WaterUI {
   #enabled = true
   #$board = null
   #$canvas = null
+  #ctx = null
   #layers = null
   #grid = null
   #field = null
@@ -97,7 +101,8 @@ export default class WaterUI {
   /** Call after every `BoardUI.render()`: that replaces the board's contents, water included. */
   attach($board) {
     this.#$board = $board
-    this.#$canvas = this.#layers = this.#field = this.#grid = null
+    this.#release()
+    this.#$canvas = this.#ctx = this.#layers = this.#field = this.#grid = null
     this.#job++
     this.#apply()
     if (this.#enabled) this.#build()
@@ -110,7 +115,31 @@ export default class WaterUI {
     if (on && !this.#field) this.#build()
   }
 
+  /**
+   * Give the old canvases' memory back now: iOS Safari caps the total canvas memory of a page and
+   * only frees a detached canvas when it is collected.
+   */
+  #release() {
+    if (!this.#layers) return
+    const all = [this.#$canvas, this.#layers.depth, this.#layers.veil, this.#layers.coast, this.#layers.swell,
+      ...this.#layers.ripples.map(r => r.tile)]
+    all.forEach($c => { if ($c) $c.width = $c.height = 0 })
+  }
+
   async #build() {
+    try {
+      await this.#buildWater()
+    } catch (e) {
+      // Water is decoration: if anything fails (an image blocked, an old browser), keep the plain sea
+      console.warn('Water effects unavailable:', e)
+      this.#release()
+      this.#$canvas?.remove()
+      this.#$canvas = this.#ctx = this.#layers = null
+      this.#apply()
+    }
+  }
+
+  async #buildWater() {
     const job = ++this.#job
     // After the board's first paint, so the water never delays it
     await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)))
@@ -177,6 +206,8 @@ export default class WaterUI {
       // One tile per ripple pattern, at the water canvas's resolution
       ripples: RIPPLES.map((r, i) => ({ ...r, img: patterns[i], tile: canvas(Math.round(r.p / RES), Math.round(r.p / RES)) })),
     }
+    // Fully opaque, so the browser can skip blending it with what is behind
+    this.#ctx = $canvas.getContext('2d', { alpha: false })
     this.#$board.prepend($canvas)
     this.#$canvas = $canvas
   }
@@ -231,14 +262,14 @@ export default class WaterUI {
       ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${ca})`
       ctx.fillRect(0, 0, r.tile.width, r.tile.height)
       ctx.globalCompositeOperation = 'source-over'
-      r.pattern = this.#$canvas.getContext('2d').createPattern(r.tile, 'repeat')
+      r.pattern = this.#ctx.createPattern(r.tile, 'repeat')
     }
     this.#draw(performance.now())
   }
 
   /** Composite one frame: depth, ripples at time `now`, veil, foam, swell. */
   #draw(now) {
-    const ctx = this.#$canvas.getContext('2d')
+    const ctx = this.#ctx
     const { width: w, height: h } = this.#$canvas
     const L = this.#layers, s = now / 1000
     ctx.globalAlpha = 1
@@ -248,7 +279,8 @@ export default class WaterUI {
     if (ctx.globalAlpha > 0) {
       for (const r of L.ripples) {
         const shift = ((s / r.dur) % 1) * r.tile.width
-        r.pattern.setTransform(new DOMMatrix().translate(r.dx * shift, r.dy * shift))
+        // Without pattern transforms (very old engines) the ripples simply stand still
+        r.pattern.setTransform?.(new DOMMatrix().translate(r.dx * shift, r.dy * shift))
         ctx.fillStyle = r.pattern
         ctx.fillRect(0, 0, w, h)
       }
@@ -290,7 +322,8 @@ export default class WaterUI {
     if (on) this.#raf = requestAnimationFrame(this.#tick)
     const root = document.documentElement.style
     if (on) {
-      const deep = SD.waterStops({ h4x: isGodMode() }).at(-1).map(Math.round)
+      const stops = SD.waterStops({ h4x: isGodMode() })
+      const deep = stops[stops.length - 1].map(Math.round)
       root.setProperty('--water-color', `rgb(${deep.join(' ')})`)
     } else {
       root.removeProperty('--water-color')
