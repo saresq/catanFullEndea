@@ -40,8 +40,7 @@
 }
 
 /* Civilization pieces (html.civ-pieces) get a thin soft-black edge that keeps their detail off the
-   tiles; settlements, cities and roads alike. The classic pieces go without (--piece-outline unset).
-   Picked on the Outlines page of public/mockups/civ-pieces.html. */
+   tiles; settlements, cities and roads alike. The classic pieces go without (--piece-outline unset). */
 .civ-pieces .board {
     --piece-outline: drop-shadow(.5px 0 0 rgb(0 0 0 / .55)) drop-shadow(-.5px 0 0 rgb(0 0 0 / .55)) drop-shadow(0 .5px 0 rgb(0 0 0 / .55)) drop-shadow(0 -.5px 0 rgb(0 0 0 / .55));
 }

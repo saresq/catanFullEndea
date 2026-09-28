@@ -71,8 +71,8 @@ export const COLOR_IDS = range(1, 10)
 
 /**
  * Civilizations a player can pick in the waiting room; each one's pieces are
- * /images/pieces/civ/<civ>-settlement.svg and -city.svg. The order is the picker's. Exported from
- * public/mockups/civ-pieces.html by scripts/export_civ_pieces.js, which checks this list.
+ * /images/pieces/civ/<civ>-settlement.svg and -city.svg, and its line in civ-pieces.css.
+ * The order is the picker's.
  */
 export const CIVS = ['khmer', 'japanese', 'chinese', 'aztecs', 'mayans', 'indians', 'saracens', 'bengalis',
   'babylonians', 'egyptians', 'britons', 'atlanteans', 'poles', 'iroquois', 'greeks', 'romans']
