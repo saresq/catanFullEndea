@@ -79,6 +79,8 @@ export default class PlayerUI {
     // Apply the chosen colour class - the whole action bar themes off it
     const cid = (this.player.color_id ?? this.player.id)
     this.$el.classList.add('pc' + cid)
+    // The build buttons show this player's civilization pieces (constants.css)
+    this.player.civ && (this.$el.dataset.civ = this.player.civ)
     if (this.player.spectator) {
       this.$action_bar.innerHTML = `
         <div class="row-1">

@@ -11,6 +11,7 @@ import ResSelectionUI from "./res_selection_ui.js"
 import AnimationUI from "./animations_ui.js"
 import AccessibilityUI from "./accessibility_ui.js"
 import WaterUI from "./water_ui.js"
+import { civPiecesOn, setCivPieces, preloadCivPieces } from "../civ_pieces.js"
 const $ = document.querySelector.bind(document)
 
 export default class UI {
@@ -26,7 +27,9 @@ export default class UI {
     this.#board = board
     this.#player = player
 
-    this.board_ui = new BoardUI(board, (loc, id) => game.onBoardClick(loc, id), undefined, (pid) => (game.getPlayer(pid)?.color_id ?? pid))
+    this.board_ui = new BoardUI(board, (loc, id) => game.onBoardClick(loc, id), undefined, (pid) => (game.getPlayer(pid)?.color_id ?? pid), pid => game.getPlayer(pid)?.civ)
+    setCivPieces(civPiecesOn(), false)
+    preloadCivPieces([player, ...(opponents || [])])
     this.animation_ui = new AnimationUI()
     this.water_ui = new WaterUI()
 
@@ -43,8 +46,10 @@ export default class UI {
       toggleNotificationsAudio: allow => game.toggleNotificationsAudio(allow),
       toggleWater: on => this.water_ui.setEnabled(on),
       water_on: this.water_ui.enabled,
+      toggleCivPieces: on => setCivPieces(on),
+      civ_on: civPiecesOn(),
       spectator_link: true,
-      icons: { zoom: false, water: true },
+      icons: { zoom: false, water: true, civ: true },
     })
 
     this.all_players_ui = new AllPlayersUI(player, opponents, {

@@ -5,7 +5,7 @@ const $ = document.querySelector.bind(document)
 const oKeys = Object.keys
 
 export default class BoardUI {
-  #board; #onClick; #getColorId;
+  #board; #onClick; #getColorId; #getCiv;
   #size = { MIN: 0.1, MAX: 5 }
   // Untransformed bounding box of the rendered rows, relative to the board element
   #bounds = { x: 0, y: 0, width: 100, height: 100 }
@@ -24,11 +24,12 @@ export default class BoardUI {
   viewStorageKey = CONST.STORAGE_KEYS.BOARD_VIEW
 
   /** @param {Board} board  */
-  constructor(board, onClick, size, getColorId) {
+  constructor(board, onClick, size, getColorId, getCiv) {
     this.#board = board
     this.#onClick = onClick
     this.#size = size || this.#size
     this.#getColorId = (typeof getColorId === 'function') ? getColorId : (pid => pid)
+    this.#getCiv = (typeof getCiv === 'function') ? getCiv : (_ => null)
   }
 
   /**
@@ -426,6 +427,9 @@ export default class BoardUI {
       instant && $corner.classList.add('no-drop')
       const cid = this.#getColorId(pid)
       piece === 'S' && $corner.classList.add('taken', `p${pid}`, `pc${cid}`)
+      // Whose civilization it is drawn as (constants.css); an upgrade keeps it
+      const civ = this.#getCiv(pid)
+      civ ? ($corner.dataset.civ = civ) : delete $corner.dataset.civ
       setTimeout(_ => {
         instant || $corner.classList.remove('no-drop')
         $corner.dataset.taken = piece

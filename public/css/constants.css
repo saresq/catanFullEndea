@@ -10,7 +10,7 @@
     --trade-negative: #ff4f4f;
 
     /* Endea palette. Heraldic tinctures, rich rather than neon, kept off the board's own ochres
-       and olives. Checked on every terrain in tmp/player-colors (the mockup). */
+       and olives. */
     --player-1-color: #d61b2a; /* Gules */
     --player-2-color: #355fe6; /* Azure */
     --player-3-color: #ffd60a; /* Cadmium */
@@ -343,11 +343,22 @@
     --piece-road-120: url(/images/pieces/road-120.svg);
 }
 
-:where(.corner.taken, .edge.taken, .build-settlement .image, .build-city .image, .end-table :is(.S, .C) .pts-icon, .slot .city-icon, .color-option) {
+/*
+ * Civilization pieces: an element that carries a player's data-civ (a corner, the dock, an end-table
+ * row) gets that civilization's --civ-settlement / --civ-city from civ-pieces.css. With civ pieces on
+ * (html.civ-pieces, the default; the options menu turns it off per browser) they stand in for the
+ * classic art everywhere below, so every site keeps its own --piece rule.
+ */
+.civ-pieces [data-civ] {
+    --piece-settlement: var(--civ-settlement);
+    --piece-city: var(--civ-city);
+}
+
+:where(.corner.taken, .edge.taken, .build-settlement .image, .build-city .image, .end-table :is(.S, .C) .pts-icon, .slot .city-icon, .color-option, .civ-option, .end-table .civ-city) {
     position: relative;
 }
 
-:is(.corner.taken, .edge.taken, .build-settlement .image, .build-city .image, .end-table :is(.S, .C) .pts-icon, .slot .city-icon, .color-option)::before {
+:is(.corner.taken, .edge.taken, .build-settlement .image, .build-city .image, .end-table :is(.S, .C) .pts-icon, .slot .city-icon, .color-option, .civ-option, .end-table .civ-city)::before {
     content: '';
     position: absolute;
     inset: 0;

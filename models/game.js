@@ -106,6 +106,7 @@ export default class Game {
       onChange: (...params) => this.#onPlayerUpdate(...params),
       onVpChange: (pid, vp) => this.#onPlayerVpChange(pid, vp),
     })
+    this.players[host.id - 1].civ = this.#freeCiv()
     this.#onGameEnd = onGameEnd
   }
 
@@ -150,9 +151,18 @@ export default class Game {
       }
     }
 
+    player.civ = this.#freeCiv()
+
     this.players[id - 1] = player
     this.#io_manager.updateWaitingRoom(player)
     return player
+  }
+
+  /** A civilization nobody at the table has, at random; players can swap it in the waiting room. */
+  #freeCiv() {
+    const taken = this.players.filter(p => p?.id).map(p => p.civ)
+    const free = CONST.CIVS.filter(c => !taken.includes(c))
+    return free.length ? free[Math.floor(Math.random() * free.length)] : CONST.CIVS[0]
   }
 
   /** Lobby only: seat a bot in the first free seat. `avoid_names` keeps a name free for a human. */
@@ -647,6 +657,17 @@ export default class Game {
     if (isTaken) return
     player.color_id = cid
     this.#io_manager.updateWaitingRoomColor(pid, cid)
+  }
+
+  /** Waiting Room: Change player civilization, one of CONST.CIVS nobody else has */
+  waitingRoomChangeCivIO(pid, civ) {
+    if (this.state) return // game already started
+    const player = this.getPlayer(pid)
+    if (!player) return
+    if (!CONST.CIVS.includes(civ)) return
+    if (this.players.some(p => p?.id && p.id !== pid && p.civ === civ)) return
+    player.civ = civ
+    this.#io_manager.updateWaitingRoomCiv(pid, civ)
   }
 
   /** Waiting Room: Host starts the game */

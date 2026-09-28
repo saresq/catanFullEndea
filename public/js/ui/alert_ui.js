@@ -1,5 +1,5 @@
 import { default as MSG, getName } from "../const_messages.js"
-import { STORAGE_KEYS as KEYS, REMATCH_SECONDS, GAME_STATES as ST, icon } from "../const.js"
+import { STORAGE_KEYS as KEYS, REMATCH_SECONDS, GAME_STATES as ST, BOT_ICON, BOT_LEVELS, icon } from "../const.js"
 import { t } from "../i18n.js"
 const $ = document.querySelector.bind(document)
 const TURN_SEP = '<<<TURN_SEPARATOR>>>'
@@ -250,35 +250,56 @@ export default class AlertUI {
 
   renderEndGameAlert(p, { pid, color_id, dVps }, game) {
     const cid = p?.color_id || color_id || pid
+    // The column icons are the winner's pieces: their colour, and their civilization's art
+    const civ = [this.#player, ...game.opponents].find(pl => pl.id === pid)?.civ
     const rows = [this.#player, ...game.opponents].filter(pl => !pl.spectator).map(pl => {
       const S = pl.pieces.S.length, C = pl.pieces.C.length, dVp = dVps?.[pl.id] ?? 0
-      const army = pl.largest_army ? 2 : 0, road = pl.longest_road ? 2 : 0
+      const knights = pl.open_dev_cards.dK, road = pl.longest_road_list.length
       return {
-        pl, total: S + 2 * C + dVp + army + road,
-        cells: [[S], [2 * C, C], [dVp], [army, pl.open_dev_cards.dK], [road, pl.longest_road_list.length]],
+        pl, total: S + 2 * C + dVp + (pl.largest_army ? 2 : 0) + (pl.longest_road ? 2 : 0),
+        cells: [[S], [C], [dVp], [knights, pl.largest_army, 'end.knights'], [road, pl.longest_road, 'end.road_len']],
       }
     }).sort((a, b) => !!a.pl.removed - !!b.pl.removed || (b.pl.id === pid) - (a.pl.id === pid) || b.total - a.total)
-    // Main number is the VP the column gives; the count sits under it where it differs.
-    const cell = ([vp, count = vp]) => `<td>${vp || '–'}${count !== vp ? `<small>${count}</small>` : ''}</td>`
+    // Every cell is a count; the header says what one is worth. The two awards are the counts
+    // they are won on (knights, road length), and the holder's is the one in colour.
+    const cell = ([n, award, key]) => {
+      const title = key ? ` title="${t(key, { n })}${award ? `, ${t('end.worth_award')}` : ''}"` : ''
+      return `<td${title}>${award ? `<span class="award">${n}</span>` : n || '–'}</td>`
+    }
     // `pts`, not `icon`: that name is the Lucide helper used for the trophy below
     const pts = '<div class="pts-icon"></div>'
+    const each = n => [t('end.worth_each', { n }), `×${n}`]
     const head = [
-      [t('end.player'), 'name'], [t('end.vp'), 'total', '<div class="vp-icon"></div>'], [t('end.settlements'), 'S', pts], [t('end.cities'), 'C', pts],
-      [t('end.vp_cards'), 'dVp', '<div class="card card--xs" data-card="dVp"></div>', 'dVp'],
-      [t('end.largest_army'), 'army', pts, 'lArmy'], [t('end.longest_road'), 'road', pts, 'lRoad'],
+      [t('end.player'), 'name'],
+      [t('end.settlements'), 'S', pts, each(1)], [t('end.cities'), 'C', pts, each(2)],
+      [t('end.vp_cards'), 'dVp', '<div class="card card--xs" data-card="dVp"></div>', each(1), 'dVp'],
+      [t('end.army'), 'army', pts, [t('end.worth_award'), '+2'], 'lArmy', t('end.largest_army')],
+      [t('end.road'), 'road', pts, [t('end.worth_award'), '+2'], 'lRoad', t('end.longest_road')],
+      [t('end.vp'), 'total', '<div class="vp-icon"></div>'],
     ]
+    // Under the name: the civilization, then "left", or a bot's robot and level as dots (the lobby's marks)
+    const botMark = pl => {
+      const level = Math.max(0, BOT_LEVELS.findIndex(l => l.id === pl.bot_level))
+      const label = t('lobby.bot_level', { name: BOT_LEVELS[level].name })
+      return `<span class="bot-mark" role="img" aria-label="${label}" title="${label}">${BOT_ICON}${
+        BOT_LEVELS.map((l, i) => `<span class="dot${i <= level ? ' filled' : ''}"></span>`).join('')}</span>`
+    }
+    const who = pl => [
+      pl.civ && `<span>${t('names.civs.' + pl.civ)}</span>`,
+      pl.removed ? `<span>${t('end.left')}</span>` : pl.is_bot && botMark(pl),
+    ].filter(Boolean).join('')
     this.$alert.querySelector('.text').innerHTML = `
-      <div class="game-ended pc${cid}">
+      <div class="game-ended pc${cid}"${civ ? ` data-civ="${civ}"` : ''}>
         <div class="title-emoji">${icon('trophy')}</div>
         <div class="player-name">${t(p ? 'end.won' : 'end.won_self', { name: getName(p) })}</div>
         <div class="end-overview">
           <table class="end-table">
-            <thead><tr>${head.map(([label, cls, glyph = '', type]) =>
-              `<th class="${cls}"${type ? ` data-type="${type}"` : ''}>${glyph}<span class="label">${label}</span></th>`).join('')}</tr></thead>
+            <thead><tr>${head.map(([label, cls, glyph = '', worth, type, full]) =>
+              `<th class="${cls}"${type ? ` data-type="${type}"` : ''}${full ? ` title="${full}"` : ''}>${glyph}<span class="label">${label}</span>${worth ? `<span class="worth"><span class="long">${worth[0]}</span><span class="short" aria-hidden="true">${worth[1]}</span></span>` : ''}</th>`).join('')}</tr></thead>
             <tbody>${rows.map(({ pl, total, cells }) => `
-              <tr class="pc${pl.color_id || pl.id}${pl.id === pid ? ' winner' : ''}${pl.removed ? ' left' : ''}">
-                <td class="name"><div><span class="p-name">${this.#isMe(pl) ? t('end.you') : pl.name}</span>${pl.removed ? `<small>${t('end.left')}</small>` : pl.is_bot ? `<small>${t('end.bot_tag', { level: t(`names.bot_levels.${pl.bot_level}.short`) })}</small>` : ''}</div></td>
-                <td class="total"><span>${total}</span></td>${cells.map(cell).join('')}
+              <tr class="pc${pl.color_id || pl.id}${pl.id === pid ? ' winner' : ''}${pl.removed ? ' left' : ''}"${pl.civ ? ` data-civ="${pl.civ}"` : ''}>
+                <td class="name"><div>${pl.civ ? '<span class="civ-city" aria-hidden="true"></span>' : ''}<span class="who"><span class="p-name">${this.#isMe(pl) ? t('end.you') : pl.name}</span>${who(pl) ? `<small>${who(pl)}</small>` : ''}</span></div></td>
+                ${cells.map(cell).join('')}<td class="total"><span>${total}</span></td>
               </tr>`).join('')}
             </tbody>
           </table>

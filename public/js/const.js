@@ -69,6 +69,14 @@ export const WIN_POINT_OPTIONS = range(5, 20)
 /** Colour ids a player may pick. `0` is reserved for god mode. */
 export const COLOR_IDS = range(1, 10)
 
+/**
+ * Civilizations a player can pick in the waiting room; each one's pieces are
+ * /images/pieces/civ/<civ>-settlement.svg and -city.svg. The order is the picker's. Exported from
+ * public/mockups/civ-pieces.html by scripts/export_civ_pieces.js, which checks this list.
+ */
+export const CIVS = ['khmer', 'japanese', 'chinese', 'aztecs', 'mayans', 'indians', 'saracens', 'bengalis',
+  'babylonians', 'egyptians', 'britons', 'atlanteans', 'poles', 'iroquois', 'greeks', 'romans']
+
 /** Every `pcN` class - remove all of them before adding a player's current one. */
 export const PC_CLASSES = [0, ...COLOR_IDS].map(id => 'pc' + id)
 
@@ -223,6 +231,7 @@ const LUCIDE = {
   power: '<path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/>',
   'arrow-left': '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
   waves: '<path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/>',
+  castle: '<path d="M10 5V3"/><path d="M14 5V3"/><path d="M15 21v-3a3 3 0 0 0-6 0v3"/><path d="M18 3v8"/><path d="M18 5H6"/><path d="M22 11H2"/><path d="M22 9v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9"/><path d="M6 3v8"/>',
   'map-pin': '<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
   trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
   dices: '<rect width="12" height="12" x="2" y="10" rx="2" ry="2"/><path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6"/><path d="M6 18h.01"/><path d="M10 14h.01"/><path d="M15 6h.01"/><path d="M18 9h.01"/>',
@@ -258,6 +267,7 @@ export const SOCKET_EVENTS = {
   BUY_DEV: 'buy_development_card',
   END_TURN: 'end_turn',
   PLAYER_COLOR_CHANGE: 'waiting_room_player_color_change',
+  PLAYER_CIV_CHANGE: 'waiting_room_player_civ_change',
   START_GAME: 'waiting_room_start_game',
   REMATCH_VOTE: 'rematch_vote',
   GODMODE_ACTIVATE: 'godmode_activate',
@@ -281,6 +291,7 @@ export const SOCKET_EVENTS = {
   JOINED_WAITING_ROOM: 'joined_waiting_room',
   FIRST_ROLL: 'first_player_roll',
   PLAYER_COLOR_UPDATED: 'waiting_room_player_color_updated',
+  PLAYER_CIV_UPDATED: 'waiting_room_player_civ_updated',
   STATE_CHANGE: 'state_change',
   SET_TIMER: 'set_timer',
   BUILD: 'build',
@@ -343,4 +354,6 @@ export const STORAGE_KEYS = {
   BOARD_VIEW: 'board-view',
   // '0' when the player turned water effects off; missing or '1' means on
   WATER_FX: 'water-fx',
+  // '0' when the player chose the classic pieces; missing or '1' means each player's civilization
+  CIV_PIECES: 'civ-pieces',
 }

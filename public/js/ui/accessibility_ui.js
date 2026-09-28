@@ -9,8 +9,9 @@ export default class AccessibilityUI {
   muted_notif = (localStorage.getItem(KEYS.MUTE_NOTIFICATIONS) === null)
     ? true
     : !!+localStorage.getItem(KEYS.MUTE_NOTIFICATIONS)
-  #toggleBoardZoom; #recenterMap; #toggleBgm; #toggleNotificationsAudio; #toggleWater
+  #toggleBoardZoom; #recenterMap; #toggleBgm; #toggleNotificationsAudio; #toggleWater; #toggleCivPieces
   water_on = true
+  civ_on = true
   $el = document.querySelector('#game .accessibility-zone')
 
   // The keys are physical and fixed; only the labels are translated.
@@ -41,15 +42,17 @@ export default class AccessibilityUI {
   constructor({ toggleBoardZoom = _dummyFn, recenterMap = null, toggleBgm = _dummyFn, toggleNotificationsAudio = _dummyFn,
     /** `(on) => …`: the game's water effects. Its row shows only with `icons.water`. */
     toggleWater = _dummyFn, water_on = true,
+    /** `(on) => …`: civilization pieces or the classic ones. Its row shows only with `icons.civ`. */
+    toggleCivPieces = _dummyFn, civ_on = true,
     spectator_link = false, quit_label = t('menu.quit_game'),
     /** `{ label, href }`: a last row that leaves without the quit arming, for pages with no game to lose. */
     back = null,
     icons: { fullscreen = true, zoom = true, bgm = true, notifcation_sounds = true,
-      shorcuts = true, info = true, quit = true, water = false } = {}} = {}) {
+      shorcuts = true, info = true, quit = true, water = false, civ = false } = {}} = {}) {
     this.#shown_icons = {
       // iPhone Safari has no Element#requestFullscreen: no item, and `f` does nothing.
       fullscreen: fullscreen && !!document.documentElement.requestFullscreen,
-      zoom, bgm, notifcation_sounds, shorcuts, info, quit, water,
+      zoom, bgm, notifcation_sounds, shorcuts, info, quit, water, civ,
     }
     this.#spectator_link = spectator_link
     this.#quit_label = quit_label
@@ -60,6 +63,8 @@ export default class AccessibilityUI {
     this.#toggleNotificationsAudio = toggleNotificationsAudio
     this.#toggleWater = toggleWater
     this.water_on = water_on
+    this.#toggleCivPieces = toggleCivPieces
+    this.civ_on = civ_on
   }
 
   render() {
@@ -82,6 +87,7 @@ export default class AccessibilityUI {
         ${shown.notifcation_sounds ? item('notifications', icon('volume-2'), t('menu.notification_sounds'), 'n', true) : ''}
         ${shown.bgm ? item('bgm', icon('music'), t('menu.music'), 'm', true) : ''}
         ${shown.water ? item('water', icon('waves'), t('menu.water_effects'), '', true) : ''}
+        ${shown.civ ? item('civ', icon('castle'), t('menu.civ_pieces'), '', true) : ''}
         ${shown.shorcuts ? item('question-mark', icon('keyboard'), t('menu.keyboard_shortcuts'), '?') : ''}
         ${this.#spectator_link ? item('spectator-link', icon('link'), t('menu.copy_spectator_link')) : ''}
         ${shown.info ? item('info', icon('info'), t('menu.about')) : ''}
@@ -143,6 +149,7 @@ export default class AccessibilityUI {
     set('.item.notifications', !this.muted_notif, icon(this.muted_notif ? 'volume-x' : 'volume-2'))
     set('.item.bgm', !this.muted)
     set('.item.water', this.water_on)
+    set('.item.civ', this.civ_on)
   }
 
   #disarmQuit() {
@@ -198,6 +205,7 @@ export default class AccessibilityUI {
     this.$el.querySelector('.item.notifications')?.addEventListener('click', e => this.toggleMuteNotications())
     this.$el.querySelector('.item.bgm')?.addEventListener('click', e => this.toggleMuteBgm())
     this.$el.querySelector('.item.water')?.addEventListener('click', e => this.toggleWater())
+    this.$el.querySelector('.item.civ')?.addEventListener('click', e => this.toggleCivPieces())
     this.$el.querySelector('.item.zoom-in')?.addEventListener('click', e => this.toggleZoom())
     this.$el.querySelector('.item.zoom-out')?.addEventListener('click', e => this.toggleZoom(true))
     this.$el.querySelector('.item.question-mark')?.addEventListener('click', e => {
@@ -272,6 +280,13 @@ export default class AccessibilityUI {
     if (!this.#shown_icons.water) return
     this.water_on = !this.water_on
     this.#toggleWater(this.water_on)
+    this.#syncStates()
+  }
+
+  toggleCivPieces() {
+    if (!this.#shown_icons.civ) return
+    this.civ_on = !this.civ_on
+    this.#toggleCivPieces(this.civ_on)
     this.#syncStates()
   }
 

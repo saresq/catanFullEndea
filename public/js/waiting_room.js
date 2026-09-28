@@ -12,6 +12,8 @@ class WaitingRoomUI {
   escCloser = e => { if (e.key === 'Escape') this.closePicker() }
 
   constructor() {
+    // The lobby is where civilizations are picked, so it always shows them (constants.css)
+    document.documentElement.classList.add('civ-pieces')
     this.socket = window.io()
     this.audio_manager = new AudioManager()
     this.accessibility_ui = new AccessibilityUI({
@@ -63,7 +65,7 @@ class WaitingRoomUI {
       if ($add) { this.socket.emit(CONST.SOCKET_EVENTS.ADD_BOT, CONST.DEFAULT_BOT_LEVEL); return }
       if ($remove) { this.socket.emit(CONST.SOCKET_EVENTS.REMOVE_BOT, +$remove.dataset.pid); return }
       if ($dot) { this.socket.emit(CONST.SOCKET_EVENTS.SET_BOT_LEVEL, +$dot.closest('.level-dots').dataset.pid, $dot.dataset.level); return }
-      if (e.target.closest('.slot.me')) this.openColorPicker(this.getTakenColors())
+      if (e.target.closest('.slot.me')) this.openColorPicker()
     })
     $('#slots-list').addEventListener('change', e => {
       const $select = e.target.closest('.level-select')
@@ -112,6 +114,13 @@ class WaitingRoomUI {
         window.players[pid - 1].color_id = color_id
       }
       this.renderSlots()
+      this.#refreshPicker()
+    })
+
+    this.socket.on(CONST.SOCKET_EVENTS.PLAYER_CIV_UPDATED, (pid, civ) => {
+      if (window.players?.[pid - 1]) window.players[pid - 1].civ = civ
+      this.renderSlots()
+      this.#refreshPicker()
     })
 
     // Listen for game start (state change) to transition into game view
@@ -175,28 +184,46 @@ class WaitingRoomUI {
     return overlay
   }
 
-  openColorPicker(takenColors = new Set()) {
-    const overlay = this.#openOverlay(`
-        <div class="title">${t('lobby.choose_color')}</div>
-        <div class="grid">
-          ${CONST.COLOR_IDS.map(i=>`
-            <div class="color-option pc${i} ${takenColors.has(i) ? 'taken' : ''}" data-id="${i}"
-                 title="${t('lobby.color_n', { n: i })}"></div>
-          `).join('')}
-        </div>
-        <button class="btn btn--secondary btn--sm close">${t('lobby.cancel')}</button>`)
-    overlay.querySelectorAll('.color-option:not(.taken)')
-      .forEach(el => el.addEventListener('click', e => {
-        const cid = +e.currentTarget.dataset.id
-        this.socket.emit(CONST.SOCKET_EVENTS.PLAYER_COLOR_CHANGE, cid)
-        this.closePicker()
-      }))
+  /**
+   * Colour and civilization in one panel: each colour as your civilization's city, each
+   * civilization's city in your colour. It stays open while you pick; Done, Escape or a click
+   * outside closes it. Another player's pick greys the option out live (#refreshPicker).
+   */
+  openColorPicker() {
+    const overlay = this.#openOverlay(`<div class="picker-body"></div>
+        <button class="btn btn--secondary btn--sm close">${t('lobby.done')}</button>`)
+    overlay.querySelector('.picker').addEventListener('click', e => {
+      const $opt = e.target.closest('.color-option:not(.taken), .civ-option:not(.taken)')
+      if (!$opt || $opt.classList.contains('selected')) return
+      $opt.classList.contains('color-option')
+        ? this.socket.emit(CONST.SOCKET_EVENTS.PLAYER_COLOR_CHANGE, +$opt.dataset.id)
+        : this.socket.emit(CONST.SOCKET_EVENTS.PLAYER_CIV_CHANGE, $opt.dataset.civ)
+    })
+    this.#refreshPicker()
   }
 
-  getTakenColors() {
-    const set = new Set()
-    ;(window.players || []).forEach(p => { if (p && p.id !== this.my_pid && p.color_id) set.add(p.color_id) })
-    return set
+  #refreshPicker() {
+    const $body = document.querySelector('.picker-overlay .picker-body')
+    if (!$body) return
+    const me = (window.players || [])[this.my_pid - 1] || {}
+    const my_cid = me.color_id || me.id
+    const others = (window.players || []).filter(p => p && p.id !== this.my_pid)
+    const colors = new Set(others.map(p => p.color_id)), civs = new Set(others.map(p => p.civ))
+    const option = (cls, taken, selected, attrs, label) =>
+      `<button type="button" class="${cls}${taken ? ' taken' : ''}${selected ? ' selected' : ''}" ${attrs}
+        ${taken ? 'disabled' : ''} aria-pressed="${selected}" title="${label}" aria-label="${label}"></button>`
+    $body.innerHTML = `
+      <div class="title">${t('lobby.choose_color')}</div>
+      <div class="grid"${me.civ ? ` data-civ="${me.civ}"` : ''}>
+        ${CONST.COLOR_IDS.map(i => option(`color-option pc${i}`, colors.has(i), i === my_cid, `data-id="${i}"`, t('lobby.color_n', { n: i }))).join('')}
+      </div>
+      <div class="title">${t('lobby.choose_civ')}</div>
+      <div class="grid civs">
+        ${CONST.CIVS.map(civ => `<div class="civ-cell">
+          ${option(`civ-option pc${my_cid}`, civs.has(civ), civ === me.civ, `data-civ="${civ}"`, t('names.civs.' + civ))}
+          <span class="civ-name" aria-hidden="true">${t('names.civs.' + civ)}</span>
+        </div>`).join('')}
+      </div>`
   }
 
   joinedCount() { return (window.players || []).filter(Boolean).length }
@@ -316,10 +343,10 @@ class WaitingRoomUI {
     })
   }
 
-  addPlayer({ id, name, color_id, is_bot, bot_level }) {
+  addPlayer({ id, name, color_id, civ, is_bot, bot_level }) {
     // Keep global list updated for rendering
     window.players = window.players || []
-    window.players[id - 1] = { id, name, color_id, is_bot: !!is_bot, bot_level: bot_level || null }
+    window.players[id - 1] = { id, name, color_id, civ, is_bot: !!is_bot, bot_level: bot_level || null }
     this.updateJoinedCount()
     this.updateMaxPlayersSelect?.()
   }
@@ -389,9 +416,10 @@ class WaitingRoomUI {
         const remove = p.is_bot && this.is_host
           ? `<button type="button" class="btn btn--quiet btn--sm remove-bot" data-pid="${p.id}" aria-label="${t('lobby.remove_bot_aria', { name: p.name })}" title="${t('lobby.remove_bot')}">${CONST.CLOSE_ICON}</button>`
           : ''
-        return `<${tag} class="slot filled ${me ? 'me' : ''} ${p.is_bot ? 'bot' : ''} p${p.id} pc${cid}" data-pid="${p.id}">
+        const civ = p.civ ? `<span class="civ-name">${t('names.civs.' + p.civ)}</span>` : ''
+        return `<${tag} class="slot filled ${me ? 'me' : ''} ${p.is_bot ? 'bot' : ''} p${p.id} pc${cid}" data-pid="${p.id}"${p.civ ? ` data-civ="${p.civ}"` : ''}>
           <span class="city-icon"></span>
-          <span class="name">${p.name}</span>${bot}${remove}
+          <span class="name">${p.name}${civ}</span>${bot}${remove}
         </${me ? 'button' : 'div'}>`
       }
       // The host fills an empty seat with a bot; its level is set on the slot afterwards

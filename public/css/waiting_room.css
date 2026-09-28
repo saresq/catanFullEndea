@@ -1,6 +1,7 @@
 @import "/css/index/accessibility.css";
 @import "/css/index/alert.css";
 @import "/css/constants.css";
+@import "/css/civ-pieces.css";
 @import "/css/fonts.css";
 @import "/css/base.css";
 @import "/css/ui/primitives.css";
@@ -278,6 +279,15 @@ body {
         font-size: var(--text-lg);
     }
 
+    /* The civilization after the name, quieter: the city icon already shows it */
+    .civ-name {
+        flex: none;
+        margin-left: var(--space-2);
+        font-family: var(--font-body), sans-serif;
+        font-size: 0.8em;
+        opacity: .75;
+    }
+
     /* Bot seats: the robot, then the level as filled dots - never the colour alone. Ink, like the
        name: the darkest tint needs it for 4.5:1 / 3:1 */
     .bot-icon {
@@ -462,7 +472,7 @@ body {
     }
 }
 
-/* Colour picker: a sand panel over the room holding the grid of city pieces */
+/* Colour and civilization picker: a sand panel over the room holding two grids of city pieces */
 .picker-overlay {
     position: fixed;
     inset: 0;
@@ -476,6 +486,10 @@ body {
         padding: var(--space-4);
         color: var(--surface-ink);
         outline: none; /* focus lands here on open; Tab moves it to the options */
+        max-height: calc(100vh - 2 * var(--space-3)); /* before dvh: Safari < 15.4 */
+        max-height: calc(100dvh - 2 * var(--space-3));
+        box-sizing: border-box;
+        overflow-y: auto;
     }
 
     .title {
@@ -494,24 +508,69 @@ body {
         margin-bottom: var(--space-3);
     }
 
-    .color-option {
+    .color-option, .civ-option {
         width: 3.75rem;
         height: 3.75rem;
+        padding: 0;
+        background: none;
         border-radius: var(--radius-sm);
         --piece: var(--piece-city);
         border: 0.125rem solid transparent;
         transition: transform .12s ease, border-color .12s ease;
         cursor: pointer;
 
-        &:hover {
+        &:hover, &:focus-visible {
             transform: scale(1.06);
             border-color: var(--surface-ink);
+            outline: none;
+        }
+
+        &.selected {
+            border-color: var(--surface-ink);
+            background: #0000001a;
+            cursor: default;
         }
 
         &.taken {
             opacity: .3;
             pointer-events: none;
         }
+    }
+
+    /* Wide screens: colours and civilizations side by side, so the panel fits a laptop's height */
+    @media (min-width: 720px) {
+        .picker-body {
+            display: grid;
+            grid-template-columns: auto auto;
+            grid-template-rows: auto 1fr;
+            grid-auto-flow: column;
+            column-gap: var(--space-5);
+            align-items: start;
+        }
+    }
+
+    /* Civilizations: each one's city in your colour, its name under it */
+    .grid.civs {
+        row-gap: var(--space-2);
+    }
+
+    .civ-cell {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.125rem;
+    }
+
+    .civ-option {
+        width: 3.25rem;
+        height: 3.25rem;
+        --piece: var(--civ-city);
+    }
+
+    .civ-name {
+        font-size: 0.75rem;
+        line-height: 1.1;
+        text-align: center;
     }
 
     .close {
@@ -521,7 +580,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .picker-overlay .color-option {
+    .picker-overlay :is(.color-option, .civ-option) {
         transition: none;
     }
 }

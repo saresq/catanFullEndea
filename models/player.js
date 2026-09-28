@@ -11,6 +11,8 @@ export default class Player {
   is_bot = false
   /** @type {null|'easy'|'medium'} */ bot_level = null
   color_id = 1
+  /** One of CONST.CIVS: whose settlements and cities this player builds. Game.join draws it. */
+  civ = null
   resource_count = 0
   dev_card_count = 0
   public_vps = 0
@@ -203,6 +205,7 @@ export default class Player {
       id: this.id,
       name: this.name,
       color_id: this.color_id,
+      civ: this.civ,
       pieces: this.pieces,
       public_vps: this.public_vps,
       resource_count: this.resource_count,

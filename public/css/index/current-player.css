@@ -958,3 +958,15 @@
         }
     }
 }
+
+/* Civilization pieces are drawn square, not wide like the classic ones: the city fills the
+   button's height and the settlement stays a size smaller */
+.civ-pieces #game > .current-player[data-civ] .actions {
+    .build-settlement .image {
+        --piece-size: 1.75rem;
+    }
+
+    .build-city .image {
+        --piece-size: contain;
+    }
+}

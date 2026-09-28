@@ -39,6 +39,13 @@
     --chit-shadow: drop-shadow(-.5px 1px .5px rgb(0 0 0 / .39)) drop-shadow(-1.6px 2px 1.65px rgb(0 0 0 / .45));
 }
 
+/* Civilization pieces (html.civ-pieces) get a thin soft-black edge that keeps their detail off the
+   tiles; settlements, cities and roads alike. The classic pieces go without (--piece-outline unset).
+   Picked on the Outlines page of public/mockups/civ-pieces.html. */
+.civ-pieces .board {
+    --piece-outline: drop-shadow(.5px 0 0 rgb(0 0 0 / .55)) drop-shadow(-.5px 0 0 rgb(0 0 0 / .55)) drop-shadow(0 .5px 0 rgb(0 0 0 / .55)) drop-shadow(0 -.5px 0 rgb(0 0 0 / .55));
+}
+
 .board {
     position: relative;
     /* transform: scale(1); */
@@ -443,7 +450,7 @@
             visibility: visible;
             border-radius: 0;
             background-color: transparent;
-            filter: var(--piece-shadow);
+            filter: var(--piece-outline,) var(--piece-shadow);
             z-index: 4;
             transform-origin: 50% 85%;
 
@@ -481,11 +488,13 @@
             --piece: var(--piece-settlement);
         }
 
+        /* A city's box is 48px against the settlement's 30px, so the two tell apart at a glance
+           whatever the drawing. Centred on the same spot: (48 - 30) / 2 = 9px each way. */
         &[data-taken=C] {
-            width: 40px;
-            height: 40px;
-            margin-top: -5px;
-            margin-left: -5px;
+            width: 48px;
+            height: 48px;
+            margin-top: -9px;
+            margin-left: -9px;
             --piece: var(--piece-city);
         }
 
@@ -613,7 +622,7 @@
             width: 7px;
             height: 50px;
             z-index: 2;
-            filter: var(--road-shadow);
+            filter: var(--piece-outline,) var(--road-shadow);
 
             &::before {
                 inset: -12% -107.142857%;
@@ -632,7 +641,7 @@
 
             /* Lit up by the Longest Road award, one road at a time */
             &.award-lit {
-                filter: var(--road-shadow) drop-shadow(0 0 2px #fff) drop-shadow(0 0 6px #fff3c4);
+                filter: var(--piece-outline,) var(--road-shadow) drop-shadow(0 0 2px #fff) drop-shadow(0 0 6px #fff3c4);
             }
         }
 

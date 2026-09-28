@@ -67,6 +67,9 @@ export default class IOManager {
     /** @event Waiting-Room Color Change */
     socket.on(SOC.PLAYER_COLOR_CHANGE, (color_id) => game.waitingRoomChangeColorIO(pid, color_id))
 
+    /** @event Waiting-Room Civilization Change */
+    socket.on(SOC.PLAYER_CIV_CHANGE, civ => game.waitingRoomChangeCivIO(pid, civ))
+
     /** @event Waiting-Room Start Game */
     socket.on(SOC.START_GAME, () => game.waitingRoomStartGameIO(pid))
 
@@ -91,6 +94,8 @@ export default class IOManager {
   updateWaitingRoom(player) { this.emit(SOC.JOINED_WAITING_ROOM, player) }
 
   updateWaitingRoomColor(pid, color_id) { this.emit(SOC.PLAYER_COLOR_UPDATED, pid, color_id) }
+
+  updateWaitingRoomCiv(pid, civ) { this.emit(SOC.PLAYER_CIV_UPDATED, pid, civ) }
 
   updateWaitingRoomConfig(config) {
     const { player_count, win_points, mapkey, map_size, dice_mode } = config
