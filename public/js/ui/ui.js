@@ -114,6 +114,7 @@ export default class UI {
     this.res_selection_ui.render()
     // Board last: its initial fit measures the space left by the player bar
     this.board_ui.render()
+    this.board_ui.setPlayers([this.#player, ...this.#game.opponents].filter(p => p?.id && !p.spectator).map(p => p.id))
     this.water_ui.attach(this.board_ui.$el)
     this.$splash.classList.add('hide')
   }

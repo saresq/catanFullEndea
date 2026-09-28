@@ -696,6 +696,36 @@
     }
 }
 
+/*
+ * Pre-rendered pieces (js/ui/piece_art.js). Once every seat's art is baked the board gets .baked,
+ * and a piece at rest shows one plain image per player, colour, outline and shadows already in
+ * it, in place of the blend, mask and filter chain above: the same picture, a fraction of the work
+ * for a phone. The image covers the art box plus piece_art's MARGIN (20px) each side. A piece in a
+ * highlight state (click target, Longest Road) goes back to the live art: those replace the filter.
+ */
+.board.baked .tile {
+    .corner.taken:not(.shown),
+    .edge.taken:not(.longest, .award-lit) {
+        filter: none;
+
+        &::before {
+            background: var(--art) center / 100% 100% no-repeat;
+            background-blend-mode: normal;
+            -webkit-mask: none;
+            mask: none;
+        }
+    }
+
+    .corner.taken:not(.shown)::before {
+        inset: -20px;
+    }
+
+    /* The road's art box is 6px above and below the 50px bar and 7.5px either side of it */
+    .edge.taken:not(.longest, .award-lit)::before {
+        inset: -26px -27.5px;
+    }
+}
+
 /* --------------------------------------
  * BEACHES
  * -------------

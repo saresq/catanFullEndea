@@ -1,11 +1,14 @@
 import Board from "../board/board.js"
 import * as CONST from "../const.js"
 import { EDGES, beachVariant, ownsCoast } from "../board/coastline.js"
+import PieceArt from "./piece_art.js"
 const $ = document.querySelector.bind(document)
 const oKeys = Object.keys
 
 export default class BoardUI {
-  #board; #onClick; #getColorId; #getCiv;
+  #board; #onClick; #getColorId; #getCiv; #art
+  /** Colour ids told by updatePlayerColor, ahead of the player data */
+  #cids = new Map()
   #size = { MIN: 0.1, MAX: 5 }
   // Untransformed bounding box of the rendered rows, relative to the board element
   #bounds = { x: 0, y: 0, width: 100, height: 100 }
@@ -484,7 +487,16 @@ export default class BoardUI {
     this.$el.querySelectorAll('.edge.longest').forEach($el => $el.classList.remove('longest'))
   }
 
+  /** Bakes every seat's pieces into plain images (piece_art.js): the board shows them once all are in */
+  setPlayers(pids) {
+    const colourOf = pid => getComputedStyle(document.documentElement).getPropertyValue(`--player-${this.#cids.get(pid) ?? this.#getColorId(pid)}-color`).trim()
+    this.#art ??= new PieceArt(this.$el, { colourOf, civOf: pid => this.#getCiv(pid) })
+    return this.#art.setPlayers(pids)
+  }
+
   updatePlayerColor(pid, cid) {
+    this.#cids.set(pid, cid)
+    this.#art?.update(pid)
     // Update corners and edges belonging to this pid
     this.$el.querySelectorAll(`.corner.taken.p${pid}, .edge.taken.p${pid}`).forEach($el => {
       $el.classList.remove(...CONST.PC_CLASSES)
